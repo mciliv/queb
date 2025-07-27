@@ -24,6 +24,12 @@ class MolecularProcessor {
 
     for (const smiles of smilesArray) {
       try {
+        // Basic SMILES validation
+        if (!this.isValidSmiles(smiles)) {
+          results.skipped.push(`${smiles.substring(0, 50)}... (invalid format)`);
+          continue;
+        }
+
         const sdfPath = await this.generateSDF(smiles, overwrite);
         if (sdfPath) {
           results.sdfPaths.push(sdfPath);
@@ -31,11 +37,24 @@ class MolecularProcessor {
           results.skipped.push(smiles);
         }
       } catch (error) {
-        results.errors.push(`${smiles} - ${error.message}`);
+        results.errors.push(`${smiles.substring(0, 50)}... - ${error.message}`);
       }
     }
 
     return results;
+  }
+
+  // Basic SMILES format validation (not length-based)
+  isValidSmiles(smiles) {
+    if (!smiles || typeof smiles !== 'string') return false;
+    if (smiles.trim() === '' || smiles === 'N/A') return false;
+    
+    // Skip obvious molecular formulas (not comprehensive, just common cases)
+    if (/^[A-Z][0-9]*([A-Z][0-9]*)*$/.test(smiles.replace(/\s/g, ''))) {
+      return false; // Likely molecular formula like H2O, CaCO3, etc.
+    }
+    
+    return true;
   }
 
   async generateSDF(smiles, overwrite = false) {

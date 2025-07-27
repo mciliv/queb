@@ -40,4 +40,4 @@ git push origin main
 ./dev-debug    # Maximum error visibility
 ```
 
-Run terminal commands in seperate window from chat
+Run terminal commands in seperate window from chat & restart if stalling

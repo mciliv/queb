@@ -312,7 +312,12 @@ class MolecularApp {
     if (smiles.length > 0) {
       await this.generateAndDisplayMolecules(smiles, displayName, chemicals);
     } else {
-      await this.createObjectColumn(displayName, [], [], "No displayable molecular structures found");
+      // Better error message based on what was found
+      let message = "No displayable molecular structures found";
+      if (chemicals.length > 0) {
+        message = `Found ${chemicals.length} chemical(s) but no valid SMILES structures for 3D visualization`;
+      }
+      await this.createObjectColumn(displayName, [], [], message);
     }
   }
 
@@ -328,7 +333,21 @@ class MolecularApp {
       if (!response.ok) throw new Error(`SDF generation failed: ${response.status}`);
       
       const result = await response.json();
-      await this.createObjectColumn(objectName, result.sdfPaths || [], smiles, null, chemicals);
+      
+      // Check if any molecules were successfully generated
+      if (result.sdfPaths && result.sdfPaths.length > 0) {
+        await this.createObjectColumn(objectName, result.sdfPaths, smiles, null, chemicals);
+      } else {
+        // Show what went wrong
+        let message = "No 3D structures could be generated";
+        if (result.skipped && result.skipped.length > 0) {
+          message += `\n\nSkipped: ${result.skipped.join(', ')}`;
+        }
+        if (result.errors && result.errors.length > 0) {
+          message += `\n\nErrors: ${result.errors.join(', ')}`;
+        }
+        await this.createObjectColumn(objectName, [], [], message);
+      }
       
     } catch (error) {
       this.showError(`Error generating 3D models: ${error.message}`);
@@ -361,19 +380,27 @@ class MolecularApp {
     } else {
       // Render 3D molecules
       for (let i = 0; i < sdfFiles.length; i++) {
-        const container = document.createElement("div");
-        container.className = "molecule-viewer";
+        const moleculeContainer = document.createElement("div");
+        moleculeContainer.className = "molecule-container";
         
         const moleculeName = document.createElement("div");
         moleculeName.className = "molecule-name";
         const chemical = chemicals?.[i] || { smiles: smiles[i] };
         moleculeName.textContent = uiManager.getMoleculeName(chemical);
         
-        objectColumn.appendChild(moleculeName);
-        objectColumn.appendChild(container);
+        const viewerContainer = document.createElement("div");
+        viewerContainer.className = "molecule-viewer";
+        viewerContainer.id = `viewer-${Date.now()}-${i}`;
+        
+        moleculeContainer.appendChild(moleculeName);
+        moleculeContainer.appendChild(viewerContainer);
+        objectColumn.appendChild(moleculeContainer);
 
-        const viewer = await this.render(sdfFiles[i], container);
-        if (viewer) this.viewers.push(viewer);
+        // Add small delay to ensure DOM is ready
+        setTimeout(async () => {
+          const viewer = await this.render(sdfFiles[i], viewerContainer);
+          if (viewer) this.viewers.push(viewer);
+        }, i * 100); // Stagger rendering to avoid conflicts
       }
     }
 
@@ -386,16 +413,30 @@ class MolecularApp {
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
       const sdfData = await response.text();
-      const viewer = $3Dmol.createViewer(container, { defaultcolors: $3Dmol.rasmolElementColors });
+      
+      // Clear container first
+      container.innerHTML = '';
+      
+      // Create viewer with proper configuration
+      const viewer = $3Dmol.createViewer(container, { 
+        defaultcolors: $3Dmol.rasmolElementColors,
+        backgroundColor: 'black'
+      });
       
       viewer.addModel(sdfData, "sdf");
       viewer.setStyle({}, { sphere: { scale: 0.8 } });
       viewer.zoomTo();
       viewer.render();
       
+      // Ensure viewer resizes properly
+      setTimeout(() => {
+        viewer.resize();
+        viewer.render();
+      }, 50);
+      
       return viewer;
     } catch (error) {
-      container.textContent = `Error: ${error.message}`;
+      container.innerHTML = `<div style="color: #ff4444; padding: 10px; text-align: center;">Error: ${error.message}</div>`;
       return null;
     }
   }

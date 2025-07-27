@@ -286,6 +286,17 @@ if (process.env.NODE_ENV === "development") {
 }
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));
 
+// Favicon route - serve SVG as favicon.ico
+app.get('/favicon.ico', (req, res) => {
+  if (process.env.NODE_ENV === "development") {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+  res.type('image/svg+xml');
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "assets", "favicon.svg"));
+});
+
 // Disable caching for components in development to prevent issues with cached JavaScript
 if (process.env.NODE_ENV === "development") {
   app.use("/components", express.static(path.join(__dirname, "..", "..", "frontend", "components"), {

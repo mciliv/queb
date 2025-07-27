@@ -26,7 +26,14 @@ Response format:
   ]
 }
 
-Use standard SMILES notation.`;
+CRITICAL SMILES Guidelines:
+- Use ONLY standard SMILES notation, never molecular formulas
+- Provide accurate SMILES for the actual molecules present
+- Examples: "O" (water), "CCO" (ethanol), "C1=CC=CC=C1" (benzene)
+- For complex molecules, provide the complete accurate SMILES
+
+NEVER use molecular formulas like "H2O", "C2H6O", "CaCO3" - always use SMILES.
+Ensure SMILES are chemically accurate and can be parsed by standard tools.`;
   }
 
   async analyzeImage(
@@ -125,19 +132,43 @@ Use standard SMILES notation.`;
   parseAIResponse(content) {
     try {
       // Try to extract JSON from the response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      let jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        let jsonStr = jsonMatch[0];
+        
+        // If JSON appears truncated, try to fix it
+        if (!jsonStr.endsWith('}')) {
+          // Find the last complete chemical entry
+          const chemicalsMatch = jsonStr.match(/"chemicals"\s*:\s*\[([\s\S]*)/);
+          if (chemicalsMatch) {
+            const chemicalsStr = chemicalsMatch[1];
+            const lastCompleteEntry = chemicalsStr.lastIndexOf('{"name"');
+            if (lastCompleteEntry > 0) {
+              const truncatedPart = chemicalsStr.substring(0, lastCompleteEntry - 1);
+              jsonStr = jsonStr.replace(/"chemicals"\s*:\s*\[[\s\S]*/, `"chemicals": [${truncatedPart}]}`);
+            } else {
+              // No valid chemicals found, return empty array
+              const objectMatch = jsonStr.match(/"object"\s*:\s*"([^"]+)"/);
+              const objectName = objectMatch ? objectMatch[1] : "Unknown object";
+              jsonStr = `{"object": "${objectName}", "chemicals": []}`;
+            }
+          }
+        }
+        
+        return JSON.parse(jsonStr);
       }
 
       // Fallback: try to parse the entire content as JSON
       return JSON.parse(content);
     } catch (error) {
-      console.error("Failed to parse AI response:", content);
+      console.error("Failed to parse AI response:", content.substring(0, 500) + "...");
       
-      // Simple fallback - just return empty result
+      // Try to extract object name at least
+      const objectMatch = content.match(/"object"\s*:\s*"([^"]+)"/);
+      const objectName = objectMatch ? objectMatch[1] : "Unknown object";
+      
       return {
-        object: "Unknown object",
+        object: objectName,
         chemicals: []
       };
     }

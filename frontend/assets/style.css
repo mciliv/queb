@@ -533,6 +533,8 @@ label {
   margin-top: var(--space-lg);
   min-height: 400px;
   z-index: var(--z-content);
+  position: relative;
+  width: 100%;
 }
 
 /* Molecular Display Container */
@@ -545,6 +547,8 @@ label {
   padding: 20px 0;
   scroll-behavior: smooth;
   max-width: 100%;
+  position: relative;
+  z-index: var(--z-content);
 }
 
 /* Individual Molecular Columns */
@@ -593,14 +597,19 @@ label {
 .molecule-viewer {
   width: 100%;
   height: 200px;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.8);
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
 }
 
 /* Molecule Container and Names */
 .molecule-container {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .molecule-name {
