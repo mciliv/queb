@@ -34,7 +34,7 @@ class ComponentTestRunner {
     
     const serverRunning = await this.checkServer();
     if (!serverRunning) {
-      console.log('❌ Server not running. Start with: ./infrastructure/deployment/run server');
+      console.log('❌ Server not running. Start with: ./run server');
       return false;
     }
     

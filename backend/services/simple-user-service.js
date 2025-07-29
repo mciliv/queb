@@ -3,12 +3,12 @@ class SimpleUserService {
   constructor() {
     this.users = new Map();
     this.usageStats = new Map();
-    console.log('✅ Simple in-memory user service initialized');
+
   }
 
   async initializeTables() {
     // No-op for in-memory storage
-    console.log('✅ In-memory user storage ready');
+
     return true;
   }
 
@@ -32,7 +32,7 @@ class SimpleUserService {
     };
 
     this.users.set(deviceToken, user);
-    console.log(`✅ User created: ${deviceToken.substring(0, 10)}...`);
+
     return user;
   }
 
@@ -64,7 +64,7 @@ class SimpleUserService {
     if (user) {
       user.usage += amount;
       user.last_used = new Date().toISOString();
-      console.log(`Usage incremented for ${deviceToken.substring(0, 10)}...: ${user.usage}`);
+  
     }
     return user;
   }
@@ -76,7 +76,7 @@ class SimpleUserService {
   async deleteUser(deviceToken) {
     const deleted = this.users.delete(deviceToken);
     if (deleted) {
-      console.log(`User deleted: ${deviceToken.substring(0, 10)}...`);
+  
     }
     return deleted;
   }

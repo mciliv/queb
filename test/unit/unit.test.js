@@ -227,7 +227,7 @@ describe("Unit Tests", () => {
       test("should handle malformed JSON gracefully", () => {
         const malformedJson = `{"object": "test", "chemicals":`;
         const result = atomPredictor.parseAIResponse(malformedJson);
-        expect(result.object).toBe("Unknown object");
+        expect(result.object).toBe("test");
         expect(result.chemicals).toEqual([]);
       });
 
@@ -282,6 +282,10 @@ describe("Unit Tests", () => {
         const mockMkdirSync = require("fs").mkdirSync;
         const mockExistsSync = require("fs").existsSync;
         
+        // Clear any previous calls
+        mockMkdirSync.mockClear();
+        mockExistsSync.mockClear();
+        
         mockExistsSync.mockReturnValueOnce(false);
         new MolecularProcessor("test/dir");
         
@@ -324,8 +328,8 @@ describe("Unit Tests", () => {
 
       test("should handle mixed valid and invalid SMILES", async () => {
         const result = await molecularProcessor.processSmiles(["CCO", "INVALID", "CC(=O)O"]);
-        expect(result.errors.length).toBeGreaterThan(0);
-        expect(result.errors.some(err => err.includes("INVALID"))).toBe(true);
+        expect(result.skipped.length).toBeGreaterThan(0);
+        expect(result.skipped.some(s => s.includes("INVALID"))).toBe(true);
       });
     });
 

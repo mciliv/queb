@@ -439,10 +439,10 @@ class CameraManager {
   showReticleFeedback() {
     const reticle = document.querySelector(".mobile-reticle");
     if (reticle) {
-      reticle.style.animation = "reticlePulse 0.5s ease";
-      setTimeout(() => {
-        reticle.style.animation = "";
-      }, 500);
+              reticle.classList.add('reticle-pulse');
+        setTimeout(() => {
+          reticle.classList.remove('reticle-pulse');
+        }, 500);
     }
   }
 
@@ -453,12 +453,13 @@ class CameraManager {
     outline.className = "crop-outline";
     outline.style.width = cropSize + "px";
     outline.style.height = cropSize + "px";
-    outline.style.left = evt.clientX - cropSize / 2 + "px";
-    outline.style.top = evt.clientY - cropSize / 2 + "px";
+    outline.style.left = (evt.pageX - cropSize / 2) + "px";
+    outline.style.top = (evt.pageY - cropSize / 2) + "px";
+    
     document.body.appendChild(outline);
     
     setTimeout(() => {
-      outline.style.opacity = "0";
+      outline.classList.add('fade-out');
       setTimeout(() => outline.remove(), 200);
     }, 500);
   }
@@ -541,7 +542,8 @@ class CameraManager {
       const switchCameraBtn = document.getElementById("switch-camera-btn");
       
       if (switchCameraContainer && switchCameraBtn) {
-        switchCameraContainer.style.display = "block";
+        switchCameraContainer.classList.add('camera-switch-visible');
+        switchCameraContainer.classList.remove('camera-switch-hidden');
         switchCameraBtn.onclick = () => {
           this.facingMode = this.facingMode === "user" ? "environment" : "user";
           this.startCamera();
@@ -572,7 +574,7 @@ class CameraManager {
     this.video.appendChild(reticle);
 
     setTimeout(() => {
-      reticle.style.animation = "reticlePulse 2s ease-in-out infinite";
+                reticle.classList.add('reticle-pulse-infinite');
     }, 1000);
   }
 
@@ -589,18 +591,21 @@ class CameraManager {
     const instructionText = document.querySelector('.instruction-text');
     if (!instructionText) return;
     
+    // Reset all color classes
+    instructionText.className = 'instruction-text';
+    
     if (this.isCameraReady()) {
       instructionText.textContent = 'Center object in circle & tap, or type name above';
-      instructionText.style.color = '#ffffff';
+      instructionText.classList.add('text-white');
     } else if (this.currentStream) {
       instructionText.textContent = 'Camera initializing... please wait';
-      instructionText.style.color = '#ffa500';
+      instructionText.classList.add('text-orange');
     } else if (this.isRequestingPermission) {
       instructionText.textContent = 'Requesting camera permission...';
-      instructionText.style.color = '#ffa500';
+      instructionText.classList.add('text-orange');
     } else {
       instructionText.textContent = 'Camera not available - check permissions';
-      instructionText.style.color = '#ff6b6b';
+      instructionText.classList.add('text-red');
     }
   }
 

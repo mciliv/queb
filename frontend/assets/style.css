@@ -301,10 +301,15 @@ button:disabled,
 
 /* Close Button Override */
 .payment-close-btn {
+  position: absolute !important;
+  top: 20px !important;
+  right: 20px !important;
   background: none !important;
   color: #00d4ff !important;
-  padding: 5px !important;
+  border: none !important;
+  cursor: pointer !important;
   font-size: 20px !important;
+  padding: 5px !important;
   min-height: auto !important;
 }
 
@@ -660,6 +665,231 @@ label {
   color: rgba(255, 255, 255, 0.7);
   font-style: italic;
   padding: 20px;
+}
+
+/* Crop Outline - Red box indicator for camera clicks */
+.crop-outline {
+  position: fixed !important;
+  border: 2px solid #ff0000 !important;
+  pointer-events: none;
+  z-index: var(--z-tooltip);
+  transition: opacity 0.2s ease;
+  opacity: 1;
+  background: rgba(255, 0, 0, 0.1);
+}
+
+/* =============================================================================
+   EXTRACTED INLINE STYLES - Moved from JS/HTML files
+   ============================================================================= */
+
+/* Loading Indicator */
+.loading-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 1000;
+}
+
+/* Error Messages */
+.error-modal {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid #ff4444;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 12px 16px;
+  color: #ff4444;
+  font-size: 12px;
+  text-align: center;
+}
+
+.error-container {
+  color: #ff4444;
+  padding: 10px;
+  text-align: center;
+}
+
+/* Display States */
+.display-block { display: block !important; }
+.display-none { display: none !important; }
+.display-flex { display: flex !important; }
+
+/* Visibility States */
+.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.invisible {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* UI States */
+.ui-enabled {
+  opacity: 1 !important;
+  filter: none !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
+.ui-disabled {
+  opacity: 0.5;
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+/* Overflow Control */
+.overflow-auto { overflow-x: auto; }
+.overflow-hidden { overflow-x: hidden; }
+
+/* Camera Animations */
+.reticle-pulse {
+  animation: reticlePulse 0.5s ease;
+}
+
+.reticle-pulse-infinite {
+  animation: reticlePulse 2s ease-in-out infinite;
+}
+
+@keyframes reticlePulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Camera Outline Positioning */
+.camera-outline {
+  position: absolute;
+  border: 2px solid #00ff00;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.3s ease;
+}
+
+.camera-outline.fade-out {
+  opacity: 0;
+}
+
+/* Text Color States */
+.text-white { color: #ffffff; }
+.text-orange { color: #ffa500; }
+.text-red { color: #ff6b6b; }
+.text-blue { color: #00d4ff; }
+.text-green { color: #00ff88; }
+
+/* Debug Outline */
+.debug-outline {
+  outline: 2px solid;
+}
+
+/* Button Loading States */
+.btn-loading-state .btn-text {
+  display: none;
+}
+
+.btn-loading-state .btn-loading {
+  display: flex;
+}
+
+.btn-normal-state .btn-text {
+  display: inline;
+}
+
+.btn-normal-state .btn-loading {
+  display: none;
+}
+
+/* Cursor States */
+.cursor-pointer { cursor: pointer; }
+.cursor-default { cursor: default; }
+
+/* Form Section States */
+.form-section-active {
+  display: block;
+}
+
+.form-section-inactive {
+  display: none;
+}
+
+/* Payment Status Colors */
+.payment-status-active {
+  color: #00d4ff;
+}
+
+.payment-status-inactive {
+  color: #ffa500;
+}
+
+.payment-status-error {
+  color: #ff0000;
+}
+
+/* Modal States */
+.modal-open {
+  display: block;
+}
+
+.modal-closed {
+  display: none;
+}
+
+/* Processing Indicator */
+.processing-indicator {
+  display: none;
+}
+
+.processing-indicator.active {
+  display: block;
+}
+
+/* Camera Switch Container */
+.camera-switch-visible {
+  display: block;
+}
+
+.camera-switch-hidden {
+  display: none;
+}
+
+/* Autofill Detector */
+.autofill-detector {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+}
+
+/* Payment Request Button States */
+.payment-express-visible {
+  display: block;
+}
+
+.payment-express-hidden {
+  display: none;
+}
+
+/* Setup Success State */
+.setup-success-visible {
+  display: block;
+}
+
+.setup-success-hidden {
+  display: none;
+}
+
+/* Account Status Display */
+.account-status-visible {
+  display: flex;
+}
+
+.account-status-hidden {
+  display: none;
 }
 
 

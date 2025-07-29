@@ -35,6 +35,38 @@
 - Typography scale for hierarchy
 - Minimal color palette
 - Generous whitespace
+
+## Debug Code Separation
+
+### Complete separation between development and production
+- Debug utilities automatically excluded from production builds
+- Environment-based conditional loading
+- Build-time debug code removal
+- Zero debug overhead in production
+
+### Debug code patterns:
+```javascript
+// Backend - use debug utils instead of console.log
+const debug = require('./debug-utils');
+debug.log('Development only message');
+
+// Frontend - use window.debug in development
+window.debug.log('UI debug message');
+window.debug.inspect(object, 'Object name');
+```
+
+### Production builds:
+- `npm run build:production` - removes all debug code
+- `./ship-production` - full production deployment
+- Debug files excluded via .gitignore
+- Console.log statements stripped from production
+
+### Environment detection:
+- Backend: `NODE_ENV === 'production'`
+- Frontend: hostname-based detection
+- Debug utilities return empty functions in production
+- Conditional script loading based on environment
+
 description:
 globs:
 alwaysApply: false

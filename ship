@@ -1,29 +1,47 @@
 #!/bin/bash
 
-echo "🚢 Starting complete workflow (ship)..."
+# Load shared colors and logging functions
+source infrastructure/scripts/colors.sh
+
+log_ship "Starting complete workflow (ship)..."
+
+# Check for required environment variable
 if [ -z "$OPENAI_API_KEY" ]; then
-  echo "❌ OPENAI_API_KEY environment variable is required"
+  log_error "OPENAI_API_KEY environment variable is required"
   exit 1
 fi
-echo "📝 Staging all changes..."
+
+# Stage all changes
+log_info "📝 Staging all changes..."
 git add .
+
+# Commit with timestamp
 timestamp=$(date)
 commit_message="Auto-commit before production deployment - $timestamp"
-echo "💾 Committing changes..."
+log_info "💾 Committing changes..."
 git commit -m "$commit_message"
-echo "🧪 Running pre-deployment tests..."
-npx jest --testPathPattern=test/unit/unit.test.js --verbose --silent && npx jest --testPathPattern=test/integration/integration.test.js --verbose && npx jest --testPathPattern=test/integration/system.test.js --verbose --detectOpenHandles && python -m pytest test/ -v
+
+# Run pre-deployment tests
+log_test "Running pre-deployment tests..."
+./test
+
 if [ $? -ne 0 ]; then
-  echo "❌ Tests failed - aborting deployment"
+  log_error "Tests failed - aborting deployment"
   exit 1
 fi
-echo "☁️  Deploying to Google Cloud Functions..."
+
+# Deploy to Google Cloud Functions
+log_info "☁️  Deploying to Google Cloud Functions..."
 gcloud functions deploy molecular-analysis --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --memory 1GB --timeout 540s --region us-central1 --entry-point molecularAnalysis --source . --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY --quiet
+
 if [ $? -ne 0 ]; then
-  echo "❌ Deployment failed"
+  log_error "Deployment failed"
   exit 1
 fi
-echo "📤 Pushing to git repository..."
+
+# Push to git repository
+log_info "📤 Pushing to git repository..."
 git push
-echo "✅ Complete workflow successful!"
-echo "🌐 Function deployed to Google Cloud Functions" 
+
+log_success "Complete workflow successful!"
+log_success "🌐 Function deployed to Google Cloud Functions"

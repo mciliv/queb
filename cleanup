@@ -1,15 +1,21 @@
 #!/bin/bash
 
-echo "🧹 Cleaning up all development processes and ports..."
+# Load shared colors and logging functions
+source infrastructure/scripts/colors.sh
+
+log_clean "Cleaning up all development processes and ports..."
 pkill -f "node.*backend/api/server.js" 2>/dev/null || true
 pkill -f "nodemon" 2>/dev/null || true
+
+# Try to free up the common ports
 if command -v lsof >/dev/null 2>&1; then
   for port in 8080 3001 35729; do
     pids=$(lsof -ti:$port 2>/dev/null || true)
     if [ ! -z "$pids" ]; then
-      echo "🔄 Freeing port $port (PIDs: $pids)..."
+      log_info "🔄 Freeing port $port (PIDs: $pids)..."
       echo "$pids" | xargs kill -9 2>/dev/null || true
     fi
   done
 fi
-echo "✅ Cleanup complete. You can now restart the server." 
+
+log_success "Cleanup complete. You can now restart the server." 

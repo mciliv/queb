@@ -51,10 +51,11 @@ async function initializeStripe() {
             const displayError = document.getElementById('card-errors');
             if (event.error) {
                 displayError.textContent = event.error.message;
-                displayError.style.display = 'block';
+                displayError.classList.add('display-block');
             } else {
                 displayError.textContent = '';
-                displayError.style.display = 'none';
+                displayError.classList.remove('display-block');
+    displayError.classList.add('display-none');
             }
         });
         
@@ -83,8 +84,8 @@ function initializePaymentRequest() {
     paymentRequest.canMakePayment().then(function(result) {
         if (result) {
             const paymentRequestButton = paymentRequest.mount('#payment-request-button');
-            document.getElementById('payment-request-button').style.display = 'block';
-            document.getElementById('or-divider').style.display = 'block';
+                  document.getElementById('payment-request-button').classList.add('payment-express-visible');
+      document.getElementById('or-divider').classList.add('payment-express-visible');
             
             // Style the payment request button
             paymentRequestButton.update({
@@ -175,11 +176,11 @@ function initializeExpressPayments() {
     
     // Show express payment section if any options are available
     const expressSection = document.getElementById('express-payment');
-    const hasOptions = document.getElementById('payment-request-button').style.display !== 'none' ||
-                      document.getElementById('paypal-button-container').style.display !== 'none';
+        const hasOptions = document.getElementById('payment-request-button').classList.contains('payment-express-visible') ||
+      document.getElementById('paypal-button-container').classList.contains('payment-express-visible');
     
     if (hasOptions) {
-        expressSection.style.display = 'block';
+        expressSection.classList.add('payment-express-visible');
     }
 }
 
@@ -268,8 +269,8 @@ function checkExistingUser() {
 
 // Show welcome back screen for recognized users
 function showExistingUser() {
-    document.getElementById('existing-user').style.display = 'block';
-    document.getElementById('new-user').style.display = 'none';
+          document.getElementById('existing-user').classList.add('form-section-active');
+      document.getElementById('new-user').classList.add('form-section-inactive');
     
     document.getElementById('card-last4').textContent = currentUser.cardLast4;
     document.getElementById('user-usage').textContent = currentUser.usage;
@@ -277,8 +278,8 @@ function showExistingUser() {
 
 // Show setup screen for new users
 function showNewUserSetup() {
-    document.getElementById('existing-user').style.display = 'none';
-    document.getElementById('new-user').style.display = 'block';
+          document.getElementById('existing-user').classList.add('form-section-inactive');
+      document.getElementById('new-user').classList.add('form-section-active');
 }
 
 // Setup event listeners
@@ -310,8 +311,8 @@ async function handleCardSetup(event) {
     const btnLoading = setupBtn.querySelector('.btn-loading');
     
     // Show loading state
-    btnText.style.display = 'none';
-    btnLoading.style.display = 'flex';
+            btn.classList.add('btn-loading-state');
+        btn.classList.remove('btn-normal-state');
     setupBtn.disabled = true;
     
     try {
@@ -386,8 +387,8 @@ async function handleCardSetup(event) {
         showError(error.message);
         
         // Reset button state
-        btnText.style.display = 'inline';
-        btnLoading.style.display = 'none';
+        btn.classList.remove('btn-loading-state');
+        btn.classList.add('btn-normal-state');
         setupBtn.disabled = false;
     }
 }
@@ -413,9 +414,9 @@ function getDeviceFingerprint() {
 
 // Show success state
 function showSuccess() {
-    document.getElementById('new-user').style.display = 'none';
-    document.getElementById('existing-user').style.display = 'none';
-    document.getElementById('setup-success').style.display = 'block';
+            document.getElementById('new-user').classList.add('form-section-inactive');
+        document.getElementById('existing-user').classList.add('form-section-inactive');
+        document.getElementById('setup-success').classList.add('setup-success-visible');
 }
 
 // Show success and redirect after delay
@@ -430,11 +431,12 @@ function showSuccessAndRedirect() {
 function showError(message) {
     const errorDiv = document.getElementById('card-errors');
     errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
+          errorDiv.classList.add('display-block');
     
     // Auto-hide after 5 seconds
     setTimeout(() => {
-        errorDiv.style.display = 'none';
+        errorDiv.classList.remove('display-block');
+      errorDiv.classList.add('display-none');
     }, 5000);
 }
 

@@ -4,5 +4,7 @@
   "python.testing.pytestEnabled": true,
   "livePreview.defaultPreviewPath": "/index.html",
   "python.poetryPath": "/Users/m/.pyenv/versions/3.12.9/bin/poetry",
-  "python.terminal.activateEnvironment": true
+  "python.terminal.activateEnvironment": true,
+  "editor.vim.enabled": true,
+  "vim.useSystemClipboard": true
 }

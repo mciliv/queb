@@ -26,14 +26,25 @@ Response format:
   ]
 }
 
+ANALYSIS APPROACH:
+1. BIOLOGICAL MATERIALS (skin, food, plants, etc.): Provide major molecular components typically found in that material
+2. MANUFACTURED ITEMS: Analyze visible materials and compositions
+3. PURE SUBSTANCES: Identify the specific chemical if recognizable
+
+BIOLOGICAL MATERIAL EXAMPLES:
+- Human skin: Include keratin proteins, lipids, water, cholesterol, ceramides
+- Food items: Include major nutrients, flavor compounds, preservatives
+- Plants: Include cellulose, chlorophyll, common plant metabolites
+
 CRITICAL SMILES Guidelines:
 - Use ONLY standard SMILES notation, never molecular formulas
 - Provide accurate SMILES for the actual molecules present
 - Examples: "O" (water), "CCO" (ethanol), "C1=CC=CC=C1" (benzene)
+- For proteins, use representative amino acids: "N[C@@H](CC1=CC=CC=C1)C(=O)O" (phenylalanine)
 - For complex molecules, provide the complete accurate SMILES
 
 NEVER use molecular formulas like "H2O", "C2H6O", "CaCO3" - always use SMILES.
-Ensure SMILES are chemically accurate and can be parsed by standard tools.`;
+When visual analysis is insufficient, use scientific knowledge of typical molecular composition.`;
   }
 
   async analyzeImage(
@@ -130,27 +141,59 @@ Ensure SMILES are chemically accurate and can be parsed by standard tools.`;
   }
 
   parseAIResponse(content) {
+    // Handle null/undefined content first
+    if (!content) {
+      return {
+        object: "Unknown object",
+        chemicals: []
+      };
+    }
+
     try {
-      // Try to extract JSON from the response
-      let jsonMatch = content.match(/\{[\s\S]*\}/);
+      // Extract JSON from potential markdown or text wrapper
+      const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
       if (jsonMatch) {
-        let jsonStr = jsonMatch[0];
+        return JSON.parse(jsonMatch[1]);
+      }
+
+      // Look for standalone JSON object in the response
+      const objectMatch = content.match(/\{[\s\S]*?\}/);
+      if (objectMatch) {
+        const jsonStr = objectMatch[0];
         
-        // If JSON appears truncated, try to fix it
-        if (!jsonStr.endsWith('}')) {
-          // Find the last complete chemical entry
-          const chemicalsMatch = jsonStr.match(/"chemicals"\s*:\s*\[([\s\S]*)/);
+        // Check if this appears to be a complete, properly structured response
+        if (jsonStr.includes('"object"') && jsonStr.includes('"chemicals"')) {
+          // Validate that all chemical entries are complete
+          const chemicalsMatch = jsonStr.match(/"chemicals"\s*:\s*\[([\s\S]*?)\]/);
           if (chemicalsMatch) {
             const chemicalsStr = chemicalsMatch[1];
-            const lastCompleteEntry = chemicalsStr.lastIndexOf('{"name"');
-            if (lastCompleteEntry > 0) {
-              const truncatedPart = chemicalsStr.substring(0, lastCompleteEntry - 1);
-              jsonStr = jsonStr.replace(/"chemicals"\s*:\s*\[[\s\S]*/, `"chemicals": [${truncatedPart}]}`);
-            } else {
-              // No valid chemicals found, return empty array
+            const entryCount = (chemicalsStr.match(/\{/g) || []).length;
+            const completeEntries = (chemicalsStr.match(/\{\s*"name"\s*:\s*"[^"]*"\s*,\s*"smiles"\s*:\s*"[^"]*"\s*\}/g) || []).length;
+            
+            // If some entries are incomplete, extract what we can
+            if (entryCount > completeEntries) {
+              const completeChemicals = [];
+              const completeMatches = chemicalsStr.match(/\{\s*"name"\s*:\s*"([^"]*)"\s*,\s*"smiles"\s*:\s*"([^"]*)"\s*\}/g) || [];
+              
+              completeMatches.forEach(match => {
+                const nameMatch = match.match(/"name"\s*:\s*"([^"]*)"/);
+                const smilesMatch = match.match(/"smiles"\s*:\s*"([^"]*)"/);
+                if (nameMatch && smilesMatch) {
+                  completeChemicals.push({
+                    name: nameMatch[1],
+                    smiles: smilesMatch[1]
+                  });
+                }
+              });
+              
+              // Get object name
               const objectMatch = jsonStr.match(/"object"\s*:\s*"([^"]+)"/);
               const objectName = objectMatch ? objectMatch[1] : "Unknown object";
-              jsonStr = `{"object": "${objectName}", "chemicals": []}`;
+              
+              return {
+                object: objectName,
+                chemicals: completeChemicals
+              };
             }
           }
         }
@@ -161,15 +204,25 @@ Ensure SMILES are chemically accurate and can be parsed by standard tools.`;
       // Fallback: try to parse the entire content as JSON
       return JSON.parse(content);
     } catch (error) {
-      console.error("Failed to parse AI response:", content.substring(0, 500) + "...");
-      
-      // Try to extract object name at least
+      // Enhanced fallback: try to extract chemicals even from malformed JSON
       const objectMatch = content.match(/"object"\s*:\s*"([^"]+)"/);
       const objectName = objectMatch ? objectMatch[1] : "Unknown object";
       
+      // Try to extract individual chemical entries
+      const chemicals = [];
+      const entryRegex = /\{"name"\s*:\s*"([^"]+)"\s*,\s*"smiles"\s*:\s*"([^"]+)"\}/g;
+      let match;
+      
+      while ((match = entryRegex.exec(content)) !== null) {
+        chemicals.push({
+          name: match[1],
+          smiles: match[2]
+        });
+      }
+      
       return {
         object: objectName,
-        chemicals: []
+        chemicals: chemicals
       };
     }
   }

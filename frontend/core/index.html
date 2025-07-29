@@ -34,7 +34,7 @@
               <line x1="2" y1="10" x2="22" y2="10"/>
             </svg>
           </div>
-          <button id="payment-close-btn" class="payment-close-btn" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: #00d4ff; cursor: pointer; font-size: 20px; padding: 5px;">
+          <button id="payment-close-btn" class="payment-close-btn">
             ✕
           </button>
         </div>
@@ -427,12 +427,12 @@
       </div>
     </template>
 
+    <script src="/frontend/core/conditional-debug.js"></script>
     <script type="module" src="/components/logger.js"></script>
     <script type="module" src="/components/payment.js"></script>
     <script type="module" src="/components/camera.js"></script>
     <script type="module" src="/components/camera-handler.js"></script>
     <script type="module" src="/components/ui-utils.js"></script>
-    <script src="/components/debug-events.js"></script>
     <script src="/components/error-handler.js"></script>
     <script src="ui-context-automation.js"></script>
     <script type="module" src="app.js"></script>

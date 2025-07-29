@@ -1,10 +1,11 @@
 class PaymentManager {
-  constructor() {
+  constructor(mode = 'modal') {
     this.stripe = null;
     this.elements = null;
     this.cardElement = null;
     this.paymentRequest = null;
     this.setupInProgress = false;
+    this.mode = mode; // 'modal' or 'sidebar'
   }
 
   isLocalDevelopment() {
@@ -47,6 +48,10 @@ class PaymentManager {
   }
 
   showPaymentModal() {
+    if (this.mode === 'sidebar') {
+      return this.showPaymentSection();
+    }
+    
     console.log('🔄 Showing payment modal...');
     const modal = document.getElementById('payment-modal');
     const backdrop = document.getElementById('modal-backdrop');
@@ -79,6 +84,111 @@ class PaymentManager {
     }
     
     this.initializePaymentSetup();
+  }
+
+  // Sidebar mode payment section
+  showPaymentSection() {
+    console.log('💳 Showing payment section');
+    const paymentSection = document.getElementById('payment-section');
+    
+    if (paymentSection) {
+      paymentSection.classList.remove('hidden');
+      paymentSection.classList.add('display-block');
+      
+      setTimeout(() => {
+        paymentSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+    
+    this.initializePaymentSetup();
+  }
+
+  hidePaymentSection() {
+    console.log('💳 Hiding payment section');
+    const paymentSection = document.getElementById('payment-section');
+    
+    if (paymentSection) {
+      paymentSection.classList.add('hidden');
+      paymentSection.classList.remove('display-block');
+    paymentSection.classList.add('display-none');
+    }
+  }
+
+  // Simplified payment check for sidebar mode
+  async checkPaymentRequired() {
+    if (this.mode === 'modal') {
+      return this.checkInitialPaymentSetup();
+    }
+    
+    const deviceToken = localStorage.getItem('molDeviceToken');
+    const cardInfo = localStorage.getItem('molCardInfo');
+    
+    if (!deviceToken || !cardInfo) {
+      console.log('🔧 No payment method found - payment sidebar available');
+      this.updateAccountButton();
+      this.hidePaymentSection();
+      return false;
+    }
+    
+    console.log('✅ Payment method found');
+    this.updateAccountButton();
+    return true;
+  }
+
+  // Update account button to show payment status (sidebar mode)
+  updateAccountButton() {
+    const accountStatus = document.getElementById('account-status');
+    const accountName = document.getElementById('account-name');
+    
+    if (accountStatus && accountName) {
+      const cardInfo = localStorage.getItem('molCardInfo');
+      
+      if (cardInfo) {
+        try {
+          const parsed = JSON.parse(cardInfo);
+          accountName.textContent = parsed.name || 'Account Active';
+          accountStatus.style.color = '#00d4ff';
+          
+          if (parsed.usage !== undefined) {
+            accountName.textContent = `${parsed.name || 'Active'} (${parsed.usage} analyses)`;
+          }
+        } catch (e) {
+          accountName.textContent = 'Account Active';
+          accountStatus.style.color = '#00d4ff';
+        }
+      } else {
+        accountName.textContent = '';
+        accountStatus.classList.add('payment-status-error');
+      }
+      
+      accountStatus.style.cursor = 'pointer';
+      accountStatus.onclick = () => {
+        console.log('💳 Credit card icon clicked');
+        const deviceToken = localStorage.getItem('molDeviceToken');
+        if (deviceToken) {
+          this.showCardManagement();
+        } else {
+          this.showPaymentSection();
+        }
+      };
+    }
+  }
+
+  // Simple card management for sidebar mode
+  showCardManagement() {
+    if (this.mode === 'modal') {
+      return this.showCardManagementModal();
+    }
+    
+    const cardInfo = localStorage.getItem('molCardInfo');
+    if (cardInfo) {
+      try {
+        const parsed = JSON.parse(cardInfo);
+        alert(`Account: ${parsed.name || 'Active'}\nUsage: ${parsed.usage || 0} analyses\n\nPayment is active and working.`);
+      } catch (e) {
+        alert('Payment is active and working.');
+      }
+    }
   }
 
 
@@ -121,14 +231,14 @@ class PaymentManager {
     if (accountStatus) {
       // Always show the account status
       accountStatus.classList.remove('hidden');
-      accountStatus.style.display = 'flex';
+      accountStatus.classList.add('account-status-visible');
       
       if (user && user.name) {
         accountName.textContent = user.name;
-        accountStatus.style.color = '#00d4ff'; // Blue when set up
+        accountStatus.classList.add('payment-status-active'); // Blue when set up
       } else {
         accountName.textContent = 'Add Card';
-        accountStatus.style.color = '#ffa500'; // Orange when not set up
+        accountStatus.classList.add('payment-status-inactive'); // Orange when not set up
       }
       
       // Add click handler to show payment modal when no payment set up

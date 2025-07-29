@@ -1,6 +1,6 @@
 class ErrorHandler {
   static handleAIError(error, context = '') {
-    console.error(`AI Error in ${context}:`, error);
+  
     
     let errorMessage = `AI analysis failed: ${error.message}`;
     let statusCode = 500;
@@ -29,7 +29,7 @@ class ErrorHandler {
   }
   
   static handleValidationError(error, context = '') {
-    console.error(`Validation Error in ${context}:`, error);
+  
     return {
       errorMessage: `Invalid input data: ${error.message}`,
       statusCode: 400
@@ -37,7 +37,7 @@ class ErrorHandler {
   }
   
   static handleProcessingError(error, context = '') {
-    console.error(`Processing Error in ${context}:`, error);
+  
     return {
       errorMessage: `Processing failed: ${error.message}`,
       statusCode: 500

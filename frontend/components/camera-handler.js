@@ -140,6 +140,9 @@ class CameraHandler {
       return;
     }
     
+    // Show crop outline at click location
+    this.showCropOutline(evt);
+    
     const rect = img.getBoundingClientRect();
     const clickX = evt.clientX - rect.left;
     const clickY = evt.clientY - rect.top;
@@ -351,6 +354,29 @@ class CameraHandler {
       });
       urlAnalyze.addEventListener("click", () => this.handleUrlAnalysis());
     }
+  }
+
+  // Show crop outline at interaction point
+  showCropOutline(evt) {
+    const cropSize = 100;
+    const outline = document.createElement("div");
+    outline.className = "crop-outline";
+    outline.style.width = cropSize + "px";
+    outline.style.height = cropSize + "px";
+    
+    // Use page coordinates for fixed positioning
+    const x = evt.pageX || evt.clientX;
+    const y = evt.pageY || evt.clientY;
+    
+    outline.style.left = (x - cropSize / 2) + "px";
+    outline.style.top = (y - cropSize / 2) + "px";
+    
+    document.body.appendChild(outline);
+    
+    setTimeout(() => {
+      outline.style.opacity = "0";
+      setTimeout(() => outline.remove(), 200);
+    }, 500);
   }
 }
 

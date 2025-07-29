@@ -15,6 +15,7 @@ Memory preservation via persistent documentation
 Error reporting for AI & human readability
 Show code chunks rather than descriptions
 If anything can be seen as a principle, put here
+No logging
 
 IF (UI element mentioned) THEN → Update meta.mdc → Create rule if complex
 IF (recurring issue) THEN → Add prevention rule → Reference in meta.mdc  

@@ -1,25 +1,50 @@
 #!/bin/bash
 
-# Simple development script with auto-reload
-echo "🚀 Starting development server with auto-reload..."
+# Load shared colors and logging functions
+source infrastructure/scripts/colors.sh
 
-# Kill any existing processes
-pkill -f "node.*server.js" 2>/dev/null || true
+# Utility function to get local IP
+get_local_ip() {
+    if command -v ipconfig >/dev/null 2>&1; then
+        # macOS
+        ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "127.0.0.1"
+    else
+        # Linux
+        hostname -I | awk '{print $1}' 2>/dev/null || echo "127.0.0.1"
+    fi
+}
+
+log_clean "Cleaning up any existing development processes..."
+# Kill any existing node processes running our server
+pkill -f "node.*backend/api/server.js" 2>/dev/null || true
 pkill -f "nodemon" 2>/dev/null || true
+
+# Wait a moment for cleanup
 sleep 1
 
-# Start the server with nodemon watching frontend files
-echo "📁 Watching: backend/ and frontend/ directories"
-echo "🔄 Auto-reload: Active"
-echo "🌐 Server: http://localhost:8080"
-echo ""
+log_rocket "Starting development server..."
 
-exec npx nodemon \
-    --watch backend/ \
-    --watch frontend/ \
-    --ext js,html,css \
-    --ignore node_modules/ \
-    --ignore test/ \
-    --delay 1000ms \
-    --exec "node --inspect=0.0.0.0:9229" \
-    backend/api/server.js 
+# Run tests first, then start server with enhanced output
+if npx jest --testPathPattern=unit.test.js --verbose --silent; then
+    echo ""
+    log_rocket "Tests passed! Starting servers..."
+    
+    # Get local IP for network access
+    LOCAL_IP=$(get_local_ip)
+    
+    # Show server URLs that will be available
+    echo -e "${GREEN}📍 Server URLs:${NC}"
+    echo -e "${GREEN}   HTTP:  http://localhost:8080${NC}"
+    echo -e "${GREEN}   HTTPS: https://localhost:3001${NC}"
+    echo -e "${BLUE}📱 Network access:${NC}"
+    echo -e "${BLUE}   HTTP:  http://${LOCAL_IP}:8080${NC}"
+    echo -e "${BLUE}   HTTPS: https://${LOCAL_IP}:3001${NC}"
+    echo -e "${YELLOW}🐛 Debug: ws://0.0.0.0:9229${NC}"
+    echo ""
+    
+    # Start nodemon with enhanced monitoring
+    nodemon --watch backend/ --watch frontend/ --ext js,html,css --ignore node_modules/ --ignore test/ --ignore .git/ --delay 1000ms --exec "node --inspect=0.0.0.0:9229" backend/api/server.js
+else
+    log_error "Tests failed! Fix tests before starting development server."
+    exit 1
+fi 

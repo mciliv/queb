@@ -14,7 +14,6 @@ module.exports = {
   testTimeout: 30000,
   verbose: true,
   detectOpenHandles: true,
-  forceExit: true,
   testEnvironmentOptions: {
     url: 'http://localhost:8080'
   },
@@ -28,7 +27,7 @@ module.exports = {
     TextEncoder: TextEncoder,
     TextDecoder: TextDecoder
   },
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^mol$': '<rootDir>/package.json'
   },
   projects: [
@@ -37,8 +36,7 @@ module.exports = {
       testMatch: ['**/test/unit/camera*.test.js', '**/test/unit/manual.test.js', '**/test/unit/front-end*.test.js'],
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/test/fixtures/setup.js'],
-      forceExit: true,
-      detectOpenHandles: true
+          detectOpenHandles: true
     },
     {
       displayName: 'unit-backend', 
@@ -48,8 +46,7 @@ module.exports = {
         TextEncoder: TextEncoder,
         TextDecoder: TextDecoder
       },
-      forceExit: true,
-      detectOpenHandles: true
+          detectOpenHandles: true
     },
     {
       displayName: 'integration',
@@ -59,15 +56,13 @@ module.exports = {
         TextEncoder: TextEncoder,
         TextDecoder: TextDecoder
       },
-      forceExit: true,
-      detectOpenHandles: true
+          detectOpenHandles: true
     },
     {
       displayName: 'smoke',
       testMatch: ['**/test/smoke.test.js'],
       testEnvironment: 'node',
-      forceExit: true,
-      detectOpenHandles: true
+          detectOpenHandles: true
     }
   ]
 }; 

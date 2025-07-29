@@ -38,8 +38,14 @@ describe('Basic App Smoke Tests', () => {
   });
 
   test('Environment configuration is valid', () => {
-    // Test that scripts directory is set up
-    expect(fs.existsSync(path.join(__dirname, '..', 'scripts'))).toBe(true);
-    expect(fs.existsSync(path.join(__dirname, '..', 'dev'))).toBe(true);
+    // Test that root-level scripts are set up
+    const rootScripts = ['dev', 'tests', 'ship', 'server', 'debug', 'cleanup'];
+    
+    rootScripts.forEach(script => {
+      expect(fs.existsSync(path.join(__dirname, '..', script))).toBe(true);
+    });
+    
+    // Test that infrastructure scripts still exist
+    expect(fs.existsSync(path.join(__dirname, '..', 'infrastructure', 'scripts'))).toBe(true);
   });
 }); 

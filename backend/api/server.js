@@ -16,12 +16,9 @@ let SimpleUserService = null;
 try {
   UserService = require("../services/user-service");
 } catch (error) {
-  console.log('⚠️ Full UserService not available - trying simple fallback');
   try {
     SimpleUserService = require("../services/simple-user-service");
-    console.log('✅ Simple UserService loaded');
   } catch (fallbackError) {
-    console.log('⚠️ No user service available - running without user management');
   }
 }
 const {
@@ -54,28 +51,20 @@ try {
   
   // Database connection error handling
   pool.on('error', (err, client) => {
-    console.error('🔴 Unexpected error on idle client', err);
-    console.log('💡 Database connection will be retried automatically');
   });
   
-  console.log('✅ PostgreSQL module loaded successfully');
 } catch (error) {
-  console.log('⚠️ PostgreSQL module not available - running without database');
-  console.log('💡 Install with: npm install pg pg-pool');
 }
 
 // Database connection error handling (only if pool exists)
 if (pool) {
   pool.on('error', (err, client) => {
-    console.error('🔴 Unexpected error on idle client', err);
-    console.log('💡 Database connection will be retried automatically');
   });
 }
 
 // Test database connection on startup
 const testDatabaseConnection = async () => {
   if (!pool) {
-    console.log('⚠️ Database not available - running without persistent user storage');
     return false;
   }
   
@@ -83,15 +72,9 @@ const testDatabaseConnection = async () => {
     const client = await pool.connect();
     const result = await client.query('SELECT NOW()');
     client.release();
-    console.log('✅ Database connected successfully');
     dbConnected = true;
     return true;
   } catch (err) {
-    console.error('🔴 Database connection failed:', err.message);
-    console.log('💡 Make sure PostgreSQL is running and credentials are correct');
-    if (process.env.NODE_ENV === 'development') {
-      console.log('💡 For local development, run: createdb mol_users');
-    }
     dbConnected = false;
     return false;
   }
@@ -127,18 +110,14 @@ const molecularProcessor = new MolecularProcessor();
 let userService = null;
 if (pool && UserService) {
   userService = new UserService(pool);
-  console.log('✅ PostgreSQL UserService initialized');
 } else if (SimpleUserService) {
   userService = new SimpleUserService();
-  console.log('✅ Simple UserService initialized');
 } else {
-  console.log('⚠️ No user service available');
 }
 
 // Initialize database on startup
 const initializeDatabase = async () => {
   if (!userService) {
-    console.log('⚠️ User service not available - running without user storage');
     return;
   }
   
@@ -148,18 +127,13 @@ const initializeDatabase = async () => {
       const dbConnected = await testDatabaseConnection();
       if (dbConnected) {
         await userService.initializeTables();
-        console.log('✅ PostgreSQL database initialized successfully');
       } else {
-        console.log('⚠️ Database not connected - running without persistent user storage');
       }
     } else {
       // Using simple in-memory service
       await userService.initializeTables();
-      console.log('✅ In-memory user service initialized successfully');
     }
   } catch (error) {
-    console.error('🔴 User service initialization failed:', error.message);
-    console.log('💡 Server will continue but user data may not persist');
   }
 };
 
@@ -167,46 +141,11 @@ const initializeDatabase = async () => {
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 
-// LiveReload for development
-if (process.env.NODE_ENV === 'development') {
-  try {
-    const livereload = require('livereload');
-    const connectLivereload = require('connect-livereload');
-    
-    // Create livereload server
-    const liveReloadServer = livereload.createServer({
-      exts: ['html', 'css', 'js'],
-      port: 35730
-    });
-    
-    // Watch frontend directory
-    liveReloadServer.watch(path.join(__dirname, '../../frontend'));
-    
-    // Add livereload middleware
-    app.use(connectLivereload({ port: 35730 }));
-    
-    console.log('🔄 LiveReload server started on port 35730');
-  } catch (error) {
-    console.log('⚠️ LiveReload not available:', error.message);
-  }
-}
+// Browser-Sync handles frontend reloading via proxy
+// No middleware needed - Browser-Sync proxies this server
 
 // ==================== ERROR LOGGING ENDPOINT ====================
 app.post('/api/log-error', (req, res) => {
-  const error = req.body;
-  
-  // Log to console for AI reading - STRUCTURED FORMAT
-  console.error('🚨 FRONTEND ERROR:', JSON.stringify({
-    timestamp: error.timestamp,
-    type: error.type,
-    message: error.message,
-    source: error.source,
-    userAgent: req.get('User-Agent'),
-    ip: req.ip || req.connection.remoteAddress
-  }, null, 2));
-  
-  // Optionally log to file or database here
-  
   res.status(200).json({ status: 'logged' });
 });
 
@@ -219,48 +158,10 @@ app.post('/api/logs', (req, res) => {
       return res.status(400).json({ error: 'Invalid logs format' });
     }
 
-    // Process each log entry
-    logs.forEach(logEntry => {
-      const { level, message, data, timestamp: logTimestamp, source } = logEntry;
-      
-      // Format the log message
-      const timestampStr = new Date(logTimestamp).toISOString();
-      const sourceStr = source ? `[${source.file}:${source.line}]` : '';
-      const levelStr = level.toUpperCase().padEnd(5);
-      
-      let logMessage = `[${timestampStr}] ${levelStr} ${sourceStr} ${message}`;
-      
-      // Add data if present
-      if (data) {
-        if (typeof data === 'object') {
-          logMessage += ` | ${JSON.stringify(data)}`;
-        } else {
-          logMessage += ` | ${data}`;
-        }
-      }
-      
-      // Output to appropriate stream based on level
-      switch (level) {
-        case 'error':
-          console.error(logMessage);
-          break;
-        case 'warn':
-          console.warn(logMessage);
-          break;
-        case 'debug':
-          console.debug(logMessage);
-          break;
-        default:
-          console.log(logMessage);
-      }
-    });
 
-    // Log request metadata
-    console.log(`[${new Date().toISOString()}] INFO [LOGGER] Received ${logs.length} logs from ${url} (${userAgent})`);
 
     res.json({ success: true, processed: logs.length });
   } catch (error) {
-    console.error('Error processing logs:', error);
     res.status(500).json({ error: 'Failed to process logs' });
   }
 });
@@ -342,7 +243,7 @@ app.post("/setup-payment-method", async (req, res) => {
     };
     
     if (!userService) {
-      console.log('🔴 UserService is null during payment setup');
+  
       return res.status(503).json({ error: "User service not available" });
     }
     
@@ -361,7 +262,7 @@ app.post("/setup-payment-method", async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Payment setup error:", error);
+
     if (error.message === 'Device token already exists') {
       res.status(409).json({ error: "Device already registered" });
     } else {
@@ -404,7 +305,7 @@ app.post("/update-payment-method", async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Payment update error:", error);
+
     res.status(500).json({ error: "Failed to update payment method" });
   }
 });
@@ -447,7 +348,7 @@ app.get("/get-payment-methods", async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Get payment methods error:", error);
+
     res.status(500).json({ error: "Failed to get payment methods" });
   }
 });
@@ -485,7 +386,7 @@ app.delete("/delete-payment-method", async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Delete payment method error:", error);
+
     res.status(500).json({ error: "Failed to delete payment method" });
   }
 });
@@ -522,7 +423,7 @@ app.post("/set-default-payment-method", async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Set default payment method error:", error);
+
     res.status(500).json({ error: "Failed to set default payment method" });
   }
 });
@@ -556,7 +457,7 @@ app.post("/validate-payment", async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Payment validation error:", error);
+
     res.status(500).json({ error: "Failed to validate payment" });
   }
 });
@@ -581,7 +482,7 @@ app.post("/increment-usage", async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Usage increment error:", error);
+
     if (error.message === 'User not found') {
       res.status(404).json({ error: "User not found" });
     } else {
@@ -629,7 +530,7 @@ app.post("/image-molecules", async (req, res) => {
     );
     res.json({ output: result });
   } catch (error) {
-    console.error("Image analysis error:", error);
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -711,7 +612,7 @@ app.post("/generate-sdfs", async (req, res) => {
       message: `Generated ${result.sdfPaths.length} 3D structures from ${smiles.length} SMILES`,
     });
   } catch (error) {
-    console.error("SDF generation error:", error);
+
 
     // Provide more specific error messages
     let errorMessage = error.message;
@@ -750,7 +651,6 @@ app.get("/", (req, res) => {
 app.use((req, res, next) => {
   // Skip logging Chrome DevTools discovery requests
   if (!req.url.includes(".well-known/appspecific/com.chrome.devtools")) {
-    console.log(`Incoming request: ${req.method} ${req.url}`);
   }
 
   // Handle Chrome DevTools discovery request
@@ -782,18 +682,13 @@ if (!isServerless && !isTestMode) {
   const localIP = getLocalIPAddress();
   
   httpServer = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`✅ HTTP server running on http://localhost:${PORT}`);
-    console.log(`📱 Mobile access: http://${localIP}:${PORT}`);
   });
 
   // Handle port binding errors
   httpServer.on("error", (error) => {
     if (error.code === "EADDRINUSE") {
-      console.error(`❌ Port ${PORT} is already in use`);
-      console.log(`💡 Try: ./dev (kills existing processes)`);
       process.exit(1);
     } else {
-      console.error("❌ Server error:", error.message);
       process.exit(1);
     }
   });
@@ -808,25 +703,18 @@ if (!isServerless && !isTestMode) {
         const httpsServer = new HttpsServer(app, HTTPS_PORT);
         httpsServerInstance = await httpsServer.start();
         if (httpsServerInstance) {
-          console.log("✅ HTTPS server started successfully");
         }
       } catch (error) {
-        console.log("⚠️ HTTPS server not started - continuing with HTTP only");
       }
     }, 1000);
   }
 } else {
   // Serverless mode
   if (isCloudFunction) {
-    console.log(`Running in Cloud Functions mode`);
   } else if (isNetlify) {
-    console.log(`Running in Netlify mode`);
   }
 
   if (process.env.NODE_ENV === "production" && !process.env.OPENAI_API_KEY) {
-    console.error(
-      "OPENAI_API_KEY environment variable is required for production",
-    );
     process.exit(1);
   }
 }
@@ -834,13 +722,11 @@ if (!isServerless && !isTestMode) {
 // Graceful shutdown handling for nodemon restarts
 if (!isServerless && !isTestMode) {
   const gracefulShutdown = (signal) => {
-    console.log(`\n${signal} received: closing HTTP/HTTPS servers gracefully`);
 
     const closeServer = (server, name) => {
       return new Promise((resolve) => {
         if (server) {
           server.close(() => {
-            console.log(`${name} server closed`);
             resolve();
           });
         } else {
@@ -853,13 +739,11 @@ if (!isServerless && !isTestMode) {
       closeServer(httpServer, "HTTP"),
       closeServer(httpsServerInstance, "HTTPS"),
     ]).then(() => {
-      console.log("Shutdown complete");
       process.exit(0);
     });
 
     // Force exit after 5 seconds
     setTimeout(() => {
-      console.error("Forced shutdown after timeout");
       process.exit(1);
     }, 5000);
   };
@@ -872,15 +756,9 @@ if (!isServerless && !isTestMode) {
 
 // Global error handlers
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
-  console.log(
-    "💡 This usually indicates a network or API error. Check your internet connection and API keys.",
-  );
 });
 
 process.on("uncaughtException", (error) => {
-  console.error("❌ Uncaught Exception:", error.message);
-  console.log("💡 Application crashed. Check the error details above.");
   process.exit(1);
 });
 

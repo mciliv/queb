@@ -13,3 +13,13 @@ sdf_files
 .venv
 certs/
 .env
+
+# Production build artifacts
+dist/
+build/
+*.production.js
+
+# Debug files (excluded from production)
+debug-output/
+debug-logs/
+*.debug.log

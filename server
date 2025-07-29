@@ -1,2 +1,10 @@
 #!/bin/bash
-./run server 
+
+# Load shared colors and logging functions
+source infrastructure/scripts/colors.sh
+
+log_clean "Cleaning up any existing server processes..."
+pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+sleep 1
+log_rocket "Starting production server..."
+node backend/api/server.js 

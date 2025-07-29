@@ -62,19 +62,17 @@ class MolecularProcessor {
     if (!overwrite) {
       const existingPath = this.findExistingSdfFile(smiles);
       if (existingPath) {
-        console.log(`Using existing file: ${smiles} → ${existingPath}`);
+
         return existingPath;
       }
     }
 
     // Generate from SMILES
     try {
-      console.log(`Generating SMILES structure for: ${smiles}`);
+
       const sdfPath = await this.generateSmilesSDF(smiles);
       if (sdfPath) return sdfPath;
-    } catch (error) {
-      console.error(`SMILES generation failed for ${smiles}:`, error.message);
-      console.error(`Full error:`, error);
+          } catch (error) {
       throw error;
     }
 
@@ -98,16 +96,12 @@ class MolecularProcessor {
       });
 
       pythonProcess.stderr.on("data", (data) => {
-        console.error(`Python Error: ${data.toString()}`);
       });
 
       pythonProcess.on("close", (code) => {
         if (code === 0) {
           const sdfPath = this.findExistingSdfFile(chemical);
           if (sdfPath) {
-            console.log(
-              `Successfully generated SMILES structure: ${chemical} → ${sdfPath}`,
-            );
             resolve(sdfPath);
           } else {
             reject(
@@ -117,10 +111,6 @@ class MolecularProcessor {
             );
           }
         } else {
-          console.error(`Python process failed with exit code: ${code}`);
-          console.error(`Working directory: ${process.cwd()}`);
-          console.error(`Python command: python sdf.py ${chemical} --dir ${this.sdfDir}`);
-          console.error(`SDF directory exists: ${fs.existsSync(this.sdfDir)}`);
           reject(new Error(`SMILES generation failed for ${chemical} (exit code: ${code})`));
         }
       });

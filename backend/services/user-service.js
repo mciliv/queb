@@ -31,10 +31,10 @@ class UserService {
         CREATE INDEX IF NOT EXISTS idx_users_active ON users (is_active);
       `);
 
-      console.log('✅ Database tables initialized successfully');
+
       return true;
     } catch (error) {
-      console.error('🔴 Failed to initialize database tables:', error.message);
+
       throw error;
     } finally {
       client.release();
@@ -58,13 +58,13 @@ class UserService {
         RETURNING *;
       `, [deviceToken, paymentMethodId, deviceInfo, name]);
 
-      console.log(`✅ Created user: ${name || 'Anonymous'} with device ${deviceToken.substring(0, 8)}...`);
+
       return result.rows[0];
     } catch (error) {
       if (error.code === '23505') { // Unique constraint violation
         throw new Error('Device token already exists');
       }
-      console.error('🔴 Failed to create user:', error.message);
+      
       throw error;
     } finally {
       client.release();
@@ -93,7 +93,7 @@ class UserService {
 
       return result.rows[0];
     } catch (error) {
-      console.error('🔴 Failed to get user:', error.message);
+      
       throw error;
     } finally {
       client.release();
@@ -149,10 +149,10 @@ class UserService {
       }
 
       const user = result.rows[0];
-      console.log(`✅ Updated user: ${user.name || 'Anonymous'} with device ${deviceToken.substring(0, 8)}...`);
+
       return user;
     } catch (error) {
-      console.error('🔴 Failed to update user:', error.message);
+
       throw error;
     } finally {
       client.release();
@@ -175,11 +175,11 @@ class UserService {
       }
 
       const user = result.rows[0];
-      console.log(`📊 Usage: ${user.name || 'Anonymous'} - ${user.usage} analyses`);
+
       
       return user.usage;
     } catch (error) {
-      console.error('🔴 Failed to increment usage:', error.message);
+
       throw error;
     } finally {
       client.release();
@@ -202,7 +202,7 @@ class UserService {
 
       return result.rows[0];
     } catch (error) {
-      console.error('🔴 Failed to get user stats:', error.message);
+
       throw error;
     } finally {
       client.release();
@@ -223,12 +223,12 @@ class UserService {
 
       const count = result.rowCount;
       if (count > 0) {
-        console.log(`🧹 Marked ${count} inactive users as inactive`);
+  
       }
       
       return count;
     } catch (error) {
-      console.error('🔴 Failed to cleanup inactive users:', error.message);
+
       throw error;
     } finally {
       client.release();

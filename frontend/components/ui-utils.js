@@ -198,7 +198,7 @@ class UIManager {
   showMainApp() {
     const mainInterface = document.getElementById('main-app-interface');
     if (mainInterface) {
-      mainInterface.style.display = 'block';
+      mainInterface.classList.add('display-block');
     }
   }
 
@@ -219,11 +219,7 @@ class UIManager {
             mainInterface.classList.remove('payment-required');
           }
           
-          mainInterface.style.filter = 'none';
-          mainInterface.style.opacity = '1';
-          mainInterface.style.pointerEvents = 'auto';
-          mainInterface.style.visibility = 'visible';
-          mainInterface.style.display = 'block';
+                mainInterface.classList.add('ui-enabled');
         }
         
         console.log('✅ HTTPS blur states cleared (payment modal preserved)');
@@ -304,20 +300,18 @@ class UIManager {
       if (mainInterface.classList.contains('payment-required')) {
         console.log('🔧 Bypassing payment requirements');
         mainInterface.classList.remove('payment-required');
-        mainInterface.style.opacity = '1';
-        mainInterface.style.filter = 'none';
-        mainInterface.style.pointerEvents = 'auto';
+        mainInterface.classList.add('ui-enabled');
         if (paymentPopdown) {
-          paymentPopdown.style.display = 'none';
+          paymentPopdown.classList.add('display-none');
+          paymentPopdown.classList.remove('display-block');
         }
       } else {
         console.log('🔒 Restoring payment requirements');
         mainInterface.classList.add('payment-required');
-        mainInterface.style.opacity = '';
-        mainInterface.style.filter = '';
-        mainInterface.style.pointerEvents = '';
+        mainInterface.classList.remove('ui-enabled');
         if (paymentPopdown) {
-          paymentPopdown.style.display = 'block';
+          paymentPopdown.classList.remove('display-none');
+          paymentPopdown.classList.add('display-block');
         }
       }
     };
@@ -356,16 +350,11 @@ class UIManager {
       const paymentPopdown = document.getElementById('payment-modal');
       
       if (paymentPopdown) {
-        paymentPopdown.style.display = 'block';
-        paymentPopdown.style.visibility = 'visible';
+            paymentPopdown.classList.add('display-block', 'visible');
       }
       
       if (mainInterface) {
-        mainInterface.style.display = 'block';
-        mainInterface.style.visibility = 'visible';
-        mainInterface.style.opacity = '1';
-        mainInterface.style.filter = 'none';
-        mainInterface.style.pointerEvents = 'auto';
+            mainInterface.classList.add('ui-enabled');
         mainInterface.classList.remove('payment-required');
       }
       
@@ -378,11 +367,7 @@ class UIManager {
       const mainInterface = document.getElementById('main-app-interface');
       
       if (mainInterface) {
-        mainInterface.style.display = 'block';
-        mainInterface.style.opacity = '1';
-        mainInterface.style.filter = 'none';
-        mainInterface.style.pointerEvents = 'auto';
-        mainInterface.style.visibility = 'visible';
+            mainInterface.classList.add('ui-enabled');
         mainInterface.classList.remove('payment-required');
         console.log('✅ App interface forced visible');
       } else {

@@ -149,9 +149,9 @@
       "problemMatcher": []
     },
     {
-      "label": "auto-test-npm",
-      "type": "npm",
-      "script": "test:auto:unit",
+      "label": "test-watch",
+      "type": "npm", 
+      "script": "test:watch",
       "group": "test",
       "presentation": {
         "echo": true,

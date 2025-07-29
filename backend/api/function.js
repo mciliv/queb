@@ -63,7 +63,7 @@ app.post("/image-molecules", async (req, res) => {
     );
     res.json({ output: result });
   } catch (error) {
-    console.error("Image analysis error:", error);
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -89,7 +89,7 @@ app.post("/object-molecules", async (req, res) => {
     const result = await atomPredictor.analyzeText(object);
     res.json({ output: result });
   } catch (error) {
-    console.error("Text analysis error:", error);
+
     res.status(500).json({ error: error.message });
   }
 });
@@ -121,7 +121,7 @@ app.post("/generate-sdfs", async (req, res) => {
       message: `Generated ${result.sdfPaths.length} 3D structures from ${smiles.length} SMILES`,
     });
   } catch (error) {
-    console.error("SDF generation error:", error);
+
     res.status(500).json({ error: error.message });
   }
 });

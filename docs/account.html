@@ -18,7 +18,7 @@
         <!-- Single streamlined setup -->
         <div class="setup-container">
             <!-- Existing User Recognition -->
-            <div class="existing-user" id="existing-user" style="display: none;">
+            <div class="existing-user form-section-inactive" id="existing-user">
                 <div class="user-card">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -56,12 +56,12 @@
                     <div class="express-title">Quick Payment</div>
                     
                     <!-- Apple Pay / Google Pay -->
-                    <div id="payment-request-button" class="payment-request-btn" style="display: none;"></div>
+                    <div id="payment-request-button" class="payment-request-btn payment-express-hidden"></div>
                     
                     <!-- PayPal Express -->
-                    <div id="paypal-button-container" class="paypal-container" style="display: none;"></div>
+                    <div id="paypal-button-container" class="paypal-container payment-express-hidden"></div>
                     
-                    <div class="or-divider" id="or-divider" style="display: none;">
+                    <div class="or-divider payment-express-hidden" id="or-divider">
                         <span>or</span>
                     </div>
                 </div>
@@ -72,7 +72,7 @@
                         <label for="card-element">Card Details</label>
                         
                         <!-- Hidden fields for browser autofill detection -->
-                        <div class="autofill-detector" style="position: absolute; left: -9999px; opacity: 0;">
+                        <div class="autofill-detector">
                             <input type="text" name="cc-name" autocomplete="cc-name" tabindex="-1">
                             <input type="text" name="cc-number" autocomplete="cc-number" tabindex="-1">
                             <input type="text" name="cc-exp-month" autocomplete="cc-exp-month" tabindex="-1">
@@ -110,7 +110,7 @@
                             </svg>
                         </span>
                         <span class="btn-text">Start Analyzing</span>
-                        <span class="btn-loading" style="display: none;">
+                        <span class="btn-loading">
                             <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" stroke-dasharray="31.416" stroke-dashoffset="31.416">
                                     <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
@@ -148,7 +148,7 @@
             </div>
 
             <!-- Success State -->
-            <div class="setup-success" id="setup-success" style="display: none;">
+            <div class="setup-success setup-success-hidden" id="setup-success">
                 <div class="success-animation">
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 12l2 2 4-4"/>
