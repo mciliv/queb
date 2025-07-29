@@ -759,7 +759,33 @@ app.post("/generate-sdfs", async (req, res) => {
 
 // Static routes
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
+});
+
+// SEO routes
+app.get("/robots.txt", (req, res) => {
+  res.type('text/plain');
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "robots.txt"));
+});
+
+app.get("/sitemap.xml", (req, res) => {
+  res.type('application/xml');
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "sitemap.xml"));
+});
+
+// Catch-all route for SPA (prevents 404s on direct navigation)
+app.get("*", (req, res, next) => {
+  // Skip API routes, assets, and special files
+  if (req.url.startsWith("/api/") || 
+      req.url.startsWith("/assets/") || 
+      req.url.startsWith("/components/") ||
+      req.url.startsWith("/sdf_files/") ||
+      req.url.includes(".")) {
+    return next();
+  }
+  
+  // Serve index.html for all other routes (SPA behavior)
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
 });
 
 // Request logging middleware
