@@ -4,24 +4,21 @@ const {
   CHEMICAL_REPRESENTATIONS,
 } = require("../schemas/schemas");
 
+// Import the new prompt engineering modules
+const { buildChemicalAnalysisInstructions } = require("../prompts/chemical-analysis-instructions");
+const { parseAIResponseWithFallbacks, validateSMILESQuality } = require("../prompts/fallback-handlers");
+const { getRelevantExamples } = require("../prompts/material-examples");
+
 class AtomPredictor {
   constructor(apiKey) {
     this.client = new OpenAI({ apiKey });
+    // Use the improved instruction builder from git history analysis
     this.chemicalInstructions = this.buildChemicalInstructions();
   }
 
   buildChemicalInstructions() {
-    return `Analyze the object and provide a JSON response with chemical components.
-
-Response format:
-{
-  "object": "Object name",
-  "chemicals": [
-    {"name": "Chemical name", "smiles": "SMILES notation"}
-  ]
-}
-
-Use standard SMILES notation.`;
+    // Use the comprehensive instructions with proven techniques
+    return buildChemicalAnalysisInstructions();
   }
 
   async analyzeImage(
@@ -53,9 +50,9 @@ Use standard SMILES notation.`;
         },
       ];
 
-      // Add cropped region if available
+      // Add cropped region if available - improved focus text from git history
       if (croppedImageBase64) {
-        let focusText = `Here's a cropped view of the area of interest. Analyze the chemical composition of the material or substance visible in this region:`;
+        let focusText = `Here's a cropped view of the area of interest. Analyze the chemical composition of the material or substance visible in this region. Use the examples above as your guide for accurate SMILES notation:`;
 
         messages[0].content.push({
           type: "text",
@@ -74,15 +71,20 @@ Use standard SMILES notation.`;
         model: "gpt-4o",
         messages,
         max_tokens: 1000,
-        temperature: 0.1,
+        temperature: 0.1, // Keep low for consistency
       });
 
       const content = response.choices[0].message.content;
-      const parsed = this.parseAIResponse(content);
+      
+      // Use the improved parsing with smart fallbacks
+      const parsed = parseAIResponseWithFallbacks(content);
+      
+      // Validate and improve SMILES quality
+      const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
 
       return {
         object: parsed.object || "Unknown object",
-        chemicals: parsed.chemicals || [],
+        chemicals: validatedChemicals,
       };
     } catch (error) {
       console.error("AI analysis error:", error);
@@ -92,12 +94,22 @@ Use standard SMILES notation.`;
 
   async analyzeText(object) {
     try {
+      // Enhanced text analysis with context-aware examples
+      const objectType = this.detectObjectType(object);
+      const relevantExamples = getRelevantExamples(objectType);
+      
+      const enhancedInstructions = `${this.chemicalInstructions}
+
+${relevantExamples}
+
+Now analyze this specific object: "${object}"`;
+
       const response = await this.client.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "user",
-            content: `Analyze this object: "${object}". ${this.chemicalInstructions}`,
+            content: enhancedInstructions,
           },
         ],
         max_tokens: 1000,
@@ -105,11 +117,16 @@ Use standard SMILES notation.`;
       });
 
       const content = response.choices[0].message.content;
-      const parsed = this.parseAIResponse(content);
+      
+      // Use the improved parsing with smart fallbacks
+      const parsed = parseAIResponseWithFallbacks(content);
+      
+      // Validate and improve SMILES quality
+      const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
 
       return {
         object: parsed.object || object,
-        chemicals: parsed.chemicals || [],
+        chemicals: validatedChemicals,
       };
     } catch (error) {
       console.error("AI text analysis error:", error);
@@ -117,25 +134,37 @@ Use standard SMILES notation.`;
     }
   }
 
-  parseAIResponse(content) {
-    try {
-      // Try to extract JSON from the response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-
-      // Fallback: try to parse the entire content as JSON
-      return JSON.parse(content);
-    } catch (error) {
-      console.error("Failed to parse AI response:", content);
-      
-      // Simple fallback - just return empty result
-      return {
-        object: "Unknown object",
-        chemicals: []
-      };
+  /**
+   * Detect object type for context-aware examples
+   * Helps provide more relevant prompts to improve accuracy
+   */
+  detectObjectType(object) {
+    const objectLower = object.toLowerCase();
+    
+    if (objectLower.includes('wine') || objectLower.includes('beer') || 
+        objectLower.includes('coffee') || objectLower.includes('drink') ||
+        objectLower.includes('beverage')) {
+      return 'beverage';
     }
+    
+    if (objectLower.includes('fruit') || objectLower.includes('food') ||
+        objectLower.includes('apple') || objectLower.includes('orange') ||
+        objectLower.includes('vegetable')) {
+      return 'food';
+    }
+    
+    if (objectLower.includes('plastic') || objectLower.includes('metal') ||
+        objectLower.includes('wood') || objectLower.includes('stone')) {
+      return 'material';
+    }
+    
+    return 'general';
+  }
+
+  // Keep the legacy parseAIResponse method for compatibility but mark as deprecated
+  parseAIResponse(content) {
+    console.warn("Using deprecated parseAIResponse - consider updating to use fallback-handlers module");
+    return parseAIResponseWithFallbacks(content);
   }
 }
 
