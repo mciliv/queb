@@ -1,27 +1,49 @@
-// server.js - Clean modular architecture
+/**
+ * MOLECULAR ANALYSIS API SERVER
+ * Purpose: Express.js API server for molecular analysis and visualization
+ * Features: AI-powered analysis, 3D molecule generation, user management, payment processing
+ * 
+ * Service Architecture:
+ * - AtomPredictor: OpenAI-based molecular analysis
+ * - MolecularProcessor: SMILES to 3D structure conversion
+ * - UserService: Account management (PostgreSQL or in-memory fallback)
+ * - ErrorHandler: Centralized error handling and logging
+ */
+
 process.env.NODE_ENV ||= "development";
 
-// ==================== IMPORTS ====================
+// ==================== CORE DEPENDENCIES ====================
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+
+// ==================== SERVICE IMPORTS ====================
 const HttpsServer = require("./https-server");
 const AtomPredictor = require("../services/AtomPredictor");
 const MolecularProcessor = require("../services/molecular-processor");
 const ErrorHandler = require("../services/error-handler");
-// UserService import - with fallback to simple service
+
+// ==================== USER SERVICE INITIALIZATION ====================
+// Service Priority: Full PostgreSQL UserService > Simple in-memory > No user management
 let UserService = null;
 let SimpleUserService = null;
+let availableUserService = null;
+
 try {
+  // Attempt to load full PostgreSQL user service
   UserService = require("../services/user-service");
+  console.log('✅ PostgreSQL UserService available');
 } catch (error) {
-  console.log('⚠️ Full UserService not available - trying simple fallback');
+  console.log('⚠️ PostgreSQL UserService not available, trying in-memory fallback');
+  
   try {
+    // Fallback to simple in-memory user service  
     SimpleUserService = require("../services/simple-user-service");
-    console.log('✅ Simple UserService loaded');
+    console.log('✅ In-memory UserService loaded (no data persistence)');
   } catch (fallbackError) {
-    console.log('⚠️ No user service available - running without user management');
+    console.log('⚠️ No user service available - server will run without user management');
+    console.log('💡 User features will be disabled but molecular analysis will work');
   }
 }
 const {

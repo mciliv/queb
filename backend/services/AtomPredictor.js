@@ -1,16 +1,29 @@
+/**
+ * ATOM PREDICTOR SERVICE
+ * Purpose: OpenAI-powered molecular analysis and chemical identification
+ * Features: Image analysis, text analysis, SMILES generation, structured chemical data
+ * 
+ * Core Responsibilities:
+ * - Analyze images to identify chemical compounds
+ * - Process text descriptions to extract molecular information
+ * - Generate accurate SMILES notation for identified chemicals
+ * - Provide structured chemical data for 3D visualization
+ */
+
 const { OpenAI } = require("openai");
 const {
   ObjectIdentificationSchema,
   CHEMICAL_REPRESENTATIONS,
 } = require("../schemas/schemas");
 const ErrorHandler = require("./error-handler");
+const { AI_CONFIG } = require("../config/constants");
 
 class AtomPredictor {
   constructor(apiKey) {
     this.client = new OpenAI({ 
       apiKey,
-      timeout: 30000, // 30 seconds timeout
-      maxRetries: 2   // Retry failed requests twice
+      timeout: AI_CONFIG.AI_TIMEOUT,
+      maxRetries: AI_CONFIG.MAX_RETRIES
     });
     this.chemicalInstructions = this.buildChemicalInstructions();
   }
@@ -57,8 +70,8 @@ Ensure SMILES are chemically accurate and can be parsed by standard tools.`;
             {
               type: "image_url",
               image_url: {
-                url: `data:image/jpeg;base64,${imageBase64}`,
-                detail: "high",
+                            url: `data:image/jpeg;base64,${imageBase64}`,
+            detail: AI_CONFIG.IMAGE_DETAIL,
               },
             },
           ],
@@ -83,10 +96,10 @@ Ensure SMILES are chemically accurate and can be parsed by standard tools.`;
       }
 
       const response = await this.client.chat.completions.create({
-        model: "gpt-4o",
+        model: AI_CONFIG.MODEL,
         messages,
-        max_tokens: 1000,
-        temperature: 0.1,
+        max_tokens: AI_CONFIG.MAX_TOKENS,
+        temperature: AI_CONFIG.TEMPERATURE,
       });
 
       const content = response.choices[0].message.content;
@@ -105,15 +118,15 @@ Ensure SMILES are chemically accurate and can be parsed by standard tools.`;
   async analyzeText(object) {
     try {
       const response = await this.client.chat.completions.create({
-        model: "gpt-4o",
+        model: AI_CONFIG.MODEL,
         messages: [
           {
             role: "user",
             content: `Analyze this object: "${object}". ${this.chemicalInstructions}`,
           },
         ],
-        max_tokens: 1000,
-        temperature: 0.1,
+        max_tokens: AI_CONFIG.MAX_TOKENS,
+        temperature: AI_CONFIG.TEMPERATURE,
       });
 
       const content = response.choices[0].message.content;

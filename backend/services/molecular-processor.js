@@ -1,9 +1,23 @@
+/**
+ * MOLECULAR PROCESSOR SERVICE
+ * Purpose: Convert SMILES notation to 3D molecular structures (SDF files)
+ * Features: SMILES validation, SDF generation, file management, error handling
+ * 
+ * Core Responsibilities:
+ * - Validate SMILES notation format
+ * - Generate 3D molecular structures from SMILES
+ * - Manage SDF file storage and retrieval
+ * - Handle batch processing of multiple molecules
+ * - Interface with Python chemistry processing scripts
+ */
+
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const { FILE_CONFIG, CHEMISTRY_CONFIG } = require("../config/constants");
 
 class MolecularProcessor {
-  constructor(sdfDir = "data/sdf_files") {
+  constructor(sdfDir = FILE_CONFIG.SDF_DIRECTORY) {
     this.sdfDir = path.join(__dirname, "..", "..", sdfDir);
     this.ensureSdfDirectory();
   }
@@ -44,13 +58,13 @@ class MolecularProcessor {
     return results;
   }
 
-  // Basic SMILES format validation (not length-based)
+  // Basic SMILES format validation using centralized patterns
   isValidSmiles(smiles) {
     if (!smiles || typeof smiles !== 'string') return false;
-    if (smiles.trim() === '' || smiles === 'N/A') return false;
+    if (CHEMISTRY_CONFIG.INVALID_SMILES.includes(smiles.trim())) return false;
     
-    // Skip obvious molecular formulas (not comprehensive, just common cases)
-    if (/^[A-Z][0-9]*([A-Z][0-9]*)*$/.test(smiles.replace(/\s/g, ''))) {
+    // Skip obvious molecular formulas using centralized pattern
+    if (CHEMISTRY_CONFIG.MOLECULAR_FORMULA_PATTERN.test(smiles.replace(/\s/g, ''))) {
       return false; // Likely molecular formula like H2O, CaCO3, etc.
     }
     

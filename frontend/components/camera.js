@@ -1,3 +1,16 @@
+/**
+ * CAMERA MANAGER COMPONENT
+ * Purpose: Handle camera access, video streaming, and image capture for molecular analysis
+ * Features: Cross-platform camera support, permission management, image capture, mobile optimization
+ * 
+ * Core Responsibilities:
+ * - Request and manage camera permissions
+ * - Initialize video streams with optimal settings
+ * - Capture high-quality images for AI analysis
+ * - Handle platform-specific camera behaviors (iOS, Android, desktop)
+ * - Manage camera switching (front/back on mobile)
+ */
+
 import { paymentManager } from './payment.js';
 import { uiManager } from './ui-utils.js';
 import { logger } from './logger.js';

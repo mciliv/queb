@@ -1,4 +1,17 @@
-// Simple App Logic - Following ui.mdc Guidelines
+/**
+ * MOLECULAR ANALYSIS APP - MAIN APPLICATION CONTROLLER
+ * Purpose: Orchestrates molecular analysis through text, camera, and image inputs
+ * Features: OpenAI Vision API integration, 3D molecule visualization, payment management
+ * UI Philosophy: "Stupid simple" design with minimal visual elements
+ * 
+ * Core Responsibilities:
+ * - Text-based molecular analysis
+ * - Camera/image capture and analysis
+ * - 3D molecule rendering using 3DMol.js
+ * - Payment validation and management
+ * - Error handling and user feedback
+ */
+
 import { simplePaymentManager } from '../components/simple-payment.js';
 import { cameraManager } from '../components/camera.js';
 import { cameraHandler } from '../components/camera-handler.js';
@@ -489,16 +502,7 @@ class MolecularApp {
     }
   }
 
-  // Processing indicator methods for test compatibility
-  showProcessing() {
-    const indicator = document.getElementById('processing-indicator');
-    if (indicator) indicator.style.display = 'block';
-  }
 
-  hideProcessing() {
-    const indicator = document.getElementById('processing-indicator');
-    if (indicator) indicator.style.display = 'none';
-  }
 
   updateScrollHandles() {
     // Simple implementation for horizontal scroll management
