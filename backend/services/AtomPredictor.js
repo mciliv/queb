@@ -27,7 +27,7 @@ Response format:
 }
 
 ANALYSIS APPROACH:
-1. BIOLOGICAL MATERIALS (skin, food, plants, etc.): Provide major molecular components typically found in that material
+1. BIOLOGICAL MATERIALS (skin, food, plants, etc.): Provide all molecular components typically found in that material
 2. MANUFACTURED ITEMS: Analyze visible materials and compositions
 3. PURE SUBSTANCES: Identify the specific chemical if recognizable
 
