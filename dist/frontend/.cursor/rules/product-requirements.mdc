@@ -1,0 +1,48 @@
+# Product Requirements - Core UI Elements
+
+## Account Button (NEVER REMOVE)
+**Visual**: Card icon + "Account" text
+**Implementation**:
+```html
+<div class="account-link">
+  <img src="assets/account.svg" alt="Card" class="card-icon">
+  <span id="account-name">Account</span>
+</div>
+```
+**Critical CSS**:
+```css
+.account-link { gap: 8px; min-width: 100px; }
+.text-input { margin-right: 160px; } /* mobile: 80px */
+```
+**Purpose**: Opens payment sidebar, visual payment indicator
+
+## Button Design System (NEVER ADD BORDERS)
+**Rule**: All buttons must have `border: none !important`
+**Rationale**: "Stupid simple" UI with no extraneous lines
+**Implementation**:
+```css
+button, .btn, .mode-label { border: none !important; outline: none !important; }
+```
+**Covers**: All interactive elements, form controls, custom buttons, camera/photo mode buttons
+
+## UI Core Principles
+1. **No Borders/Outlines**: Clean, borderless design throughout
+2. **Black Background**: Everything #000000 background
+3. **Card Icon**: Credit card symbol, not user icon
+4. **Minimal Design**: Function over decoration
+5. **Anti-Overlap Layout**: Use layout-system.mdc rules (CSS variables, safe areas, z-index stack)
+6. **Consistent Spacing**: CSS custom properties only (--space-xs to --space-xxl)
+
+## Required Elements Checklist
+- [ ] Account button with card icon
+- [ ] Payment sidebar (hidden by default)
+- [ ] Text input with safe area margin (var(--safe-area-right))
+- [ ] All buttons borderless
+- [ ] Black backgrounds everywhere
+- [ ] No overlapping elements (use layout debug: window.app.enableLayoutDebug())
+
+## Prevention Protocol
+**Before ANY UI change**: Review this file + ui-memory.mdc + layout-system.mdc
+**After losing element**: Immediately restore + update docs
+**Testing overlaps**: Use window.app.enableLayoutDebug() in console
+**Weekly**: Verify all required elements present and no overlaps on mobile

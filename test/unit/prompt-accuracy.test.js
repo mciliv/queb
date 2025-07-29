@@ -286,7 +286,7 @@ describe("AtomPredictor Prompt Accuracy Tests", () => {
         const accuracy = AccuracyScorer.scoreAnalysis(result, expected);
         
         expect(accuracy.score).toBeGreaterThanOrEqual(90); // Must be highly accurate
-        expect(result.chemicals).toHaveLength(expect.any(Number));
+                 expect(result.chemicals.length).toBeGreaterThan(0);
         expect(result.chemicals.every(c => SMILESValidator.isValidSMILES(c.smiles))).toBe(true);
         
         if (accuracy.score < 90) {
@@ -407,7 +407,7 @@ describe("AtomPredictor Prompt Accuracy Tests", () => {
       
       // Should contain key improvements from our analysis
       expect(instructions).toContain("valid, verified SMILES");
-      expect(instructions).toContain("examples");
+             expect(instructions).toContain("EXAMPLES");
       expect(instructions).toContain("constraints");
       expect(instructions.length).toBeGreaterThan(1000); // Should be comprehensive
     });

@@ -1,0 +1,676 @@
+/* "Stupid Simple" UI - Clean Dark Theme */
+
+:root {
+  /* Spacing Scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+  
+  /* Layout Zones - COMPACT CARD BUTTON */
+  --card-button-width: 48px;
+  --sidebar-gap: 20px;
+  --top-bar-height: 60px;
+  --safe-area-right: calc(var(--card-button-width) + var(--sidebar-gap));
+  --safe-area-top: calc(var(--top-bar-height) + var(--sidebar-gap));
+  
+  /* Z-Index Stack */
+  --z-base: 1;
+  --z-content: 10;
+  --z-sidebar: 100;
+  --z-modal: 1000;
+  --z-tooltip: 10000;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+*:focus {
+  outline: none !important;
+}
+
+/* Remove all borders and outlines */
+*, *::before, *::after {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #000000;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  overflow-x: hidden;
+}
+
+/* Main App Container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100vw;
+}
+
+/* Hidden Elements */
+.hidden {
+  display: none !important;
+}
+
+/* Main Layout */
+.main-content-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Analysis Section (Left) */
+.analysis-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-lg);
+  min-width: 0;
+  margin-right: var(--safe-area-right);
+  max-width: calc(100vw - var(--safe-area-right));
+}
+
+/* Input Mode Selection */
+.input-mode-section {
+  margin: 20px 0;
+}
+
+.mode-selector {
+  display: flex;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  align-items: center;
+  justify-content: center;
+}
+
+.mode-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.mode-label:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Hide the actual checkbox */
+.mode-selector input[type="checkbox"] {
+  display: none;
+}
+
+/* Style the label when checkbox is checked */
+.mode-selector input[type="checkbox"]:checked + .mode-label {
+  background: rgba(0, 212, 255, 0.2);
+  color: #00d4ff;
+}
+
+.mode-selector input[type="checkbox"]:checked + .mode-label svg {
+  color: #00d4ff;
+}
+
+/* Camera and Photo Options */
+.camera-container,
+.photo-options {
+  display: none;
+  margin-top: 20px;
+}
+
+.camera-container.active,
+.photo-options.active {
+  display: block;
+}
+
+/* Payment Section (Right) */
+.payment-section {
+  width: 350px;
+  min-width: 350px;
+  background: rgba(15, 15, 15, 0.95);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 24px;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+/* Payment Content */
+.payment-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payment-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.payment-header h2 {
+  color: #ffffff;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.payment-header p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+/* Form Elements - Unified Styling */
+.form-row,
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.form-row label,
+.form-group label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* All Input Fields - Unified */
+.card-input,
+input[type="text"],
+input[type="url"],
+input[type="email"],
+textarea,
+#card-element,
+.StripeElement {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+  color: #ffffff !important;
+  font-size: 0.9rem !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  min-height: 44px;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+input::placeholder,
+.StripeElement::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+#object-input {
+  margin-right: var(--safe-area-right);
+  max-width: calc(100vw - var(--safe-area-right) - var(--space-lg));
+}
+
+/* Responsive Safe Areas */
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: 200px;
+    --safe-area-right: calc(var(--sidebar-width) + var(--sidebar-gap));
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --safe-area-right: var(--space-xxl);
+  }
+  
+  .sidebar-container {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    margin-top: var(--space-lg);
+  }
+  
+  #object-input {
+    margin-right: 0;
+    max-width: 100%;
+  }
+  
+  .analysis-section {
+    margin-right: 0;
+    max-width: 100vw;
+  }
+}
+
+input:focus,
+.StripeElement:focus,
+.StripeElement--focus {
+  border-color: rgba(0, 212, 255, 0.5) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* All Buttons - Unified */
+button,
+.btn,
+.submit-btn,
+.url-button,
+.payment-close-btn,
+input[type="submit"],
+input[type="button"] {
+  background: linear-gradient(45deg, #00d4ff, #0099cc) !important;
+  color: #000000 !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 6px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+button:hover,
+.btn:hover,
+.submit-btn:hover,
+.url-button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3) !important;
+}
+
+button:disabled,
+.btn:disabled,
+.submit-btn:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Close Button Override */
+.payment-close-btn {
+  background: none !important;
+  color: #00d4ff !important;
+  padding: 5px !important;
+  font-size: 20px !important;
+  min-height: auto !important;
+}
+
+/* URL Input Container */
+.url-input-container {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.url-input-container input {
+  flex: 1;
+}
+
+/* Camera Interface */
+.camera-interface {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  min-height: 400px;
+}
+
+.camera-feed {
+  width: 100%;
+  max-width: 500px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Text Description */
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Icons and SVG */
+svg {
+  flex-shrink: 0;
+}
+
+/* Modal (Hidden by default) */
+.payment-modal,
+.modal-backdrop {
+  display: none !important;
+}
+
+/* Sidebar Container */
+.sidebar-container {
+  position: fixed;
+  top: var(--sidebar-gap);
+  right: var(--sidebar-gap);
+  z-index: var(--z-sidebar);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: var(--sidebar-width);
+}
+
+/* Account Status */
+.account-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #00d4ff; /* Default blue for payment active */
+}
+
+.account-status:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.account-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-link:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.card-icon {
+  width: 24px;
+  height: 24px;
+  color: #ffffff;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+}
+
+.account-link:hover .card-icon {
+  color: #ffffff;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+}
+
+/* Error Messages */
+.error-message {
+  color: #ff4444;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+/* File Upload Styling */
+.file-input-container {
+  position: relative;
+  display: inline-block;
+}
+
+input[type="file"] {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* Radio Buttons and Checkboxes (General) */
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: #00d4ff;
+  margin-right: 8px;
+}
+
+/* Labels for radio/checkbox (General) */
+label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 8px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .main-content-layout {
+    flex-direction: column;
+  }
+  
+  .payment-section {
+    width: 100%;
+    min-width: unset;
+    max-height: 50vh;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .analysis-section {
+    padding: 16px;
+  }
+
+  .mode-selector {
+    gap: 12px;
+  }
+
+  .mode-label {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Touch-friendly sizes for mobile */
+@media (max-width: 768px) {
+  button,
+  .btn,
+  input {
+    min-height: 44px;
+    font-size: 1rem;
+  }
+}
+
+/* Layout Debug Mode (Development) */
+.debug-layout * {
+  outline: 1px solid rgba(255, 0, 0, 0.3) !important;
+}
+
+.debug-layout .analysis-section::after {
+  content: 'MAIN CONTENT AREA';
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: rgba(0, 255, 0, 0.2);
+  color: #000;
+  padding: var(--space-xs);
+  font-size: 10px;
+  z-index: var(--z-tooltip);
+}
+
+.debug-layout .sidebar-container::after {
+  content: 'SIDEBAR ZONE';
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(255, 255, 0, 0.2);
+  color: #000;
+  padding: var(--space-xs);
+  font-size: 10px;
+  z-index: var(--z-tooltip);
+}
+
+/* Overflow Prevention */
+.layout-container {
+  max-width: calc(100vw - var(--safe-area-right));
+  overflow: hidden;
+}
+
+.scrollable-content {
+  max-height: calc(100vh - var(--safe-area-top));
+  overflow-y: auto;
+}
+
+/* Results Section */
+.results-section {
+  flex: 1;
+  margin-top: var(--space-lg);
+  min-height: 400px;
+  z-index: var(--z-content);
+  position: relative;
+  width: 100%;
+}
+
+/* Molecular Display Container */
+#gldiv {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 20px 0;
+  scroll-behavior: smooth;
+  max-width: 100%;
+  position: relative;
+  z-index: var(--z-content);
+}
+
+/* Individual Molecular Columns */
+.object-column {
+  min-width: 280px;
+  max-width: 320px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Column Title and Close Button */
+.object-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.close-button {
+  background: none !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  padding: 4px !important;
+  min-height: auto !important;
+  border-radius: 3px !important;
+  transition: color 0.2s ease !important;
+}
+
+.close-button:hover {
+  color: #ff4444 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Molecule Viewer Container */
+.molecule-viewer {
+  width: 100%;
+  height: 200px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Molecule Container and Names */
+.molecule-container {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.molecule-name {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 4px;
+}
+
+.wikipedia-link {
+  color: #00d4ff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.wikipedia-link:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* Description Content */
+.description-content {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Cropped Image Container */
+.cropped-image-container {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.image-highlighted {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Loading Indicator */
+.loading-indicator {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  padding: 20px;
+}
+
+/* Crop Outline - Red box indicator for camera clicks */
+.crop-outline {
+  position: fixed !important;
+  border: 2px solid #ff0000 !important;
+  pointer-events: none;
+  z-index: var(--z-tooltip);
+  transition: opacity 0.2s ease;
+  opacity: 1;
+  background: rgba(255, 0, 0, 0.1);
+}
+
+

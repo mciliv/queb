@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Load shared colors and logging functions
+source infrastructure/scripts/colors.sh
+
+log_clean "Cleaning up any existing debug processes..."
+pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+sleep 1
+log_debug "Starting server with debugger..."
+node --inspect backend/api/server.js 

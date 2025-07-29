@@ -147,7 +147,7 @@ function validateSMILESQuality(chemicals) {
     
     // Check for common formula errors (H2O instead of O)
     const formulaPattern = /^[A-Z][a-z]?\d*([A-Z][a-z]?\d*)*$/;
-    if (formulaPattern.test(smiles) && smiles !== "O" && smiles !== "C" && smiles !== "N") {
+    if (formulaPattern.test(smiles) && !["O", "C", "N", "S", "P", "H", "CCO", "CO"].includes(smiles)) {
       console.warn(`Possible chemical formula instead of SMILES: ${smiles} for ${chemical.name}`);
     }
     

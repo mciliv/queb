@@ -1,0 +1,13 @@
+---
+description: UI
+alwaysApply: false
+---
+
+just use icons, no text
+
+## "Simplest" UI Guidelines
+- **No Extraneous Lines**: Avoid borders, outlines, shadows, or decorative elements
+- **Minimal Design**: Focus on functionality over visual embellishment
+- **Clean Layout**: Use flexbox for responsive, clean layouts
+- **Consistent Spacing**: Use consistent padding and margins throughout
+Make backgrounds uniform, e.g. for 3dmol same as default
