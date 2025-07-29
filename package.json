@@ -403,7 +403,16 @@
     "zod": "^3.25.67"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:accuracy": "node test/run-accuracy-tests.js",
+    "test:accuracy:unit": "node test/run-accuracy-tests.js --suite=unit",
+    "test:accuracy:integration": "node test/run-accuracy-tests.js --suite=integration",
+    "test:prompt": "jest test/unit/prompt-accuracy.test.js",
+    "test:molecular": "jest test/integration/molecular-accuracy.test.js",
+    "test:unit": "jest test/unit/",
+    "test:integration": "jest test/integration/",
+    "test:watch": "jest --watch",
+    "test:verbose": "jest --verbose"
   },
   "repository": {
     "type": "git",
