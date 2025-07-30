@@ -152,7 +152,7 @@ class MolecularApp {
       const response = await fetch("/analyze-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: inputValue }),
+        body: JSON.stringify({ object: inputValue }),
         signal: controller.signal
       });
 

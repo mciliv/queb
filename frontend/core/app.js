@@ -33,7 +33,7 @@ class MolecularApp {
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
       console.log('🔧 Auto-enabling developer mode for localhost');
       this.hasPaymentSetup = true;
-    }
+    }    
     
     await cameraManager.initialize();
 
@@ -104,7 +104,7 @@ class MolecularApp {
       const response = await fetch("/analyze-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: inputValue }),
+        body: JSON.stringify({ object: inputValue }),
       });
 
       if (!response.ok) {
@@ -155,16 +155,7 @@ class MolecularApp {
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
     errorDiv.textContent = message;
-    errorDiv.style.cssText = `
-      background: rgba(255, 68, 68, 0.1);
-      border: 1px solid #ff4444;
-      border-radius: 4px;
-      padding: 12px;
-      margin: 12px 16px;
-      color: #ff4444;
-      font-size: 12px;
-      text-align: center;
-    `;
+    errorDiv.classList.add('error-modal');
     
     const resultsSection = document.querySelector('.results-section');
     if (resultsSection) {
@@ -304,16 +295,7 @@ class MolecularApp {
       const descDiv = document.createElement("div");
       descDiv.className = "description-content";
       descDiv.textContent = description;
-      descDiv.style.cssText = `
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 13px;
-        line-height: 1.4;
-        padding: 12px;
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 4px;
-        max-height: 200px;
-        overflow-y: auto;
-      `;
+      descDiv.classList.add('description-content');
       objectColumn.appendChild(descDiv);
     } else {
       // Render 3D molecules with SPHERE REPRESENTATION ONLY
