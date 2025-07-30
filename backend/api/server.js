@@ -1,6 +1,15 @@
 // server.js - Clean modular architecture
 process.env.NODE_ENV ||= "development";
 
+// Simple logger - only log on errors unless in debug mode
+const isDebugMode = process.env.NODE_ENV === 'debug';
+const log = {
+  info: (msg) => isDebugMode && console.log(msg),
+  success: (msg) => isDebugMode && console.log(msg),
+  warning: (msg) => console.log(msg), // Keep warnings visible
+  error: (msg) => console.error(msg)  // Always show errors
+};
+
 // ==================== IMPORTS ====================
 const express = require("express");
 const cors = require("cors");
@@ -14,7 +23,7 @@ let UserService = null;
 try {
   UserService = require("../services/user-service");
 } catch (error) {
-  console.log('⚠️ UserService not available - running without user management');
+  log.warning('⚠️ UserService not available - running without user management');
 }
 const {
   ImageMoleculeSchema,
@@ -46,28 +55,28 @@ try {
   
   // Database connection error handling
   pool.on('error', (err, client) => {
-    console.error('🔴 Unexpected error on idle client', err);
-    console.log('💡 Database connection will be retried automatically');
+    log.error('🔴 Unexpected error on idle client', err);
+    log.info('💡 Database connection will be retried automatically');
   });
   
-  console.log('✅ PostgreSQL module loaded successfully');
+  log.success('✅ PostgreSQL module loaded successfully');
 } catch (error) {
-  console.log('⚠️ PostgreSQL module not available - running without database');
-  console.log('💡 Install with: npm install pg pg-pool');
+  log.warning('⚠️ PostgreSQL module not available - running without database');
+  log.info('💡 Install with: npm install pg pg-pool');
 }
 
 // Database connection error handling (only if pool exists)
 if (pool) {
   pool.on('error', (err, client) => {
-    console.error('🔴 Unexpected error on idle client', err);
-    console.log('💡 Database connection will be retried automatically');
+    log.error('🔴 Unexpected error on idle client', err);
+    log.info('💡 Database connection will be retried automatically');
   });
 }
 
 // Test database connection on startup
 const testDatabaseConnection = async () => {
   if (!pool) {
-    console.log('⚠️ Database not available - running without persistent user storage');
+    log.warning('⚠️ Database not available - running without persistent user storage');
     return false;
   }
   
@@ -75,14 +84,14 @@ const testDatabaseConnection = async () => {
     const client = await pool.connect();
     const result = await client.query('SELECT NOW()');
     client.release();
-    console.log('✅ Database connected successfully');
+    log.success('✅ Database connected successfully');
     dbConnected = true;
     return true;
   } catch (err) {
-    console.error('🔴 Database connection failed:', err.message);
-    console.log('💡 Make sure PostgreSQL is running and credentials are correct');
+    log.error('🔴 Database connection failed:', err.message);
+    log.info('💡 Make sure PostgreSQL is running and credentials are correct');
     if (process.env.NODE_ENV === 'development') {
-      console.log('💡 For local development, run: createdb mol_users');
+      log.info('💡 For local development, run: createdb mol_users');
     }
     dbConnected = false;
     return false;
@@ -206,6 +215,15 @@ const initializeDatabase = async () => {
 // ==================== MIDDLEWARE ====================
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
+
+// ==================== HEALTH CHECK ENDPOINT ====================
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || '1.0.0'
+  });
+});
 
 // ==================== ERROR LOGGING ENDPOINT ====================
 app.post('/api/log-error', (req, res) => {
@@ -617,7 +635,7 @@ app.post("/image-molecules", async (req, res) => {
       cropMiddleY,
       cropSize,
     );
-    res.json({ output: result });
+    res.json(result);
   } catch (error) {
     console.error("Image analysis error:", error);
     res.status(500).json({ error: error.message });
@@ -627,15 +645,14 @@ app.post("/image-molecules", async (req, res) => {
 // Text analysis route (frontend compatibility endpoint)
 app.post("/analyze-text", async (req, res) => {
   try {
-    const { text } = req.body;
+    const { object } = req.body;
     
-    if (!text) {
-      return res.status(400).json({ error: "No text provided" });
+    if (!object || typeof object !== "string" || object.trim().length === 0) {
+      return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
     }
 
-    // Map to the existing object-molecules logic
-    const result = await atomPredictor.analyzeText(text);
-    res.json({ output: result });
+    const result = await atomPredictor.analyzeText(object || "");
+    res.json(result);
   } catch (error) {
     console.error("Text analysis error:", error);
     res.status(500).json({
@@ -663,7 +680,7 @@ app.post("/object-molecules", async (req, res) => {
     }
 
     const result = await atomPredictor.analyzeText(object);
-    res.json({ output: result });
+    res.json(result);
   } catch (error) {
     console.error("Text analysis error:", error);
 
@@ -792,7 +809,7 @@ app.get("*", (req, res, next) => {
 app.use((req, res, next) => {
   // Skip logging Chrome DevTools discovery requests
   if (!req.url.includes(".well-known/appspecific/com.chrome.devtools")) {
-    console.log(`Incoming request: ${req.method} ${req.url}`);
+    log.info(`Incoming request: ${req.method} ${req.url}`);
   }
 
   // Handle Chrome DevTools discovery request
@@ -865,8 +882,13 @@ if (!isServerless && !isTestMode) {
 
       const localIP = getLocalIPAddress();
       httpServer = app.listen(actualPort, "0.0.0.0", () => {
-        console.log(`✅ HTTP server running on http://localhost:${actualPort}`);
-        console.log(`📱 Mobile access: http://${localIP}:${actualPort}`);
+        log.success(`✅ HTTP server running on http://localhost:${actualPort}`);
+        log.info(`📱 Mobile access: http://${localIP}:${actualPort}`);
+        
+        // Always log server ready for tests
+        if (process.env.NODE_ENV === 'test') {
+          console.log('Server running on port', actualPort);
+        }
       });
     } catch (error) {
       console.error(`❌ Failed to start server: ${error.message}`);
@@ -914,7 +936,7 @@ if (!isServerless && !isTestMode) {
         httpsServerInstance = await httpsServer.start();
         
         if (httpsServerInstance) {
-          console.log("✅ HTTPS server started successfully");
+          log.success("✅ HTTPS server started successfully");
           
           // Handle HTTPS server errors after startup
           httpsServerInstance.on("error", (error) => {
@@ -922,7 +944,7 @@ if (!isServerless && !isTestMode) {
             console.log("💡 HTTPS server will continue running if possible");
           });
         } else {
-          console.log("⚠️ HTTPS server not started - continuing with HTTP only");
+          log.warning("⚠️ HTTPS server not started - continuing with HTTP only");
         }
       } catch (error) {
         console.error("❌ Failed to start HTTPS server:", error.message);
