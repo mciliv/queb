@@ -422,6 +422,7 @@
   },
   "homepage": "https://github.com/mciliv/mol#readme",
   "devDependencies": {
+    "@babel/preset-env": "^7.28.0",
     "chokidar": "^4.0.3",
     "jest-environment-jsdom": "^29.7.0",
     "puppeteer": "^24.15.0"

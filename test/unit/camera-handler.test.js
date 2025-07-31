@@ -64,28 +64,24 @@ document.createElement = jest.fn((tagName) => {
   };
 });
 
-// Mock UI Manager
-const mockUIManager = {
-  createColumn: jest.fn(() => ({ innerHTML: '' })),
-  createLoadingColumn: jest.fn(() => ({ remove: jest.fn() })),
-  createErrorMessage: jest.fn(() => ({ remove: jest.fn() })),
-  fileToBase64: jest.fn().mockResolvedValue('mockbase64data'),
-  urlToBase64: jest.fn().mockResolvedValue('mockbase64data')
-};
 
-// Mock Payment Manager
-const mockPaymentManager = {
-  checkPaymentMethod: jest.fn().mockResolvedValue(true),
-  incrementUsage: jest.fn().mockResolvedValue()
-};
 
-// Mock modules
-jest.doMock('../../frontend/components/ui-utils.js', () => ({
-  uiManager: mockUIManager
+// Mock modules before requiring
+jest.mock('../../frontend/components/ui-utils.js', () => ({
+  uiManager: {
+    createColumn: jest.fn(() => ({ innerHTML: '' })),
+    createLoadingColumn: jest.fn(() => ({ remove: jest.fn() })),
+    createErrorMessage: jest.fn(() => ({ remove: jest.fn() })),
+    fileToBase64: jest.fn().mockResolvedValue('mockbase64data'),
+    urlToBase64: jest.fn().mockResolvedValue('mockbase64data')
+  }
 }));
 
-jest.doMock('../../frontend/components/payment.js', () => ({
-  paymentManager: mockPaymentManager
+jest.mock('../../frontend/components/payment.js', () => ({
+  paymentManager: {
+    checkPaymentMethod: jest.fn().mockResolvedValue(true),
+    incrementUsage: jest.fn().mockResolvedValue()
+  }
 }));
 
 // Helper to setup DOM
@@ -105,12 +101,20 @@ function setupTestDOM() {
 describe('CameraHandler Tests', () => {
   let CameraHandler;
   let cameraHandler;
+  let mockUIManager;
+  let mockPaymentManager;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     setupTestDOM();
     
     // Import after mocking
     delete require.cache[require.resolve('../../frontend/components/camera-handler.js')];
+    
+    // Get references to the mocked modules first
+    mockUIManager = require('../../frontend/components/ui-utils.js').uiManager;
+    mockPaymentManager = require('../../frontend/components/payment.js').paymentManager;
+    
+    // Import the camera handler module
     const cameraHandlerModule = require('../../frontend/components/camera-handler.js');
     cameraHandler = cameraHandlerModule.cameraHandler;
     CameraHandler = cameraHandler.constructor;

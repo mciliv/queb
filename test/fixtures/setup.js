@@ -22,6 +22,11 @@ jest.mock("openai", () => {
 process.env.NODE_ENV = "test";
 process.env.OPENAI_API_KEY = "test-key";
 
+// Polyfill setImmediate for test environment
+if (!global.setImmediate) {
+  global.setImmediate = (callback, ...args) => setTimeout(callback, 0, ...args);
+}
+
 // Setup process cleanup hooks
 process.on('exit', () => cleanup.forceCleanup());
 process.on('SIGINT', async () => {

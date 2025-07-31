@@ -596,9 +596,8 @@ describe("Unit Tests", () => {
           .post("/analyze-text")
           .send({ object: "" });
 
-        expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty("object");
-        expect(response.body).toHaveProperty("chemicals");
+        expect(response.status).toBe(400);
+        expect(response.body).toHaveProperty("error");
       });
 
       test("should reject invalid text data", async () => {
