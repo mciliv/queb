@@ -144,19 +144,10 @@ describe('CameraHandler Tests', () => {
   beforeAll(async () => {
     setupTestDOM();
     
-    // Import the camera handler module after mocking
-    delete require.cache[require.resolve('../../frontend/components/camera-handler.js')];
-    const cameraHandlerModule = require('../../frontend/components/camera-handler.js');
-    cameraHandler = cameraHandlerModule.cameraHandler;
-    CameraHandler = cameraHandler.constructor;
-    
-    // Manually patch the imported modules
-    const uiUtilsModule = require('../../frontend/components/ui-utils.js');
-    const paymentModule = require('../../frontend/components/payment.js');
-    
-    // Replace the imported functions with our mocks
-    Object.assign(uiUtilsModule.uiManager, mockUIManager);
-    Object.assign(paymentModule.paymentManager, mockPaymentManager);
+    // Use the testable version with dependency injection
+    const { CameraHandler: TestableHandler } = require('./camera-handler-testable.js');
+    CameraHandler = TestableHandler;
+    cameraHandler = new CameraHandler(mockUIManager, mockPaymentManager);
   });
 
   beforeEach(() => {
