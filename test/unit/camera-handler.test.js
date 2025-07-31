@@ -1,6 +1,6 @@
 // test/unit/camera-handler.test.js - CameraHandler image analysis tests
 
-// Mock DOM environment
+// Mock DOM environment first
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
 global.window = dom.window;
@@ -48,9 +48,29 @@ document.createElement = jest.fn((tagName) => {
         top: 0,
         width: 300,
         height: 200
-      }))
+      })),
+      width: 300,
+      height: 200,
+      naturalWidth: 300,
+      naturalHeight: 200
     };
+    // Simulate successful image load after a brief delay
+    setTimeout(() => {
+      if (img.onload) img.onload();
+    }, 0);
     return img;
+  }
+  if (tagName === 'div') {
+    return {
+      className: '',
+      innerHTML: '',
+      textContent: '',
+      style: {},
+      appendChild: jest.fn(),
+      addEventListener: jest.fn(),
+      remove: jest.fn(),
+      querySelector: jest.fn()
+    };
   }
   return {
     className: '',
@@ -60,29 +80,48 @@ document.createElement = jest.fn((tagName) => {
     appendChild: jest.fn(),
     addEventListener: jest.fn(),
     remove: jest.fn(),
-    querySelector: jest.fn()
+    querySelector: jest.fn(),
+    style: {}
   };
 });
 
 
 
-// Mock modules before requiring
-jest.mock('../../frontend/components/ui-utils.js', () => ({
-  uiManager: {
-    createColumn: jest.fn(() => ({ innerHTML: '' })),
-    createLoadingColumn: jest.fn(() => ({ remove: jest.fn() })),
-    createErrorMessage: jest.fn(() => ({ remove: jest.fn() })),
-    fileToBase64: jest.fn().mockResolvedValue('mockbase64data'),
-    urlToBase64: jest.fn().mockResolvedValue('mockbase64data')
-  }
-}));
+// Create shared mock objects that can be accessed in tests
+const mockUIManager = {
+  createColumn: jest.fn(() => ({ innerHTML: '' })),
+  createLoadingColumn: jest.fn(() => ({ remove: jest.fn() })),
+  createErrorMessage: jest.fn(() => ({ remove: jest.fn() })),
+  fileToBase64: jest.fn().mockResolvedValue('mockbase64data'),
+  urlToBase64: jest.fn().mockResolvedValue('mockbase64data')
+};
 
-jest.mock('../../frontend/components/payment.js', () => ({
-  paymentManager: {
-    checkPaymentMethod: jest.fn().mockResolvedValue(true),
-    incrementUsage: jest.fn().mockResolvedValue()
-  }
-}));
+const mockPaymentManager = {
+  checkPaymentMethod: jest.fn().mockResolvedValue(true),
+  incrementUsage: jest.fn().mockResolvedValue()
+};
+
+// Use __mocks__ for automatic mocking
+jest.mock('../../frontend/components/ui-utils.js');
+jest.mock('../../frontend/components/payment.js');
+
+// Add additional global mocks
+global.alert = jest.fn();
+window.updateScrollHandles = jest.fn();
+document.dispatchEvent = jest.fn();
+// Create a shared object to hold element values
+const mockElements = {
+  'photo-url': { value: '', addEventListener: jest.fn(), remove: jest.fn() },
+  'url-analyze': { addEventListener: jest.fn(), remove: jest.fn() },
+  'photo-upload': { addEventListener: jest.fn(), files: [], remove: jest.fn() },
+  'photo-options': { innerHTML: '', appendChild: jest.fn(), remove: jest.fn() }
+};
+
+document.getElementById = jest.fn((id) => {
+  if (mockElements[id]) return mockElements[id];
+  return { innerHTML: '', appendChild: jest.fn(), querySelector: jest.fn(), remove: jest.fn() };
+});
+document.querySelector = jest.fn(() => ({ appendChild: jest.fn() }));
 
 // Helper to setup DOM
 function setupTestDOM() {
@@ -101,29 +140,49 @@ function setupTestDOM() {
 describe('CameraHandler Tests', () => {
   let CameraHandler;
   let cameraHandler;
-  let mockUIManager;
-  let mockPaymentManager;
 
   beforeAll(async () => {
     setupTestDOM();
     
-    // Import after mocking
+    // Import the camera handler module after mocking
     delete require.cache[require.resolve('../../frontend/components/camera-handler.js')];
-    
-    // Get references to the mocked modules first
-    mockUIManager = require('../../frontend/components/ui-utils.js').uiManager;
-    mockPaymentManager = require('../../frontend/components/payment.js').paymentManager;
-    
-    // Import the camera handler module
     const cameraHandlerModule = require('../../frontend/components/camera-handler.js');
     cameraHandler = cameraHandlerModule.cameraHandler;
     CameraHandler = cameraHandler.constructor;
+    
+    // Manually patch the imported modules
+    const uiUtilsModule = require('../../frontend/components/ui-utils.js');
+    const paymentModule = require('../../frontend/components/payment.js');
+    
+    // Replace the imported functions with our mocks
+    Object.assign(uiUtilsModule.uiManager, mockUIManager);
+    Object.assign(paymentModule.paymentManager, mockPaymentManager);
   });
 
   beforeEach(() => {
     setupTestDOM();
     jest.clearAllMocks();
     fetch.mockClear();
+    
+    // Reset mock elements
+    mockElements['photo-url'].value = '';
+    mockElements['photo-options'].innerHTML = '';
+    
+    // Reset mock implementations
+    mockUIManager.fileToBase64.mockResolvedValue('mockbase64data');
+    mockUIManager.urlToBase64.mockResolvedValue('mockbase64data');
+    mockUIManager.createErrorMessage.mockReturnValue({ remove: jest.fn() });
+    mockPaymentManager.checkPaymentMethod.mockResolvedValue(true);
+    mockPaymentManager.incrementUsage.mockResolvedValue();
+    
+    // Reset fetch mock
+    fetch.mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        chemicals: ['H2O'],
+        object: 'water'
+      })
+    });
   });
 
   describe('constructor', () => {
@@ -196,8 +255,7 @@ describe('CameraHandler Tests', () => {
   describe('handleUrlAnalysis', () => {
     test('should analyze valid image URL', async () => {
       const mockUrl = 'https://example.com/image.jpg';
-      const photoUrlInput = document.getElementById('photo-url');
-      photoUrlInput.value = mockUrl;
+      mockElements['photo-url'].value = mockUrl;
       
       const displaySpy = jest.spyOn(cameraHandler, 'displayUploadedImage').mockResolvedValue();
       
@@ -205,14 +263,13 @@ describe('CameraHandler Tests', () => {
       
       expect(mockUIManager.urlToBase64).toHaveBeenCalledWith(mockUrl);
       expect(displaySpy).toHaveBeenCalled();
-      expect(photoUrlInput.value).toBe('');
+      expect(mockElements['photo-url'].value).toBe('');
       
       displaySpy.mockRestore();
     });
 
     test('should reject empty URL', async () => {
-      const photoUrlInput = document.getElementById('photo-url');
-      photoUrlInput.value = '';
+      mockElements['photo-url'].value = '';
       
       const alertSpy = jest.spyOn(window, 'alert').mockImplementation();
       
@@ -224,8 +281,8 @@ describe('CameraHandler Tests', () => {
     });
 
     test('should reject invalid URL format', async () => {
-      const photoUrlInput = document.getElementById('photo-url');
-      photoUrlInput.value = 'not-a-valid-url';
+      // Set the mock element value directly
+      mockElements['photo-url'].value = 'not-a-valid-url';
       
       const alertSpy = jest.spyOn(window, 'alert').mockImplementation();
       
@@ -237,8 +294,7 @@ describe('CameraHandler Tests', () => {
     });
 
     test('should handle URL loading errors', async () => {
-      const photoUrlInput = document.getElementById('photo-url');
-      photoUrlInput.value = 'https://example.com/nonexistent.jpg';
+      mockElements['photo-url'].value = 'https://example.com/nonexistent.jpg';
       
       mockUIManager.urlToBase64.mockRejectedValueOnce(new Error('Failed to load'));
       
