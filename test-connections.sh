@@ -9,7 +9,7 @@ if curl -s http://localhost:8080 > /dev/null; then
     echo "✅ Server is running on http://localhost:8080"
 else
     echo "❌ Server not running. Starting server..."
-    ./infrastructure/deployment/run server &
+    ./run server &
     sleep 3
 fi
 

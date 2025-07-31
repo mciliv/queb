@@ -1,14 +1,20 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
+const IntegrationTestSetup = require('./setup-integration');
 
 describe('Molecular App Integration Tests', () => {
   let browser;
   let page;
-  const baseUrl = 'http://localhost:8080';
+  let testSetup;
 
   beforeAll(async () => {
+    // Start the server first
+    testSetup = new IntegrationTestSetup();
+    await testSetup.startServer();
+    await testSetup.waitForServer();
+
     browser = await puppeteer.launch({ 
-      headless: false, // Set to true for CI/CD
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     page = await browser.newPage();
@@ -16,14 +22,16 @@ describe('Molecular App Integration Tests', () => {
     // Enable console logging
     page.on('console', msg => console.log('Browser console:', msg.text()));
     page.on('pageerror', err => console.error('Browser error:', err));
-  });
+  }, 60000); // 60 second timeout
 
   afterAll(async () => {
-    await browser.close();
+    if (page) await page.close();
+    if (browser) await browser.close();
+    if (testSetup) testSetup.stopServer();
   });
 
   beforeEach(async () => {
-    await page.goto(baseUrl, { waitUntil: 'networkidle0' });
+    await page.goto(testSetup.baseUrl, { waitUntil: 'networkidle0' });
     // Wait for app to initialize
     await page.waitForSelector('#object-input', { timeout: 10000 });
   });

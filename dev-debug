@@ -72,6 +72,7 @@ log_warning "Press Ctrl+C to stop the server"
 echo ""
 
 # Start nodemon with maximum verbosity and error output
+export NODE_ENV=debug
 exec npx nodemon \
     --verbose \
     --watch backend/ \

@@ -5,7 +5,10 @@
       "label": "dev",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "dev"],
+      "args": [
+        "run",
+        "dev"
+      ],
       "isBackground": true,
       "group": {
         "kind": "build",
@@ -27,6 +30,6 @@
           "endsPattern": "Node server running on"
         }
       }
-    }
+    },
   ]
 }

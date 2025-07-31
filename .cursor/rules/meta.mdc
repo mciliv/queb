@@ -1,52 +1,39 @@
-# Meta Requirements - Living System
+---
+alwaysApply: true
+---
 
-## Core Philosophy
 Maximally simple & straightforward
+only respond in code
 Only generate rules in .mdc files, not markdown
+Maximally simple & straightforward
 Show code chunks rather than descriptions
-
-## Auto-Generation Protocol
 UI element mentioned → Document specs + implementation
 Recurring issue → Create prevention rule
 Architectural decision → Add to system patterns
+Centralized error panel (top-right)
+Memory preservation via persistent documentation
+Error reporting for AI & human readability
+Show code chunks rather than descriptions
+If anything can be seen as a principle, put here
+No logging
 
-## UI Elements Registry
+prefer code comments over chat text
+Don't create extraneous files
+Show code chunks, not descriptions
 
-### Account/Payment System
-- Credit card SVG icon (NOT user icon)
-- `gap: 8px` on .account-link (CRITICAL)
-- `margin-right: 160px` on .text-input (CRITICAL)
-- Mobile: `margin-right: 80px`
-
-### Developer Mode System  
-- NO UI elements (terminal controlled only)
-- `enableDevMode()` function in console
-- Auto-enabled on localhost
-
-### Error Handling
-- Centralized error panel (top-right)
-- Structured console logs with 🚨 prefix
-- `/api/log-error` endpoint for backend logging
-
-## System Patterns
-- Document-Driven Development prevents AI amnesia
-- `.mdc` files with `alwaysApply: true` for critical fixes
-- Memory preservation via persistent documentation
-- Error reporting for AI & human readability
-
-## Metrics
-- UI Elements: 5 documented
-- Auto-Generated .mdc Files: 4
-- Fixed Issues: /analyze-text endpoint, card icon spacing
-
-## Auto-Generation Triggers
+# Workflow
+Test 
+Run/refresh app (`dev`)
+ 
+## After Acceptance
+```bash
+git commit -am "Brief description"
+git push origin main
 ```
-IF (UI element mentioned) THEN → Update meta.mdc → Create rule if complex
-IF (recurring issue) THEN → Add prevention rule → Reference in meta.mdc  
-IF (architectural decision) THEN → Document pattern → Cross-reference
+## Run development Server
+```bash
+./dev          # Standard with live reload
+./dev-debug    # Maximum error visibility
 ```
-- Error reporting integration points (AUTO-GENERATED: error-reporting.mdc)
 
----
-
-**This file continuously evolves - it's not just documentation, it's the living requirements brain of the project.**
+Run terminal commands in seperate window from chat & restart if stalling

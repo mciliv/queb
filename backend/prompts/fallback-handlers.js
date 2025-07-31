@@ -52,6 +52,11 @@ const FALLBACK_COMPOSITIONS = {
  * Combines proven techniques from multiple git commits
  */
 function parseAIResponseWithFallbacks(content) {
+  // Handle empty, null, or non-string content
+  if (typeof content !== "string" || content.trim() === "") {
+    return { object: "Unknown object", chemicals: [] };
+  }
+
   try {
     // Primary parsing attempt - extract JSON from response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -77,8 +82,14 @@ function parseAIResponseWithFallbacks(content) {
   } catch (error) {
     console.error("Failed to parse AI response:", content);
     
-    // Smart fallback detection based on content analysis
-    return detectAndHandleRefusal(content);
+    // Only use smart fallbacks for actual refusal patterns, not parsing errors
+    if (typeof content === "string" && content.length > 10) {
+      const fallback = detectAndHandleRefusal(content);
+      if (fallback) return fallback;
+    }
+
+    // Default minimal object for parsing errors
+    return { object: "Unknown object", chemicals: [] };
   }
 }
 
@@ -87,7 +98,15 @@ function parseAIResponseWithFallbacks(content) {
  * Based on patterns observed in successful deployments
  */
 function detectAndHandleRefusal(content) {
+  if (typeof content !== "string") return null;
   const lowerContent = content.toLowerCase();
+  
+  // Only check for refusals in content that looks like natural language responses
+  // Skip if it looks like JSON or very short strings, or contains "not JSON"
+  if (lowerContent.includes("{") || lowerContent.includes("}") || 
+      content.length < 20 || lowerContent.includes("not json")) {
+    return null;
+  }
   
   // Human/person analysis refusal - use realistic body composition (commit be3ecc0)
   const humanRefusalPatterns = [
@@ -105,10 +124,9 @@ function detectAndHandleRefusal(content) {
   // General image analysis refusal - provide minimal but useful response
   const imageRefusalPatterns = [
     "can't analyze images",
-    "unable to identify", 
-    "i'm sorry",
+    "i'm sorry, but i cannot",
     "cannot process images",
-    "unable to see"
+    "unable to see the image"
   ];
   
   if (imageRefusalPatterns.some(pattern => lowerContent.includes(pattern))) {

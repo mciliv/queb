@@ -18,5 +18,6 @@
   },
   "exec": "node server.js",
   "delay": 1000,
-  "verbose": false
+  "verbose": false,
+  "quiet": true
 }

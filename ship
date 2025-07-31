@@ -1,29 +1,69 @@
-#!/bin/bash
+#!/usr/bin/env node
 
-echo "🚢 Starting complete workflow (ship)..."
-if [ -z "$OPENAI_API_KEY" ]; then
-  echo "❌ OPENAI_API_KEY environment variable is required"
-  exit 1
-fi
-echo "📝 Staging all changes..."
-git add .
-timestamp=$(date)
-commit_message="Auto-commit before production deployment - $timestamp"
-echo "💾 Committing changes..."
-git commit -m "$commit_message"
-echo "🧪 Running pre-deployment tests..."
-npx jest --testPathPattern=test/unit/unit.test.js --verbose --silent && npx jest --testPathPattern=test/integration/integration.test.js --verbose && npx jest --testPathPattern=test/integration/system.test.js --verbose --detectOpenHandles && python -m pytest test/ -v
-if [ $? -ne 0 ]; then
-  echo "❌ Tests failed - aborting deployment"
-  exit 1
-fi
-echo "☁️  Deploying to Google Cloud Functions..."
-gcloud functions deploy molecular-analysis --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --memory 1GB --timeout 540s --region us-central1 --entry-point molecularAnalysis --source . --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY --quiet
-if [ $? -ne 0 ]; then
-  echo "❌ Deployment failed"
-  exit 1
-fi
-echo "📤 Pushing to git repository..."
-git push
-echo "✅ Complete workflow successful!"
-echo "🌐 Function deployed to Google Cloud Functions" 
+const { execSync } = require("child_process");
+
+console.log("🚢 Starting complete workflow (ship)...");
+
+// Configuration
+const config = {
+  functionName: "molecular-analysis",
+  runtime: "nodejs20",
+  region: "us-central1",
+  memory: "1GB",
+  timeout: "540s",
+  entryPoint: "molecularAnalysis",
+};
+
+// Check for required environment variable
+if (!process.env.OPENAI_API_KEY) {
+  console.error("❌ OPENAI_API_KEY environment variable is required");
+  process.exit(1);
+}
+
+try {
+  // Step 1: Stage all changes
+  console.log("📝 Staging all changes...");
+  execSync("git add .", { stdio: "inherit" });
+
+  // Step 2: Commit with timestamp
+  const timestamp = new Date().toLocaleString();
+  const commitMessage = `Auto-commit before production deployment - ${timestamp}`;
+  console.log("💾 Committing changes...");
+  execSync(`git commit -m "${commitMessage}"`, { stdio: "inherit" });
+
+  // Step 3: Run pre-deployment tests
+  console.log("🧪 Running pre-deployment tests...");
+  execSync("npm run test:pre-deploy", { stdio: "inherit" });
+
+  // Step 4: Deploy to Google Cloud Functions
+  console.log("☁️  Deploying to Google Cloud Functions...");
+  
+  const deployCommand = [
+    "gcloud functions deploy",
+    config.functionName,
+    "--gen2",
+    `--runtime ${config.runtime}`,
+    "--trigger-http",
+    "--allow-unauthenticated",
+    `--memory ${config.memory}`,
+    `--timeout ${config.timeout}`,
+    `--region ${config.region}`,
+    `--entry-point ${config.entryPoint}`,
+    "--source .",
+    `--set-env-vars OPENAI_API_KEY=${process.env.OPENAI_API_KEY}`,
+    "--quiet"
+  ].join(" ");
+
+  execSync(deployCommand, { stdio: "inherit" });
+
+  // Step 5: Push to git repository
+  console.log("📤 Pushing to git repository...");
+  execSync("git push", { stdio: "inherit" });
+
+  console.log("✅ Complete workflow successful!");
+  console.log("🌐 Function deployed to Google Cloud Functions");
+
+} catch (error) {
+  console.error("❌ Workflow failed:", error.message);
+  process.exit(1);
+} 

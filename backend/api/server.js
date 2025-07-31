@@ -1,8 +1,13 @@
 // server.js - Clean modular architecture
-process.env.NODE_ENV ||= "development";
+
+// Load environment configuration
+const config = require('../config/env');
+
+// Validate configuration
+config.validateConfig();
 
 // Simple logger - only log on errors unless in debug mode
-const isDebugMode = process.env.NODE_ENV === 'debug';
+const isDebugMode = config.NODE_ENV === 'debug';
 const log = {
   info: (msg) => isDebugMode && console.log(msg),
   success: (msg) => isDebugMode && console.log(msg),
@@ -40,11 +45,11 @@ try {
   
   // Database configuration with local development defaults
   const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'mol_users',
-    user: process.env.DB_USER || 'mol_user',
-    password: process.env.DB_PASSWORD || 'mol_password',
+    host: config.DB_HOST,
+    port: config.DB_PORT,
+    database: config.DB_NAME,
+    user: config.DB_USER,
+    password: config.DB_PASSWORD,
     // Connection pool settings
     max: 20, // maximum number of clients in pool
     idleTimeoutMillis: 30000, // close idle clients after 30 seconds
@@ -184,10 +189,12 @@ const findAvailablePort = async (startPort) => {
   );
 };
 
-const PORT = process.env.PORT || DEFAULT_PORT;
+const PORT = config.PORT;
 
 // Initialize modules
-const atomPredictor = new AtomPredictor(process.env.OPENAI_API_KEY);
+// Use mock API key for test environment if OPENAI_API_KEY not set
+const openaiApiKey = config.OPENAI_API_KEY || (config.NODE_ENV === 'test' ? 'test-key' : undefined);
+const atomPredictor = new AtomPredictor(openaiApiKey);
 const molecularProcessor = new MolecularProcessor();
 const userService = (pool && UserService) ? new UserService(pool) : null;
 
@@ -822,21 +829,25 @@ app.use((req, res, next) => {
 
 // ==================== SERVER STARTUP ====================
 const isCloudFunction =
-  process.env.FUNCTION_NAME ||
-  process.env.FUNCTION_TARGET ||
-  process.env.K_SERVICE ||
-  process.env.GOOGLE_CLOUD_PROJECT ||
-  process.env.GCP_PROJECT;
-const isNetlify = process.env.NETLIFY;
+  config.FUNCTION_NAME ||
+  config.FUNCTION_TARGET ||
+  config.K_SERVICE ||
+  config.GOOGLE_CLOUD_PROJECT ||
+  config.GCP_PROJECT;
+const isNetlify = config.NETLIFY;
 const isTestMode =
-  process.env.NODE_ENV === "test" || process.env.JEST_WORKER_ID;
+  config.NODE_ENV === "test" || process.env.JEST_WORKER_ID;
+const isIntegrationTest = config.INTEGRATION_TEST;
 const isServerless = isCloudFunction || isNetlify;
 
 // Store server instances for cleanup
 let httpServer;
 let httpsServerInstance;
 
-if (!isServerless && !isTestMode) {
+console.log('Server conditions:', { isServerless, isTestMode, isIntegrationTest });
+
+if (!isServerless && (!isTestMode || isIntegrationTest)) {
+  console.log('Starting server in local development mode...');
   // Local development mode
   const startServer = async () => {
     try {
