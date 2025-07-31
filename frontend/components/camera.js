@@ -264,29 +264,36 @@ class CameraManager {
   async handleInteraction(evt) {
     console.log('📷 Camera interaction detected:', evt);
     
-    let paymentCheck = false;
-    try {
-      paymentCheck = await paymentManager.checkPaymentMethod();
-      console.log('💳 Payment check result:', paymentCheck);
-    } catch (error) {
-      console.log('⚠️ Payment check failed, proceeding anyway:', error);
-      paymentCheck = true; // Fallback to allow analysis
-    }
+    // Check if payment is enabled globally
+    const paymentEnabled = window.app && window.app.paymentEnabled;
+    let paymentCheck = true; // Default to allow analysis when payment disabled
     
-    if (!paymentCheck) {
-      console.log('🚫 Payment required - showing message');
-      // Show simple message instead of modal
-      const messageColumn = uiManager.createColumn("See payment setup above", "payment-required");
-      messageColumn.innerHTML = `
-        <div class="molecule-container">
-          <div class="molecule-info">
-            <h3>Payment Required</h3>
-            <p>See payment setup above</p>
-            <div class="analysis-note">Complete payment setup to analyze molecules via camera</div>
+    if (paymentEnabled) {
+      try {
+        paymentCheck = await paymentManager.checkPaymentMethod();
+        console.log('💳 Payment check result:', paymentCheck);
+      } catch (error) {
+        console.log('⚠️ Payment check failed, proceeding anyway:', error);
+        paymentCheck = true; // Fallback to allow analysis
+      }
+      
+      if (!paymentCheck) {
+        console.log('🚫 Payment required - showing message');
+        // Show simple message instead of modal
+        const messageColumn = uiManager.createColumn("See payment setup above", "payment-required");
+        messageColumn.innerHTML = `
+          <div class="molecule-container">
+            <div class="molecule-info">
+              <h3>Payment Required</h3>
+              <p>See payment setup above</p>
+              <div class="analysis-note">Complete payment setup to analyze molecules via camera</div>
+            </div>
           </div>
-        </div>
-      `;
-      return;
+        `;
+        return;
+      }
+    } else {
+      console.log('💳 Payment disabled - proceeding with analysis');
     }
 
     console.log('✅ Payment check passed, proceeding with analysis');

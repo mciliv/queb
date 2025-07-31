@@ -114,14 +114,19 @@ const mockElements = {
   'photo-url': { value: '', addEventListener: jest.fn(), remove: jest.fn() },
   'url-analyze': { addEventListener: jest.fn(), remove: jest.fn() },
   'photo-upload': { addEventListener: jest.fn(), files: [], remove: jest.fn() },
-  'photo-options': { innerHTML: '', appendChild: jest.fn(), remove: jest.fn() }
+  'photo-options': { innerHTML: '', appendChild: jest.fn(), remove: jest.fn(), querySelector: jest.fn() }
 };
 
 document.getElementById = jest.fn((id) => {
   if (mockElements[id]) return mockElements[id];
   return { innerHTML: '', appendChild: jest.fn(), querySelector: jest.fn(), remove: jest.fn() };
 });
-document.querySelector = jest.fn(() => ({ appendChild: jest.fn() }));
+document.querySelector = jest.fn((selector) => {
+  if (selector === '.snapshots-container') {
+    return { appendChild: jest.fn(), innerHTML: '', remove: jest.fn() };
+  }
+  return { appendChild: jest.fn(), innerHTML: '', remove: jest.fn() };
+});
 
 // Helper to setup DOM
 function setupTestDOM() {
@@ -152,7 +157,8 @@ describe('CameraHandler Tests', () => {
 
   beforeEach(() => {
     setupTestDOM();
-    jest.clearAllMocks();
+    
+    // DON'T clear all mocks since it breaks dependency injection
     fetch.mockClear();
     
     // Reset mock elements
@@ -160,11 +166,15 @@ describe('CameraHandler Tests', () => {
     mockElements['photo-options'].innerHTML = '';
     
     // Reset mock implementations
-    mockUIManager.fileToBase64.mockResolvedValue('mockbase64data');
-    mockUIManager.urlToBase64.mockResolvedValue('mockbase64data');
-    mockUIManager.createErrorMessage.mockReturnValue({ remove: jest.fn() });
-    mockPaymentManager.checkPaymentMethod.mockResolvedValue(true);
-    mockPaymentManager.incrementUsage.mockResolvedValue();
+    mockUIManager.fileToBase64.mockClear().mockResolvedValue('mockbase64data');
+    mockUIManager.urlToBase64.mockClear().mockResolvedValue('mockbase64data');
+    mockUIManager.createErrorMessage.mockClear().mockReturnValue({ remove: jest.fn() });
+    mockPaymentManager.checkPaymentMethod.mockClear().mockResolvedValue(true);
+    mockPaymentManager.incrementUsage.mockClear().mockResolvedValue();
+    
+    // Ensure dependency injection is still working
+    cameraHandler.uiManager = mockUIManager;
+    cameraHandler.paymentManager = mockPaymentManager;
     
     // Reset fetch mock
     fetch.mockResolvedValue({

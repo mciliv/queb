@@ -4,6 +4,12 @@ import { cameraManager } from '../components/camera.js';
 import { cameraHandler } from '../components/camera-handler.js';
 import { uiManager } from '../components/ui-utils.js';
 
+// Payment toggle configuration
+const PAYMENT_CONFIG = {
+  enabled: false, // Set to true to enable payment functionality
+  devMode: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+};
+
 class MolecularApp {
   constructor() {
     this.snapshots = null;
@@ -11,6 +17,7 @@ class MolecularApp {
     this.viewers = [];
     this.isProcessing = false;
     this.hasPaymentSetup = false;
+    this.paymentEnabled = PAYMENT_CONFIG.enabled;
     this.currentAnalysisType = null;
     this.lastAnalysis = null;
   }
@@ -25,12 +32,19 @@ class MolecularApp {
 
     this.setupEventListeners();
 
-    // Check payment setup
-    simplePaymentManager.checkPaymentRequired();
-    this.hasPaymentSetup = true; // Keep simple for now
+    // Initialize payment system if enabled
+    if (this.paymentEnabled) {
+      simplePaymentManager.checkPaymentRequired();
+      this.hasPaymentSetup = true;
+    } else {
+      // Hide payment section when disabled
+      this.hidePaymentSection();
+      this.hasPaymentSetup = true; // Skip payment validation
+      console.log('💳 Payment functionality disabled');
+    }
     
     // Auto-enable dev mode for localhost
-    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    if (PAYMENT_CONFIG.devMode) {
       console.log('🔧 Auto-enabling developer mode for localhost');
       this.hasPaymentSetup = true;
     }    
@@ -89,7 +103,8 @@ class MolecularApp {
     const inputValue = this.objectInput.value.trim();
     if (!inputValue) return;
 
-    if (!this.hasPaymentSetup) {
+    // Check payment only if enabled
+    if (this.paymentEnabled && !this.hasPaymentSetup) {
       console.log('💳 Payment not set up, showing message');
       this.showError('Payment setup required. See payment section on the right.');
       return;
@@ -385,6 +400,38 @@ class MolecularApp {
       gldiv.innerHTML = "";
     }
     this.viewers = [];
+  }
+
+  hidePaymentSection() {
+    const paymentSection = document.getElementById('payment-section');
+    if (paymentSection) {
+      paymentSection.style.display = 'none';
+      console.log('💳 Payment section hidden');
+    }
+  }
+
+  showPaymentSection() {
+    const paymentSection = document.getElementById('payment-section');
+    if (paymentSection) {
+      paymentSection.style.display = 'block';
+      console.log('💳 Payment section shown');
+    }
+  }
+
+  // Toggle payment functionality
+  togglePayments(enabled) {
+    this.paymentEnabled = enabled;
+    PAYMENT_CONFIG.enabled = enabled;
+    
+    if (enabled) {
+      console.log('💳 Payments ENABLED');
+      this.showPaymentSection();
+      simplePaymentManager.checkPaymentRequired();
+    } else {
+      console.log('💳 Payments DISABLED');
+      this.hidePaymentSection();
+      this.hasPaymentSetup = true; // Skip validation when disabled
+    }
   }
 }
 

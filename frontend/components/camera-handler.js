@@ -120,24 +120,31 @@ class CameraHandler {
 
   // Handle click on uploaded image
   async handleImageClick(evt, img) {
-    let paymentCheck = false;
-    try {
-      paymentCheck = await paymentManager.checkPaymentMethod();
-    } catch (error) {
-      paymentCheck = true; // Fallback to allow analysis
-    }
+    // Check if payment is enabled globally
+    const paymentEnabled = window.app && window.app.paymentEnabled;
+    let paymentCheck = true; // Default to allow analysis when payment disabled
     
-    if (!paymentCheck) {
-      const messageColumn = uiManager.createColumn("Payment required", "payment-required");
-      messageColumn.innerHTML = `
-        <div class="molecule-container">
-          <div class="molecule-info">
-            <h3>Payment Required</h3>
-            <p>Complete payment setup to analyze molecules</p>
+    if (paymentEnabled) {
+      try {
+        paymentCheck = await paymentManager.checkPaymentMethod();
+      } catch (error) {
+        paymentCheck = true; // Fallback to allow analysis
+      }
+      
+      if (!paymentCheck) {
+        const messageColumn = uiManager.createColumn("Payment required", "payment-required");
+        messageColumn.innerHTML = `
+          <div class="molecule-container">
+            <div class="molecule-info">
+              <h3>Payment Required</h3>
+              <p>Complete payment setup to analyze molecules</p>
+            </div>
           </div>
-        </div>
-      `;
-      return;
+        `;
+        return;
+      }
+    } else {
+      console.log('💳 Payment disabled - proceeding with image analysis');
     }
     
     const rect = img.getBoundingClientRect();
