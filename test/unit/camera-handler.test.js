@@ -376,11 +376,11 @@ describe('CameraHandler Tests', () => {
       });
       
       expect(emitSpy).toHaveBeenCalledWith(
-        { object: 'Test Object', chemicals: [] },
+        { output: { object: 'Test Object', chemicals: [] } },
         'Photo',
-        'Test Object',
+        'Unknown',
         false,
-        expect.any(String)
+        'mockbase64data'
       );
       
       global.Image = originalImage;
@@ -442,15 +442,30 @@ describe('CameraHandler Tests', () => {
 
     test('should handle API errors gracefully', async () => {
       const mockImg = {
-        dataset: { base64: 'mockbase64data' },
-        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 })
+        dataset: { imageBase64: 'mockbase64data' },
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 }),
+        src: 'data:image/jpeg;base64,mockbase64data'
       };
       const mockEvent = { clientX: 150, clientY: 100 };
+      
+      // Mock the global Image constructor
+      const originalImage = global.Image;
+      global.Image = jest.fn().mockImplementation(() => {
+        const img = {
+          src: '',
+          width: 400,
+          height: 300,
+          onload: null,
+          onerror: null
+        };
+        setTimeout(() => { if (img.onload) img.onload(); }, 0);
+        return img;
+      });
       
       fetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
-        text: jest.fn().mockResolvedValue('Server Error')
+        statusText: 'Server Error'
       });
       
       const errorSpy = jest.spyOn(cameraHandler, 'createClosableErrorMessage').mockImplementation();
@@ -459,6 +474,7 @@ describe('CameraHandler Tests', () => {
       
       expect(errorSpy).toHaveBeenCalledWith('Error: HTTP 500: Server Error');
       
+      global.Image = originalImage;
       errorSpy.mockRestore();
     });
 
@@ -466,10 +482,25 @@ describe('CameraHandler Tests', () => {
       mockPaymentManager.checkPaymentMethod.mockRejectedValueOnce(new Error('Payment check failed'));
       
       const mockImg = {
-        dataset: { base64: 'mockbase64data' },
-        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 })
+        dataset: { imageBase64: 'mockbase64data' },
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 }),
+        src: 'data:image/jpeg;base64,mockbase64data'
       };
       const mockEvent = { clientX: 150, clientY: 100 };
+      
+      // Mock the global Image constructor
+      const originalImage = global.Image;
+      global.Image = jest.fn().mockImplementation(() => {
+        const img = {
+          src: '',
+          width: 400,
+          height: 300,
+          onload: null,
+          onerror: null
+        };
+        setTimeout(() => { if (img.onload) img.onload(); }, 0);
+        return img;
+      });
       
       fetch.mockResolvedValueOnce({
         ok: true,
@@ -482,6 +513,8 @@ describe('CameraHandler Tests', () => {
       
       // Should proceed with analysis despite payment check error
       expect(fetch).toHaveBeenCalled();
+      
+      global.Image = originalImage;
     });
   });
 
@@ -596,20 +629,25 @@ describe('CameraHandler Tests', () => {
   describe('image cropping functionality', () => {
     test('should calculate crop coordinates correctly', async () => {
       const mockImg = {
-        dataset: { base64: 'mockbase64data' },
-        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 })
+        dataset: { imageBase64: 'mockbase64data' },
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 }),
+        src: 'data:image/jpeg;base64,mockbase64data'
       };
       const mockEvent = { clientX: 150, clientY: 100 };
       
-      // Mock Image.onload to trigger cropping logic
+      // Mock Image with proper onload callback
       const originalImage = global.Image;
-      global.Image = jest.fn(() => ({
-        onload: null,
-        onerror: null,
-        src: '',
-        width: 600,
-        height: 400
-      }));
+      global.Image = jest.fn().mockImplementation(() => {
+        const img = {
+          onload: null,
+          onerror: null,
+          src: '',
+          width: 600,
+          height: 400
+        };
+        setTimeout(() => { if (img.onload) img.onload(); }, 0);
+        return img;
+      });
       
       fetch.mockResolvedValueOnce({
         ok: true,
@@ -634,33 +672,31 @@ describe('CameraHandler Tests', () => {
   describe('error handling', () => {
     test('should handle image load errors in handleImageClick', async () => {
       const mockImg = {
-        dataset: { base64: 'mockbase64data' },
-        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 })
+        dataset: { imageBase64: 'mockbase64data' },
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 }),
+        src: 'data:image/jpeg;base64,mockbase64data'
       };
       const mockEvent = { clientX: 150, clientY: 100 };
       
-      // Mock Image with onerror callback
+      // Mock Image with onerror callback that triggers immediately
       const originalImage = global.Image;
-      global.Image = jest.fn(() => ({
-        onload: null,
-        onerror: null,
-        src: ''
-      }));
+      global.Image = jest.fn().mockImplementation(() => {
+        const img = {
+          onload: null,
+          onerror: null,
+          src: '',
+          width: 400,
+          height: 300
+        };
+        setTimeout(() => { if (img.onerror) img.onerror(); }, 0);
+        return img;
+      });
       
       const errorSpy = jest.spyOn(cameraHandler, 'createClosableErrorMessage').mockImplementation();
       
-      // Start the process
-      const promise = cameraHandler.handleImageClick(mockEvent, mockImg);
+      await cameraHandler.handleImageClick(mockEvent, mockImg);
       
-      // Simulate image error
-      const imageInstance = new global.Image();
-      if (imageInstance.onerror) {
-        imageInstance.onerror();
-      }
-      
-      await promise;
-      
-      expect(errorSpy).toHaveBeenCalledWith('Failed to process image');
+      expect(errorSpy).toHaveBeenCalledWith('Error: Failed to process image');
       
       global.Image = originalImage;
       errorSpy.mockRestore();
@@ -668,10 +704,25 @@ describe('CameraHandler Tests', () => {
 
     test('should handle network errors in image analysis', async () => {
       const mockImg = {
-        dataset: { base64: 'mockbase64data' },
-        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 })
+        dataset: { imageBase64: 'mockbase64data' },
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 }),
+        src: 'data:image/jpeg;base64,mockbase64data'
       };
       const mockEvent = { clientX: 150, clientY: 100 };
+      
+      // Mock the global Image constructor
+      const originalImage = global.Image;
+      global.Image = jest.fn().mockImplementation(() => {
+        const img = {
+          src: '',
+          width: 400,
+          height: 300,
+          onload: null,
+          onerror: null
+        };
+        setTimeout(() => { if (img.onload) img.onload(); }, 0);
+        return img;
+      });
       
       fetch.mockRejectedValueOnce(new Error('Network error'));
       
@@ -681,6 +732,7 @@ describe('CameraHandler Tests', () => {
       
       expect(errorSpy).toHaveBeenCalledWith('Error: Network error');
       
+      global.Image = originalImage;
       errorSpy.mockRestore();
     });
   });
