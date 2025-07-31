@@ -1,6 +1,7 @@
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/test/fixtures/setup.js'],
+  globalTeardown: '<rootDir>/test/fixtures/global-teardown.js',
   testMatch: [
     '<rootDir>/test/**/*.test.js'
   ],
@@ -23,5 +24,8 @@ module.exports = {
   globals: {
     TextEncoder: TextEncoder,
     TextDecoder: TextDecoder
-  }
+  },
+  forceExit: true,
+  detectOpenHandles: true,
+  testTimeout: 30000
 }; 

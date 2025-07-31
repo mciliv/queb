@@ -1,0 +1,94 @@
+# Clean Terminal Termination Plan
+
+## Root Causes
+- Jest not exiting (async operations remain open)
+- Puppeteer browser instances 
+- HTTP connections not closed
+- File watchers still active
+- Missing global teardown hooks
+
+## Implementation Strategy
+
+### 1. Jest Global Teardown
+```js
+// jest.config.js
+module.exports = {
+  // ... existing config
+  globalTeardown: '<rootDir>/test/fixtures/global-teardown.js',
+  forceExit: true,
+  detectOpenHandles: true
+}
+```
+
+### 2. Process Cleanup Hook
+```js
+// test/fixtures/process-cleanup.js
+const cleanup = require('./cleanup-registry');
+
+process.on('exit', cleanup.forceCleanup);
+process.on('SIGINT', cleanup.gracefulShutdown);
+process.on('SIGTERM', cleanup.gracefulShutdown);
+process.on('uncaughtException', cleanup.emergencyShutdown);
+```
+
+### 3. Resource Registry Pattern
+```js
+// test/fixtures/cleanup-registry.js
+class CleanupRegistry {
+  constructor() {
+    this.resources = new Set();
+  }
+  
+  register(resource) {
+    this.resources.add(resource);
+  }
+  
+  async cleanup() {
+    for (const resource of this.resources) {
+      try {
+        if (resource.close) await resource.close();
+        if (resource.stop) await resource.stop();
+        if (resource.kill) resource.kill();
+      } catch (e) {
+        console.warn('Cleanup warning:', e.message);
+      }
+    }
+    this.resources.clear();
+  }
+}
+```
+
+### 4. Test Lifecycle Management
+```js
+// All tests follow this pattern:
+beforeAll(async () => {
+  // Register all resources for cleanup
+  cleanup.register(server);
+  cleanup.register(browser);
+});
+
+afterAll(async () => {
+  await cleanup.cleanup();
+});
+```
+
+### 5. Timeout Safety
+```js
+// Force exit after reasonable timeout
+setTimeout(() => {
+  console.warn('Force exiting after timeout');
+  process.exit(0);
+}, 5000);
+```
+
+## Files to Modify
+- jest.config.js (add global teardown)
+- test/fixtures/setup.js (add cleanup hooks)
+- Integration tests (ensure proper afterAll)
+- Package.json scripts (add --forceExit)
+
+## Validation
+- Jest should exit within 2 seconds
+- No "detect open handles" warnings
+- All child processes terminated
+- Memory cleaned up properly

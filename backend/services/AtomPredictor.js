@@ -13,7 +13,7 @@ class AtomPredictor {
   constructor(apiKey) {
     // Handle test environment
     this.isTestMode = apiKey === 'test-key' || process.env.NODE_ENV === 'test';
-    this.client = this.isTestMode ? null : new OpenAI({ apiKey });
+    this.client = new OpenAI({ apiKey: apiKey || 'test-key' }); // Always create client for Jest mocks
     // Use the improved instruction builder from git history analysis
     this.chemicalInstructions = this.buildChemicalInstructions();
   }
@@ -38,16 +38,7 @@ class AtomPredictor {
     }
 
     try {
-      // Return mock data in test mode
-      if (this.isTestMode) {
-        return {
-          object: "Test Object",
-          chemicals: [
-            { name: "Water", smiles: "O" },
-            { name: "Ethanol", smiles: "CCO" }
-          ]
-        };
-      }
+      // Skip test mode check - let Jest mocks handle test behavior
 
       const messages = [
         {
@@ -112,16 +103,7 @@ class AtomPredictor {
 
   async analyzeText(object) {
     try {
-      // Return mock data in test mode
-      if (this.isTestMode) {
-        return {
-          object: object || "Test Object",
-          chemicals: [
-            { name: "Water", smiles: "O" },
-            { name: "Sodium Chloride", smiles: "[Na+].[Cl-]" }
-          ]
-        };
-      }
+      // Skip test mode check - let Jest mocks handle test behavior
 
       // Enhanced text analysis with context-aware examples
       const objectType = this.detectObjectType(object);
