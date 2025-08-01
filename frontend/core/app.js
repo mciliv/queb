@@ -261,27 +261,46 @@ class MolecularApp {
     const sdfFiles = [];
     const smiles = [];
 
-    for (const chemical of chemicals) {
-      try {
-        if (chemical.smiles) {
-          const response = await fetch("/generate-sdf", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ smiles: chemical.smiles }),
-          });
+    // Collect all SMILES strings
+    const smilesArray = chemicals
+      .filter(chemical => chemical.smiles)
+      .map(chemical => chemical.smiles);
 
-          if (response.ok) {
-            const blob = await response.blob();
-            const sdfUrl = URL.createObjectURL(blob);
-            sdfFiles.push(sdfUrl);
-            smiles.push(chemical.smiles);
-          } else {
-            console.warn(`Failed to generate SDF for ${chemical.name || chemical.smiles}`);
+    if (smilesArray.length === 0) {
+      return { sdfFiles, smiles };
+    }
+
+    try {
+      const response = await fetch("/generate-sdfs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ smiles: smilesArray }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.sdfPaths && Array.isArray(result.sdfPaths)) {
+          // Convert relative paths to full URLs
+          for (const sdfPath of result.sdfPaths) {
+            const fullUrl = sdfPath.startsWith('/') ? sdfPath : `/${sdfPath}`;
+            sdfFiles.push(fullUrl);
+          }
+          
+          // Add corresponding SMILES
+          for (let i = 0; i < result.sdfPaths.length && i < smilesArray.length; i++) {
+            smiles.push(smilesArray[i]);
           }
         }
-      } catch (error) {
-        console.error(`Error generating SDF for chemical:`, error);
+        
+        if (result.errors && result.errors.length > 0) {
+          console.warn('SDF generation errors:', result.errors);
+        }
+      } else {
+        console.warn(`Failed to generate SDFs: ${response.status} ${response.statusText}`);
       }
+    } catch (error) {
+      console.error(`Error generating SDFs:`, error);
     }
 
     return { sdfFiles, smiles };
