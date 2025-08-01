@@ -77,6 +77,7 @@ class MolecularApp {
     });
     
     // Setup modern keyboard hint (only on non-touch devices)
+    console.log('🔧 Setting up keyboard hint...');
     this.setupKeyboardHint();
 
     document.addEventListener('imageAnalysisComplete', (e) => {
@@ -161,16 +162,21 @@ class MolecularApp {
     const keyboardHint = document.getElementById('keyboard-hint');
     const hintKey = document.getElementById('hint-key');
     
-    if (!keyboardHint || !hintKey) return;
+    if (!keyboardHint || !hintKey) {
+      console.log('❌ Keyboard hint elements not found');
+      return;
+    }
 
-    // Detect if device has a physical keyboard (not touch-only)
-    const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const isLikelyDesktop = window.innerWidth >= 768 && !hasTouchScreen;
+    // Simplified detection - show on non-mobile devices
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isWideScreen = window.innerWidth >= 768;
     
-    // Only show on desktop/laptop computers with keyboards
-    if (!isLikelyDesktop || isMobile) {
+    console.log('🔍 Device detection:', { isMobile, isWideScreen, userAgent: navigator.userAgent });
+    
+    // Show on desktop/laptop computers (wide screen, non-mobile)
+    if (isMobile || !isWideScreen) {
       keyboardHint.style.display = 'none';
+      console.log('📱 Hiding hint - mobile or narrow screen');
       return;
     }
 
@@ -180,6 +186,13 @@ class MolecularApp {
     
     // Show the hint
     keyboardHint.classList.add('show');
+    console.log('✅ Keyboard hint shown:', hintKey.textContent);
+    
+    // Debug: Force visibility for testing
+    keyboardHint.style.display = 'block';
+    keyboardHint.style.opacity = '1';
+    keyboardHint.style.visibility = 'visible';
+    console.log('🔧 Debug: Forced hint visibility');
   }
 
   showError(message) {
