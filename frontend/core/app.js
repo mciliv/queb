@@ -76,13 +76,8 @@ class MolecularApp {
       }
     });
     
-    // Platform-specific placeholder
-    const textInput = document.getElementById('object-input');
-    if (textInput) {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const shortcutKey = isMac ? '⌘K' : 'Ctrl+K';
-      textInput.placeholder = `Type any molecule name (e.g., caffeine, aspirin, water)... (${shortcutKey} to focus)`;
-    }
+    // Setup modern keyboard hint (only on non-touch devices)
+    this.setupKeyboardHint();
 
     document.addEventListener('imageAnalysisComplete', (e) => {
       const { output, icon, objectName, useQuotes, croppedImageData } = e.detail;
@@ -156,12 +151,35 @@ class MolecularApp {
 
   hideProcessing() {
     if (this.objectInput) {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const shortcutKey = isMac ? '⌘K' : 'Ctrl+K';
-      this.objectInput.placeholder = `Type any molecule name (e.g., caffeine, aspirin, water)... (${shortcutKey} to focus)`;
+      this.objectInput.placeholder = `Type any molecule name (e.g., caffeine, aspirin, water)...`;
       this.objectInput.disabled = false;
       this.objectInput.value = "";
     }
+  }
+
+  setupKeyboardHint() {
+    const keyboardHint = document.getElementById('keyboard-hint');
+    const hintKey = document.getElementById('hint-key');
+    
+    if (!keyboardHint || !hintKey) return;
+
+    // Detect if device has a physical keyboard (not touch-only)
+    const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isLikelyDesktop = window.innerWidth >= 768 && !hasTouchScreen;
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Only show on desktop/laptop computers with keyboards
+    if (!isLikelyDesktop || isMobile) {
+      keyboardHint.style.display = 'none';
+      return;
+    }
+
+    // Set platform-specific key display
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    hintKey.textContent = isMac ? '⌘K' : 'Ctrl+K';
+    
+    // Show the hint
+    keyboardHint.classList.add('show');
   }
 
   showError(message) {
@@ -442,4 +460,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   await app.initialize();
 
   window.molecularApp = app;
+  
+  // Global helper functions for console access
+  window.enablePayments = () => app.togglePayments(true);
+  window.disablePayments = () => app.togglePayments(false);
+  window.togglePayments = (enabled) => app.togglePayments(enabled);
 });

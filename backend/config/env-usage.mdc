@@ -1,0 +1,28 @@
+# Environment Configuration
+
+## Files
+- `env.js` - Original dotenv-based loader (requires .env file)
+- `env-loader.js` - New loader that assumes environment variables are already loaded
+
+## Usage
+
+### Standard approach (with .env)
+```js
+const config = require('./backend/config/env.js');
+```
+
+### New approach (environment-agnostic)
+```js
+const envLoader = require('./backend/config/env-loader.js');
+envLoader.logStatus(); // Check configuration
+```
+
+## Benefits of env-loader.js
+- Works with any environment source (.env, system vars, cloud config)
+- No direct .env dependency
+- Better validation and logging
+- Cleaner for deployment scenarios
+
+## Development Scripts
+- `./dev` - Full setup with database checks
+- `./dev-simple` - Minimal startup with env-loader approach

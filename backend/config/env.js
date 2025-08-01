@@ -2,7 +2,11 @@
 // Loads environment variables from .env file
 // Note: .env file is hidden from assistant for security
 
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ 
+  path: path.resolve(process.cwd(), '.env'),
+  debug: false // Set to true for debugging env loading
+});
 
 const config = {
   // Node Environment

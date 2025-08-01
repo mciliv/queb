@@ -1,0 +1,23 @@
+# Payment Toggle
+
+## Configuration
+```js
+// In frontend/core/app.js
+const PAYMENT_CONFIG = {
+  enabled: false, // Set to true to enable payment functionality
+  devMode: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+};
+```
+
+## Usage
+```js
+// Console commands
+enablePayments()   // Enable payment functionality
+disablePayments()  // Disable payment functionality  
+togglePayments(true/false) // Set specific state
+```
+
+## Behavior
+- **Disabled**: Payment section hidden, all analysis allowed
+- **Enabled**: Payment section shown, payment validation required
+- **Dev mode**: Auto-enables on localhost regardless of setting

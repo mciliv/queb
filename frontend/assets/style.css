@@ -233,6 +233,7 @@ body {
   display: flex;
   align-items: center;
   flex: 1;
+  position: relative;
 }
 
 .text-input {
@@ -253,6 +254,46 @@ body {
 
 .text-input::placeholder {
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* Modern keyboard shortcut hint */
+.keyboard-hint {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.keyboard-hint.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.hint-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  min-width: 20px;
+  height: 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Hide hint when input is focused or has content */
+.text-input:focus + .keyboard-hint,
+.text-input:not(:placeholder-shown) + .keyboard-hint {
+  opacity: 0;
+  visibility: hidden;
 }
 
 /* Input Mode Selection */

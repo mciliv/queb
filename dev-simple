@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Simple dev runner that assumes .env is already loaded
+# Uses the new env-loader.js which doesn't depend on .env directly
+
+set -e
+
+# Get project root
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$PROJECT_ROOT"
+
+# Load environment variables if .env exists (silently)
+if [ -f ".env" ]; then
+    export $(grep -v '^#' .env | xargs) 2>/dev/null || true
+fi
+
+echo "🚀 Starting development server with environment loader..."
+
+# Start server with the new environment configuration
+NODE_OPTIONS="" npx nodemon --quiet backend/api/server.js
