@@ -1,3 +1,0 @@
-#!/bin/bash
-# Deployment script - run tests and deploy to Google Cloud Functions
-jest --testPathPattern=unit.test.js --verbose --silent && jest --testPathPattern=integration.test.js --verbose && jest --testPathPattern=system.test.js --verbose --detectOpenHandles && python -m pytest tests/ -v && gcloud functions deploy molecular-analysis --runtime nodejs20 --trigger-http --allow-unauthenticated --memory 1GB --timeout 540s --entry-point molecularAnalysis --source . 
