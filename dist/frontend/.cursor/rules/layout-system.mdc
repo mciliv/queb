@@ -1,0 +1,100 @@
+# Layout System - Anti-Overlap Rules
+
+## CSS Custom Properties (ALWAYS USE)
+**Purpose**: Consistent spacing prevents overlap accidents
+```css
+:root {
+  /* Spacing Scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+  
+  /* Layout Zones */
+  --sidebar-width: 300px;
+  --sidebar-gap: 20px;
+  --top-bar-height: 60px;
+  --safe-area-right: calc(var(--sidebar-width) + var(--sidebar-gap));
+  --safe-area-top: calc(var(--top-bar-height) + var(--sidebar-gap));
+  
+  /* Z-Index Stack */
+  --z-base: 1;
+  --z-content: 10;
+  --z-sidebar: 100;
+  --z-modal: 1000;
+  --z-tooltip: 10000;
+}
+```
+
+## Z-Index Management (NEVER OVERLAP)
+**Rule**: All positioned elements must use defined z-index values
+```css
+.content-area { z-index: var(--z-content); }
+.sidebar-container { z-index: var(--z-sidebar); }
+.modal-backdrop { z-index: var(--z-modal); }
+```
+
+## Safe Areas (MANDATORY MARGINS)
+**Purpose**: Create exclusion zones around fixed elements
+```css
+.main-content { margin-right: var(--safe-area-right); }
+.text-input { margin-right: var(--safe-area-right); }
+.content-with-sidebar { padding-right: var(--safe-area-right); }
+```
+
+## Layout Containers (PREVENT OVERFLOW)
+```css
+.layout-container {
+  max-width: calc(100vw - var(--safe-area-right));
+  overflow: hidden;
+}
+.scrollable-content {
+  max-height: calc(100vh - var(--safe-area-top));
+  overflow-y: auto;
+}
+```
+
+## Responsive Breakpoints (STACK ON MOBILE)
+```css
+@media (max-width: 768px) {
+  :root {
+    --safe-area-right: 80px; /* Smaller sidebar */
+  }
+}
+@media (max-width: 480px) {
+  .sidebar-container { 
+    position: relative; /* Stack instead of overlap */
+    width: 100%;
+  }
+  .main-content { margin-right: 0; }
+}
+```
+
+## Debug Mode (DEVELOPMENT ONLY)
+```css
+.debug-layout * {
+  outline: 1px solid rgba(255, 0, 0, 0.3) !important;
+}
+.debug-layout .safe-area::after {
+  content: 'SAFE ZONE';
+  background: rgba(255, 255, 0, 0.2);
+  position: absolute;
+}
+```
+
+## Element Positioning Rules
+1. **Fixed Elements**: Must define safe areas for other content
+2. **Text Inputs**: Must have right margin = sidebar width + gap
+3. **Buttons**: Must stay within content boundaries
+4. **Modals**: Must use highest z-index with backdrop
+5. **Tooltips**: Must use tooltip z-index level
+
+## Overlap Prevention Checklist
+- [ ] Uses CSS custom properties for spacing
+- [ ] Defines safe areas around fixed elements  
+- [ ] Sets proper z-index from defined stack
+- [ ] Tests on mobile breakpoints
+- [ ] Validates with debug mode
+- [ ] Documents any layout exceptions

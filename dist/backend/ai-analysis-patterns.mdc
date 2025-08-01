@@ -1,0 +1,74 @@
+# AI Analysis Patterns for Molecular Recognition
+
+## Pixel-Level Analysis Requirements
+- **Focus on EXACT pixel coordinates** when analyzing images
+- **Use "CRITICAL: Focus on the EXACT pixel at coordinates (x, y)"** in prompts
+- **Analyze ONLY what's at the specific pixel location** - not general area
+- **Provide crop region context** with middle pixel coordinates
+
+## Biological Tissue Recognition
+- **Identify collagen and keratin** in biological tissues
+- **Recognize skin, hair, nails, tendons** as containing structural proteins
+- **Do NOT return random small molecules** when analyzing biological proteins
+- **Use appropriate protein component SMILES** for biological structures
+
+## SMILES vs Molecular Formula Correction
+- **CRITICAL: Use proper SMILES notation ONLY** - never molecular formulas
+- **Reject molecular formulas** like "C3N2O2H6", "CaCO3", "H2O"
+- **Provide correct SMILES examples** in AI instructions
+- **Validate SMILES format** before processing
+
+## AI Instruction Patterns
+```javascript
+// Good: Specific pixel targeting
+const focusText = `CRITICAL: Focus on the EXACT pixel at coordinates (${x}, ${y}) in the original image. 
+The red box in the cropped image marks the exact middle pixel (${cropMiddleX}, ${cropMiddleY}) 
+of the ${cropSize}x${cropSize} crop region. Analyze ONLY what's at this specific pixel location.`;
+
+// Good: SMILES validation instructions
+const smilesInstruction = `CRITICAL: Use proper SMILES notation ONLY, never molecular formulas like C3N2O2H6.
+Examples:
+- Correct: "O" (water), "CCO" (ethanol), "C1=CC=CC=C1" (benzene)
+- Incorrect: "H2O", "C2H6O", "C6H6"`;
+```
+
+## Biological Analysis Examples
+- **Collagen fiber**: Return collagen component amino acids in SMILES
+- **Hair strand**: Return keratin component amino acids in SMILES  
+- **Skin tissue**: Return structural protein components
+- **Muscle tissue**: Return actin/myosin components
+
+## Error Handling for AI Responses
+- **Parse AI responses carefully** for chemical arrays
+- **Handle description-only responses** when no molecules found
+- **Validate SMILES before SDF generation** 
+- **Provide fallback behavior** for parsing failures
+
+## Crop Region Processing
+- **Calculate exact middle pixel** of crop region
+- **Draw red box indicator** on cropped image
+- **Scale coordinates properly** between display and actual image
+- **Maintain aspect ratios** during crop operations
+
+## Response Format Requirements
+```javascript
+// Expected AI response format
+{
+  object: "Skin tissue",
+  chemicals: [
+    { name: "Glycine", smiles: "C(C(=O)O)N" },
+    { name: "Proline", smiles: "C1CC(NC1)C(=O)O" },
+    { name: "Hydroxyproline", smiles: "C1C(C(NC1)C(=O)O)O" }
+  ]
+}
+```
+
+## Quality Assurance
+- **Test with biological samples** (skin, hair, nails)
+- **Verify SMILES validity** with RDKit parsing
+- **Check coordinate accuracy** in crop regions
+- **Validate protein component identification**
+description:
+globs:
+alwaysApply: false
+---
