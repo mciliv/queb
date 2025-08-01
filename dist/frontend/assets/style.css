@@ -296,6 +296,21 @@ body {
   visibility: hidden;
 }
 
+/* Enhanced visibility for wide screens */
+@media (min-width: 1024px) {
+  .hint-key {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 11px;
+    padding: 3px 8px;
+    height: 20px;
+    min-width: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 8px rgba(255, 255, 255, 0.1);
+  }
+}
+
 /* Input Mode Selection */
 .input-mode-section {
   padding: 16px;
