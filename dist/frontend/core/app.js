@@ -321,22 +321,27 @@ class MolecularApp {
     
     objectColumn.appendChild(titleContainer);
 
-    // Handle description vs molecules
+    // Add description as header if present
     if (description) {
-      const descDiv = document.createElement("div");
-      descDiv.className = "description-content";
-      descDiv.textContent = description;
-      descDiv.classList.add('description-content');
-      objectColumn.appendChild(descDiv);
-    } else {
-      // Render 3D molecules with SPHERE REPRESENTATION ONLY
+      const descHeader = document.createElement("div");
+      descHeader.className = "description-header";
+      descHeader.textContent = description;
+      objectColumn.appendChild(descHeader);
+    }
+
+    // Render 3D molecules with SPHERE REPRESENTATION ONLY
+    if (sdfFiles.length > 0) {
+      // keep 3dmol.js grid
+      const moleculeGrid = document.createElement("div");
+      moleculeGrid.className = "molecule-grid";
+      
       for (let i = 0; i < sdfFiles.length; i++) {
         const sdfFile = sdfFiles[i];
         const chemical = chemicals?.[i] || { smiles: smiles[i] };
         
         const container = document.createElement("div");
         container.className = "molecule-viewer";
-        objectColumn.appendChild(container);
+        moleculeGrid.appendChild(container);
 
         const moleculeContainer = document.createElement("div");
         moleculeContainer.className = "molecule-container";
@@ -357,11 +362,13 @@ class MolecularApp {
 
         moleculeName.appendChild(wikipediaLink);
         moleculeContainer.appendChild(moleculeName);
-        objectColumn.appendChild(moleculeContainer);
+        moleculeGrid.appendChild(moleculeContainer);
 
         const viewer = await this.render(sdfFile, container);
         if (viewer) this.viewers.push(viewer);
       }
+
+      objectColumn.appendChild(moleculeGrid);
 
       this.viewers.forEach((viewer) => {
         viewer.resize();
