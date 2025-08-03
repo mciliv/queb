@@ -52,6 +52,21 @@ body {
   outline: none !important;
 }
 
+/* Molecule grid styling */
+.molecule-grid {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.molecule-grid canvas {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+
 /* Hide 3Dmol.js default UI elements that conflict with app design */
 .3dmol-ui .ui-panel,
 .3dmol-ui .ui-controls,

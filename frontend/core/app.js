@@ -348,10 +348,13 @@ class MolecularApp {
       descDiv.classList.add('description-content');
       objectColumn.appendChild(descDiv);
     } else {
-      // Render 3D molecules with SPHERE REPRESENTATION ONLY
-      for (let i = 0; i < sdfFiles.length; i++) {
-        const sdfFile = sdfFiles[i];
-        const chemical = chemicals?.[i] || { smiles: smiles[i] };
+      // Use 3Dmol.js grid viewer for multiple molecules
+      if (sdfFiles.length > 1) {
+        await this.createGridViewer(objectColumn, sdfFiles, chemicals, smiles);
+      } else {
+        // Single molecule - use individual viewer
+        const sdfFile = sdfFiles[0];
+        const chemical = chemicals?.[0] || { smiles: smiles[0] };
         
         const container = document.createElement("div");
         container.className = "molecule-viewer";
@@ -364,8 +367,7 @@ class MolecularApp {
         moleculeName.className = "molecule-name";
 
         const displayName = uiManager.getMoleculeName(chemical);
-        moleculeName.textContent = displayName;
-
+        
         // Add Wikipedia link
         const wikipediaLink = document.createElement("a");
         wikipediaLink.textContent = displayName;
@@ -390,6 +392,81 @@ class MolecularApp {
 
     gldiv.appendChild(objectColumn);
     this.updateScrollHandles();
+  }
+
+  async createGridViewer(container, sdfFiles, chemicals, smiles) {
+    // Create grid container
+    const gridContainer = document.createElement("div");
+    gridContainer.className = "molecule-grid";
+    gridContainer.id = `grid-${Date.now()}`;
+    
+    // Adjust container height based on number of molecules
+    const baseHeight = 150;
+    const totalHeight = baseHeight * sdfFiles.length;
+    gridContainer.style.height = `${totalHeight}px`;
+    gridContainer.style.width = "400px";
+    
+    container.appendChild(gridContainer);
+
+    // Create 3Dmol.js grid viewer
+    const viewers = $3Dmol.createViewerGrid(
+      gridContainer.id,
+      { 
+        rows: sdfFiles.length,
+        cols: 1
+      }
+    );
+
+    // Render each molecule in the grid
+    const renderPromises = sdfFiles.map(async (sdfFile, index) => {
+      const viewer = viewers[index][0];
+      const chemical = chemicals?.[index] || { smiles: smiles[index] };
+      
+      try {
+        const response = await fetch(sdfFile);
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+
+        const sdfData = await response.text();
+        if (!sdfData.trim()) {
+          throw new Error(`Empty SDF data`);
+        }
+        if (!sdfData.includes("$$$$")) {
+          throw new Error(`Invalid SDF format`);
+        }
+
+        viewer.addModel(sdfData, "sdf");
+        // CRITICAL: Use ONLY sphere representation with van der Waals radii at 0.8 scale
+        viewer.setStyle({}, { sphere: { scale: 0.8 } });
+        viewer.zoomTo();
+        viewer.render();
+
+        // Add molecule name label
+        const displayName = uiManager.getMoleculeName(chemical);
+        viewer.addLabel(displayName, {
+          position: { x: 0, y: 0, z: 0 },
+          fontSize: 12,
+          fontColor: 'white',
+          backgroundColor: 'rgba(0,0,0,0.7)'
+        });
+
+        this.viewers.push(viewer);
+        return { index, sdfFile, status: "success" };
+      } catch (error) {
+        console.error(`Failed to load molecule:`, error);
+        viewer.addLabel(`Error: ${error.message}`, {
+          position: { x: 0, y: 0, z: 0 },
+          fontSize: 12,
+          fontColor: 'red'
+        });
+        viewer.render();
+        return { index, sdfFile, status: "error", error: error.message };
+      }
+    });
+
+    const results = await Promise.all(renderPromises);
+    console.log("Grid rendering results:", results);
   }
 
   async render(sdfFile, container) {
