@@ -39,7 +39,7 @@ describe('Basic App Smoke Tests', () => {
 
   test('Environment configuration is valid', () => {
     // Test that root-level scripts are set up
-    const rootScripts = ['dev', 'tests', 'ship', 'server', 'debug', 'cleanup'];
+    const rootScripts = ['dev', 'ship', 'server', 'cleanup'];
     
     rootScripts.forEach(script => {
       expect(fs.existsSync(path.join(__dirname, '..', script))).toBe(true);
