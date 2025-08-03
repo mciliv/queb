@@ -41,6 +41,43 @@ body {
   overflow-x: hidden;
 }
 
+/* 3Dmol.js UI Alignment - Match app's "stupid simple" design */
+.3dmol-ui,
+.3dmol-ui *,
+[class*="3dmol"],
+[class*="3Dmol"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Hide 3Dmol.js default UI elements that conflict with app design */
+.3dmol-ui .ui-panel,
+.3dmol-ui .ui-controls,
+.3dmol-ui .ui-buttons,
+[class*="3dmol"] .ui-panel,
+[class*="3dmol"] .ui-controls,
+[class*="3dmol"] .ui-buttons {
+  display: none !important;
+}
+
+/* Ensure 3Dmol.js canvas aligns with app styling */
+.3dmol-ui canvas,
+[class*="3dmol"] canvas,
+.molecule-viewer canvas {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Remove any 3Dmol.js borders/outlines */
+.3dmol-ui *:focus,
+[class*="3dmol"] *:focus {
+  outline: none !important;
+  border: none !important;
+}
+
 /* Remove all default browser outlines and borders */
 *:focus {
   outline: none !important;
@@ -558,9 +595,13 @@ body {
 .molecule-viewer {
   width: 100%;
   height: 250px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 4px;
+  background: transparent;
+  border: none;
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .molecule-name {
@@ -1565,7 +1606,7 @@ input[type="checkbox"]:checked + .mode-label {
   position: relative;
   width: 400px;
   height: 300px;
-  background: #000000;
+  background: transparent;
   border-radius: 0;
   overflow: hidden;
   margin: 0;

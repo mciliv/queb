@@ -232,6 +232,17 @@ app.get('/health', (req, res) => {
   });
 });
 
+// ==================== CONFIGURATION ENDPOINT ====================
+app.get('/api/config', (req, res) => {
+  const paymentConfig = config.getPaymentConfig();
+  
+  res.json({
+    payments: paymentConfig,
+    environment: config.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // ==================== ERROR LOGGING ENDPOINT ====================
 app.post('/api/log-error', (req, res) => {
   const error = req.body;
@@ -893,8 +904,7 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
 
       const localIP = getLocalIPAddress();
       httpServer = app.listen(actualPort, "0.0.0.0", () => {
-        log.success(`✅ HTTP server running on http://localhost:${actualPort}`);
-        log.info(`📱 Mobile access: http://${localIP}:${actualPort}`);
+        console.log(`http://localhost:${actualPort}; http://${localIP}:${actualPort} (desktop only)`);
         
         // Always log server ready for tests
         if (process.env.NODE_ENV === 'test') {

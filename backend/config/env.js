@@ -18,6 +18,11 @@ const config = {
   // OpenAI API Configuration
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   
+  // Payment Configuration
+  PAYMENTS_ENABLED: process.env.PAYMENTS_ENABLED === 'true',
+  PAYMENTS_DEV_MODE: process.env.PAYMENTS_DEV_MODE === 'true',
+  PAYMENTS_REQUIRED: process.env.PAYMENTS_REQUIRED === 'true',
+  
   // Database Configuration (PostgreSQL)
   DB_HOST: process.env.DB_HOST || 'localhost',
   DB_PORT: parseInt(process.env.DB_PORT) || 5432,
@@ -42,6 +47,20 @@ const config = {
   SSL_KEY_PATH: process.env.SSL_KEY_PATH,
 };
 
+// Payment configuration helper
+const getPaymentConfig = () => {
+  const isDev = config.NODE_ENV === 'development';
+  const isLocalhost = process.env.HOSTNAME === 'localhost' || process.env.HOSTNAME === '127.0.0.1';
+  
+  return {
+    enabled: config.PAYMENTS_ENABLED || false,
+    devMode: config.PAYMENTS_DEV_MODE || isDev || isLocalhost,
+    required: config.PAYMENTS_REQUIRED || false,
+    // Auto-disable in development unless explicitly enabled
+    effectiveEnabled: config.PAYMENTS_ENABLED === true || (isDev && config.PAYMENTS_DEV_MODE !== false)
+  };
+};
+
 // Validation
 const validateConfig = () => {
   const errors = [];
@@ -59,5 +78,6 @@ const validateConfig = () => {
 // Export validated config
 module.exports = {
   ...config,
+  getPaymentConfig,
   validateConfig,
 }; 

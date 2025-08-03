@@ -401,7 +401,13 @@ class MolecularApp {
 
       const sdfData = await response.text();
       const viewer = $3Dmol.createViewer(container, {
+        backgroundColor: 'transparent',
+        antialias: true,
         defaultcolors: $3Dmol.rasmolElementColors,
+        // Disable 3Dmol.js UI to match app's "stupid simple" design
+        ui: false,
+        showControls: false,
+        showInfo: false
       });
 
       viewer.addModel(sdfData, "sdf");
