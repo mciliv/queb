@@ -24,12 +24,29 @@ createdb mol_users
 ## Usage
 
 ```bash
-./run dev     # Start development server
-./run server  # Start production server
-./run test    # Run tests
-./run format  # Format code
-./run clean   # Clean processes
+./run dev              # Start development server
+./run server           # Start production server
+./run test             # Run tests
+./run test:connections # Test backwards endpoint connections
+./run format           # Format code
+./run clean            # Clean processes
 ```
+
+## Connection Testing
+
+The app includes backwards connection testing that validates the entire data flow:
+
+**Test Flow (backwards from output):**
+1. Frontend Display ← Can we serve the frontend?
+2. SDF File Serving ← Can we serve generated SDF files?  
+3. SDF Generation ← Can we generate SDF from SMILES?
+4. Molecular Analysis ← Can we analyze text/images to get SMILES?
+5. Input Validation ← Can we handle valid inputs?
+
+**Usage:**
+- `./run test:connections` - Run backwards connection tests
+- `/health/connections` - Real-time connection health API
+- `Ctrl+Shift+H` - Toggle connection health display (dev mode)
 
 ## Features
 

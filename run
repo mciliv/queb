@@ -35,6 +35,10 @@ case "$1" in
     echo "🧪 Running integration tests..."
     npx jest --testPathPattern=integration.test.js --verbose
     ;;
+  "test:connections")
+    echo "🔗 Testing backwards connections..."
+    npx jest test/backwards-connection.test.js --verbose
+    ;;
   
   # Utilities
   "format")
@@ -53,13 +57,14 @@ case "$1" in
   # Help
   "help"|"--help"|"-h"|"")
     echo "Commands:"
-    echo "  dev       - Start development server"
-    echo "  server    - Start production server"  
-    echo "  debug     - Start with debugger"
-    echo "  test      - Run tests"
-    echo "  format    - Format code"
-    echo "  clean     - Clean up processes"
-    echo "  deploy    - Deploy to production"
+    echo "  dev              - Start development server"
+    echo "  server           - Start production server"  
+    echo "  debug            - Start with debugger"
+    echo "  test             - Run tests"
+    echo "  test:connections - Test backwards endpoint connections"
+    echo "  format           - Format code"
+    echo "  clean            - Clean up processes"
+    echo "  deploy           - Deploy to production"
     ;;
   *)
     echo "❌ Unknown command: $1"

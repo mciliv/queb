@@ -232,6 +232,37 @@ app.get('/health', (req, res) => {
   });
 });
 
+// ==================== CONNECTION HEALTH ENDPOINT ====================
+app.get('/health/connections', async (req, res) => {
+  try {
+    // Import the backwards connection tester
+    const BackwardsConnectionTester = require('../../test/backwards-connection-test');
+    const tester = new BackwardsConnectionTester(app);
+    
+    // Run a quick connection health check
+    const healthReport = await tester.runBackwardsConnectionTest();
+    
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      connectionHealth: healthReport.connectionHealth,
+      passCount: healthReport.passCount,
+      totalSteps: healthReport.totalSteps,
+      details: healthReport.details,
+      summary: healthReport.connectionHealth >= 80 ? 'excellent' : 
+               healthReport.connectionHealth >= 60 ? 'good' : 'critical'
+    });
+  } catch (error) {
+    console.error('Connection health check failed:', error);
+    res.status(500).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      error: 'Failed to perform connection health check',
+      details: error.message
+    });
+  }
+});
+
 // ==================== CONFIGURATION ENDPOINT ====================
 app.get('/api/config', (req, res) => {
   const paymentConfig = config.getPaymentConfig();

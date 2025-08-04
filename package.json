@@ -8,6 +8,7 @@
     "dev": "./dev",
     "build": "vite build",
     "test": "jest",
+    "test:connections": "jest test/backwards-connection.test.js",
     "format": "prettier --write .",
     "clean": "./cleanup"
   },
@@ -23,7 +24,8 @@
     "vite": "^7.0.6",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
   },
   "repository": {
     "type": "git",
