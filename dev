@@ -1,71 +1,38 @@
 #!/bin/bash
 
-# dev - Development server startup with Vite + Node.js backend
-
 set -e
 
 # Get project root
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_ROOT"
 
-# Colors for output
-source infrastructure/scripts/colors.sh
-
 echo "🚀 Starting Development Server"
-echo "=============================="
 
 # Clean up any existing processes
-log_clean "Cleaning up development processes..."
 ./cleanup 2>/dev/null || true
 
-# Check if dev.queb.space is in /etc/hosts
-if ! grep -q "dev.queb.space" /etc/hosts; then
-    log_warning "dev.queb.space not in /etc/hosts. Run ./setup-queb-space.sh first"
-fi
-
-log_info "Starting development servers..."
-log_info "Press Ctrl+C to stop"
-echo ""
-
 # Start the Node.js backend server
-log_info "🔧 Starting Node.js backend..."
 PORT=3001 NODE_ENV=development npx nodemon --quiet backend/api/server.js &
 BACKEND_PID=$!
 
 # Wait for backend to start
-sleep 3
+sleep 2
 
-# Check if backend is running
-if kill -0 $BACKEND_PID 2>/dev/null; then
-    log_success "✅ Backend server is running!"
-    
-    echo ""
-    log_success "🌐 Development URL:"
-    log_success "   🌟 https://dev.queb.space"
-    echo ""
-    
-    # Start Vite dev server for frontend
-    log_info "⚡ Starting Vite dev server..."
-    npx vite &
-    VITE_PID=$!
-    
-    # Store PIDs for cleanup
-    echo $BACKEND_PID > /tmp/dev_backend_pid
-    echo $VITE_PID > /tmp/dev_vite_pid
-    
-    log_success "✅ Vite dev server started with HMR!"
-    log_info "   📝 Edit frontend files and see changes instantly"
-    log_info "   🔄 Hot Module Replacement enabled"
-    
-    # Wait for either process to exit, then cleanup
-    wait $BACKEND_PID $VITE_PID
-    
-    # Cleanup when either process exits
-    log_info "🔄 Shutting down development servers..."
-    kill $BACKEND_PID 2>/dev/null || true
-    kill $VITE_PID 2>/dev/null || true
-    
-else
-    log_error "❌ Backend server failed to start"
-    exit 1
-fi
+# Start Vite dev server for frontend
+npx vite &
+VITE_PID=$!
+
+# Store PIDs for cleanup
+echo $BACKEND_PID > /tmp/dev_backend_pid
+echo $VITE_PID > /tmp/dev_vite_pid
+
+echo "✅ Development servers running:"
+echo "   🌟 https://dev.queb.space"
+echo "   ⚡ Vite HMR enabled"
+
+# Wait for either process to exit, then cleanup
+wait $BACKEND_PID $VITE_PID
+
+# Cleanup when either process exits
+kill $BACKEND_PID 2>/dev/null || true
+kill $VITE_PID 2>/dev/null || true
