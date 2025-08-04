@@ -13,9 +13,29 @@ pkill -f "npm.*nodemon" 2>/dev/null || true
 # Kill any remaining nodemon processes
 pkill -f "nodemon" 2>/dev/null || true
 
+# Kill Vite processes
+pkill -f "vite" 2>/dev/null || true
+
+# Kill our file watcher processes (legacy)
+if [ -f /tmp/dev_watcher_pid ]; then
+    WATCHER_PID=$(cat /tmp/dev_watcher_pid)
+    kill $WATCHER_PID 2>/dev/null || true
+    rm -f /tmp/dev_watcher_pid
+fi
+
+# Kill our reload server (legacy)
+if [ -f /tmp/dev_reload_pid ]; then
+    RELOAD_PID=$(cat /tmp/dev_reload_pid)
+    kill $RELOAD_PID 2>/dev/null || true
+    rm -f /tmp/dev_reload_pid
+fi
+
+# Kill any fswatch processes (legacy)
+pkill -f "fswatch" 2>/dev/null || true
+
 # Try to free up the common ports
 if command -v lsof >/dev/null 2>&1; then
-  for port in 3000 3001 3002; do
+  for port in 3000 3001 3002 3004; do
     pids=$(lsof -ti:$port 2>/dev/null || true)
     if [ ! -z "$pids" ]; then
       log_info "🔄 Freeing port $port (PIDs: $pids)..."
@@ -23,6 +43,12 @@ if command -v lsof >/dev/null 2>&1; then
     fi
   done
 fi
+
+# Clean up temp files
+rm -f /tmp/dev_backend_pid
+rm -f /tmp/dev_vite_pid
+rm -f /tmp/dev_server_pid
+rm -f /tmp/frontend_last_check
 
 # Wait a moment for processes to fully terminate
 sleep 1

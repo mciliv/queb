@@ -423,24 +423,39 @@
       </div>
     </template>
 
+    <!-- Core Components -->
     <script type="module" src="../components/payment.js"></script>
     <script type="module" src="../components/camera.js"></script>
     <script type="module" src="../components/camera-handler.js"></script>
     <script type="module" src="../components/ui-utils.js"></script>
     <script src="../components/debug-events.js"></script>
-    <script src="../components/error-handler.js"></script>
-    <script type="module" src="app.js"></script>
+    
+    <!-- Modular App -->
+    <script type="module" src="app-modular.js"></script>
+    
+    <!-- External Libraries -->
     <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <!-- Manual testing script for component connections -->
-    <script src="../../tests/manual-test.js"></script>
-    <!-- Camera testing script -->
-    <script src="../../tests/camera-test.js"></script>
-    <!-- Camera mode testing script -->
-    <script src="../../test-camera-mode.js"></script>
-    <!-- Camera click testing script -->
-    <script src="../../test-camera-click.js"></script>
-    <!-- LiveReload disabled - using nodemon for server restarts -->
+    
+    <!-- Development Scripts (only in dev mode) -->
+    <script>
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        // Load development scripts
+        const devScripts = [
+          '../../tests/manual-test.js',
+          '../../tests/camera-test.js',
+          '../../test-camera-mode.js',
+          '../../test-camera-click.js',
+          'test-modular.js'
+        ];
+        
+        devScripts.forEach(src => {
+          const script = document.createElement('script');
+          script.src = src;
+          document.head.appendChild(script);
+        });
+      }
+    </script>
   <!-- Error Reporting Panel -->
   <div id="error-panel" class="error-panel hidden">
     <div class="error-header">
