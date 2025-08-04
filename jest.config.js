@@ -40,6 +40,10 @@ module.exports = {
       testMatch: ['**/test/unit/camera*.test.js', '**/test/unit/manual.test.js', '**/test/unit/front-end*.test.js'],
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/test/fixtures/setup.js'],
+      globals: {
+        TextEncoder: TextEncoder,
+        TextDecoder: TextDecoder
+      },
       detectOpenHandles: true
     },
     {
