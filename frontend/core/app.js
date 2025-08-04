@@ -274,8 +274,9 @@ class MolecularApp {
   setupKeyboardHint() {
     const keyboardHint = document.getElementById('keyboard-hint');
     const hintKey = document.getElementById('hint-key');
+    const objectInput = document.getElementById('object-input');
     
-    if (!keyboardHint || !hintKey) return;
+    if (!keyboardHint || !hintKey || !objectInput) return;
 
     // Show on non-mobile devices with wide screens
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -288,7 +289,11 @@ class MolecularApp {
 
     // Set platform-specific key display
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    hintKey.textContent = isMac ? '⌘K' : 'Ctrl+K';
+    const shortcutKey = isMac ? '⌘K' : 'Ctrl+K';
+    hintKey.textContent = shortcutKey;
+    
+    // Update placeholder with keyboard shortcut
+    objectInput.placeholder = `Describe an object... (${shortcutKey} to focus)`;
     
     // Show the hint
     keyboardHint.classList.add('show');
