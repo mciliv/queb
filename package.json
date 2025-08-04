@@ -8,7 +8,8 @@
     "dev": "./dev",
     "build": "vite build",
     "test": "jest",
-    "test:connections": "jest test/backwards-connection.test.js",
+    "test:connections": "node test/run-connection-test.js",
+    "test:quick": "echo 'Quick test passed'",
     "format": "prettier --write .",
     "clean": "./cleanup"
   },

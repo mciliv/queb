@@ -4,10 +4,10 @@ import { cameraManager } from '../components/camera.js';
 import { cameraHandler } from '../components/camera-handler.js';
 import { uiManager } from '../components/ui-utils.js';
 
-// Payment toggle configuration
-const PAYMENT_CONFIG = {
-  enabled: false, // Set to true to enable payment functionality
-  devMode: location.hostname === 'dev.queb.space'
+// Payment configuration - loaded from server
+let PAYMENT_CONFIG = {
+  enabled: false,
+  devMode: false
 };
 
 class MolecularApp {
@@ -26,28 +26,32 @@ class MolecularApp {
     this.snapshots = document.querySelector(".snapshots-container");
     this.objectInput = document.getElementById("object-input");
 
+    // Ensure objectInput exists
+    if (!this.objectInput) {
+      console.error('❌ objectInput not found');
+      return;
+    }
+
     uiManager.initialize();
     uiManager.setupDebuggingFunctions();
     uiManager.showMainApp();
 
-    this.setupEventListeners();
+    // Load configuration from server
+    await this.loadConfiguration();
 
-    // Initialize payment system if enabled
+    this.setupEventListeners();
+    this.setupInputHandling();
+
+    // Initialize payment system based on config
+    this.paymentEnabled = PAYMENT_CONFIG.effectiveEnabled;
     if (this.paymentEnabled) {
       simplePaymentManager.checkPaymentRequired();
       this.hasPaymentSetup = true;
     } else {
-      // Hide payment section when disabled
       this.hidePaymentSection();
-      this.hasPaymentSetup = true; // Skip payment validation
+      this.hasPaymentSetup = true;
       console.log('💳 Payment functionality disabled');
     }
-    
-    // Auto-enable dev mode for dev.queb.space
-    if (PAYMENT_CONFIG.devMode) {
-      console.log('🔧 Auto-enabling developer mode for dev.queb.space');
-      this.hasPaymentSetup = true;
-    }    
     
     await cameraManager.initialize();
 
@@ -60,6 +64,19 @@ class MolecularApp {
     console.log('✅ Molecular analysis app initialized');
   }
 
+  async loadConfiguration() {
+    try {
+      const response = await fetch('/api/config');
+      if (response.ok) {
+        const config = await response.json();
+        PAYMENT_CONFIG = config.payments;
+        console.log('✅ Configuration loaded:', config);
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to load configuration, using defaults');
+    }
+  }
+
   setupEventListeners() {
     this.setupTextAnalysis();
     cameraHandler.setupEventListeners();
@@ -68,11 +85,7 @@ class MolecularApp {
     document.addEventListener('keydown', (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
         event.preventDefault();
-        const textInput = document.getElementById('object-input');
-        if (textInput) {
-          textInput.focus();
-          textInput.select();
-        }
+        this.focusInput();
       }
     });
     
@@ -84,8 +97,44 @@ class MolecularApp {
       this.processAnalysisResult(output, icon, objectName, useQuotes, croppedImageData);
     });
   }
+
+  setupInputHandling() {
+    // Photo upload handling
+    const photoUpload = document.getElementById('photo-upload');
+    if (photoUpload) {
+      photoUpload.addEventListener('change', (e) => this.handlePhotoUpload(e));
+    }
+
+    // URL analysis
+    const urlAnalyze = document.getElementById('url-analyze');
+    if (urlAnalyze) {
+      urlAnalyze.addEventListener('click', () => this.handleUrlAnalysis());
+    }
+
+    // URL input enter key
+    const photoUrl = document.getElementById('photo-url');
+    if (photoUrl) {
+      photoUrl.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+          this.handleUrlAnalysis();
+        }
+      });
+    }
+  }
+
+  focusInput() {
+    if (this.objectInput) {
+      this.objectInput.focus();
+      this.objectInput.select();
+    }
+  }
    
   setupTextAnalysis() {
+    if (!this.objectInput) {
+      console.error('❌ objectInput not found');
+      return;
+    }
+    
     this.objectInput.addEventListener("keyup", async (e) => {
       if (e.key !== "Enter") return;
       await this.handleTextAnalysis();
@@ -139,6 +188,71 @@ class MolecularApp {
     } finally {
       this.hideProcessing();
       this.isProcessing = false;
+    }
+  }
+
+  async handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const imageData = await this.readFileAsDataURL(file);
+      await this.analyzeImage(imageData, file.name);
+    } catch (error) {
+      console.error('❌ Photo upload failed:', error);
+      this.showError('Failed to upload photo');
+    }
+  }
+
+  async handleUrlAnalysis() {
+    const photoUrl = document.getElementById('photo-url');
+    if (!photoUrl || !photoUrl.value.trim()) return;
+
+    try {
+      await this.analyzeImage(photoUrl.value.trim(), 'URL Image');
+      photoUrl.value = ''; // Clear input after analysis
+    } catch (error) {
+      console.error('❌ URL analysis failed:', error);
+      this.showError('Failed to analyze image URL');
+    }
+  }
+
+  readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = (e) => reject(e);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async analyzeImage(imageData, imageName) {
+    try {
+      const response = await fetch('/api/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          image: imageData,
+          imageName: imageName
+        })
+      });
+
+      if (!response.ok) throw new Error('Image analysis failed');
+      
+      const result = await response.json();
+      
+      // Dispatch analysis complete event
+      document.dispatchEvent(new CustomEvent('imageAnalysisComplete', {
+        detail: {
+          output: result.output,
+          icon: null,
+          objectName: imageName,
+          useQuotes: false,
+          croppedImageData: imageData
+        }
+      }));
+    } catch (error) {
+      throw new Error(`Image analysis failed: ${error.message}`);
     }
   }
 

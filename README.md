@@ -24,12 +24,12 @@ createdb mol_users
 ## Usage
 
 ```bash
-./run dev              # Start development server
-./run server           # Start production server
-./run test             # Run tests
-./run test:connections # Test backwards endpoint connections
-./run format           # Format code
-./run clean            # Clean processes
+dev              # Start development server
+server           # Start production server
+test             # Run tests
+test:connections # Test backwards endpoint connections
+format           # Format code
+clean            # Clean processes
 ```
 
 ## Connection Testing
