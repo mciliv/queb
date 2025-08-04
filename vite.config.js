@@ -7,18 +7,20 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      // Proxy API requests to our Node.js backend
+      // Proxy API requests to our local Node.js backend
       '/api': {
-        target: 'https://dev.queb.space',
+        target: 'https://localhost:3002',
         changeOrigin: true,
+        secure: false,
         rewrite: (path) => path.replace(/^\/api/, '')
       },
-      // Proxy other backend routes
-      '/stripe-config': 'https://dev.queb.space',
-      '/setup-payment-method': 'https://dev.queb.space',
-      '/update-payment-method': 'https://dev.queb.space',
-      '/analyze-image': 'https://dev.queb.space',
-      '/sdf_files': 'https://dev.queb.space'
+      // Proxy other backend routes to local server
+      '/stripe-config': 'https://localhost:3002',
+      '/setup-payment-method': 'https://localhost:3002',
+      '/update-payment-method': 'https://localhost:3002',
+      '/analyze-image': 'https://localhost:3002',
+      '/analyze-text': 'https://localhost:3002',
+      '/sdf_files': 'https://localhost:3002'
     }
   },
   build: {
