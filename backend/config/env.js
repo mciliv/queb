@@ -19,9 +19,9 @@ const config = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   
   // Payment Configuration
-  PAYMENTS_ENABLED: process.env.PAYMENTS_ENABLED === 'true',
+  PAYMENTS_ENABLED: process.env.PAYMENTS_ENABLED === 'false',
   PAYMENTS_DEV_MODE: process.env.PAYMENTS_DEV_MODE === 'true',
-  PAYMENTS_REQUIRED: process.env.PAYMENTS_REQUIRED === 'true',
+  PAYMENTS_REQUIRED: process.env.PAYMENTS_REQUIRED === 'false',
   
   // Database Configuration (PostgreSQL)
   DB_HOST: process.env.DB_HOST || 'localhost',
@@ -50,11 +50,11 @@ const config = {
 // Payment configuration helper
 const getPaymentConfig = () => {
   const isDev = config.NODE_ENV === 'development';
-  const isLocalhost = process.env.HOSTNAME === 'localhost' || process.env.HOSTNAME === '127.0.0.1';
+  const isDevDomain = process.env.HOSTNAME === 'dev.queb.space';
   
   return {
     enabled: config.PAYMENTS_ENABLED || false,
-    devMode: config.PAYMENTS_DEV_MODE || isDev || isLocalhost,
+    devMode: config.PAYMENTS_DEV_MODE || isDev || isDevDomain,
     required: config.PAYMENTS_REQUIRED || false,
     // Auto-disable in development unless explicitly enabled
     effectiveEnabled: config.PAYMENTS_ENABLED === true || (isDev && config.PAYMENTS_DEV_MODE !== false)

@@ -112,8 +112,8 @@ class CameraManager {
     }
 
     const isSecureContext = window.isSecureContext || location.protocol === "https:";
-    if (!isSecureContext && !location.hostname.includes("localhost")) {
-      this.showError("Camera requires HTTPS on mobile devices. Please use HTTPS or localhost.");
+    if (!isSecureContext && !location.hostname.includes("dev.queb.space")) {
+      this.showError("Camera requires HTTPS on mobile devices. Please use HTTPS or dev.queb.space.");
       return false;
     }
 

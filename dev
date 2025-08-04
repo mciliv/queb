@@ -40,10 +40,8 @@ if kill -0 $BACKEND_PID 2>/dev/null; then
     log_success "✅ Backend server is running!"
     
     echo ""
-    log_success "🌐 Development URLs:"
-    log_success "   🌟 Frontend: http://localhost:3000 (Vite + HMR)"
-    log_success "   🔧 Backend: http://localhost:3001 (API)"
-    log_success "   🔒 HTTPS: https://dev.queb.space"
+    log_success "🌐 Development URL:"
+    log_success "   🌟 https://dev.queb.space"
     echo ""
     
     # Start Vite dev server for frontend

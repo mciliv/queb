@@ -7,7 +7,7 @@ import { uiManager } from '../components/ui-utils.js';
 // Payment toggle configuration
 const PAYMENT_CONFIG = {
   enabled: false, // Set to true to enable payment functionality
-  devMode: location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  devMode: location.hostname === 'dev.queb.space'
 };
 
 class MolecularApp {
@@ -43,9 +43,9 @@ class MolecularApp {
       console.log('💳 Payment functionality disabled');
     }
     
-    // Auto-enable dev mode for localhost
+    // Auto-enable dev mode for dev.queb.space
     if (PAYMENT_CONFIG.devMode) {
-      console.log('🔧 Auto-enabling developer mode for localhost');
+      console.log('🔧 Auto-enabling developer mode for dev.queb.space');
       this.hasPaymentSetup = true;
     }    
     

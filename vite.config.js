@@ -9,16 +9,16 @@ export default defineConfig({
     proxy: {
       // Proxy API requests to our Node.js backend
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'https://dev.queb.space',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       },
       // Proxy other backend routes
-      '/stripe-config': 'http://localhost:3001',
-      '/setup-payment-method': 'http://localhost:3001',
-      '/update-payment-method': 'http://localhost:3001',
-      '/analyze-image': 'http://localhost:3001',
-      '/sdf_files': 'http://localhost:3001'
+      '/stripe-config': 'https://dev.queb.space',
+      '/setup-payment-method': 'https://dev.queb.space',
+      '/update-payment-method': 'https://dev.queb.space',
+      '/analyze-image': 'https://dev.queb.space',
+      '/sdf_files': 'https://dev.queb.space'
     }
   },
   build: {
