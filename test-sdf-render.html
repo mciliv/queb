@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SDF Render Test</title>
+    <script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-container { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .molecule-viewer { width: 300px; height: 300px; border: 1px solid #ddd; }
+        .error { color: red; }
+        .success { color: green; }
+        .object-column { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .object-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .close-button { background: none; border: none; cursor: pointer; font-size: 18px; }
+        .molecule-container { margin: 10px 0; }
+        .molecule-name { margin-bottom: 5px; font-weight: bold; }
+        .wikipedia-link { color: #0066cc; text-decoration: none; }
+        .wikipedia-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>SDF Render Test</h1>
+    
+    <div class="test-container">
+        <h3>Test 1: Direct SDF URL</h3>
+        <div id="direct-test"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>Test 2: Generate SDF via API</h3>
+        <button onclick="testGenerateSDF()">Generate SDF for CCO</button>
+        <div id="api-test"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>Test 3: Full App Integration</h3>
+        <button onclick="testFullIntegration()">Test Full Integration</button>
+        <div id="full-test"></div>
+    </div>
+
+    <script>
+        // Mock UI manager for testing
+        const uiManager = {
+            getMoleculeName: (chemical) => {
+                return chemical.name || chemical.smiles || 'Unknown';
+            }
+        };
+
+        // Simplified render function from app.js
+        async function render(sdfFile, container) {
+            try {
+                const response = await fetch(sdfFile);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                const sdfData = await response.text();
+                const viewer = $3Dmol.createViewer(container, {
+                    defaultcolors: $3Dmol.rasmolElementColors,
+                });
+
+                viewer.addModel(sdfData, "sdf");
+                // CRITICAL: Use ONLY sphere representation with van der Waals radii at 0.8 scale
+                viewer.setStyle({}, { sphere: { scale: 0.8 } });
+                viewer.zoomTo();
+                viewer.render();
+
+                return viewer;
+                
+            } catch (error) {
+                console.error(`Failed to load molecule:`, error);
+                container.textContent = `Error loading molecule: ${error.message}`;
+                container.className += " error-text";
+                return null;
+            }
+        }
+
+        // Test 1: Direct SDF URL
+        async function testDirectSDF() {
+            const container = document.getElementById('direct-test');
+            container.innerHTML = '<div class="molecule-viewer"></div>';
+            
+            try {
+                const viewer = await render('/sdf_files/CCO.sdf', container.querySelector('.molecule-viewer'));
+                if (viewer) {
+                    container.innerHTML += '<div class="success">✓ Direct SDF render successful</div>';
+                }
+            } catch (error) {
+                container.innerHTML += `<div class="error">✗ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Test 2: Generate SDF via API
+        async function testGenerateSDF() {
+            const container = document.getElementById('api-test');
+            container.innerHTML = '<div>Generating SDF...</div>';
+            
+            try {
+                const response = await fetch("/generate-sdfs", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ smiles: ["CCO"] }),
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('API response:', result);
+                    
+                    if (result.sdfPaths && result.sdfPaths.length > 0) {
+                        container.innerHTML = '<div class="molecule-viewer"></div>';
+                        const viewer = await render(result.sdfPaths[0], container.querySelector('.molecule-viewer'));
+                        if (viewer) {
+                            container.innerHTML += '<div class="success">✓ API SDF generation and render successful</div>';
+                        }
+                    } else {
+                        container.innerHTML = `<div class="error">✗ No SDF paths returned: ${JSON.stringify(result)}</div>`;
+                    }
+                } else {
+                    container.innerHTML = `<div class="error">✗ API failed: ${response.status} ${response.statusText}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="error">✗ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Test 3: Full App Integration
+        async function testFullIntegration() {
+            const container = document.getElementById('full-test');
+            container.innerHTML = '<div>Testing full integration...</div>';
+            
+            try {
+                // Simulate the full flow
+                const chemicals = [{ smiles: 'CCO', name: 'Ethanol' }];
+                
+                // Generate SDFs
+                const sdfResult = await generateSDFs(chemicals);
+                console.log('SDF result:', sdfResult);
+                
+                if (sdfResult.sdfFiles.length > 0) {
+                    // Create display column
+                    await createObjectColumn(
+                        'Test Result',
+                        sdfResult.sdfFiles,
+                        sdfResult.smiles,
+                        null, null, [], null,
+                        chemicals
+                    );
+                    
+                    container.innerHTML += '<div class="success">✓ Full integration successful</div>';
+                } else {
+                    container.innerHTML = `<div class="error">✗ No SDF files generated</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="error">✗ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Simplified generateSDFs function from app.js
+        async function generateSDFs(chemicals) {
+            const sdfFiles = [];
+            const smiles = [];
+
+            // Collect all SMILES strings
+            const smilesArray = chemicals
+                .filter(chemical => chemical.smiles)
+                .map(chemical => chemical.smiles);
+
+            if (smilesArray.length === 0) {
+                return { sdfFiles, smiles };
+            }
+
+            try {
+                const response = await fetch("/generate-sdfs", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ smiles: smilesArray }),
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    if (result.sdfPaths && Array.isArray(result.sdfPaths)) {
+                        // Convert relative paths to full URLs
+                        for (const sdfPath of result.sdfPaths) {
+                            const fullUrl = sdfPath.startsWith('/') ? sdfPath : `/${sdfPath}`;
+                            sdfFiles.push(fullUrl);
+                        }
+                        
+                        // Add corresponding SMILES
+                        for (let i = 0; i < result.sdfPaths.length && i < smilesArray.length; i++) {
+                            smiles.push(smilesArray[i]);
+                        }
+                    }
+                    
+                    if (result.errors && result.errors.length > 0) {
+                        console.warn('SDF generation errors:', result.errors);
+                    }
+                } else {
+                    console.warn(`Failed to generate SDFs: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                console.error(`Error generating SDFs:`, error);
+            }
+
+            return { sdfFiles, smiles };
+        }
+
+        // Simplified createObjectColumn function from app.js
+        async function createObjectColumn(objectName, sdfFiles, smiles = [], errorMessage = null, 
+                                        summary = null, skippedChemicals = [], description = null, 
+                                        chemicals = null, croppedImageData = null) {
+            const container = document.getElementById('full-test');
+            
+            // Create object column
+            const objectColumn = document.createElement("div");
+            objectColumn.className = "object-column";
+
+            // Create title with close button
+            const titleContainer = document.createElement("div");
+            titleContainer.className = "object-title";
+            
+            const titleText = document.createElement("span");
+            titleText.textContent = objectName;
+            titleContainer.appendChild(titleText);
+
+            const closeButton = document.createElement("button");
+            closeButton.innerHTML = "✕";
+            closeButton.className = "close-button";
+            closeButton.title = "Close";
+            closeButton.onclick = () => {
+                objectColumn.remove();
+            };
+            titleContainer.appendChild(closeButton);
+            
+            objectColumn.appendChild(titleContainer);
+
+            // Handle description vs molecules
+            if (description) {
+                const descDiv = document.createElement("div");
+                descDiv.className = "description-content";
+                descDiv.textContent = description;
+                objectColumn.appendChild(descDiv);
+            } else {
+                // Render 3D molecules with SPHERE REPRESENTATION ONLY
+                for (let i = 0; i < sdfFiles.length; i++) {
+                    const sdfFile = sdfFiles[i];
+                    const chemical = chemicals?.[i] || { smiles: smiles[i] };
+                    
+                    const moleculeContainer = document.createElement("div");
+                    moleculeContainer.className = "molecule-container";
+
+                    const moleculeName = document.createElement("div");
+                    moleculeName.className = "molecule-name";
+
+                    const displayName = uiManager.getMoleculeName(chemical);
+                    
+                    // Add Wikipedia link
+                    const wikipediaLink = document.createElement("a");
+                    wikipediaLink.textContent = displayName;
+                    wikipediaLink.href = `https://en.wikipedia.org/wiki/${encodeURIComponent(displayName)}`;
+                    wikipediaLink.target = "_blank";
+                    wikipediaLink.rel = "noopener noreferrer";
+                    wikipediaLink.className = "wikipedia-link";
+
+                    moleculeName.appendChild(wikipediaLink);
+                    moleculeContainer.appendChild(moleculeName);
+
+                    const viewerContainer = document.createElement("div");
+                    viewerContainer.className = "molecule-viewer";
+                    moleculeContainer.appendChild(viewerContainer);
+
+                    objectColumn.appendChild(moleculeContainer);
+
+                    // Render the molecule
+                    await render(sdfFile, viewerContainer);
+                }
+            }
+
+            container.appendChild(objectColumn);
+        }
+
+        // Run direct test on page load
+        document.addEventListener('DOMContentLoaded', testDirectSDF);
+    </script>
+</body>
+</html> 

@@ -4,12 +4,18 @@
 source infrastructure/scripts/colors.sh
 
 log_clean "Cleaning up all development processes and ports..."
+
+# Kill all Node.js processes related to our project
 pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+pkill -f "nodemon.*backend/api/server.js" 2>/dev/null || true
+pkill -f "npm.*nodemon" 2>/dev/null || true
+
+# Kill any remaining nodemon processes
 pkill -f "nodemon" 2>/dev/null || true
 
 # Try to free up the common ports
 if command -v lsof >/dev/null 2>&1; then
-  for port in 8080 3001 35729; do
+  for port in 8080 8081 3001 35729; do
     pids=$(lsof -ti:$port 2>/dev/null || true)
     if [ ! -z "$pids" ]; then
       log_info "🔄 Freeing port $port (PIDs: $pids)..."
@@ -17,5 +23,8 @@ if command -v lsof >/dev/null 2>&1; then
     fi
   done
 fi
+
+# Wait a moment for processes to fully terminate
+sleep 1
 
 log_success "Cleanup complete. You can now restart the server." 

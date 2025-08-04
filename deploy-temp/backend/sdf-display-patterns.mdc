@@ -1,0 +1,29 @@
+# SDF Display Prevention Patterns
+
+## API Endpoint Consistency
+- Use `/generate-sdfs` (plural) for SDF generation
+- Frontend must match backend endpoint names exactly
+
+## Response Format
+- Backend returns JSON: `{sdfPaths: [], errors: [], skipped: []}`
+- Frontend converts paths to full URLs before rendering
+- Never expect blob responses from SDF endpoints
+
+## Path Resolution
+- Backend returns relative paths: `/sdf_files/filename.sdf`
+- Frontend converts to full URLs: `http://localhost:8080/sdf_files/filename.sdf`
+- SDF files served under `/sdf_files/` static route
+
+## SDF Validation
+- All SDF files must have RDKit header
+- All SDF files must have $$$$ terminator
+- Validate atom/bond counts before rendering
+
+## Error Handling
+- Log detailed errors for debugging
+- Handle network failures gracefully
+- Provide user-friendly error messages
+description:
+globs:
+alwaysApply: false
+---

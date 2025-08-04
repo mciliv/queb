@@ -1,2 +1,2 @@
-echo "🧪 Running smoke tests before commit..."
-npm run test:smoke 
+echo "🧪 Running quick tests before commit..."
+npm run test:quick 

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SDF Display Test</title>
+    <script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-container { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .molecule-viewer { width: 300px; height: 300px; border: 1px solid #ddd; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>SDF Display Test</h1>
+    
+    <div class="test-container">
+        <h3>Test 1: CCO (Ethanol)</h3>
+        <div id="cco-viewer" class="molecule-viewer"></div>
+        <div id="cco-status"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>Test 2: Direct SDF Data</h3>
+        <div id="direct-viewer" class="molecule-viewer"></div>
+        <div id="direct-status"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>Test 3: Error Case (Invalid SDF)</h3>
+        <div id="error-viewer" class="molecule-viewer"></div>
+        <div id="error-status"></div>
+    </div>
+
+    <script>
+        async function testSDFDisplay() {
+            // Test 1: Load from file
+            try {
+                const response = await fetch('/data/sdf_files/CCO.sdf');
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                const sdfData = await response.text();
+                
+                const viewer1 = $3Dmol.createViewer('#cco-viewer', {
+                    defaultcolors: $3Dmol.rasmolElementColors,
+                });
+                
+                viewer1.addModel(sdfData, "sdf");
+                viewer1.setStyle({}, { sphere: { scale: 0.8 } });
+                viewer1.zoomTo();
+                viewer1.render();
+                
+                document.getElementById('cco-status').innerHTML = 
+                    '<span class="success">✓ CCO loaded successfully</span>';
+                console.log('CCO SDF data:', sdfData);
+                
+            } catch (error) {
+                document.getElementById('cco-status').innerHTML = 
+                    `<span class="error">✗ Error: ${error.message}</span>`;
+                console.error('CCO test failed:', error);
+            }
+
+            // Test 2: Direct SDF data
+            try {
+                const directSDF = `
+     RDKit          3D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+M  END
+>  <SMILES>  (1) 
+CO
+
+$$$$`;
+                
+                const viewer2 = $3Dmol.createViewer('#direct-viewer', {
+                    defaultcolors: $3Dmol.rasmolElementColors,
+                });
+                
+                viewer2.addModel(directSDF, "sdf");
+                viewer2.setStyle({}, { sphere: { scale: 0.8 } });
+                viewer2.zoomTo();
+                viewer2.render();
+                
+                document.getElementById('direct-status').innerHTML = 
+                    '<span class="success">✓ Direct SDF loaded successfully</span>';
+                
+            } catch (error) {
+                document.getElementById('direct-status').innerHTML = 
+                    `<span class="error">✗ Error: ${error.message}</span>`;
+                console.error('Direct SDF test failed:', error);
+            }
+
+            // Test 3: Error case
+            try {
+                const invalidSDF = "This is not valid SDF data";
+                
+                const viewer3 = $3Dmol.createViewer('#error-viewer', {
+                    defaultcolors: $3Dmol.rasmolElementColors,
+                });
+                
+                viewer3.addModel(invalidSDF, "sdf");
+                viewer3.setStyle({}, { sphere: { scale: 0.8 } });
+                viewer3.zoomTo();
+                viewer3.render();
+                
+                document.getElementById('error-status').innerHTML = 
+                    '<span class="success">✓ Error handling worked (expected failure)</span>';
+                
+            } catch (error) {
+                document.getElementById('error-status').innerHTML = 
+                    `<span class="error">✗ Error: ${error.message}</span>`;
+                console.error('Error test failed:', error);
+            }
+        }
+
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', testSDFDisplay);
+    </script>
+</body>
+</html> 

@@ -1,0 +1,93 @@
+#!/bin/bash
+
+# Dev Queb.Space - Local Development Server
+# ========================================
+# Starts the development server for dev.queb.space
+
+set -e
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log_info() {
+    echo -e "${BLUE}ℹ️  $1${NC}"
+}
+
+log_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+log_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+# Get project root
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$PROJECT_ROOT"
+
+echo "🚀 Starting Dev Queb.Space"
+echo "========================="
+echo ""
+
+# Check if .env exists
+if [ ! -f ".env" ]; then
+    log_warning "No .env file found. Run ./setup-queb-space.sh first"
+    exit 1
+fi
+
+# Load environment variables
+export $(grep -v '^#' .env | xargs)
+
+# Check if SSL certificates exist
+if [ ! -f "backend/api/certs/cert.pem" ] || [ ! -f "backend/api/certs/key.pem" ]; then
+    log_warning "SSL certificates not found. Run ./setup-queb-space.sh first"
+    exit 1
+fi
+
+# Check if dev.queb.space is in /etc/hosts
+if ! grep -q "dev.queb.space" /etc/hosts; then
+    log_warning "dev.queb.space not in /etc/hosts. Run ./setup-queb-space.sh first"
+    exit 1
+fi
+
+# Clean up any existing processes
+./cleanup 2>/dev/null || true
+
+log_info "Starting development server..."
+log_info "Press Ctrl+C to stop"
+echo ""
+
+# Start the server with HTTPS using existing infrastructure
+PORT=8081 NODE_ENV=development npx nodemon --quiet backend/api/server.js &
+
+# Wait for server to start and show URLs
+sleep 3
+
+# Check if server is running and show URLs
+if pgrep -f "node.*server.js" > /dev/null; then
+    log_success "✅ Server is running!"
+    echo ""
+    log_success "🌐 Access URLs:"
+    log_success "   Local: https://dev.queb.space"
+    log_success "   HTTP:  http://localhost:8081"
+    log_success "   HTTPS: https://localhost:3001"
+    echo ""
+    
+    # Start browser-sync for live reload
+    if command -v browser-sync >/dev/null 2>&1; then
+        log_info "🔄 Starting browser-sync for live reload..."
+        browser-sync start --proxy "localhost:8081" --files "frontend/**/*" --port 3000 --no-notify &
+        log_success "   Browser-sync: http://localhost:3000"
+    else
+        log_warning "Browser-sync not found. Install with: npm install -g browser-sync"
+    fi
+else
+    log_error "❌ Server failed to start"
+    exit 1
+fi
+
+# Wait for the main server process
+wait 
