@@ -265,6 +265,139 @@ app.post('/api/log-error', (req, res) => {
 // User data now stored in PostgreSQL instead of in-memory
 // Database schema will be created by the database setup script
 
+// ==================== API ROUTES ====================
+
+// Image analysis route
+app.post("/image-molecules", async (req, res) => {
+  try {
+    // Validate input schema
+    const validation = ImageMoleculeSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        error: "Invalid input data",
+        details: validation.error.issues,
+      });
+    }
+
+    const {
+      imageBase64,
+      croppedImageBase64,
+      x,
+      y,
+      cropMiddleX,
+      cropMiddleY,
+      cropSize,
+    } = req.body;
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "No image data provided" });
+    }
+
+    const result = await atomPredictor.analyzeImage(
+      imageBase64,
+      croppedImageBase64,
+      x,
+      y,
+      cropMiddleX,
+      cropMiddleY,
+      cropSize,
+    );
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Text analysis route
+app.post("/object-molecules", async (req, res) => {
+  try {
+    // Validate input schema
+    const validation = TextMoleculeSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        error: "Invalid input data",
+        details: validation.error.issues,
+      });
+    }
+
+    const { object } = req.body;
+
+    if (!object) {
+      return res.status(400).json({ error: "No object description provided" });
+    }
+
+    const result = await atomPredictor.analyzeText(object);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Text analysis route (alias for backward compatibility)
+app.post("/analyze-text", async (req, res) => {
+  try {
+    // Validate input schema
+    const validation = TextMoleculeSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        error: "Invalid input data",
+        details: validation.error.issues,
+      });
+    }
+
+    const { object } = req.body;
+
+    if (!object) {
+      return res.status(400).json({ error: "No object description provided" });
+    }
+
+    const result = await atomPredictor.analyzeText(object);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// SDF generation route
+app.post("/generate-sdfs", async (req, res) => {
+  try {
+    // Validate input schema
+    const validation = SdfGenerationSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        error: "Invalid input data",
+        details: validation.error.issues,
+      });
+    }
+
+    const { smiles, overwrite = false } = req.body;
+
+    if (!smiles || !Array.isArray(smiles)) {
+      return res.status(400).json({ error: "smiles array is required" });
+    }
+
+    const result = await molecularProcessor.processSmiles(smiles, overwrite);
+
+    res.json({
+      sdfPaths: result.sdfPaths,
+      errors: result.errors,
+      skipped: result.skipped,
+      message: `Generated ${result.sdfPaths.length} 3D structures from ${smiles.length} SMILES`,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Health check route
+app.get("/", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "Mol Molecular Analysis API",
+    version: "1.0.0",
+  });
+});
+
 // ==================== DEVELOPMENT MIDDLEWARE ====================
 // Live reload enabled for local development
 if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === undefined) {
