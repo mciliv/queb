@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Load shared colors and logging functions
+source infrastructure/scripts/colors.sh
+
+case "$1" in
+  "unit")
+    npx jest --testPathPattern=unit.test.js --verbose --silent
+    ;;
+  "integration")
+    npx jest --testPathPattern=integration.test.js --verbose
+    ;;
+  "system")
+    npx jest --testPathPattern=system.test.js --verbose --detectOpenHandles
+    ;;
+  "watch")
+    npx jest --watch
+    ;;
+  "pytest")
+    python -m pytest testing/ -v
+    ;;
+  *)
+    npx jest --testPathPattern=unit.test.js --verbose --silent && npx jest --testPathPattern=integration.test.js --verbose && npx jest --testPathPattern=system.test.js --verbose --detectOpenHandles
+    ;;
+esac 

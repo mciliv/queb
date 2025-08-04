@@ -1,0 +1,129 @@
+#!/bin/bash
+
+case "$1" in
+  # Development
+  "dev"|"start")
+    echo "🧹 Cleaning up any existing development processes..."
+    # Kill any existing node processes running our server
+    pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+    pkill -f "nodemon" 2>/dev/null || true
+    
+    # Wait a moment for cleanup
+    sleep 1
+    
+    echo "🚀 Starting development server..."
+    npx jest --testPathPattern=unit.test.js --verbose --silent && nodemon backend/api/server.js
+    ;;
+  "server")
+    echo "🧹 Cleaning up any existing server processes..."
+    pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+    sleep 1
+    echo "🚀 Starting production server..."
+    node backend/api/server.js
+    ;;
+  "debug")
+    echo "🧹 Cleaning up any existing debug processes..."
+    pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+    sleep 1
+    echo "🐛 Starting server with debugger..."
+    node --inspect backend/api/server.js
+    ;;
+  "unsafe")
+    echo "🧹 Cleaning up any existing processes..."
+    pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+    pkill -f "nodemon" 2>/dev/null || true
+    sleep 1
+    echo "🚀 Starting unsafe development server (no tests)..."
+    nodemon backend/api/server.js
+    ;;
+  
+  # Testing
+  "test")
+    echo "🧪 Running test suite..."
+    npx jest --testPathPattern=unit.test.js --verbose --silent && npx jest --testPathPattern=integration.test.js --verbose && npx jest --testPathPattern=system.test.js --verbose --detectOpenHandles
+    ;;
+  "test:unit")
+    echo "🧪 Running unit tests..."
+    npx jest --testPathPattern=unit.test.js --verbose --silent
+    ;;
+  "test:integration")
+    echo "🧪 Running integration tests..."
+    npx jest --testPathPattern=integration.test.js --verbose
+    ;;
+  "test:system")
+    echo "🧪 Running system tests..."
+    npx jest --testPathPattern=system.test.js --verbose --detectOpenHandles
+    ;;
+  "test:python")
+    echo "🧪 Running Python tests..."
+    python -m pytest test/ -v
+    ;;
+  "test:accuracy")
+    echo "🧪 Running molecular accuracy tests..."
+    node test/run-accuracy-tests.js
+    ;;
+  "test:all")
+    echo "🧪 Running complete test suite..."
+    npx jest --testPathPattern=unit.test.js --verbose --silent && npx jest --testPathPattern=integration.test.js --verbose && npx jest --testPathPattern=system.test.js --verbose --detectOpenHandles && python -m pytest test/ -v
+    ;;
+  
+  # Utilities
+  "format")
+    echo "🎨 Formatting code..."
+    prettier --write .
+    ;;
+  "clean")
+    echo "🧹 Cleaning up..."
+    ./cleanup
+    ;;
+  "deploy")
+    echo "🚀 Deploying to production..."
+    ./ship
+    ;;
+  "setup")
+    echo "⚙️ Setting up project..."
+    ./infrastructure/scripts/setup-database.sh
+    ;;
+  "cert")
+    echo "🔐 Generating certificates..."
+    ./infrastructure/scripts/trust-cert.sh
+    ;;
+  
+  # Help
+  "help"|"--help"|"-h"|"")
+    echo "🔧 Available commands:"
+    echo ""
+    echo "Development:"
+    echo "  dev, start    - Start development server with tests"
+    echo "  server        - Start production server"
+    echo "  debug         - Start server with debugger"
+    echo "  unsafe        - Start development server without tests"
+    echo ""
+    echo "Testing:"
+    echo "  test          - Run main test suite"
+    echo "  test:unit     - Run unit tests only"
+    echo "  test:integration - Run integration tests only"
+    echo "  test:system   - Run system tests only"
+    echo "  test:python   - Run Python tests only"
+    echo "  test:accuracy - Run molecular accuracy tests"
+    echo "  test:all      - Run complete test suite"
+    echo ""
+    echo "Utilities:"
+    echo "  format        - Format code with prettier"
+    echo "  clean         - Clean up processes"
+    echo "  deploy        - Deploy to production"
+    echo "  setup         - Setup database"
+    echo "  cert          - Generate certificates"
+    echo "  help          - Show this help"
+    echo ""
+    echo "Examples:"
+    echo "  ./run dev              # Start development server"
+    echo "  ./run test:unit        # Run unit tests"
+    echo "  ./run deploy           # Deploy to production"
+    ;;
+  *)
+    echo "❌ Unknown command: $1"
+    echo "Run './run help' for available commands"
+    exit 1
+    ;;
+esac 

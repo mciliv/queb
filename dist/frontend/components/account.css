@@ -1,0 +1,483 @@
+/*
+  MODERN CARD-FIRST ACCOUNT SETUP
+  
+  Design Principle: Minimal, secure, and frictionless setup
+  - Single-screen card entry (no complex forms)
+  - Device-based recognition (no passwords)
+  - Modern payment app aesthetics
+  - "Stupid simple" UX with maximum security
+*/
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #ffffff;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+header {
+  text-align: center;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 20px 0;
+  font-weight: 400;
+}
+
+.back-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.back-link:hover {
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+}
+
+/* Setup Container */
+.setup-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Existing User Card */
+.existing-user {
+  text-align: center;
+}
+
+.user-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 32px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+}
+
+.user-card svg {
+  margin-bottom: 16px;
+  color: #00d4ff;
+}
+
+.user-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.user-info p {
+  margin: 4px 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 15px;
+}
+
+.usage {
+  font-size: 14px !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: underline;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px;
+  transition: color 0.3s ease;
+}
+
+.btn-link:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* New User Setup */
+.new-user {
+  max-width: 100%;
+}
+
+.setup-info {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.price-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.price {
+  font-size: 32px;
+  font-weight: 700;
+  color: #00d4ff;
+}
+
+.per {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.security-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.security-note svg {
+  color: #00ff88;
+  flex-shrink: 0;
+}
+
+/* Express Payment Section */
+.express-payment {
+  margin-bottom: 24px;
+  display: none;
+}
+
+.express-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.payment-request-btn {
+  margin-bottom: 16px;
+}
+
+.paypal-container {
+  margin-bottom: 16px;
+}
+
+.or-divider {
+  position: relative;
+  text-align: center;
+  margin: 24px 0;
+  display: none;
+}
+
+.or-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.or-divider span {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 0 16px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+/* Autofill Detection */
+.autofill-detector {
+  position: absolute !important;
+  left: -9999px !important;
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+.autofill-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.3s ease;
+}
+
+.autofill-note svg {
+  color: #00ff88;
+  flex-shrink: 0;
+}
+
+/* Payment Request Button Styling */
+#payment-request-button {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#payment-request-button .StripeElement {
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+}
+
+/* Enhanced form styling */
+.setup-form {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 32px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group.optional {
+  margin-bottom: 32px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+}
+
+.card-element {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.card-element:focus-within {
+  border-color: #00d4ff;
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+}
+
+#user-name {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 16px;
+  color: #ffffff;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+#user-name:focus {
+  outline: none;
+  border-color: #00d4ff;
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+#user-name::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.error-message {
+  color: #ff6b6b;
+  font-size: 14px;
+  margin-top: 8px;
+  display: none;
+}
+
+/* Setup Button */
+.setup-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+}
+
+.setup-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+}
+
+.setup-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn-icon svg {
+  flex-shrink: 0;
+}
+
+.btn-loading {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner {
+  color: #000000;
+}
+
+/* Primary Button */
+.btn-primary {
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+}
+
+/* Features List */
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.feature svg {
+  color: #00ff88;
+  flex-shrink: 0;
+}
+
+/* Success State */
+.setup-success {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.success-animation {
+  margin-bottom: 24px;
+}
+
+.success-animation svg {
+  color: #00ff88;
+  animation: successPulse 2s ease-in-out infinite;
+}
+
+.setup-success h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.setup-success p {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 32px 0;
+  font-size: 16px;
+}
+
+/* Animations */
+@keyframes successPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+  
+  header h1 {
+    font-size: 24px;
+  }
+  
+  .setup-form {
+    padding: 24px 20px;
+  }
+  
+  .user-card {
+    padding: 24px 20px;
+  }
+  
+  .price {
+    font-size: 28px;
+  }
+  
+  .back-link {
+    position: static;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+} 

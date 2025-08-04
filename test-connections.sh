@@ -9,7 +9,11 @@ if curl -s http://localhost:8080 > /dev/null; then
     echo "✅ Server is running on http://localhost:8080"
 else
     echo "❌ Server not running. Starting server..."
-    ./run server &
+    echo "🧹 Cleaning up any existing server processes..."
+    pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+    sleep 1
+    echo "🚀 Starting production server..."
+    node backend/api/server.js &
     sleep 3
 fi
 

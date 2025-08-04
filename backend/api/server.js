@@ -1,5 +1,19 @@
 // server.js - Clean modular architecture
-process.env.NODE_ENV ||= "development";
+
+// Load environment configuration
+const config = require('../config/env');
+
+// Validate configuration
+config.validateConfig();
+
+// Simple logger - only log on errors unless in debug mode
+const isDebugMode = config.NODE_ENV === 'debug';
+const log = {
+  info: (msg) => isDebugMode && console.log(msg),
+  success: (msg) => isDebugMode && console.log(msg),
+  warning: (msg) => console.log(msg), // Keep warnings visible
+  error: (msg) => console.error(msg)  // Always show errors
+};
 
 // ==================== IMPORTS ====================
 const express = require("express");
@@ -9,17 +23,12 @@ const path = require("path");
 const HttpsServer = require("./https-server");
 const AtomPredictor = require("../services/AtomPredictor");
 const MolecularProcessor = require("../services/molecular-processor");
-const ErrorHandler = require("../services/error-handler");
-// UserService import - with fallback to simple service
+// UserService import - only if database is available
 let UserService = null;
-let SimpleUserService = null;
 try {
   UserService = require("../services/user-service");
 } catch (error) {
-  try {
-    SimpleUserService = require("../services/simple-user-service");
-  } catch (fallbackError) {
-  }
+  log.warning('⚠️ UserService not available - running without user management');
 }
 const {
   ImageMoleculeSchema,
@@ -36,11 +45,11 @@ try {
   
   // Database configuration with local development defaults
   const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'mol_users',
-    user: process.env.DB_USER || 'mol_user',
-    password: process.env.DB_PASSWORD || 'mol_password',
+    host: config.DB_HOST,
+    port: config.DB_PORT,
+    database: config.DB_NAME,
+    user: config.DB_USER,
+    password: config.DB_PASSWORD,
     // Connection pool settings
     max: 20, // maximum number of clients in pool
     idleTimeoutMillis: 30000, // close idle clients after 30 seconds
@@ -51,20 +60,28 @@ try {
   
   // Database connection error handling
   pool.on('error', (err, client) => {
+    log.error('🔴 Unexpected error on idle client', err);
+    log.info('💡 Database connection will be retried automatically');
   });
   
+  log.success('✅ PostgreSQL module loaded successfully');
 } catch (error) {
+  log.warning('⚠️ PostgreSQL module not available - running without database');
+  log.info('💡 Install with: npm install pg pg-pool');
 }
 
 // Database connection error handling (only if pool exists)
 if (pool) {
   pool.on('error', (err, client) => {
+    log.error('🔴 Unexpected error on idle client', err);
+    log.info('💡 Database connection will be retried automatically');
   });
 }
 
 // Test database connection on startup
 const testDatabaseConnection = async () => {
   if (!pool) {
+    log.warning('⚠️ Database not available - running without persistent user storage');
     return false;
   }
   
@@ -72,9 +89,15 @@ const testDatabaseConnection = async () => {
     const client = await pool.connect();
     const result = await client.query('SELECT NOW()');
     client.release();
+    log.success('✅ Database connected successfully');
     dbConnected = true;
     return true;
   } catch (err) {
+    log.error('🔴 Database connection failed:', err.message);
+    log.info('💡 Make sure PostgreSQL is running and credentials are correct');
+    if (process.env.NODE_ENV === 'development') {
+      log.info('💡 For local development, run: createdb mol_users');
+    }
     dbConnected = false;
     return false;
   }
@@ -99,41 +122,100 @@ const getLocalIPAddress = () => {
   return "127.0.0.1";
 };
 
+// Utility to attempt cleanup of processes using our ports
+const attemptPortCleanup = async (port) => {
+  try {
+    const { execSync } = require("child_process");
+    
+    // Try to find and kill processes using the port (Unix/macOS)
+    if (process.platform !== "win32") {
+      try {
+        const result = execSync(`lsof -ti:${port}`, { encoding: "utf8", stdio: "pipe" });
+        const pids = result.trim().split("\n").filter(Boolean);
+        
+        if (pids.length > 0) {
+          console.log(`🧹 Found ${pids.length} process(es) using port ${port}, attempting cleanup...`);
+          
+          for (const pid of pids) {
+            try {
+              execSync(`kill -9 ${pid}`, { stdio: "pipe" });
+              console.log(`   ✅ Killed process ${pid}`);
+            } catch (e) {
+              console.log(`   ⚠️ Could not kill process ${pid} (may not have permission)`);
+            }
+          }
+          
+          // Wait a moment for cleanup
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return true;
+        }
+      } catch (e) {
+        // No processes found or lsof not available
+        return false;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.log(`⚠️ Port cleanup failed: ${error.message}`);
+    return false;
+  }
+};
 
+const findAvailablePort = async (startPort) => {
+  const net = require("net");
 
-const PORT = process.env.PORT || DEFAULT_PORT;
+  const isPortAvailable = (port) => {
+    return new Promise((resolve) => {
+      const tester = net
+        .createServer()
+        .once("error", () => resolve(false))
+        .once("listening", () => {
+          tester.once("close", () => resolve(true)).close();
+        })
+        .listen(port);
+    });
+  };
+
+  let port = startPort;
+  while (port < startPort + 100) {
+    // Try up to 100 ports
+    if (await isPortAvailable(port)) {
+      return port;
+    }
+    port++;
+  }
+  throw new Error(
+    `No available ports found between ${startPort} and ${startPort + 100}`,
+  );
+};
+
+const PORT = config.PORT;
 
 // Initialize modules
-const atomPredictor = new AtomPredictor(process.env.OPENAI_API_KEY);
+// Use mock API key for test environment if OPENAI_API_KEY not set
+const openaiApiKey = config.OPENAI_API_KEY || (config.NODE_ENV === 'test' ? 'test-key' : undefined);
+const atomPredictor = new AtomPredictor(openaiApiKey);
 const molecularProcessor = new MolecularProcessor();
-// Initialize user service with detailed logging
-let userService = null;
-if (pool && UserService) {
-  userService = new UserService(pool);
-} else if (SimpleUserService) {
-  userService = new SimpleUserService();
-} else {
-}
+const userService = (pool && UserService) ? new UserService(pool) : null;
 
 // Initialize database on startup
 const initializeDatabase = async () => {
   if (!userService) {
+    console.log('⚠️ User service not available - running without persistent user storage');
     return;
   }
   
   try {
-    // If using PostgreSQL service, test connection first
-    if (pool && UserService && userService instanceof UserService) {
-      const dbConnected = await testDatabaseConnection();
-      if (dbConnected) {
-        await userService.initializeTables();
-      } else {
-      }
-    } else {
-      // Using simple in-memory service
+    const dbConnected = await testDatabaseConnection();
+    if (dbConnected) {
       await userService.initializeTables();
+      console.log('✅ Database initialized successfully');
+    } else {
+      console.log('⚠️ Database not connected - running without persistent user storage');
     }
   } catch (error) {
+    console.error('🔴 Database initialization failed:', error.message);
+    console.log('💡 Server will continue but user data will not persist');
   }
 };
 
@@ -141,76 +223,120 @@ const initializeDatabase = async () => {
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 
-// Browser-Sync handles frontend reloading via proxy
-// No middleware needed - Browser-Sync proxies this server
+// ==================== HEALTH CHECK ENDPOINT ====================
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || '1.0.0'
+  });
+});
+
+// ==================== CONFIGURATION ENDPOINT ====================
+app.get('/api/config', (req, res) => {
+  const paymentConfig = config.getPaymentConfig();
+  
+  res.json({
+    payments: paymentConfig,
+    environment: config.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
 
 // ==================== ERROR LOGGING ENDPOINT ====================
 app.post('/api/log-error', (req, res) => {
+  const error = req.body;
+  
+  // Log to console for AI reading - STRUCTURED FORMAT
+  console.error('🚨 FRONTEND ERROR:', JSON.stringify({
+    timestamp: error.timestamp,
+    type: error.type,
+    message: error.message,
+    source: error.source,
+    userAgent: req.get('User-Agent'),
+    ip: req.ip || req.connection.remoteAddress
+  }, null, 2));
+  
+  // Optionally log to file or database here
+  
   res.status(200).json({ status: 'logged' });
-});
-
-// Logging endpoint for frontend logs
-app.post('/api/logs', (req, res) => {
-  try {
-    const { logs, timestamp, userAgent, url } = req.body;
-    
-    if (!logs || !Array.isArray(logs)) {
-      return res.status(400).json({ error: 'Invalid logs format' });
-    }
-
-
-
-    res.json({ success: true, processed: logs.length });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to process logs' });
-  }
 });
 
 // User data now stored in PostgreSQL instead of in-memory
 // Database schema will be created by the database setup script
 
-// ==================== STATIC FILES ====================
+// ==================== DEVELOPMENT MIDDLEWARE ====================
+// Live reload enabled for local development
+if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === undefined) {
+  const livereload = require("livereload");
+  const connectLivereload = require("connect-livereload");
+  const net = require("net");
 
-// Disable caching for HTML files in development
-if (process.env.NODE_ENV === "development") {
-  app.use(express.static(path.join(__dirname, "..", "..", "frontend", "core"), {
-    setHeaders: (res, path) => {
-      if (path.endsWith('.html')) {
-        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.set('Pragma', 'no-cache');
-        res.set('Expires', '0');
+  const isPortAvailable = (port) => {
+    return new Promise((resolve) => {
+      const tester = net
+        .createServer()
+        .once("error", () => resolve(false))
+        .once("listening", () => {
+          tester.once("close", () => resolve(true)).close();
+        })
+        .listen(port);
+    });
+  };
+
+  const startLiveReload = async (port) => {
+    try {
+      const available = await isPortAvailable(port);
+      if (!available) {
+        console.log(`LiveReload port ${port} is already in use`);
+        if (port === 35729) {
+          console.log("Trying alternative port 35730...");
+          return startLiveReload(35730);
+        } else {
+          console.log("Continuing without LiveReload...");
+          return;
+        }
       }
+
+      const liveReloadServer = livereload.createServer({
+        exts: ["html", "css", "js"],
+        ignore: ["node_modules/**", "sdf_files/**", "*.log"],
+        port: port,
+      });
+
+      // Add error handler for unexpected errors
+      liveReloadServer.server.on("error", (err) => {
+        console.error("LiveReload server error:", err.message);
+      });
+
+      // Only proceed if server starts successfully
+      liveReloadServer.server.once("listening", () => {
+        const frontendPath = path.join(__dirname, "..", "..", "frontend");
+        liveReloadServer.watch(frontendPath);
+        app.use(connectLivereload());
+
+        liveReloadServer.server.once("connection", () => {
+          setTimeout(() => {
+            liveReloadServer.refresh("/");
+          }, 100);
+        });
+
+        console.log(`🔄 LiveReload server started on port ${port}`);
+        console.log(`👀 Watching frontend files: ${frontendPath}`);
+      });
+    } catch (err) {
+      console.log("LiveReload server failed to start:", err.message);
+      console.log("Continuing without LiveReload...");
     }
-  }));
-} else {
-  app.use(express.static(path.join(__dirname, "..", "..", "frontend", "core")));
+  };
+
+  // Start LiveReload with fallback port
+  startLiveReload(35729);
 }
+
+app.use(express.static(path.join(__dirname, "..", "..", "frontend", "core")));
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));
-
-// Favicon route - serve SVG as favicon.ico
-app.get('/favicon.ico', (req, res) => {
-  if (process.env.NODE_ENV === "development") {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-  }
-  res.type('image/svg+xml');
-  res.sendFile(path.join(__dirname, "..", "..", "frontend", "assets", "favicon.svg"));
-});
-
-// Disable caching for components in development to prevent issues with cached JavaScript
-if (process.env.NODE_ENV === "development") {
-  app.use("/components", express.static(path.join(__dirname, "..", "..", "frontend", "components"), {
-    setHeaders: (res) => {
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
-    }
-  }));
-} else {
-  app.use("/components", express.static(path.join(__dirname, "..", "..", "frontend", "components")));
-}
-
+app.use("/components", express.static(path.join(__dirname, "..", "..", "frontend", "components")));
 app.use("/sdf_files", express.static(path.join(__dirname, "..", "..", "data", "sdf_files")));
 
 // ==================== PAYMENT ROUTES ====================
@@ -243,7 +369,6 @@ app.post("/setup-payment-method", async (req, res) => {
     };
     
     if (!userService) {
-  
       return res.status(503).json({ error: "User service not available" });
     }
     
@@ -262,7 +387,7 @@ app.post("/setup-payment-method", async (req, res) => {
     });
     
   } catch (error) {
-
+    console.error("Payment setup error:", error);
     if (error.message === 'Device token already exists') {
       res.status(409).json({ error: "Device already registered" });
     } else {
@@ -305,7 +430,7 @@ app.post("/update-payment-method", async (req, res) => {
     });
     
   } catch (error) {
-
+    console.error("Payment update error:", error);
     res.status(500).json({ error: "Failed to update payment method" });
   }
 });
@@ -348,7 +473,7 @@ app.get("/get-payment-methods", async (req, res) => {
     });
     
   } catch (error) {
-
+    console.error("Get payment methods error:", error);
     res.status(500).json({ error: "Failed to get payment methods" });
   }
 });
@@ -386,7 +511,7 @@ app.delete("/delete-payment-method", async (req, res) => {
     });
     
   } catch (error) {
-
+    console.error("Delete payment method error:", error);
     res.status(500).json({ error: "Failed to delete payment method" });
   }
 });
@@ -423,7 +548,7 @@ app.post("/set-default-payment-method", async (req, res) => {
     });
     
   } catch (error) {
-
+    console.error("Set default payment method error:", error);
     res.status(500).json({ error: "Failed to set default payment method" });
   }
 });
@@ -457,7 +582,7 @@ app.post("/validate-payment", async (req, res) => {
     });
     
   } catch (error) {
-
+    console.error("Payment validation error:", error);
     res.status(500).json({ error: "Failed to validate payment" });
   }
 });
@@ -482,7 +607,7 @@ app.post("/increment-usage", async (req, res) => {
     });
     
   } catch (error) {
-
+    console.error("Usage increment error:", error);
     if (error.message === 'User not found') {
       res.status(404).json({ error: "User not found" });
     } else {
@@ -528,9 +653,9 @@ app.post("/image-molecules", async (req, res) => {
       cropMiddleY,
       cropSize,
     );
-    res.json({ output: result });
+    res.json(result);
   } catch (error) {
-
+    console.error("Image analysis error:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -538,19 +663,18 @@ app.post("/image-molecules", async (req, res) => {
 // Text analysis route (frontend compatibility endpoint)
 app.post("/analyze-text", async (req, res) => {
   try {
-    const { text } = req.body;
+    const { object } = req.body;
     
-    if (!text) {
-      return res.status(400).json({ error: "No text provided" });
+    if (!object || typeof object !== "string" || object.trim().length === 0) {
+      return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
     }
 
-    // Map to the existing object-molecules logic
-    const result = await atomPredictor.analyzeText(text);
-    res.json({ output: result });
+    const result = await atomPredictor.analyzeText(object || "");
+    res.json(result);
   } catch (error) {
-    const { errorMessage, statusCode } = ErrorHandler.handleAIError(error, 'text analysis endpoint');
-    res.status(statusCode).json({
-      error: errorMessage,
+    console.error("Text analysis error:", error);
+    res.status(500).json({
+      error: `Analysis failed: ${error.message}`,
     });
   }
 });
@@ -574,9 +698,36 @@ app.post("/object-molecules", async (req, res) => {
     }
 
     const result = await atomPredictor.analyzeText(object);
-    res.json({ output: result });
+    res.json(result);
   } catch (error) {
-    const { errorMessage, statusCode } = ErrorHandler.handleAIError(error, 'object-molecules endpoint');
+    console.error("Text analysis error:", error);
+
+    // Provide more specific error messages
+    let errorMessage = error.message;
+    let statusCode = 500;
+
+    if (error.message.includes("network") || error.message.includes("fetch")) {
+      errorMessage =
+        "Network error: Unable to connect to AI service. Please check your internet connection.";
+      statusCode = 503;
+    } else if (
+      error.message.includes("API key") ||
+      error.message.includes("authentication")
+    ) {
+      errorMessage = "Authentication error: Invalid or missing API key.";
+      statusCode = 401;
+    } else if (
+      error.message.includes("rate limit") ||
+      error.message.includes("quota")
+    ) {
+      errorMessage = "Rate limit exceeded: Please try again later.";
+      statusCode = 429;
+    } else if (error.message.includes("timeout")) {
+      errorMessage =
+        "Request timeout: The AI service is taking too long to respond.";
+      statusCode = 408;
+    }
+
     res.status(statusCode).json({
       error: errorMessage,
       details: process.env.NODE_ENV === "development" ? error.stack : undefined,
@@ -584,8 +735,7 @@ app.post("/object-molecules", async (req, res) => {
   }
 });
 
-
-// SDF generation route (returns JSON with paths)
+// SDF generation route
 app.post("/generate-sdfs", async (req, res) => {
   try {
     // Validate input schema
@@ -612,7 +762,7 @@ app.post("/generate-sdfs", async (req, res) => {
       message: `Generated ${result.sdfPaths.length} 3D structures from ${smiles.length} SMILES`,
     });
   } catch (error) {
-
+    console.error("SDF generation error:", error);
 
     // Provide more specific error messages
     let errorMessage = error.message;
@@ -644,13 +794,40 @@ app.post("/generate-sdfs", async (req, res) => {
 
 // Static routes
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
+});
+
+// SEO routes
+app.get("/robots.txt", (req, res) => {
+  res.type('text/plain');
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "robots.txt"));
+});
+
+app.get("/sitemap.xml", (req, res) => {
+  res.type('application/xml');
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "sitemap.xml"));
+});
+
+// Catch-all route for SPA (prevents 404s on direct navigation)
+app.get("*", (req, res, next) => {
+  // Skip API routes, assets, and special files
+  if (req.url.startsWith("/api/") || 
+      req.url.startsWith("/assets/") || 
+      req.url.startsWith("/components/") ||
+      req.url.startsWith("/sdf_files/") ||
+      req.url.includes(".")) {
+    return next();
+  }
+  
+  // Serve index.html for all other routes (SPA behavior)
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
 });
 
 // Request logging middleware
 app.use((req, res, next) => {
   // Skip logging Chrome DevTools discovery requests
   if (!req.url.includes(".well-known/appspecific/com.chrome.devtools")) {
+    log.info(`Incoming request: ${req.method} ${req.url}`);
   }
 
   // Handle Chrome DevTools discovery request
@@ -663,58 +840,154 @@ app.use((req, res, next) => {
 
 // ==================== SERVER STARTUP ====================
 const isCloudFunction =
-  process.env.FUNCTION_NAME ||
-  process.env.FUNCTION_TARGET ||
-  process.env.K_SERVICE ||
-  process.env.GOOGLE_CLOUD_PROJECT ||
-  process.env.GCP_PROJECT;
-const isNetlify = process.env.NETLIFY;
+  config.FUNCTION_NAME ||
+  config.FUNCTION_TARGET ||
+  config.K_SERVICE ||
+  config.GOOGLE_CLOUD_PROJECT ||
+  config.GCP_PROJECT;
+const isNetlify = config.NETLIFY;
 const isTestMode =
-  process.env.NODE_ENV === "test" || process.env.JEST_WORKER_ID;
+  config.NODE_ENV === "test" || process.env.JEST_WORKER_ID;
+const isIntegrationTest = config.INTEGRATION_TEST;
 const isServerless = isCloudFunction || isNetlify;
 
 // Store server instances for cleanup
 let httpServer;
 let httpsServerInstance;
 
-if (!isServerless && !isTestMode) {
-  // Simple server startup
-  const localIP = getLocalIPAddress();
-  
-  httpServer = app.listen(PORT, "0.0.0.0", () => {
-  });
+console.log('Server conditions:', { isServerless, isTestMode, isIntegrationTest });
 
-  // Handle port binding errors
-  httpServer.on("error", (error) => {
-    if (error.code === "EADDRINUSE") {
-      process.exit(1);
-    } else {
+if (!isServerless && (!isTestMode || isIntegrationTest)) {
+  console.log('Starting server in local development mode...');
+  // Local development mode
+  const startServer = async () => {
+    try {
+      let actualPort = PORT;
+
+      // If default port is in use, try cleanup and then find an available port
+      if (PORT === DEFAULT_PORT) {
+        try {
+          // First check if port is available
+          if (!(await (async () => {
+            const net = require("net");
+            return new Promise((resolve) => {
+              const server = net.createServer();
+              server.listen(PORT, "0.0.0.0", () => {
+                server.once("close", () => resolve(true));
+                server.close();
+              });
+              server.on("error", () => resolve(false));
+            });
+          })())) {
+            console.log(`⚠️ Port ${PORT} is in use, attempting cleanup...`);
+            const cleanupSuccessful = await attemptPortCleanup(PORT);
+            
+            if (cleanupSuccessful) {
+              console.log(`✅ Port ${PORT} cleanup completed, retrying...`);
+              // Give a moment for the port to be fully released
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+          
+          actualPort = await findAvailablePort(PORT);
+          if (actualPort !== PORT) {
+            console.log(
+              `⚠️  Port ${PORT} is in use, using port ${actualPort} instead`,
+            );
+          }
+        } catch (error) {
+          console.error(`❌ Could not find available port: ${error.message}`);
+          console.log(`💡 Try: pkill -f "node.*server.js" or use a different port`);
+          process.exit(1);
+        }
+      }
+
+      const localIP = getLocalIPAddress();
+      httpServer = app.listen(actualPort, "0.0.0.0", () => {
+        console.log(`http://localhost:${actualPort}; http://${localIP}:${actualPort} (desktop only)`);
+        
+        // Always log server ready for tests
+        if (process.env.NODE_ENV === 'test') {
+          console.log('Server running on port', actualPort);
+        }
+      });
+    } catch (error) {
+      console.error(`❌ Failed to start server: ${error.message}`);
       process.exit(1);
     }
-  });
+  };
 
-  // Initialize database after server starts
-  initializeDatabase();
+  startServer()
+    .then(() => {
+      // Handle port binding errors
+      httpServer.on("error", (error) => {
+        if (error.code === "EADDRINUSE") {
+          console.error(`❌ Port ${PORT} is already in use`);
+          console.log(`💡 Solutions:`);
+          console.log(
+            `   1. Kill existing process: pkill -f "node.*server.js"`,
+          );
+          console.log(`   2. Use different port: PORT=8081 npm start`);
+          console.log(`   3. Check what's using the port: lsof -i :${PORT}`);
+          process.exit(1);
+        } else if (error.code === "EACCES") {
+          console.error(`❌ Permission denied: Cannot bind to port ${PORT}`);
+          console.log(`💡 Try using a port > 1024 or run with sudo`);
+          process.exit(1);
+        } else {
+          console.error("❌ Server error:", error.message);
+          console.log(`💡 Check your network configuration and try again`);
+          process.exit(1);
+        }
+      });
+
+      // Initialize database after server starts
+      initializeDatabase();
+    })
+    .catch((error) => {
+      console.error(`❌ Failed to start server: ${error.message}`);
+      process.exit(1);
+    });
 
   // Start HTTPS server for development
   if (process.env.NODE_ENV !== "production") {
-    setTimeout(async () => {
+    const startHttpsServer = async () => {
       try {
         const httpsServer = new HttpsServer(app, HTTPS_PORT);
         httpsServerInstance = await httpsServer.start();
+        
         if (httpsServerInstance) {
+          log.success("✅ HTTPS server started successfully");
+          
+          // Handle HTTPS server errors after startup
+          httpsServerInstance.on("error", (error) => {
+            console.error("❌ HTTPS server error after startup:", error.message);
+            console.log("💡 HTTPS server will continue running if possible");
+          });
+        } else {
+          log.warning("⚠️ HTTPS server not started - continuing with HTTP only");
         }
       } catch (error) {
+        console.error("❌ Failed to start HTTPS server:", error.message);
+        console.log("💡 Continuing with HTTP server only");
       }
-    }, 1000);
+    };
+
+    // Start HTTPS server after a short delay to avoid port conflicts
+    setTimeout(startHttpsServer, 1000);
   }
 } else {
   // Serverless mode
   if (isCloudFunction) {
+    console.log(`Running in Cloud Functions mode`);
   } else if (isNetlify) {
+    console.log(`Running in Netlify mode`);
   }
 
   if (process.env.NODE_ENV === "production" && !process.env.OPENAI_API_KEY) {
+    console.error(
+      "OPENAI_API_KEY environment variable is required for production",
+    );
     process.exit(1);
   }
 }
@@ -722,11 +995,13 @@ if (!isServerless && !isTestMode) {
 // Graceful shutdown handling for nodemon restarts
 if (!isServerless && !isTestMode) {
   const gracefulShutdown = (signal) => {
+    console.log(`\n${signal} received: closing HTTP/HTTPS servers gracefully`);
 
     const closeServer = (server, name) => {
       return new Promise((resolve) => {
         if (server) {
           server.close(() => {
+            console.log(`${name} server closed`);
             resolve();
           });
         } else {
@@ -739,11 +1014,13 @@ if (!isServerless && !isTestMode) {
       closeServer(httpServer, "HTTP"),
       closeServer(httpsServerInstance, "HTTPS"),
     ]).then(() => {
+      console.log("Shutdown complete");
       process.exit(0);
     });
 
     // Force exit after 5 seconds
     setTimeout(() => {
+      console.error("Forced shutdown after timeout");
       process.exit(1);
     }, 5000);
   };
@@ -756,9 +1033,15 @@ if (!isServerless && !isTestMode) {
 
 // Global error handlers
 process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+  console.log(
+    "💡 This usually indicates a network or API error. Check your internet connection and API keys.",
+  );
 });
 
 process.on("uncaughtException", (error) => {
+  console.error("❌ Uncaught Exception:", error.message);
+  console.log("💡 Application crashed. Check the error details above.");
   process.exit(1);
 });
 

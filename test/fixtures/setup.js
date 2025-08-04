@@ -1,39 +1,55 @@
-// Test environment setup
-const { TextEncoder, TextDecoder } = require('util');
+// test/fixtures/setup.js - Jest setup file for mocking dependencies
 
-// Add TextEncoder/TextDecoder globally for tests
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+const cleanup = require('./cleanup-registry');
 
-// Mock console methods to reduce noise in tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-
-// Only show important test output
-console.log = (...args) => {
-  const message = args.join(' ');
-  if (message.includes('✅') || message.includes('❌') || message.includes('🧪')) {
-    originalConsoleLog(...args);
-  }
-};
-
-console.error = (...args) => {
-  const message = args.join(' ');
-  if (!message.includes('Database connection failed') && !message.includes('PostgreSQL')) {
-    originalConsoleError(...args);
-  }
-};
-
-// Increase timeout for integration tests
-jest.setTimeout(30000);
-
-// Mock WebSocket if running in test environment
-if (typeof WebSocket === 'undefined') {
-  global.WebSocket = class MockWebSocket {
-    constructor() {
-      this.readyState = 1; // OPEN
-    }
-    send() {}
-    close() {}
+// Mock OpenAI before any modules are imported
+jest.mock("openai", () => {
+  return {
+    OpenAI: jest.fn().mockImplementation(() => ({
+      responses: {
+        parse: jest.fn().mockResolvedValue({
+          output_parsed: {
+            object: "test object",
+            smiles: ["O", "CCO"],
+          },
+        }),
+      },
+    })),
   };
+});
+
+// Set test environment variables
+process.env.NODE_ENV = "test";
+process.env.OPENAI_API_KEY = "test-key";
+
+// Polyfill setImmediate for test environment
+if (!global.setImmediate) {
+  global.setImmediate = (callback, ...args) => setTimeout(callback, 0, ...args);
 }
+
+// Setup process cleanup hooks
+process.on('exit', () => cleanup.forceCleanup());
+process.on('SIGINT', async () => {
+  await cleanup.cleanup();
+  process.exit(0);
+});
+process.on('SIGTERM', async () => {
+  await cleanup.cleanup();
+  process.exit(0);
+});
+
+// Override global timer functions to track them
+const originalSetTimeout = global.setTimeout;
+const originalSetInterval = global.setInterval;
+
+global.setTimeout = (...args) => {
+  const timer = originalSetTimeout(...args);
+  cleanup.registerTimer(timer);
+  return timer;
+};
+
+global.setInterval = (...args) => {
+  const interval = originalSetInterval(...args);
+  cleanup.registerInterval(interval);
+  return interval;
+};

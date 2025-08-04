@@ -12,12 +12,13 @@
       content="black-translucent"
     />
     <meta name="format-detection" content="telephone=no" />
-    <title>List Molecules</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=8">
-    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=8">
-    <link rel="shortcut icon" href="/assets/favicon.svg?v=8" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/assets/favicon.svg?v=8">
-    <link rel="stylesheet" href="/assets/style.css" />
+    <meta name="description" content="Atomizer - Advanced molecular analysis and 3D visualization tool for chemical compounds. Analyze molecular structures from camera images or text input." />
+    <meta name="keywords" content="molecular analysis, chemistry, 3D visualization, chemical compounds, SMILES, molecular structure" />
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <link rel="canonical" href="/" />
+    <title>Atomizer - Molecular Analysis</title>
+    <link rel="stylesheet" href="../assets/style.css" />
   </head>
   <body>
     <div class="app-container">
@@ -29,12 +30,14 @@
       <div class="modal-container">
         <div class="modal-header">
           <div class="modal-title">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <line x1="2" y1="10" x2="22" y2="10"/>
             </svg>
+            <span>Payment Required</span>
           </div>
-          <button id="payment-close-btn" class="payment-close-btn">
+          <p class="modal-subtitle">Add payment method to analyze molecules ($0.25 per analysis)</p>
+          <button id="payment-close-btn" class="payment-close-btn" style="position: absolute; top: 20px; right: 20px; background: none; border: none; color: #00d4ff; cursor: pointer; font-size: 20px; padding: 5px;">
             ✕
           </button>
         </div>
@@ -195,9 +198,12 @@
                 <input
                   id="object-input"
                   type="text"
-                  placeholder="Type any molecule name (e.g., caffeine, aspirin, water)... (⌘K to focus)"
+                  placeholder="Specify an object..."
                   class="text-input"
                 />
+                <div class="keyboard-hint" id="keyboard-hint">
+                  <span class="hint-key" id="hint-key">⌘K</span>
+                </div>
               </div>
             </div>
 
@@ -274,37 +280,41 @@
             </div>
           </div>
 
-          <!-- Right side: Simple account button at top-right -->
-          <div class="sidebar-container">
-            <!-- Single account button - top right corner -->
-            <button class="account-button" id="account-status">
-              <img src="assets/account.svg" alt="Card" class="card-icon">
-            </button>
-
-            <!-- Hidden payment section -->
-            <div class="payment-section hidden" id="payment-section">
-              <div class="payment-content">
-                <div class="payment-header">
-                  <p>$0.10 per analysis</p>
+          <!-- Right side: Payment and account management -->
+          <div class="payment-section" id="payment-section">
+            <div class="payment-content">
+              <div class="payment-header">
+                <h2>Payment Required</h2>
+                <p>$0.25 per analysis</p>
+              </div>
+              
+              <form id="payment-form" class="payment-form">
+                <div class="form-row">
+                  <label>Card</label>
+                  <div id="card-element" class="card-input"></div>
+                  <div id="card-errors" class="error-text"></div>
                 </div>
                 
-                <form id="payment-form" class="payment-form">
-                  <div class="form-row">
-                    <label>Card</label>
-                    <div id="card-element" class="card-input"></div>
-                    <div id="card-errors" class="error-text"></div>
-                  </div>
-                  
-                  <div class="form-row">
-                    <label>Name</label>
-                    <input type="text" id="user-name" placeholder="Optional" />
-                  </div>
-                  
-                  <button type="submit" id="setup-btn" class="submit-btn">
-                    <span class="btn-text">Setup</span>
-                    <span class="btn-loading hidden">...</span>
-                  </button>
-                </form>
+                <div class="form-row">
+                  <label>Name</label>
+                  <input type="text" id="user-name" placeholder="Optional" />
+                </div>
+                
+                <button type="submit" id="setup-btn" class="submit-btn">
+                  <span class="btn-text">Setup</span>
+                  <span class="btn-loading hidden">...</span>
+                </button>
+              </form>
+
+              <!-- Account status display -->
+              <div class="account-status" id="account-status">
+                <div class="account-link">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <line x1="2" y1="10" x2="22" y2="10"/>
+                  </svg>
+                  <span id="account-name">Account</span>
+                </div>
               </div>
             </div>
           </div>
@@ -326,7 +336,7 @@
           aria-label="Upload photo for molecular analysis"
         />
         <label for="photo-upload" class="upload-label">
-          <img src="/assets/photo-upload.svg" alt="Photo upload" width="24" height="24" />
+          <img src="../assets/photo-upload.svg" alt="Photo upload" width="24" height="24" />
           <svg class="upload-text" width="80" height="20" viewBox="0 0 80 20">
             <text
               x="40"
@@ -413,20 +423,24 @@
       </div>
     </template>
 
-    <script src="/frontend/core/conditional-debug.js"></script>
-    <script type="module" src="/components/logger.js"></script>
-    <script type="module" src="/components/payment.js"></script>
-    <script type="module" src="/components/camera.js"></script>
-    <script type="module" src="/components/camera-handler.js"></script>
-    <script type="module" src="/components/ui-utils.js"></script>
-    <script src="/components/error-handler.js"></script>
-    <script src="ui-context-automation.js"></script>
+    <script type="module" src="../components/payment.js"></script>
+    <script type="module" src="../components/camera.js"></script>
+    <script type="module" src="../components/camera-handler.js"></script>
+    <script type="module" src="../components/ui-utils.js"></script>
+    <script src="../components/debug-events.js"></script>
+    <script src="../components/error-handler.js"></script>
     <script type="module" src="app.js"></script>
     <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <!-- Manual testing script for component connections -->
-
-    <!-- Development mode -->
+    <script src="../../tests/manual-test.js"></script>
+    <!-- Camera testing script -->
+    <script src="../../tests/camera-test.js"></script>
+    <!-- Camera mode testing script -->
+    <script src="../../test-camera-mode.js"></script>
+    <!-- Camera click testing script -->
+    <script src="../../test-camera-click.js"></script>
+    <!-- LiveReload disabled - using nodemon for server restarts -->
   <!-- Error Reporting Panel -->
   <div id="error-panel" class="error-panel hidden">
     <div class="error-header">

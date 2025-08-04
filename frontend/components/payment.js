@@ -715,6 +715,13 @@ class PaymentManager {
   }
 
   async checkPaymentMethod() {
+    // Check if payment is globally disabled
+    const paymentEnabled = window.app && window.app.paymentEnabled;
+    if (!paymentEnabled) {
+      console.log('💳 Payment disabled globally - skipping validation');
+      return true;
+    }
+    
     const deviceToken = localStorage.getItem('molDeviceToken');
     const cardInfo = localStorage.getItem('molCardInfo');
     

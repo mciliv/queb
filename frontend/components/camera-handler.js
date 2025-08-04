@@ -120,28 +120,32 @@ class CameraHandler {
 
   // Handle click on uploaded image
   async handleImageClick(evt, img) {
-    let paymentCheck = false;
-    try {
-      paymentCheck = await this.checkPaymentSetupForSidebar();
-    } catch (error) {
-      paymentCheck = true; // Fallback to allow analysis
-    }
+    // Check if payment is enabled globally
+    const paymentEnabled = window.app && window.app.paymentEnabled;
+    let paymentCheck = true; // Default to allow analysis when payment disabled
     
-    if (!paymentCheck) {
-      const messageColumn = uiManager.createColumn("Payment setup required", "payment-required");
-      messageColumn.innerHTML = `
-        <div class="molecule-container">
-          <div class="molecule-info">
-            <h3>Payment Setup Required</h3>
-            <p>Complete payment setup in the sidebar to analyze molecules</p>
+    if (paymentEnabled) {
+      try {
+        paymentCheck = await paymentManager.checkPaymentMethod();
+      } catch (error) {
+        paymentCheck = true; // Fallback to allow analysis
+      }
+      
+      if (!paymentCheck) {
+        const messageColumn = uiManager.createColumn("Payment required", "payment-required");
+        messageColumn.innerHTML = `
+          <div class="molecule-container">
+            <div class="molecule-info">
+              <h3>Payment Required</h3>
+              <p>Complete payment setup to analyze molecules</p>
+            </div>
           </div>
-        </div>
-      `;
-      return;
+        `;
+        return;
+      }
+    } else {
+      console.log('💳 Payment disabled - proceeding with image analysis');
     }
-    
-    // Show crop outline at click location
-    this.showCropOutline(evt);
     
     const rect = img.getBoundingClientRect();
     const clickX = evt.clientX - rect.left;
@@ -161,26 +165,36 @@ class CameraHandler {
 
     const tempImg = new Image();
     tempImg.onload = async () => {
-      const cropSize = 200;
-      const maxX = tempImg.width - cropSize;
-      const maxY = tempImg.height - cropSize;
-      const cropX = Math.max(0, Math.min(maxX, relativeX * tempImg.width - cropSize / 2));
-      const cropY = Math.max(0, Math.min(maxY, relativeY * tempImg.height - cropSize / 2));
-      const middleX = cropX + cropSize / 2;
-      const middleY = cropY + cropSize / 2;
+      canvas.width = tempImg.width;
+      canvas.height = tempImg.height;
+      ctx.drawImage(tempImg, 0, 0);
 
-      canvas.width = cropSize;
-      canvas.height = cropSize;
-      ctx.drawImage(tempImg, cropX, cropY, cropSize, cropSize, 0, 0, cropSize, cropSize);
-      const croppedBase64 = canvas.toDataURL("image/jpeg", 0.9).split(",")[1];
+      const cropSize = Math.min(tempImg.width, tempImg.height) * 0.1;
+      const cropX = Math.max(0, relativeX * tempImg.width - cropSize / 2);
+      const cropY = Math.max(0, relativeY * tempImg.height - cropSize / 2);
 
+      const cropCanvas = document.createElement("canvas");
+      cropCanvas.width = cropSize;
+      cropCanvas.height = cropSize;
+      const cropCtx = cropCanvas.getContext("2d");
+      cropCtx.imageSmoothingEnabled = false;
+
+      cropCtx.drawImage(canvas, cropX, cropY, cropSize, cropSize, 0, 0, cropSize, cropSize);
+
+      const middleX = Math.floor(cropSize / 2);
+      const middleY = Math.floor(cropSize / 2);
+      const boxSize = Math.max(8, Math.floor(cropSize * 0.1));
+      
+      cropCtx.save();
+      cropCtx.strokeStyle = "#ff0000";
+      cropCtx.lineWidth = Math.max(2, Math.floor(cropSize * 0.02));
+      cropCtx.strokeRect(middleX - boxSize / 2, middleY - boxSize / 2, boxSize, boxSize);
+      cropCtx.restore();
+
+      const croppedBase64 = cropCanvas.toDataURL("image/jpeg", 0.9).split(",")[1];
       const loadingColumn = uiManager.createLoadingColumn("Analyzing...", croppedBase64);
 
       try {
-        // Create AbortController for timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout
-        
         const response = await fetch("/image-molecules", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -193,10 +207,7 @@ class CameraHandler {
             cropMiddleY: middleY,
             cropSize: cropSize,
           }),
-          signal: controller.signal
         });
-
-        clearTimeout(timeoutId);
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -212,7 +223,7 @@ class CameraHandler {
         this.emitAnalysisResult(output, "Photo", objectName, false, croppedBase64);
         
         try {
-          await this.incrementUsageForSidebar();
+          await paymentManager.incrementUsage();
         } catch (usageError) {
           // Ignore usage increment errors
         }
@@ -220,21 +231,7 @@ class CameraHandler {
       } catch (err) {
         loadingColumn.remove();
         this.updateScrollHandles();
-        
-        // Enhanced error handling
-        let errorMessage = 'Error: ';
-        
-        if (err.name === 'AbortError') {
-          errorMessage = 'Image analysis timed out. Please check your internet connection and try again.';
-        } else if (err.message.includes('Failed to fetch') || err.message.includes('fetch')) {
-          errorMessage = 'Network connection failed. Please check your internet connection and try again.';
-        } else if (err.message.includes('Network connection failed')) {
-          errorMessage = 'Unable to connect to analysis service. Please check your internet connection.';
-        } else {
-          errorMessage += err.message;
-        }
-        
-        this.createClosableErrorMessage(errorMessage);
+        this.createClosableErrorMessage(`Error: ${err.message}`);
       }
     };
 
@@ -243,75 +240,6 @@ class CameraHandler {
     };
 
     tempImg.src = `data:image/jpeg;base64,${imageBase64}`;
-  }
-
-  // Check payment setup for sidebar-based system
-  async checkPaymentSetupForSidebar() {
-    // Check if dev mode is enabled (localhost auto-enable)
-    if (window.app && window.app.hasPaymentSetup === true) {
-      logger.info('Developer mode active - bypassing payment check');
-      return true;
-    }
-    
-    const deviceToken = localStorage.getItem('molDeviceToken');
-    const cardInfo = localStorage.getItem('molCardInfo');
-    
-    if (!deviceToken || !cardInfo) {
-      // Ensure payment section is visible
-      const paymentSection = document.getElementById('payment-section');
-      if (paymentSection) {
-        paymentSection.classList.remove('hidden');
-      }
-      return false;
-    }
-    
-    try {
-      const response = await fetch('/validate-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_token: deviceToken })
-      });
-      
-      if (!response.ok) {
-        localStorage.removeItem('molDeviceToken');
-        localStorage.removeItem('molCardInfo');
-        // Ensure payment section is visible
-        const paymentSection = document.getElementById('payment-section');
-        if (paymentSection) {
-          paymentSection.classList.remove('hidden');
-        }
-        return false;
-      }
-      
-      return true;
-      
-    } catch (error) {
-      console.error('Payment validation error:', error);
-      return true; // Fallback to allow analysis
-    }
-  }
-
-  // Increment usage for sidebar-based system
-  async incrementUsageForSidebar() {
-    const deviceToken = localStorage.getItem('molDeviceToken');
-    if (!deviceToken) return;
-    
-    try {
-      const response = await fetch('/increment-usage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_token: deviceToken })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        const cardInfo = JSON.parse(localStorage.getItem('molCardInfo') || '{}');
-        cardInfo.usage = result.usage;
-        localStorage.setItem('molCardInfo', JSON.stringify(cardInfo));
-      }
-    } catch (error) {
-      console.log('Usage increment failed:', error);
-    }
   }
 
   // Emit analysis result event for app to handle
@@ -354,29 +282,6 @@ class CameraHandler {
       });
       urlAnalyze.addEventListener("click", () => this.handleUrlAnalysis());
     }
-  }
-
-  // Show crop outline at interaction point
-  showCropOutline(evt) {
-    const cropSize = 100;
-    const outline = document.createElement("div");
-    outline.className = "crop-outline";
-    outline.style.width = cropSize + "px";
-    outline.style.height = cropSize + "px";
-    
-    // Use page coordinates for fixed positioning
-    const x = evt.pageX || evt.clientX;
-    const y = evt.pageY || evt.clientY;
-    
-    outline.style.left = (x - cropSize / 2) + "px";
-    outline.style.top = (y - cropSize / 2) + "px";
-    
-    document.body.appendChild(outline);
-    
-    setTimeout(() => {
-      outline.style.opacity = "0";
-      setTimeout(() => outline.remove(), 200);
-    }, 500);
   }
 }
 

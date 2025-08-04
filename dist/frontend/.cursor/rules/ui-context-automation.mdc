@@ -1,0 +1,218 @@
+# UI Context Automation - Iterative Prompt Enhancement
+
+## Automated Context Capture System
+
+### 1. UI State Snapshot Generator
+```javascript
+// Add to app.js
+generateUISnapshot() {
+  return {
+    timestamp: new Date().toISOString(),
+    viewport: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      devicePixelRatio: window.devicePixelRatio
+    },
+    layout: {
+      sidebarVisible: !document.getElementById('payment-section').classList.contains('hidden'),
+      accountButtonPosition: this.getElementPosition('.account-link'),
+      textInputMargin: getComputedStyle(document.getElementById('object-input')).marginRight,
+      safeAreaRight: getComputedStyle(document.documentElement).getPropertyValue('--safe-area-right')
+    },
+    activeElements: {
+      focusedElement: document.activeElement?.id || null,
+      visibleSections: this.getVisibleSections(),
+      errorStates: this.getErrorStates()
+    },
+    cssVariables: this.getCSSVariables(),
+    responsiveState: this.getResponsiveBreakpoint(),
+    overlappingElements: this.detectOverlaps()
+  };
+}
+```
+
+### 2. Context File Auto-Generation
+```javascript
+// Generate context for next prompt
+generatePromptContext() {
+  const uiSnapshot = this.generateUISnapshot();
+  const recentChanges = this.getRecentUIChanges();
+  const activeIssues = this.getActiveUIIssues();
+  
+  return {
+    current_ui_state: uiSnapshot,
+    recent_changes: recentChanges,
+    active_issues: activeIssues,
+    rule_compliance: this.checkRuleCompliance(),
+    suggested_focus: this.suggestNextActions()
+  };
+}
+```
+
+## Rule Compliance Checker
+
+### 3. Automated Rule Validation
+```javascript
+checkRuleCompliance() {
+  const issues = [];
+  
+  // Check layout-system.mdc compliance
+  if (!this.usesCustomProperties()) issues.push('Not using CSS custom properties');
+  if (!this.hasSafeAreas()) issues.push('Missing safe area margins');
+  if (!this.hasProperZIndex()) issues.push('Z-index not from defined stack');
+  
+  // Check product-requirements.mdc compliance
+  if (!this.hasCardButton()) issues.push('Card button missing');
+  if (!this.isBorderless()) issues.push('Elements have borders');
+  if (!this.isBlackBackground()) issues.push('Non-black backgrounds detected');
+  
+  return {
+    compliant: issues.length === 0,
+    issues: issues,
+    score: Math.max(0, 100 - (issues.length * 10))
+  };
+}
+```
+
+## Automated Documentation Updates
+
+### 4. Self-Updating Documentation
+```javascript
+updateDocumentationContext() {
+  const context = this.generatePromptContext();
+  
+  // Auto-update ui-memory.mdc with new patterns
+  if (context.active_issues.length > 0) {
+    this.suggestMemoryUpdates(context.active_issues);
+  }
+  
+  // Generate layout debug report
+  if (context.current_ui_state.overlappingElements.length > 0) {
+    this.generateOverlapReport(context.current_ui_state.overlappingElements);
+  }
+  
+  // Update context cache for next interaction
+  localStorage.setItem('ui_context_cache', JSON.stringify(context));
+}
+```
+
+## Visual Diff System
+
+### 5. Before/After UI Comparison
+```javascript
+captureUIState(label) {
+  const snapshot = {
+    label: label,
+    timestamp: Date.now(),
+    screenshot: this.captureScreenshot(), // Using html2canvas
+    dom: this.serializeDOMState(),
+    styles: this.extractRelevantStyles(),
+    layout: this.generateUISnapshot()
+  };
+  
+  this.storeSnapshot(snapshot);
+  return snapshot;
+}
+
+generateDiffReport(beforeSnapshot, afterSnapshot) {
+  return {
+    layout_changes: this.compareLayouts(beforeSnapshot.layout, afterSnapshot.layout),
+    style_changes: this.compareStyles(beforeSnapshot.styles, afterSnapshot.styles),
+    dom_changes: this.compareDOMStates(beforeSnapshot.dom, afterSnapshot.dom),
+    visual_diff: this.generateVisualDiff(beforeSnapshot.screenshot, afterSnapshot.screenshot)
+  };
+}
+```
+
+## Iterative Context Enhancement
+
+### 6. Learning from Previous Iterations
+```javascript
+buildIterativeContext() {
+  const history = this.getUIChangeHistory();
+  const patterns = this.detectUIPatterns(history);
+  const predictions = this.predictNextIssues(patterns);
+  
+  return {
+    change_history: history.slice(-5), // Last 5 changes
+    common_patterns: patterns,
+    predicted_issues: predictions,
+    success_rate: this.calculateSuccessRate(history),
+    recommended_approach: this.recommendApproach(patterns)
+  };
+}
+```
+
+## Prompt Template System
+
+### 7. Auto-Generated Prompt Context
+```markdown
+## Current UI State (Auto-Generated)
+**Timestamp**: ${context.timestamp}
+**Viewport**: ${context.viewport.width}x${context.viewport.height}
+**Layout Compliance**: ${context.rule_compliance.score}% (${context.rule_compliance.issues.join(', ')})
+
+**Active Issues**:
+${context.active_issues.map(issue => `- ${issue.type}: ${issue.description}`).join('\n')}
+
+**Recent Changes**:
+${context.recent_changes.map(change => `- ${change.timestamp}: ${change.description}`).join('\n')}
+
+**Overlapping Elements**: ${context.current_ui_state.overlappingElements.length > 0 ? 'DETECTED' : 'None'}
+${context.current_ui_state.overlappingElements.map(overlap => `  - ${overlap.element1} overlaps ${overlap.element2}`).join('\n')}
+
+**CSS Variables Status**:
+${Object.entries(context.current_ui_state.cssVariables).map(([key, value]) => `  - ${key}: ${value}`).join('\n')}
+
+**Responsive State**: ${context.current_ui_state.responsiveState}
+**Sidebar Visible**: ${context.current_ui_state.layout.sidebarVisible}
+**Safe Area Right**: ${context.current_ui_state.layout.safeAreaRight}
+```
+
+## Usage Instructions
+
+### 8. How to Enable Auto-Context
+```javascript
+// Enable in console
+window.app.enableUIContextAutomation();
+
+// Before making changes
+window.app.captureUIState('before_fix');
+
+// After making changes  
+window.app.captureUIState('after_fix');
+window.app.generateDiffReport('before_fix', 'after_fix');
+
+// Generate context for next prompt
+window.app.exportContextForPrompt(); // Copies to clipboard
+```
+
+## Integration with Development Workflow
+
+### 9. Automated Workflow Hooks
+```javascript
+// Auto-capture on significant changes
+new MutationObserver((mutations) => {
+  if (this.isSignificantChange(mutations)) {
+    this.updateDocumentationContext();
+  }
+}).observe(document.body, { childList: true, subtree: true, attributes: true });
+
+// Auto-generate context on window resize
+window.addEventListener('resize', debounce(() => {
+  this.updateDocumentationContext();
+}, 500));
+
+// Hook into git commits to capture state
+// (requires git hooks setup)
+```
+
+## Benefits
+
+1. **Accurate Context**: Every prompt includes current UI state
+2. **Rule Compliance**: Automatic checking against established rules
+3. **Pattern Recognition**: Learn from previous changes
+4. **Visual Diff**: See exactly what changed
+5. **Predictive Issues**: Anticipate problems before they occur
+6. **Documentation Sync**: Keep rules updated with reality
+7. **Efficiency**: Reduce back-and-forth debugging

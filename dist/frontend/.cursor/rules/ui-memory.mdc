@@ -1,0 +1,86 @@
+# UI Memory - Critical Fixes
+
+## Auto-Reload Development Setup (ALWAYS APPLY)
+**Requirement**: Site should auto-reload after code changes during development
+**Infrastructure**:
+```bash
+./dev                    # Uses nodemon + livereload
+# Dependencies: livereload, connect-livereload (devDependencies)
+#              openai, sharp, fs-extra, zod (main dependencies)
+# Watches: backend/ and frontend/ directories  
+# Auto-reloads: server restart + browser refresh
+# LiveReload port: 35730
+```
+**Backend**: connect-livereload middleware in server.js (development only)
+**Frontend**: Script auto-injected by connect-livereload middleware
+**Location**: `backend/api/server.js` lines 144-165
+**Status**: ✅ All dependencies installed, livereload active
+**VS Code**: Pipeline documented in `.vscode/launch.json` with full infrastructure specs
+
+## Black Background Rule (ALWAYS APPLY)
+**Requirement**: Everything in this app must have black background
+**Implementation**:
+```css
+body, html, .main-container, .app-container { background: #000000; }
+.results-section, .object-column, .molecule-viewer { background: #000000; }
+.payment-section, .camera-section { background: #000000; }
+/* NO white/light backgrounds anywhere */
+```
+
+## Icons Only Rule (ALWAYS APPLY)
+**Requirement**: Use only icons, no text (ui.mdc compliance)
+**Implementation**: 
+- Remove all text labels ("Account", "Payment Required", etc.)
+- Use SVG icons exclusively
+- Card icon: 24x24px white (#ffffff) with subtle glow for max readability on black
+- Hover states: `rgba(255, 255, 255, 0.12)` (not 0.08)
+- No borders, outlines, box-shadows, or border-radius anywhere
+
+## No Extraneous Lines (ALWAYS APPLY)
+**Rule**: Global CSS removes all decorative elements
+```css
+*, *::before, *::after {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+```
+
+## Payment Sidebar (ALWAYS CLOSED BY DEFAULT)
+**Requirement**: Payment section must default to closed as sidebar
+**Implementation**:
+```html
+<div class="payment-section hidden" id="payment-section">
+```
+**Logic**: Only open when user clicks account button, never auto-show
+
+## Card Icon Payment Status (VISUAL INDICATOR)
+**Requirement**: Card icon shows payment status with color and text
+**Implementation**:
+- **Red icon, no text**: Payment not set up (`accountStatus.style.color = '#ff0000'`)
+- **Blue icon with text**: Payment active (`accountStatus.style.color = '#00d4ff'`)
+- Card icon uses `color: inherit` to reflect parent status color
+
+## Card Icon Spacing (NEVER REVERT)
+**Problem**: Card icon overlaps text input (3x recurring)
+**Fix**: 
+```css
+.account-link { gap: 8px; min-width: 100px; }
+.text-input { margin-right: 160px; } /* mobile: 80px */
+```
+
+## Developer Mode UI (PERMANENTLY REMOVED)
+- NO UI elements for developer mode
+- Terminal controlled only
+- All dev-toggle/dev-indicator elements removed
+
+## Hover States (ui.mdc compliant)
+```css
+.account-link:hover { background: rgba(255, 255, 255, 0.08); }
+/* NO box-shadow on buttons */
+```
+
+## Prevention Protocol
+Before UI changes: READ this file first
+After recurring fix: UPDATE this file
+Never reduce: account-link gap, text-input margin-right

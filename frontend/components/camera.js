@@ -1,6 +1,5 @@
 import { paymentManager } from './payment.js';
 import { uiManager } from './ui-utils.js';
-import { logger } from './logger.js';
 
 class CameraManager {
   constructor() {
@@ -10,10 +9,6 @@ class CameraManager {
     
     this.permissionKey = 'mol_camera_permission';
     this.deviceId = this.getDeviceId();
-    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    this.cameraPermission = this.hasStoredCameraPermission();
   }
 
   getDeviceId() {
@@ -175,7 +170,7 @@ class CameraManager {
     
     // Validate video element
     if (!this.video) {
-      logger.error('Video element not found');
+      console.error('Video element not found');
       return;
     }
 
@@ -211,7 +206,7 @@ class CameraManager {
       // Save successful camera permission
       this.saveCameraPermission(true);
       
-      logger.info('Camera started successfully', {
+      console.log('✅ Camera started successfully:', {
         videoWidth: this.video.videoWidth,
         videoHeight: this.video.videoHeight,
         readyState: this.video.readyState,
@@ -267,49 +262,54 @@ class CameraManager {
 
   // Handle camera interaction (click/tap)
   async handleInteraction(evt) {
-    logger.cameraEvent('interaction_detected', { 
-      isMobile: this.isMobile,
-      eventType: evt.type 
-    });
+    console.log('📷 Camera interaction detected:', evt);
     
-    let paymentCheck = false;
-    try {
-      paymentCheck = await this.checkPaymentSetupForSidebar();
-      logger.debug('Payment check result', { paymentCheck });
-    } catch (error) {
-      logger.warn('Payment check failed, proceeding anyway', error);
-      paymentCheck = true; // Fallback to allow analysis
-    }
+    // Check if payment is enabled globally
+    const paymentEnabled = window.app && window.app.paymentEnabled;
+    let paymentCheck = true; // Default to allow analysis when payment disabled
     
-    if (!paymentCheck) {
-      logger.warn('Payment required - showing message');
-      // Show simple message directing to sidebar
-      const messageColumn = uiManager.createColumn("Payment setup required", "payment-required");
-      messageColumn.innerHTML = `
-        <div class="molecule-container">
-          <div class="molecule-info">
-            <h3>Payment Setup Required</h3>
-            <p>Complete payment setup in the sidebar to analyze molecules via camera</p>
+    if (paymentEnabled) {
+      try {
+        paymentCheck = await paymentManager.checkPaymentMethod();
+        console.log('💳 Payment check result:', paymentCheck);
+      } catch (error) {
+        console.log('⚠️ Payment check failed, proceeding anyway:', error);
+        paymentCheck = true; // Fallback to allow analysis
+      }
+      
+      if (!paymentCheck) {
+        console.log('🚫 Payment required - showing message');
+        // Show simple message instead of modal
+        const messageColumn = uiManager.createColumn("See payment setup above", "payment-required");
+        messageColumn.innerHTML = `
+          <div class="molecule-container">
+            <div class="molecule-info">
+              <h3>Payment Required</h3>
+              <p>See payment setup above</p>
+              <div class="analysis-note">Complete payment setup to analyze molecules via camera</div>
+            </div>
           </div>
-        </div>
-      `;
-      return;
+        `;
+        return;
+      }
+    } else {
+      console.log('💳 Payment disabled - proceeding with analysis');
     }
 
-    logger.info('Payment check passed, proceeding with analysis');
+    console.log('✅ Payment check passed, proceeding with analysis');
 
     // Mobile reticle validation
     if (this.isMobile && !this.isWithinReticle(evt)) {
-      logger.warn('Mobile reticle validation failed');
+      console.log('📱 Mobile reticle validation failed');
       this.showReticleFeedback();
       return;
     }
 
-    logger.info('Proceeding with camera analysis');
+    console.log('🎯 Proceeding with camera analysis');
     
     // Check if camera is ready
     if (!this.isCameraReady()) {
-      logger.warn('Camera not ready, attempting to restart');
+      console.log('⚠️ Camera not ready, attempting to restart...');
       try {
         await this.startCamera();
         // Wait a moment for camera to stabilize
@@ -332,23 +332,15 @@ class CameraManager {
       }
       
       // Capture and analyze the image
-      logger.cameraEvent('capturing_image');
+      console.log('📸 Capturing image from camera');
       const captureData = await this.captureAndAnalyze(evt);
-      logger.info('Image captured successfully');
+      console.log('✅ Image captured successfully');
       
       // Create loading column
       const loadingColumn = uiManager.createLoadingColumn("Analyzing...", captureData.croppedBase64);
       
       // Send to server for analysis
-      logger.analysisEvent('camera_analysis_request', {
-        coordinates: captureData.coordinates,
-        hasImageData: !!captureData.imageBase64
-      });
-      
-      // Create AbortController for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 second timeout
-      
+      console.log('🌐 Sending camera analysis request to server');
       const response = await fetch("/image-molecules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -361,19 +353,16 @@ class CameraManager {
           cropMiddleY: captureData.coordinates.cropMiddleY,
           cropSize: captureData.coordinates.cropSize,
         }),
-        signal: controller.signal
       });
 
-      clearTimeout(timeoutId);
-
-      logger.debug('Camera analysis response status', { status: response.status });
+      console.log('📡 Camera analysis response status:', response.status);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
       
       const { output } = await response.json();
-      logger.analysisEvent('camera_analysis_completed', { output });
+      console.log('✅ Camera analysis completed:', output);
 
       // Remove loading column
       loadingColumn.remove();
@@ -392,30 +381,14 @@ class CameraManager {
       
       // Try to increment usage, but don't fail if it doesn't work
       try {
-        await this.incrementUsageForSidebar();
+        await paymentManager.incrementUsage();
       } catch (usageError) {
-        logger.warn('Usage increment failed', usageError);
+        console.log('⚠️ Usage increment failed:', usageError);
       }
       
     } catch (error) {
-      logger.error('Camera analysis error', error);
-      
-      // Enhanced error handling
-      let errorMessage = 'Analysis failed: ';
-      
-      if (error.name === 'AbortError') {
-        errorMessage = 'Camera analysis timed out. Please check your internet connection and try again.';
-      } else if (error.message.includes('Failed to fetch') || error.message.includes('fetch')) {
-        errorMessage = 'Network connection failed. Please check your internet connection and try again.';
-      } else if (error.message.includes('Network connection failed')) {
-        errorMessage = 'Unable to connect to analysis service. Please check your internet connection.';
-      } else if (error.message.includes('Camera not ready')) {
-        errorMessage = error.message; // Keep camera-specific messages as-is
-      } else {
-        errorMessage += error.message;
-      }
-      
-      this.createClosableErrorMessage(errorMessage);
+      console.error('❌ Camera analysis error:', error);
+      this.createClosableErrorMessage(`Analysis failed: ${error.message}`);
     }
   }
 
@@ -439,10 +412,10 @@ class CameraManager {
   showReticleFeedback() {
     const reticle = document.querySelector(".mobile-reticle");
     if (reticle) {
-              reticle.classList.add('reticle-pulse');
-        setTimeout(() => {
-          reticle.classList.remove('reticle-pulse');
-        }, 500);
+      reticle.style.animation = "reticlePulse 0.5s ease";
+      setTimeout(() => {
+        reticle.style.animation = "";
+      }, 500);
     }
   }
 
@@ -453,13 +426,12 @@ class CameraManager {
     outline.className = "crop-outline";
     outline.style.width = cropSize + "px";
     outline.style.height = cropSize + "px";
-    outline.style.left = (evt.pageX - cropSize / 2) + "px";
-    outline.style.top = (evt.pageY - cropSize / 2) + "px";
-    
+    outline.style.left = evt.clientX - cropSize / 2 + "px";
+    outline.style.top = evt.clientY - cropSize / 2 + "px";
     document.body.appendChild(outline);
     
     setTimeout(() => {
-      outline.classList.add('fade-out');
+      outline.style.opacity = "0";
       setTimeout(() => outline.remove(), 200);
     }, 500);
   }
@@ -542,8 +514,7 @@ class CameraManager {
       const switchCameraBtn = document.getElementById("switch-camera-btn");
       
       if (switchCameraContainer && switchCameraBtn) {
-        switchCameraContainer.classList.add('camera-switch-visible');
-        switchCameraContainer.classList.remove('camera-switch-hidden');
+        switchCameraContainer.style.display = "block";
         switchCameraBtn.onclick = () => {
           this.facingMode = this.facingMode === "user" ? "environment" : "user";
           this.startCamera();
@@ -574,7 +545,7 @@ class CameraManager {
     this.video.appendChild(reticle);
 
     setTimeout(() => {
-                reticle.classList.add('reticle-pulse-infinite');
+      reticle.style.animation = "reticlePulse 2s ease-in-out infinite";
     }, 1000);
   }
 
@@ -591,21 +562,15 @@ class CameraManager {
     const instructionText = document.querySelector('.instruction-text');
     if (!instructionText) return;
     
-    // Reset all color classes
-    instructionText.className = 'instruction-text';
-    
     if (this.isCameraReady()) {
       instructionText.textContent = 'Center object in circle & tap, or type name above';
-      instructionText.classList.add('text-white');
+      instructionText.style.color = '#ffffff';
     } else if (this.currentStream) {
       instructionText.textContent = 'Camera initializing... please wait';
-      instructionText.classList.add('text-orange');
-    } else if (this.isRequestingPermission) {
-      instructionText.textContent = 'Requesting camera permission...';
-      instructionText.classList.add('text-orange');
+      instructionText.style.color = '#ffa500';
     } else {
       instructionText.textContent = 'Camera not available - check permissions';
-      instructionText.classList.add('text-red');
+      instructionText.style.color = '#ff6b6b';
     }
   }
 
@@ -652,90 +617,14 @@ class CameraManager {
 
   // Request camera permission with persistence
   async requestPermission() {
-    this.isRequestingPermission = true;
-    this.updateCameraInstructions();
-    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       this.saveCameraPermission(true);
       stream.getTracks().forEach(track => track.stop());
-      this.isRequestingPermission = false;
-      await this.startCamera();
       return true;
     } catch (error) {
-      this.isRequestingPermission = false;
       this.saveCameraPermission(false);
-      this.updateCameraInstructions();
       return false;
-    }
-  }
-
-  // Check payment setup for sidebar-based system
-  async checkPaymentSetupForSidebar() {
-    // Check if dev mode is enabled (localhost auto-enable)
-    if (window.app && window.app.hasPaymentSetup === true) {
-      logger.info('Developer mode active - bypassing payment check');
-      return true;
-    }
-    
-    const deviceToken = localStorage.getItem('molDeviceToken');
-    const cardInfo = localStorage.getItem('molCardInfo');
-    
-    if (!deviceToken || !cardInfo) {
-      // Ensure payment section is visible
-      const paymentSection = document.getElementById('payment-section');
-      if (paymentSection) {
-        paymentSection.classList.remove('hidden');
-      }
-      return false;
-    }
-    
-    try {
-      const response = await fetch('/validate-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_token: deviceToken })
-      });
-      
-      if (!response.ok) {
-        localStorage.removeItem('molDeviceToken');
-        localStorage.removeItem('molCardInfo');
-        // Ensure payment section is visible
-        const paymentSection = document.getElementById('payment-section');
-        if (paymentSection) {
-          paymentSection.classList.remove('hidden');
-        }
-        return false;
-      }
-      
-      return true;
-      
-    } catch (error) {
-      logger.error('Payment validation error', error);
-      return true; // Fallback to allow analysis
-    }
-  }
-
-  // Increment usage for sidebar-based system
-  async incrementUsageForSidebar() {
-    const deviceToken = localStorage.getItem('molDeviceToken');
-    if (!deviceToken) return;
-    
-    try {
-      const response = await fetch('/increment-usage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_token: deviceToken })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        const cardInfo = JSON.parse(localStorage.getItem('molCardInfo') || '{}');
-        cardInfo.usage = result.usage;
-        localStorage.setItem('molCardInfo', JSON.stringify(cardInfo));
-      }
-    } catch (error) {
-      logger.warn('Usage increment failed', error);
     }
   }
 

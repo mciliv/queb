@@ -3,48 +3,24 @@ const {
   ObjectIdentificationSchema,
   CHEMICAL_REPRESENTATIONS,
 } = require("../schemas/schemas");
-const ErrorHandler = require("./error-handler");
+
+// Import the new prompt engineering modules
+const { buildChemicalAnalysisInstructions } = require("../prompts/chemical-analysis-instructions");
+const { parseAIResponseWithFallbacks, validateSMILESQuality } = require("../prompts/fallback-handlers");
+const { getRelevantExamples } = require("../prompts/material-examples");
 
 class AtomPredictor {
   constructor(apiKey) {
-    this.client = new OpenAI({ 
-      apiKey,
-      timeout: 30000, // 30 seconds timeout
-      maxRetries: 2   // Retry failed requests twice
-    });
+    // Handle test environment
+    this.isTestMode = apiKey === 'test-key' || process.env.NODE_ENV === 'test';
+    this.client = new OpenAI({ apiKey: apiKey || 'test-key' }); // Always create client for Jest mocks
+    // Use the improved instruction builder from git history analysis
     this.chemicalInstructions = this.buildChemicalInstructions();
   }
 
   buildChemicalInstructions() {
-    return `Analyze the object and provide a JSON response with chemical components.
-
-Response format:
-{
-  "object": "Object name",
-  "chemicals": [
-    {"name": "Chemical name", "smiles": "SMILES notation"}
-  ]
-}
-
-ANALYSIS APPROACH:
-1. BIOLOGICAL MATERIALS (skin, food, plants, etc.): Provide all molecular components typically found in that material
-2. MANUFACTURED ITEMS: Analyze visible materials and compositions
-3. PURE SUBSTANCES: Identify the specific chemical if recognizable
-
-BIOLOGICAL MATERIAL EXAMPLES:
-- Human skin: Include keratin proteins, lipids, water, cholesterol, ceramides
-- Food items: Include major nutrients, flavor compounds, preservatives
-- Plants: Include cellulose, chlorophyll, common plant metabolites
-
-CRITICAL SMILES Guidelines:
-- Use ONLY standard SMILES notation, never molecular formulas
-- Provide accurate SMILES for the actual molecules present
-- Examples: "O" (water), "CCO" (ethanol), "C1=CC=CC=C1" (benzene)
-- For proteins, use representative amino acids: "N[C@@H](CC1=CC=CC=C1)C(=O)O" (phenylalanine)
-- For complex molecules, provide the complete accurate SMILES
-
-NEVER use molecular formulas like "H2O", "C2H6O", "CaCO3" - always use SMILES.
-When visual analysis is insufficient, use scientific knowledge of typical molecular composition.`;
+    // Use the comprehensive instructions with proven techniques
+    return buildChemicalAnalysisInstructions();
   }
 
   async analyzeImage(
@@ -56,7 +32,14 @@ When visual analysis is insufficient, use scientific knowledge of typical molecu
     cropMiddleY = null,
     cropSize = null,
   ) {
+    // Validate non-empty image
+    if (!imageBase64 || imageBase64.trim().length === 0) {
+      throw new Error("Empty image data");
+    }
+
     try {
+      // Skip test mode check - let Jest mocks handle test behavior
+
       const messages = [
         {
           role: "user",
@@ -76,9 +59,9 @@ When visual analysis is insufficient, use scientific knowledge of typical molecu
         },
       ];
 
-      // Add cropped region if available
+      // Add cropped region if available - improved focus text from git history
       if (croppedImageBase64) {
-        let focusText = `Here's a cropped view of the area of interest. Analyze the chemical composition of the material or substance visible in this region:`;
+        let focusText = `Here's a cropped view of the area of interest. Analyze the chemical composition of the material or substance visible in this region. Use the examples above as your guide for accurate SMILES notation:`;
 
         messages[0].content.push({
           type: "text",
@@ -97,30 +80,47 @@ When visual analysis is insufficient, use scientific knowledge of typical molecu
         model: "gpt-4o",
         messages,
         max_tokens: 1000,
-        temperature: 0.1,
+        temperature: 0.1, // Keep low for consistency
       });
 
       const content = response.choices[0].message.content;
-      const parsed = this.parseAIResponse(content);
+      
+      // Use the improved parsing with smart fallbacks
+      const parsed = parseAIResponseWithFallbacks(content);
+      
+      // Validate and improve SMILES quality
+      const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
 
       return {
         object: parsed.object || "Unknown object",
-        chemicals: parsed.chemicals || [],
+        chemicals: validatedChemicals,
       };
     } catch (error) {
-      const { errorMessage } = ErrorHandler.handleAIError(error, 'image analysis');
-      throw new Error(errorMessage);
+      console.error("AI analysis error:", error);
+      throw new Error(`AI analysis failed: ${error.message}`);
     }
   }
 
   async analyzeText(object) {
     try {
+      // Skip test mode check - let Jest mocks handle test behavior
+
+      // Enhanced text analysis with context-aware examples
+      const objectType = this.detectObjectType(object);
+      const relevantExamples = getRelevantExamples(objectType);
+      
+      const enhancedInstructions = `${this.chemicalInstructions}
+
+${relevantExamples}
+
+Now analyze this specific object: "${object}"`;
+
       const response = await this.client.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "user",
-            content: `Analyze this object: "${object}". ${this.chemicalInstructions}`,
+            content: enhancedInstructions,
           },
         ],
         max_tokens: 1000,
@@ -128,103 +128,54 @@ When visual analysis is insufficient, use scientific knowledge of typical molecu
       });
 
       const content = response.choices[0].message.content;
-      const parsed = this.parseAIResponse(content);
+      
+      // Use the improved parsing with smart fallbacks
+      const parsed = parseAIResponseWithFallbacks(content);
+      
+      // Validate and improve SMILES quality
+      const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
 
       return {
         object: parsed.object || object,
-        chemicals: parsed.chemicals || [],
+        chemicals: validatedChemicals,
       };
     } catch (error) {
-      const { errorMessage } = ErrorHandler.handleAIError(error, 'text analysis');
-      throw new Error(errorMessage);
+      console.error("AI text analysis error:", error);
+      throw new Error(`AI text analysis failed: ${error.message}`);
     }
   }
 
+  /**
+   * Detect object type for context-aware examples
+   * Helps provide more relevant prompts to improve accuracy
+   */
+  detectObjectType(object) {
+    const objectLower = object.toLowerCase();
+    
+    if (objectLower.includes('wine') || objectLower.includes('beer') || 
+        objectLower.includes('coffee') || objectLower.includes('drink') ||
+        objectLower.includes('beverage')) {
+      return 'beverage';
+    }
+    
+    if (objectLower.includes('fruit') || objectLower.includes('food') ||
+        objectLower.includes('apple') || objectLower.includes('orange') ||
+        objectLower.includes('vegetable')) {
+      return 'food';
+    }
+    
+    if (objectLower.includes('plastic') || objectLower.includes('metal') ||
+        objectLower.includes('wood') || objectLower.includes('stone')) {
+      return 'material';
+    }
+    
+    return 'general';
+  }
+
+  // Keep the legacy parseAIResponse method for compatibility but mark as deprecated
   parseAIResponse(content) {
-    // Handle null/undefined content first
-    if (!content) {
-      return {
-        object: "Unknown object",
-        chemicals: []
-      };
-    }
-
-    try {
-      // Extract JSON from potential markdown or text wrapper
-      const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[1]);
-      }
-
-      // Look for standalone JSON object in the response
-      const objectMatch = content.match(/\{[\s\S]*?\}/);
-      if (objectMatch) {
-        const jsonStr = objectMatch[0];
-        
-        // Check if this appears to be a complete, properly structured response
-        if (jsonStr.includes('"object"') && jsonStr.includes('"chemicals"')) {
-          // Validate that all chemical entries are complete
-          const chemicalsMatch = jsonStr.match(/"chemicals"\s*:\s*\[([\s\S]*?)\]/);
-          if (chemicalsMatch) {
-            const chemicalsStr = chemicalsMatch[1];
-            const entryCount = (chemicalsStr.match(/\{/g) || []).length;
-            const completeEntries = (chemicalsStr.match(/\{\s*"name"\s*:\s*"[^"]*"\s*,\s*"smiles"\s*:\s*"[^"]*"\s*\}/g) || []).length;
-            
-            // If some entries are incomplete, extract what we can
-            if (entryCount > completeEntries) {
-              const completeChemicals = [];
-              const completeMatches = chemicalsStr.match(/\{\s*"name"\s*:\s*"([^"]*)"\s*,\s*"smiles"\s*:\s*"([^"]*)"\s*\}/g) || [];
-              
-              completeMatches.forEach(match => {
-                const nameMatch = match.match(/"name"\s*:\s*"([^"]*)"/);
-                const smilesMatch = match.match(/"smiles"\s*:\s*"([^"]*)"/);
-                if (nameMatch && smilesMatch) {
-                  completeChemicals.push({
-                    name: nameMatch[1],
-                    smiles: smilesMatch[1]
-                  });
-                }
-              });
-              
-              // Get object name
-              const objectMatch = jsonStr.match(/"object"\s*:\s*"([^"]+)"/);
-              const objectName = objectMatch ? objectMatch[1] : "Unknown object";
-              
-              return {
-                object: objectName,
-                chemicals: completeChemicals
-              };
-            }
-          }
-        }
-        
-        return JSON.parse(jsonStr);
-      }
-
-      // Fallback: try to parse the entire content as JSON
-      return JSON.parse(content);
-    } catch (error) {
-      // Enhanced fallback: try to extract chemicals even from malformed JSON
-      const objectMatch = content.match(/"object"\s*:\s*"([^"]+)"/);
-      const objectName = objectMatch ? objectMatch[1] : "Unknown object";
-      
-      // Try to extract individual chemical entries
-      const chemicals = [];
-      const entryRegex = /\{"name"\s*:\s*"([^"]+)"\s*,\s*"smiles"\s*:\s*"([^"]+)"\}/g;
-      let match;
-      
-      while ((match = entryRegex.exec(content)) !== null) {
-        chemicals.push({
-          name: match[1],
-          smiles: match[2]
-        });
-      }
-      
-      return {
-        object: objectName,
-        chemicals: chemicals
-      };
-    }
+    console.warn("Using deprecated parseAIResponse - consider updating to use fallback-handlers module");
+    return parseAIResponseWithFallbacks(content);
   }
 }
 

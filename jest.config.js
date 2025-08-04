@@ -1,28 +1,24 @@
 module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/test/fixtures/setup.js'],
+  globalTeardown: '<rootDir>/test/fixtures/global-teardown.js',
   testMatch: [
-    '**/test/**/*.test.js',
-    '!**/node_modules/**'
+    '<rootDir>/test/**/*.test.js'
   ],
   collectCoverageFrom: [
     'backend/**/*.js',
     'frontend/**/*.js',
-    '!**/node_modules/**',
-    '!**/coverage/**'
+    '!**/node_modules/**'
   ],
-  testTimeout: 30000,
-  verbose: true,
-  detectOpenHandles: true,
-  testEnvironmentOptions: {
-    url: 'http://localhost:8080'
-  },
   transform: {
     '^.+\\.(js|jsx)$': ['babel-jest']
   },
   transformIgnorePatterns: [
     'node_modules/(?!(.*\\.(js|mjs)$))'
   ],
+  testEnvironmentOptions: {
+    url: 'http://localhost:8080'
+  },
   globals: {
     TextEncoder: TextEncoder,
     TextDecoder: TextDecoder
@@ -36,7 +32,7 @@ module.exports = {
       testMatch: ['**/test/unit/camera*.test.js', '**/test/unit/manual.test.js', '**/test/unit/front-end*.test.js'],
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/test/fixtures/setup.js'],
-          detectOpenHandles: true
+      detectOpenHandles: true
     },
     {
       displayName: 'unit-backend', 
@@ -46,7 +42,7 @@ module.exports = {
         TextEncoder: TextEncoder,
         TextDecoder: TextDecoder
       },
-          detectOpenHandles: true
+      detectOpenHandles: true
     },
     {
       displayName: 'integration',
@@ -56,13 +52,17 @@ module.exports = {
         TextEncoder: TextEncoder,
         TextDecoder: TextDecoder
       },
-          detectOpenHandles: true
+      detectOpenHandles: true
     },
     {
       displayName: 'smoke',
       testMatch: ['**/test/smoke.test.js'],
       testEnvironment: 'node',
-          detectOpenHandles: true
+      detectOpenHandles: true
     }
-  ]
+  ],
+  forceExit: true,
+  detectOpenHandles: true,
+  testTimeout: 30000,
+  verbose: true
 }; 

@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# dev-debug - Development server with maximum error visibility and logging
+
+set -e
+
+echo "🔍 Starting DEVELOPMENT SERVER with DEBUG MODE"
+echo "=============================================="
+
+# Colors for better visibility
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
+log_success() { echo -e "${GREEN}✅ $1${NC}"; }
+log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
+log_error() { echo -e "${RED}❌ $1${NC}"; }
+
+# Cleanup function
+cleanup() {
+    echo ""
+    log_info "Shutting down development server..."
+    pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+    pkill -f "nodemon" 2>/dev/null || true
+    exit 0
+}
+
+# Set up signal handlers
+trap cleanup SIGINT SIGTERM
+
+log_info "Cleaning up any existing processes..."
+pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+pkill -f "nodemon" 2>/dev/null || true
+sleep 1
+
+log_info "Checking Node.js and npm versions..."
+echo "Node: $(node --version)"
+echo "NPM: $(npm --version)"
+
+log_info "Checking for required dependencies..."
+if npm list nodemon >/dev/null 2>&1; then
+    log_success "nodemon found"
+else
+    log_warning "nodemon not found, installing..."
+    npm install nodemon
+fi
+
+log_info "Current working directory: $(pwd)"
+log_info "Server file path: $(realpath backend/api/server.js)"
+
+echo ""
+log_info "🧪 Running tests (non-blocking)..."
+if npx jest --testPathPattern=unit.test.js --verbose; then
+    log_success "All tests passed!"
+else
+    log_warning "Some tests failed, continuing with server startup..."
+fi
+
+echo ""
+echo "🚀 STARTING DEVELOPMENT SERVER"
+echo "=============================="
+log_info "HTTP Server: http://localhost:8080"
+log_info "HTTPS Server: https://localhost:3001"
+log_info "Live Reload: Active (port 35729/35730)"
+log_info "Watching: frontend/ directory"
+echo ""
+log_warning "All errors and logs will be shown below:"
+log_warning "Press Ctrl+C to stop the server"
+echo ""
+
+# Start nodemon with maximum verbosity and error output
+export NODE_ENV=debug
+exec npx nodemon \
+    --verbose \
+    --watch backend/ \
+    --watch frontend/ \
+    --ext js,html,css \
+    --ignore node_modules/ \
+    --ignore test/ \
+    --delay 1000ms \
+    backend/api/server.js 

@@ -36,6 +36,14 @@ class SimplePaymentManager {
 
   // Check if payment is needed
   async checkPaymentRequired() {
+    // Check if payment is globally disabled
+    const paymentEnabled = window.app && window.app.paymentEnabled;
+    if (!paymentEnabled) {
+      console.log('💳 Payment disabled globally - hiding payment section');
+      this.hidePaymentSection();
+      return true;
+    }
+    
     const deviceToken = localStorage.getItem('molDeviceToken');
     const cardInfo = localStorage.getItem('molCardInfo');
     

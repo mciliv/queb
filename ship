@@ -1,47 +1,69 @@
-#!/bin/bash
+#!/usr/bin/env node
 
-# Load shared colors and logging functions
-source infrastructure/scripts/colors.sh
+const { execSync } = require("child_process");
 
-log_ship "Starting complete workflow (ship)..."
+console.log("🚢 Starting complete workflow (ship)...");
 
-# Check for required environment variable
-if [ -z "$OPENAI_API_KEY" ]; then
-  log_error "OPENAI_API_KEY environment variable is required"
-  exit 1
-fi
+// Configuration
+const config = {
+  functionName: "molecular-analysis",
+  runtime: "nodejs20",
+  region: "us-central1",
+  memory: "1GB",
+  timeout: "540s",
+  entryPoint: "molecularAnalysis",
+};
 
-# Stage all changes
-log_info "📝 Staging all changes..."
-git add .
+// Check for required environment variable
+if (!process.env.OPENAI_API_KEY) {
+  console.error("❌ OPENAI_API_KEY environment variable is required");
+  process.exit(1);
+}
 
-# Commit with timestamp
-timestamp=$(date)
-commit_message="Auto-commit before production deployment - $timestamp"
-log_info "💾 Committing changes..."
-git commit -m "$commit_message"
+try {
+  // Step 1: Stage all changes
+  console.log("📝 Staging all changes...");
+  execSync("git add .", { stdio: "inherit" });
 
-# Run pre-deployment tests
-log_test "Running pre-deployment tests..."
-./test
+  // Step 2: Commit with timestamp
+  const timestamp = new Date().toLocaleString();
+  const commitMessage = `Auto-commit before production deployment - ${timestamp}`;
+  console.log("💾 Committing changes...");
+  execSync(`git commit -m "${commitMessage}"`, { stdio: "inherit" });
 
-if [ $? -ne 0 ]; then
-  log_error "Tests failed - aborting deployment"
-  exit 1
-fi
+  // Step 3: Run pre-deployment tests
+  console.log("🧪 Running pre-deployment tests...");
+  execSync("npm run test:pre-deploy", { stdio: "inherit" });
 
-# Deploy to Google Cloud Functions
-log_info "☁️  Deploying to Google Cloud Functions..."
-gcloud functions deploy molecular-analysis --gen2 --runtime nodejs20 --trigger-http --allow-unauthenticated --memory 1GB --timeout 540s --region us-central1 --entry-point molecularAnalysis --source . --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY --quiet
+  // Step 4: Deploy to Google Cloud Functions
+  console.log("☁️  Deploying to Google Cloud Functions...");
+  
+  const deployCommand = [
+    "gcloud functions deploy",
+    config.functionName,
+    "--gen2",
+    `--runtime ${config.runtime}`,
+    "--trigger-http",
+    "--allow-unauthenticated",
+    `--memory ${config.memory}`,
+    `--timeout ${config.timeout}`,
+    `--region ${config.region}`,
+    `--entry-point ${config.entryPoint}`,
+    "--source .",
+    `--set-env-vars OPENAI_API_KEY=${process.env.OPENAI_API_KEY}`,
+    "--quiet"
+  ].join(" ");
 
-if [ $? -ne 0 ]; then
-  log_error "Deployment failed"
-  exit 1
-fi
+  execSync(deployCommand, { stdio: "inherit" });
 
-# Push to git repository
-log_info "📤 Pushing to git repository..."
-git push
+  // Step 5: Push to git repository
+  console.log("📤 Pushing to git repository...");
+  execSync("git push", { stdio: "inherit" });
 
-log_success "Complete workflow successful!"
-log_success "🌐 Function deployed to Google Cloud Functions"
+  console.log("✅ Complete workflow successful!");
+  console.log("🌐 Function deployed to Google Cloud Functions");
+
+} catch (error) {
+  console.error("❌ Workflow failed:", error.message);
+  process.exit(1);
+}

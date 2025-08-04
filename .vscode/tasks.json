@@ -19,22 +19,14 @@
       "label": "check-dependencies", 
       "type": "shell",
       "command": "npm",
-      "args": ["list", "--depth=0"],
-      "group": "build",
-      "presentation": {
-        "echo": false,
-        "reveal": "silent"
-      }
-    },
-    {
-      "label": "cleanup-ports",
-      "type": "shell", 
-      "command": "pkill",
-      "args": ["-f", "node.*server.js"],
-      "group": "build",
-      "presentation": {
-        "echo": false,
-        "reveal": "silent"
+      "args": [
+        "run",
+        "dev"
+      ],
+      "isBackground": true,
+      "group": {
+        "kind": "build",
+        "isDefault": true
       },
       "options": {
         "shell": {
@@ -145,22 +137,17 @@
         "focus": false,
         "panel": "dedicated"
       },
-      "isBackground": true,
-      "problemMatcher": []
+<<<<<<< HEAD
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "\\[nodemon\\]",
+          "endsPattern": "Node server running on"
+        }
+      }
     },
-    {
-      "label": "test-watch",
-      "type": "npm", 
-      "script": "test:watch",
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "dedicated"
-      },
-      "isBackground": true,
-      "problemMatcher": []
-    }
   ]
 }
