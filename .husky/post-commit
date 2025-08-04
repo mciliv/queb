@@ -1,0 +1,11 @@
+#!/bin/sh
+echo "🚀 Running background tests after commit..."
+
+# Run background tests in the background (non-blocking)
+nohup npm run test:background > /tmp/mol-background-tests.log 2>&1 &
+
+echo "✅ Background tests started"
+echo "📋 Check progress with: npm run test:status"
+echo "📄 Full log available at: /tmp/mol-background-tests.log"
+echo ""
+echo "💡 To watch continuous testing: npm run test:watch-continuous"

@@ -18,6 +18,10 @@
     "test:unit": "jest --selectProjects unit-frontend unit-backend",
     "test:integration": "jest --selectProjects integration",
     "test:smoke": "jest --selectProjects smoke",
+    "test:background": "node scripts/background-test-runner.js run",
+    "test:watch-continuous": "node scripts/background-test-runner.js watch",
+    "test:status": "node scripts/background-test-runner.js status",
+    "dev:test-watch": "node scripts/dev-test-watcher.js start",
     "build:production": "node build-production.js",
     "start:production": "NODE_ENV=production node dist/backend/api/server.js",
     "deploy:production": "npm run build:production && npm run start:production"
