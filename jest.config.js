@@ -5,16 +5,24 @@ module.exports = {
   testMatch: [
     '<rootDir>/test/**/*.test.js'
   ],
+  testPathIgnorePatterns: [
+    '<rootDir>/dist/',
+    '<rootDir>/node_modules/'
+  ],
   collectCoverageFrom: [
     'backend/**/*.js',
     'frontend/**/*.js',
-    '!**/node_modules/**'
+    '!**/node_modules/**',
+    '!**/dist/**'
   ],
   transform: {
     '^.+\\.(js|jsx)$': ['babel-jest']
   },
   transformIgnorePatterns: [
     'node_modules/(?!(.*\\.(js|mjs)$))'
+  ],
+  modulePathIgnorePatterns: [
+    '<rootDir>/dist/'
   ],
   testEnvironmentOptions: {
     url: 'http://localhost:8080'
