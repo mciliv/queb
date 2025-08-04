@@ -61,7 +61,7 @@ log_info "Press Ctrl+C to stop"
 echo ""
 
 # Start the server with HTTPS using existing infrastructure
-PORT=8080 NODE_ENV=development npx nodemon --quiet backend/api/server.js &
+PORT=3000 NODE_ENV=development npx nodemon --quiet backend/api/server.js &
 
 # Wait for server to start and show URLs
 sleep 3
@@ -72,15 +72,15 @@ if pgrep -f "node.*server.js" > /dev/null; then
     echo ""
     log_success "🌐 Access URLs:"
     log_success "   Local: https://dev.queb.space"
-    log_success "   HTTP:  http://localhost:8080"
+    log_success "   HTTP:  http://localhost:3000"
     log_success "   HTTPS: https://localhost:3001"
     echo ""
     
     # Start browser-sync for live reload
     if command -v browser-sync >/dev/null 2>&1; then
         log_info "🔄 Starting browser-sync for live reload..."
-        browser-sync start --proxy "localhost:8080" --files "frontend/**/*" --port 3000 --no-notify &
-        log_success "   Browser-sync: http://localhost:3000"
+        browser-sync start --proxy "localhost:3000" --files "frontend/**/*" --port 3002 --no-notify &
+        log_success "   Browser-sync: http://localhost:3002"
     else
         log_warning "Browser-sync not found. Install with: npm install -g browser-sync"
     fi

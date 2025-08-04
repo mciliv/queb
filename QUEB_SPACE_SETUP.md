@@ -24,9 +24,9 @@ This guide covers setting up both `queb.space` (Google Cloud production) and `de
 - **URL**: https://dev.queb.space
 - **Purpose**: Local development and testing
 - **SSL**: Built-in HTTPS server with auto-generated certificates
-- **HTTP**: http://localhost:8080 (standard dev port)
+- **HTTP**: http://localhost:3000 (standard Node.js port)
 - **HTTPS**: https://localhost:3001 (alternative to 3000)
-- **Browser-sync**: http://localhost:3000 (live reload)
+- **Browser-sync**: http://localhost:3002 (live reload)
 - **Start**: `./dev-queb-space`
 
 ### Production (queb.space)
@@ -169,9 +169,9 @@ For production domain setup:
 npm install connect-livereload
 
 # Check port conflicts
-lsof -i :8080
 lsof -i :3000
 lsof -i :3001
+lsof -i :3002
 ```
 
 **Host Resolution Issues**:
