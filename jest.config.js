@@ -19,7 +19,8 @@ module.exports = {
     '^.+\\.(js|jsx)$': ['babel-jest']
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(.*\\.(js|mjs)$))'
+    'node_modules/(?!(.*\\.(js|mjs)$))',
+    '!frontend/'
   ],
   modulePathIgnorePatterns: [
     '<rootDir>/dist/'

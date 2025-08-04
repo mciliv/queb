@@ -12,6 +12,14 @@ const log = {
   error: (msg) => console.error(msg)
 };
 
+// Register with cleanup system if available
+let cleanupRegistry = null;
+try {
+  cleanupRegistry = require('../../test/fixtures/cleanup-registry');
+} catch (e) {
+  // Cleanup registry not available in production
+}
+
 class HttpsServer {
   constructor(app, port = 3001) {
     this.app = app;
@@ -155,6 +163,11 @@ IP.4 = ::1
 
       const server = https.createServer(credentials, this.app);
       
+      // Register with cleanup system if available
+      if (cleanupRegistry) {
+        cleanupRegistry.register(server);
+      }
+      
       return new Promise((resolve, reject) => {
         server.listen(this.actualPort, "0.0.0.0", () => {
                     console.log(`https://dev.queb.space
@@ -207,6 +220,15 @@ IP.4 = ::1
           log.success("🔒 HTTPS server stopped gracefully");
           resolve();
         });
+        
+        // Force close after timeout
+        setTimeout(() => {
+          if (server.listening) {
+            server.destroy();
+            log.warning("⚠️ HTTPS server force closed after timeout");
+          }
+          resolve();
+        }, 5000);
       });
     }
   }

@@ -1032,6 +1032,14 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
             console.error("❌ HTTPS server error after startup:", error.message);
             console.log("💡 HTTPS server will continue running if possible");
           });
+          
+          // Register with cleanup system if available
+          try {
+            const cleanupRegistry = require('../test/fixtures/cleanup-registry');
+            cleanupRegistry.register(httpsServerInstance);
+          } catch (e) {
+            // Cleanup registry not available
+          }
         } else {
           log.warning("⚠️ HTTPS server not started - continuing with HTTP only");
         }
@@ -1042,7 +1050,15 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
     };
 
     // Start HTTPS server after a short delay to avoid port conflicts
-    setTimeout(startHttpsServer, 1000);
+    const httpsTimer = setTimeout(startHttpsServer, 1000);
+    
+    // Register timer with cleanup system if available
+    try {
+      const cleanupRegistry = require('../test/fixtures/cleanup-registry');
+      cleanupRegistry.registerTimer(httpsTimer);
+    } catch (e) {
+      // Cleanup registry not available
+    }
   }
 } else {
   // Serverless mode
