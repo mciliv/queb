@@ -399,73 +399,8 @@ app.get("/", (req, res) => {
 });
 
 // ==================== DEVELOPMENT MIDDLEWARE ====================
-// Live reload enabled for local development
-if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === undefined) {
-  const livereload = require("livereload");
-  const connectLivereload = require("connect-livereload");
-  const net = require("net");
-
-  const isPortAvailable = (port) => {
-    return new Promise((resolve) => {
-      const tester = net
-        .createServer()
-        .once("error", () => resolve(false))
-        .once("listening", () => {
-          tester.once("close", () => resolve(true)).close();
-        })
-        .listen(port);
-    });
-  };
-
-  const startLiveReload = async (port) => {
-    try {
-      const available = await isPortAvailable(port);
-      if (!available) {
-        console.log(`LiveReload port ${port} is already in use`);
-        if (port === 35729) {
-          console.log("Trying alternative port 35730...");
-          return startLiveReload(35730);
-        } else {
-          console.log("Continuing without LiveReload...");
-          return;
-        }
-      }
-
-      const liveReloadServer = livereload.createServer({
-        exts: ["html", "css", "js"],
-        ignore: ["node_modules/**", "sdf_files/**", "*.log"],
-        port: port,
-      });
-
-      // Add error handler for unexpected errors
-      liveReloadServer.server.on("error", (err) => {
-        console.error("LiveReload server error:", err.message);
-      });
-
-      // Only proceed if server starts successfully
-      liveReloadServer.server.once("listening", () => {
-        const frontendPath = path.join(__dirname, "..", "..", "frontend");
-        liveReloadServer.watch(frontendPath);
-        app.use(connectLivereload());
-
-        liveReloadServer.server.once("connection", () => {
-          setTimeout(() => {
-            liveReloadServer.refresh("/");
-          }, 100);
-        });
-
-        console.log(`🔄 LiveReload server started on port ${port}`);
-        console.log(`👀 Watching frontend files: ${frontendPath}`);
-      });
-    } catch (err) {
-      console.log("LiveReload server failed to start:", err.message);
-      console.log("Continuing without LiveReload...");
-    }
-  };
-
-  // Start LiveReload with fallback port
-  startLiveReload(35729);
-}
+// Browser-sync handles live reload in development
+// LiveReload removed in favor of browser-sync for better integration
 
 app.use(express.static(path.join(__dirname, "..", "..", "frontend", "core")));
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));

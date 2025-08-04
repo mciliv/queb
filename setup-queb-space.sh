@@ -101,9 +101,9 @@ setup_local_dev() {
     fi
     
     # Install missing dependencies if needed
-    if ! npm list connect-livereload >/dev/null 2>&1; then
-        log_info "Installing missing dependencies..."
-        npm install connect-livereload
+    if ! command -v browser-sync >/dev/null 2>&1; then
+        log_info "Installing browser-sync for live reload..."
+        npm install -g browser-sync
     fi
     
     log_success "Local development setup complete"

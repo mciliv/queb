@@ -26,7 +26,7 @@ This guide covers setting up both `queb.space` (Google Cloud production) and `de
 - **SSL**: Built-in HTTPS server with auto-generated certificates
 - **HTTP**: http://localhost:3000 (standard Node.js port)
 - **HTTPS**: https://localhost:3001 (alternative to 3000)
-- **Browser-sync**: http://localhost:3002 (live reload)
+- **Browser-sync**: http://localhost:3002 (live reload - auto-detects app port)
 - **Start**: `./dev-queb-space`
 
 ### Production (queb.space)
