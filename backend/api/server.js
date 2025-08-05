@@ -389,18 +389,8 @@ app.post("/generate-sdfs", async (req, res) => {
   }
 });
 
-// Health check route
-app.get("/", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "Mol Molecular Analysis API",
-    version: "1.0.0",
-  });
-});
-
-// ==================== DEVELOPMENT MIDDLEWARE ====================
-// Browser-sync handles live reload in development
-// LiveReload removed in favor of browser-sync for better integration
+// ==================== STATIC FILE SERVING ====================
+// Serve frontend files first (before API routes)
 
 app.use(express.static(path.join(__dirname, "..", "..", "frontend", "core")));
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));

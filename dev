@@ -38,7 +38,7 @@ echo ""
 
 # Start the Node.js backend server
 log_info "🔧 Starting Node.js backend..."
-PORT=3001 NODE_ENV=development npx nodemon --quiet backend/api/server.js &
+PORT=3000 NODE_ENV=development npx nodemon --quiet backend/api/server.js &
 BACKEND_PID=$!
 
 # Wait for backend to start
@@ -53,26 +53,19 @@ if kill -0 $BACKEND_PID 2>/dev/null; then
     log_success "   🌟 https://dev.queb.space"
     echo ""
     
-    # Start Vite dev server for frontend
-    log_info "⚡ Starting Vite dev server..."
-    npx vite &
-    VITE_PID=$!
-    
-    # Store PIDs for cleanup
+    # Store PID for cleanup
     echo $BACKEND_PID > /tmp/dev_backend_pid
-    echo $VITE_PID > /tmp/dev_vite_pid
     
-    log_success "✅ Vite dev server started with HMR!"
-    log_info "   📝 Edit frontend files and see changes instantly"
-    log_info "   🔄 Hot Module Replacement enabled"
+    log_success "✅ Development server ready!"
+    log_info "   📝 Edit frontend files and refresh to see changes"
+    log_info "   🌐 Backend serves everything on one port"
     
-    # Wait for either process to exit, then cleanup
-    wait $BACKEND_PID $VITE_PID
+    # Wait for backend to exit
+    wait $BACKEND_PID
     
-    # Cleanup when either process exits
-    log_info "🔄 Shutting down development servers..."
+    # Cleanup when backend exits
+    log_info "🔄 Shutting down development server..."
     kill $BACKEND_PID 2>/dev/null || true
-    kill $VITE_PID 2>/dev/null || true
     
 else
     log_error "❌ Backend server failed to start"

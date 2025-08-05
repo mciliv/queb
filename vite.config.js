@@ -7,18 +7,7 @@ export default defineConfig({
   root: 'frontend',
   publicDir: 'assets',
   server: {
-    port: 3000,
-    proxy: {
-      // Proxy API requests to our local Node.js backend
-      '/api': {
-        target: 'https://localhost:3002',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      },
-      // Proxy static file serving
-      '/sdf_files': 'https://localhost:3002'
-    }
+    port: 3000
   },
   build: {
     outDir: '../dist/frontend',
