@@ -16,12 +16,11 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '')
       },
-      // Proxy other backend routes to local server
+      // Proxy payment routes (not using /api prefix)
       '/stripe-config': 'https://localhost:3002',
       '/setup-payment-method': 'https://localhost:3002',
       '/update-payment-method': 'https://localhost:3002',
-      '/analyze-image': 'https://localhost:3002',
-      '/analyze-text': 'https://localhost:3002',
+      // Proxy static file serving
       '/sdf_files': 'https://localhost:3002'
     }
   },
