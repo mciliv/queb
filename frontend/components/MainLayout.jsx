@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TextInput from './TextInput';
 import ModeSelector from './ModeSelector';
 import CameraSection from './CameraSection';
@@ -22,8 +22,26 @@ const MainLayout = ({
   const [cameraMode, setCameraMode] = useState(false);
   const [photoMode, setPhotoMode] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastSuccessfulAnalysis, setLastSuccessfulAnalysis] = useState(null);
   const { checkPaymentRequired } = usePayment();
-  const { analyzeText } = useApi();
+  const { analyzeText, error: apiError } = useApi();
+  const maxRetries = 3;
+
+  // Clear error when input changes
+  useEffect(() => {
+    if (error && objectInput) {
+      setError('');
+    }
+  }, [objectInput, error]);
+
+  // Handle API errors
+  useEffect(() => {
+    if (apiError) {
+      setError(`API Error: ${apiError}`);
+    }
+  }, [apiError]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -62,6 +80,7 @@ const MainLayout = ({
           setCameraMode(false);
           setPhotoMode(false);
           setShowShortcuts(false);
+          setError('');
           document.getElementById('object-input')?.focus();
           break;
         case 'backspace':
@@ -69,6 +88,7 @@ const MainLayout = ({
             event.preventDefault();
             setViewers([]);
             setLastAnalysis(null);
+            setError('');
           }
           break;
         case 'enter':
@@ -90,7 +110,7 @@ const MainLayout = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [objectInput, setViewers, setLastAnalysis]);
 
-  const handleTextAnalysis = async (value) => {
+  const handleTextAnalysis = useCallback(async (value) => {
     if (isProcessing || !value.trim()) return;
 
     if (checkPaymentRequired()) {
@@ -100,6 +120,7 @@ const MainLayout = ({
 
     setIsProcessing(true);
     setCurrentAnalysisType('text');
+    setError('');
     
     try {
       const result = await analyzeText(value);
@@ -111,18 +132,36 @@ const MainLayout = ({
           smiles: mol.smiles
         }));
         setViewers(prev => [...prev, ...newViewers]);
+        setLastSuccessfulAnalysis(result);
+        setRetryCount(0); // Reset retry count on success
+      } else {
+        setError('No molecules found for this input. Try a different chemical name or formula.');
       }
       
       setLastAnalysis(result);
       setObjectInput('');
     } catch (error) {
       console.error('Analysis failed:', error);
+      
+      // Implement retry logic
+      if (retryCount < maxRetries) {
+        setRetryCount(prev => prev + 1);
+        setError(`Analysis failed. Retrying... (${retryCount + 1}/${maxRetries})`);
+        
+        // Retry after a short delay
+        setTimeout(() => {
+          handleTextAnalysis(value);
+        }, 1000 * (retryCount + 1)); // Exponential backoff
+      } else {
+        setError(`Analysis failed after ${maxRetries} attempts. Please check your input and try again.`);
+        setRetryCount(0);
+      }
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [isProcessing, analyzeText, setViewers, setLastAnalysis, checkPaymentRequired, retryCount]);
 
-  const handleAnalysisComplete = (result) => {
+  const handleAnalysisComplete = useCallback((result) => {
     if (result.molecules && result.molecules.length > 0) {
       const newViewers = result.molecules.map(mol => ({
         name: mol.name || 'Captured object',
@@ -130,10 +169,18 @@ const MainLayout = ({
         smiles: mol.smiles
       }));
       setViewers(prev => [...prev, ...newViewers]);
+      setLastSuccessfulAnalysis(result);
     }
     
     setLastAnalysis(result);
-  };
+    setError('');
+  }, [setViewers, setLastAnalysis]);
+
+  const handleRetry = useCallback(() => {
+    if (lastSuccessfulAnalysis) {
+      handleTextAnalysis(objectInput || lastSuccessfulAnalysis.query);
+    }
+  }, [lastSuccessfulAnalysis, objectInput, handleTextAnalysis]);
 
   return (
     <div className="app-container">
@@ -146,6 +193,7 @@ const MainLayout = ({
               onChange={setObjectInput}
               onSubmit={handleTextAnalysis}
               isProcessing={isProcessing}
+              error={error}
             />
 
             <ModeSelector
@@ -189,6 +237,17 @@ const MainLayout = ({
       >
         ?
       </button>
+
+      {/* Retry button for failed analyses */}
+      {error && lastSuccessfulAnalysis && (
+        <button 
+          className="retry-button"
+          onClick={handleRetry}
+          title="Retry last analysis"
+        >
+          ↻
+        </button>
+      )}
 
       {/* Keyboard shortcuts help overlay */}
       {showShortcuts && (
