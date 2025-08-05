@@ -1,0 +1,41 @@
+# Component Registry
+
+## Purpose
+This registry maintains the canonical list of components. AI agents MUST use these existing components rather than creating new ones.
+
+## Core Services
+
+### Payment System
+- **Canonical Component**: `frontend/components/payment.js`
+- **Export**: `paymentManager`
+- **Purpose**: Full payment processing with Stripe integration
+- **DO NOT CREATE**: simple-payment.js, SimplePaymentManager, or any alternatives
+
+### User Management
+- **Canonical Component**: `backend/services/user-service.js`
+- **Export**: `UserService`
+- **Purpose**: PostgreSQL-based user management
+- **DO NOT CREATE**: simple-user-service.js, SimpleUserService, or any alternatives
+
+### Error Handling
+- **Frontend**: `frontend/core/components/ErrorHandler.js`
+- **Backend**: `backend/services/error-handler.js`
+- **DO NOT**: Create duplicate ErrorHandler classes
+
+### Camera Management
+- **Manager**: `frontend/components/camera.js` (CameraManager)
+- **Handler**: `frontend/components/camera-handler.js` (CameraHandler)
+- **DO NOT**: Merge or duplicate these components
+
+## Import Rules
+
+1. ALWAYS check this registry before creating new components
+2. ALWAYS use the canonical import paths listed above
+3. NEVER create "simple" versions of existing components
+4. NEVER duplicate functionality with different names
+
+## Directory Structure
+
+- **Production Code**: Use only the main directories
+- **DO NOT USE**: deploy-temp/ for new development
+- **DO NOT CREATE**: Duplicate directory structures

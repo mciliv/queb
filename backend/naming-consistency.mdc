@@ -1,0 +1,47 @@
+# Naming Consistency Rules
+
+## Problem Statement
+AI agents tend to create new "simplified" versions of existing components instead of modifying them, leading to:
+- Duplicate implementations (PaymentManager vs SimplePaymentManager)
+- Broken imports and dependencies
+- Obsolete code that gets forgotten
+
+## Mandatory Rules
+
+### 1. Check Before Creating
+Before creating ANY new file or class:
+- Search for existing implementations
+- Check component-registry.mdc for canonical components
+- Modify existing code rather than creating alternatives
+
+### 2. Naming Patterns
+When modifying components:
+- KEEP original class names
+- KEEP original file names
+- KEEP original export names
+- ADD functionality to existing classes rather than creating new ones
+
+### 3. Import Consistency
+- Use ONLY the imports defined in component-registry.mdc
+- Update ALL imports when refactoring
+- Never mix imports from different versions
+
+### 4. Refactoring Approach
+Instead of creating "SimpleX" versions:
+1. Add configuration flags to existing components
+2. Use feature toggles (like PAYMENT_CONFIG.enabled)
+3. Create minimal interfaces within the same file
+4. Use dependency injection for different implementations
+
+## Example: Payment System
+```javascript
+// WRONG: Creating SimplePaymentManager
+class SimplePaymentManager { ... }
+
+// RIGHT: Adding config to existing PaymentManager
+class PaymentManager {
+  constructor(config = { simple: false }) {
+    this.simpleMode = config.simple;
+  }
+}
+```
