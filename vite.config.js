@@ -7,7 +7,10 @@ export default defineConfig({
   root: 'frontend',
   publicDir: 'assets',
   server: {
-    port: 3000
+    port: 3001,
+    hmr: {
+      port: 3001
+    }
   },
   build: {
     outDir: '../dist/frontend',

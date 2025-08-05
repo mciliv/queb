@@ -106,7 +106,7 @@ const testDatabaseConnection = async () => {
 // ==================== CONFIGURATION ====================
 const app = express();
 const DEFAULT_PORT = 8080;
-const HTTPS_PORT = process.env.HTTPS_PORT || 3001;
+const HTTPS_PORT = process.env.HTTPS_PORT || 3002;
 
 // Utility function to get local IP address
 const getLocalIPAddress = () => {
