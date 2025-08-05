@@ -4,25 +4,9 @@ alwaysApply: true
 
 # Agent instructions
 Maximally simple & straightforward
-only respond in code
+only respond in code. Eg, Prefer code comments over chat text
 If anything can be seen as a principle, put here
 No logging
-Prefer code comments over chat text
-Show code chunks not descriptions
-Don't create extraneous files; no markdown, if anything, simplify the code & tell me why to look at it
-
-After change, run `dev`
-If all tests pass,
-```sh
-git commit -am "Brief description"
-git push origin main
-```
-# Agent instructions
-Maximally simple & straightforward
-only respond in code
-If anything can be seen as a principle, put here
-No logging
-Prefer code comments over chat text
 Show code chunks not descriptions
 Don't create extraneous files; no markdown, if anything, simplify the code & tell me why to look at it
 

@@ -43,7 +43,7 @@ The app includes backwards connection testing that validates the entire data flo
 4. Molecular Analysis ← Can we analyze text/images to get SMILES?
 5. Input Validation ← Can we handle valid inputs?
 
-**Usage:**
+
 - `./run test:connections` - Run backwards connection tests
 - `/health/connections` - Real-time connection health API
 - `Ctrl+Shift+H` - Toggle connection health display (dev mode)
