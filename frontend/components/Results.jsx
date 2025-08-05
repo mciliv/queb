@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const Results = ({ viewers, setViewers }) => {
   const glDivRef = useRef(null);
@@ -54,23 +54,60 @@ const Results = ({ viewers, setViewers }) => {
 
 const MoleculeViewer = ({ viewer, index, onClose }) => {
   const viewerRef = useRef(null);
+  const [sdfData, setSdfData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (viewer.sdfData && viewerRef.current && window.$3Dmol) {
-      const viewer3d = window.$3Dmol.createViewer(viewerRef.current, {
-        backgroundColor: '#1a1a1a'
-      });
-      
-      viewer3d.addModel(viewer.sdfData, 'sdf');
-      viewer3d.setStyle({}, {
-        sphere: { 
-          scale: 0.8,
-          colorscheme: 'Jmol'
+    const loadSDFData = async () => {
+      if (!viewer.sdfData || !viewerRef.current || !window.$3Dmol) {
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        let sdfContent = viewer.sdfData;
+
+        // If sdfData is a file path, fetch the content
+        if (typeof sdfContent === 'string' && sdfContent.startsWith('file://')) {
+          const filePath = sdfContent.replace('file://', '');
+          const response = await fetch(`/sdf_files/${filePath.split('/').pop()}`);
+          if (!response.ok) {
+            throw new Error('Failed to load SDF file');
+          }
+          sdfContent = await response.text();
         }
-      });
-      viewer3d.zoomTo();
-      viewer3d.render();
-    }
+
+        // If we have SDF content, render it
+        if (sdfContent && sdfContent.trim()) {
+          const viewer3d = window.$3Dmol.createViewer(viewerRef.current, {
+            backgroundColor: '#1a1a1a'
+          });
+          
+          viewer3d.addModel(sdfContent, 'sdf');
+          viewer3d.setStyle({}, {
+            sphere: { 
+              scale: 0.8,
+              colorscheme: 'Jmol'
+            }
+          });
+          viewer3d.zoomTo();
+          viewer3d.render();
+          setSdfData(sdfContent);
+        } else {
+          setError('No SDF data available');
+        }
+      } catch (err) {
+        console.error('Failed to load SDF data:', err);
+        setError('Failed to load molecule visualization');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSDFData();
   }, [viewer.sdfData]);
 
   return (
@@ -90,6 +127,22 @@ const MoleculeViewer = ({ viewer, index, onClose }) => {
         className="viewer-container"
         style={{ height: '300px', width: '100%' }}
       />
+      {loading && (
+        <div className="viewer-loading">
+          <span className="spinner"></span>
+          Loading molecule...
+        </div>
+      )}
+      {error && (
+        <div className="viewer-error">
+          <div className="error-message">{error}</div>
+          {viewer.smiles && (
+            <div className="smiles-fallback">
+              SMILES: <code>{viewer.smiles}</code>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

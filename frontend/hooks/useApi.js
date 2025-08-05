@@ -105,6 +105,22 @@ export const useApi = () => {
     });
   }, [apiCall]);
 
+  const generateSDFs = useCallback(async (smilesArray, overwrite = false) => {
+    if (!smilesArray || !Array.isArray(smilesArray) || smilesArray.length === 0) {
+      throw new Error('SMILES array is required');
+    }
+
+    return apiCall('/generate-sdfs', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        smiles: smilesArray,
+        overwrite: overwrite
+      }),
+      maxRetries: 1,
+      timeout: 30000, // 30 seconds for SDF generation
+    });
+  }, [apiCall]);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
@@ -115,6 +131,7 @@ export const useApi = () => {
     apiCall,
     analyzeText,
     analyzeImage,
+    generateSDFs,
     clearError,
   };
 };

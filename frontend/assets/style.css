@@ -3316,4 +3316,67 @@ input[type="checkbox"]:checked + .mode-label {
 
 /* Help button */
 
+/* Molecule viewer loading and error states */
+.viewer-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #888;
+  font-size: 14px;
+  z-index: 10;
+}
+
+.viewer-loading .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #333;
+  border-top: 2px solid #888;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.viewer-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #ff4444;
+  font-size: 14px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 16px;
+  border-radius: 8px;
+  max-width: 80%;
+}
+
+.viewer-error .error-message {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.viewer-error .smiles-fallback {
+  color: #888;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.viewer-error .smiles-fallback code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+/* Ensure viewer container has relative positioning for absolute positioned children */
+.viewer-container {
+  position: relative;
+}
+
+/* Help button */
+
 
