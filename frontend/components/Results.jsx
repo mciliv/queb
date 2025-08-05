@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-const Results = ({ viewers }) => {
+const Results = ({ viewers, setViewers }) => {
   const glDivRef = useRef(null);
 
   useEffect(() => {
@@ -13,11 +13,38 @@ const Results = ({ viewers }) => {
     }
   }, []);
 
+  // Handle keyboard shortcuts for closing viewers
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Ignore shortcuts when typing in input fields
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifier = isMac ? event.metaKey : event.ctrlKey;
+
+      if (modifier && event.key === 'w' && viewers.length > 0) {
+        event.preventDefault();
+        // Close the last viewer
+        setViewers(prev => prev.slice(0, -1));
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [viewers.length, setViewers]);
+
   return (
     <div className="results-section">
       <div className="snapshots-container">
         {viewers.map((viewer, index) => (
-          <MoleculeViewer key={index} viewer={viewer} />
+          <MoleculeViewer 
+            key={index} 
+            viewer={viewer} 
+            index={index}
+            onClose={() => setViewers(prev => prev.filter((_, i) => i !== index))}
+          />
         ))}
       </div>
       <div id="gldiv" ref={glDivRef}></div>
@@ -25,7 +52,7 @@ const Results = ({ viewers }) => {
   );
 };
 
-const MoleculeViewer = ({ viewer }) => {
+const MoleculeViewer = ({ viewer, index, onClose }) => {
   const viewerRef = useRef(null);
 
   useEffect(() => {
@@ -52,9 +79,8 @@ const MoleculeViewer = ({ viewer }) => {
         <span className="molecule-name">{viewer.name}</span>
         <button 
           className="close-btn"
-          onClick={() => {
-            // TODO: Handle viewer close
-          }}
+          onClick={onClose}
+          title={`Close ${viewer.name} (${navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+W)`}
         >
           ×
         </button>
