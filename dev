@@ -18,6 +18,15 @@ echo "=============================="
 log_clean "Cleaning up development processes..."
 ./cleanup 2>/dev/null || true
 
+# Run unit tests before starting development
+log_info "🧪 Running unit tests..."
+if npx jest --testPathPattern=unit.test.js --verbose --silent; then
+    log_success "✅ Unit tests passed!"
+else
+    log_error "❌ Unit tests failed! Fix tests before continuing."
+    exit 1
+fi
+
 # Check if dev.queb.space is in /etc/hosts
 if ! grep -q "dev.queb.space" /etc/hosts; then
     log_warning "dev.queb.space not in /etc/hosts. Run ./setup-queb-space.sh first"
