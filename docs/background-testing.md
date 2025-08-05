@@ -1,6 +1,6 @@
 # Background Testing System
 
-Automated testing system that intelligently runs tests based on breaking change probability.
+Automated testing system that intelligently runs tests based on breaking change probability with persistent, reliable execution across machine restarts.
 
 ## Features
 
@@ -126,3 +126,175 @@ ps aux | grep test
 3. **Use dev watcher** - Run `npm run dev:test-watch` during active development
 4. **Fix critical failures** - Backend test failures should be addressed immediately
 5. **Mock issues** - Frontend test failures are currently non-blocking due to known mocking issues
+
+## Persistent Testing Setup
+
+### Installation Methods
+
+#### 1. PM2 (Process Manager)
+```bash
+# Install PM2 globally
+npm install -g pm2
+
+# Start test runners with PM2
+npm run pm2:start
+
+# Enable startup on boot
+pm2 startup
+pm2 save
+
+# Check status
+npm run pm2:status
+```
+
+**Features:**
+- Automatic restart on crash
+- Memory limit protection
+- Log management
+- Process monitoring
+- Scheduled restarts to prevent memory leaks
+
+#### 2. Systemd Service (Linux)
+```bash
+# Run installation script as root
+sudo bash scripts/install-test-runner.sh
+
+# Choose option 2 for systemd
+# Service will start automatically on boot
+
+# Check service status
+systemctl status mol-test-runner
+
+# View logs
+journalctl -u mol-test-runner -f
+```
+
+**Features:**
+- Native OS integration
+- Resource limits (CPU/Memory)
+- Security hardening
+- Automatic startup on boot
+- System journal logging
+
+#### 3. Docker Container
+```bash
+# Start test runner container
+npm run docker:test
+
+# Check logs
+npm run docker:test:logs
+
+# Stop container
+npm run docker:test:stop
+```
+
+**Features:**
+- Isolated environment
+- Consistent across platforms
+- Easy deployment
+- Built-in health checks
+- Resource constraints
+
+### Scheduled Testing
+
+The test scheduler runs automatically with:
+- **Every 30 minutes**: Smoke tests
+- **Every 2 hours**: Backend unit tests
+- **Daily at 3 AM**: Full test suite
+- **Every 5 minutes**: Health checks
+
+### Health Monitoring
+
+Health checks monitor:
+- Disk space (< 90% usage)
+- Memory usage (< 85% heap)
+- Git status (< 50 uncommitted files)
+- Node modules availability
+- Test failure rate (< 20%)
+
+### Log Management
+
+Logs are automatically rotated:
+- Daily rotation
+- 7 days retention
+- Compression after 1 day
+- Located in `/var/log/mol/` or `./logs/`
+
+### Reliability Features
+
+1. **Multiple Layers**:
+   - PM2 process management
+   - Systemd service supervision
+   - Cron job fallback
+   - Docker container isolation
+
+2. **Auto-Recovery**:
+   - Automatic restart on crash
+   - Memory limit restart
+   - Scheduled process refresh
+   - Health check recovery
+
+3. **Monitoring**:
+   - Real-time process status
+   - Test execution statistics
+   - System health metrics
+   - Failure notifications
+
+### Quick Start Guide
+
+```bash
+# Option 1: Development setup with PM2
+npm install
+npm run pm2:start
+pm2 startup
+pm2 save
+
+# Option 2: Production setup with systemd
+sudo bash scripts/install-test-runner.sh
+# Choose option 2
+
+# Option 3: Container setup
+docker-compose -f docker-compose.test.yml up -d
+
+# Check everything is running
+npm run test:status
+npm run pm2:status
+```
+
+### Troubleshooting Persistent Tests
+
+**Tests not starting after reboot:**
+```bash
+# Check PM2 startup
+pm2 startup
+pm2 save
+
+# Check systemd
+systemctl enable mol-test-runner
+systemctl start mol-test-runner
+
+# Check Docker
+docker ps -a
+docker-compose -f docker-compose.test.yml up -d
+```
+
+**High memory usage:**
+```bash
+# PM2 memory management
+pm2 restart mol-test-scheduler
+
+# Check memory limits
+pm2 show mol-test-scheduler | grep memory
+```
+
+**Missing test results:**
+```bash
+# Check health status
+node scripts/health-check.js
+
+# View recent logs
+tail -n 100 logs/test-watcher-out.log
+
+# Check scheduler status
+pm2 logs mol-test-scheduler --lines 50
+```

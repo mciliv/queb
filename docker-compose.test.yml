@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  test-runner:
+    build:
+      context: .
+      dockerfile: docker/test-runner/Dockerfile
+    container_name: mol-test-runner
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-test-api-key-for-testing}
+      - TZ=UTC
+    volumes:
+      - ./logs:/app/logs
+      - ./sdf_files:/app/sdf_files
+      - ./.git:/app/.git:ro
+      - test-stats:/app/test-stats
+    networks:
+      - mol-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+  test-monitor:
+    image: grafana/promtail:latest
+    container_name: mol-test-monitor
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs:ro
+      - ./docker/promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - mol-network
+    depends_on:
+      - test-runner
+
+volumes:
+  test-stats:
+    driver: local
+
+networks:
+  mol-network:
+    driver: bridge

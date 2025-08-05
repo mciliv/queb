@@ -23,3 +23,13 @@ build/
 debug-output/
 debug-logs/
 *.debug.log
+
+# Test logs and PM2
+logs/
+.pm2/
+pids/
+test-stats.json
+health-status.json
+
+# Docker volumes
+test-stats/
