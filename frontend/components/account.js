@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function initializeStripe() {
     try {
         // Get Stripe publishable key from server
-        const response = await fetch('/stripe-config');
+        const response = await fetch('/api/stripe-config');
         const config = await response.json();
         
         stripe = Stripe(config.publishableKey);
@@ -194,7 +194,7 @@ function initializePayPal() {
 async function handleExpressPayment(paymentMethod, event) {
     try {
         // Setup payment method with server
-        const response = await fetch('/setup-payment-method', {
+        const response = await fetch('/api/setup-payment-method', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -330,7 +330,7 @@ async function handleCardSetup(event) {
         }
         
         // Setup payment method with server (includes 3D Secure if needed)
-        const response = await fetch('/setup-payment-method', {
+        const response = await fetch('/api/setup-payment-method', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

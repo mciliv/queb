@@ -410,14 +410,14 @@ app.use("/sdf_files", express.static(path.join(__dirname, "..", "..", "data", "s
 // ==================== PAYMENT ROUTES ====================
 
 // Stripe configuration endpoint
-app.get("/stripe-config", (req, res) => {
+app.get("/api/stripe-config", (req, res) => {
   res.json({
     publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_demo_key_for_development'
   });
 });
 
 // Setup payment method endpoint
-app.post("/setup-payment-method", async (req, res) => {
+app.post("/api/setup-payment-method", async (req, res) => {
   try {
     const { payment_method, device_info, name } = req.body;
     
@@ -465,7 +465,7 @@ app.post("/setup-payment-method", async (req, res) => {
 });
 
 // Update payment method endpoint
-app.post("/update-payment-method", async (req, res) => {
+app.post("/api/update-payment-method", async (req, res) => {
   try {
     const { device_token, payment_method, name } = req.body;
     
@@ -504,7 +504,7 @@ app.post("/update-payment-method", async (req, res) => {
 });
 
 // Get payment methods endpoint
-app.get("/get-payment-methods", async (req, res) => {
+app.get("/api/get-payment-methods", async (req, res) => {
   try {
     const { device_token } = req.query;
     
@@ -585,7 +585,7 @@ app.delete("/delete-payment-method", async (req, res) => {
 });
 
 // Set default payment method endpoint
-app.post("/set-default-payment-method", async (req, res) => {
+app.post("/api/set-default-payment-method", async (req, res) => {
   try {
     const { device_token, payment_method_id } = req.body;
     

@@ -66,7 +66,7 @@ class SimplePaymentManager {
     
     try {
       // Get Stripe config from server
-      const response = await fetch('/stripe-config');
+      const response = await fetch('/api/stripe-config');
       if (!response.ok) {
         throw new Error('Failed to get Stripe config');
       }
@@ -206,7 +206,7 @@ class SimplePaymentManager {
 
   // Send payment method to server
   async setupPaymentOnServer(paymentMethod) {
-    const response = await fetch('/setup-payment-method', {
+    const response = await fetch('/api/setup-payment-method', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

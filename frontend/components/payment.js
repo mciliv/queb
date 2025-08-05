@@ -794,7 +794,7 @@ class PaymentManager {
     
     try {
       // Get Stripe publishable key from server
-      const response = await fetch('/stripe-config');
+      const response = await fetch('/api/stripe-config');
       if (!response.ok) {
         throw new Error('Failed to get Stripe configuration');
       }
@@ -931,7 +931,7 @@ class PaymentManager {
 
   async setupPaymentMethodOnServer(paymentMethod) {
     try {
-      const response = await fetch('/setup-payment-method', {
+      const response = await fetch('/api/setup-payment-method', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
