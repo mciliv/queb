@@ -7,6 +7,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing }) => {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !isProcessing && value.trim()) {
       e.preventDefault();
+      e.stopPropagation();
       onSubmit(value);
     }
   };

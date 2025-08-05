@@ -37,7 +37,7 @@ export const useApi = () => {
   const analyzeText = useCallback(async (text) => {
     return apiCall('/analyze-text', {
       method: 'POST',
-      body: JSON.stringify({ query: text }),
+      body: JSON.stringify({ object: text }),
     });
   }, [apiCall]);
 
