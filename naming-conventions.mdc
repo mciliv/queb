@@ -1,0 +1,77 @@
+# Component Naming Conventions and Architecture Guide
+
+## Purpose
+This guide helps AI agents understand the existing codebase structure and avoid duplicating functionality when adding new features.
+
+## Existing Component Map
+
+### Core Application Components (DO NOT DUPLICATE)
+These components already exist and handle core functionality:
+
+- **cameraManager** (`frontend/components/camera.js`)
+  - Handles: Camera feed, video stream, capture functionality
+  - Singleton: `export const cameraManager = new CameraManager()`
+  
+- **cameraHandler** (`frontend/components/camera-handler.js`)  
+  - Handles: Photo uploads, image processing, base64 conversion
+  - Singleton: `export const cameraHandler = new CameraHandler()`
+
+- **paymentManager** (`frontend/components/payment.js`)
+  - Handles: Stripe integration, payment processing, user subscriptions
+  - Singleton: `export const paymentManager = new PaymentManager()`
+
+- **simplePaymentManager** (`frontend/components/simple-payment.js`)
+  - Handles: Simplified payment flow, basic subscription logic
+  - Singleton: `export const simplePaymentManager = new SimplePaymentManager()`
+
+- **uiManager** (`frontend/components/ui-utils.js`)
+  - Handles: UI utilities, result display, molecular rendering helpers
+  - Singleton: `export const uiManager = new UIManager()`
+
+### Modular Components (New Architecture)
+These follow a different pattern but coexist with existing components:
+
+- **AppShell** - Application shell and keyboard shortcuts
+- **InputSection** - Text/camera/photo input handling
+- **MolecularViewer** - 3D molecular visualization
+- **ErrorHandler** - Error display and management
+
+## AI Agent Guidelines
+
+### Before Creating New Components:
+1. **ALWAYS check existing components first** - Search for related functionality
+2. **Extend, don't replace** - Add methods to existing managers rather than creating new ones
+3. **Preserve singleton patterns** - Don't convert existing singletons to classes
+
+### Naming Rules:
+1. **Camera-related**: Use existing `cameraManager` or `cameraHandler`
+2. **Payment-related**: Use existing `paymentManager` or `simplePaymentManager`
+3. **UI utilities**: Use existing `uiManager`
+4. **New features**: Follow modular pattern only if no existing component handles it
+
+### Import Patterns to Preserve:
+```javascript
+// Existing pattern - KEEP THIS
+import { cameraManager } from '../components/camera.js';
+import { uiManager } from '../components/ui-utils.js';
+
+// New modular pattern - ONLY for genuinely new components
+import { NewFeature } from './components/NewFeature.js';
+```
+
+### Common Pitfalls to Avoid:
+1. **Creating CameraModule when cameraManager exists**
+2. **Making ImageProcessor when cameraHandler handles image processing**
+3. **Building PaymentFlow when paymentManager already manages payments**
+4. **Renaming generic names to specific ones (breaks imports)**
+
+## Architecture Stability
+The dual pattern (managers + modular components) is intentional:
+- Managers handle cross-cutting concerns with singleton pattern
+- Modular components handle specific UI sections
+- Both patterns coexist and should be preserved
+
+description: AI agent guide for preserving existing component architecture
+globs: ["**/*.js", "**/*.mjs"]
+alwaysApply: true
+---
