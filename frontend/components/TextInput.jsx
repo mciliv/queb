@@ -4,8 +4,9 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing }) => {
   const isMac = navigator.platform.toLowerCase().includes('mac');
   const keyboardHint = isMac ? '⌘K' : 'Ctrl+K';
 
-  const handleKeyUp = (e) => {
-    if (e.key === 'Enter' && !isProcessing) {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !isProcessing && value.trim()) {
+      e.preventDefault();
       onSubmit(value);
     }
   };
@@ -20,7 +21,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing }) => {
           className="text-input"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onKeyUp={handleKeyUp}
+          onKeyDown={handleKeyDown}
           disabled={isProcessing}
         />
         <div className="keyboard-hint">
