@@ -295,6 +295,7 @@ const MainLayout = ({
               lastAnalysis={lastAnalysis}
               isProcessing={isProcessing}
               currentAnalysisType={currentAnalysisType}
+              objectInput={objectInput}
             />
           </div>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-const Results = ({ viewers, setViewers, lastAnalysis, isProcessing, currentAnalysisType }) => {
+const Results = ({ viewers, setViewers, lastAnalysis, isProcessing, currentAnalysisType, objectInput }) => {
   const glDivRef = useRef(null);
 
   useEffect(() => {
@@ -35,15 +35,44 @@ const Results = ({ viewers, setViewers, lastAnalysis, isProcessing, currentAnaly
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [viewers.length, setViewers]);
 
+  // Get the object description from analysis results
+  const getObjectDescription = () => {
+    if (isProcessing) {
+      // During processing, show the input text if available
+      return objectInput || 'input';
+    }
+    
+    if (lastAnalysis) {
+      // For completed analysis, get the object description from the result
+      // Check multiple possible locations for the object description
+      if (lastAnalysis.object) {
+        return lastAnalysis.object;
+      }
+      if (lastAnalysis.result && lastAnalysis.result.object) {
+        return lastAnalysis.result.object;
+      }
+      if (lastAnalysis.input) {
+        return lastAnalysis.input;
+      }
+      // For image/camera analysis, the result might be directly the analysis result
+      if (lastAnalysis.molecules && lastAnalysis.molecules.length > 0) {
+        // This is likely an image analysis result
+        return lastAnalysis.object || 'Captured object';
+      }
+    }
+    
+    return 'Analysis Result';
+  };
+
   return (
     <div className="results-section">
       {/* Analysis Results Header - show immediately when processing starts */}
-      {(isProcessing || (lastAnalysis && lastAnalysis.object && viewers.length > 0)) && (
+      {(isProcessing || (lastAnalysis && viewers.length > 0)) && (
         <div className="analysis-header">
           <h3>
             {isProcessing 
-              ? `Analyzing ${currentAnalysisType || 'input'}...` 
-              : `Analysis Results: ${lastAnalysis.object}`
+              ? `Analyzing: ${getObjectDescription()}` 
+              : `Analysis Results: ${getObjectDescription()}`
             }
           </h3>
           {!isProcessing && viewers.length > 0 && (
