@@ -3,14 +3,14 @@
 
 export const VERSION_CONFIG = {
   // Default version to load
-  defaultVersion: 'vanilla', // 'vanilla' | 'react'
+  defaultVersion: 'react',   // 'vanilla' | 'react'
   
   // Toggle functionality
-  allowToggle: true,         // Enable/disable version switching
-  showToggleButton: true,    // Show/hide the toggle button
+  allowToggle: false,        // Enable/disable version switching
+  showToggleButton: false,   // Show/hide the toggle button
   
   // Persistence
-  persistChoice: true,       // Remember user's choice in localStorage
+  persistChoice: false,      // Remember user's choice in localStorage
   
   // Performance mode (for production)
   performanceMode: false,    // When true, forces vanilla JS, hides toggle
@@ -18,19 +18,19 @@ export const VERSION_CONFIG = {
   // Environment-specific overrides
   environment: {
     development: {
-      allowToggle: true,
-      showToggleButton: true,
-      defaultVersion: 'vanilla'
+      allowToggle: false,
+      showToggleButton: false,
+      defaultVersion: 'react'
     },
     production: {
       allowToggle: false,
       showToggleButton: false,
-      defaultVersion: 'vanilla',
-      performanceMode: true
+      defaultVersion: 'react',
+      performanceMode: false
     },
     testing: {
-      allowToggle: true,
-      showToggleButton: true,
+      allowToggle: false,
+      showToggleButton: false,
       defaultVersion: 'react'
     }
   }
@@ -102,29 +102,29 @@ export const getFinalConfig = () => {
 
 // Configuration presets for common scenarios
 export const CONFIG_PRESETS = {
-  // Development with full toggle functionality
+  // Development with React default
   development: {
-    defaultVersion: 'vanilla',
-    allowToggle: true,
-    showToggleButton: true,
-    persistChoice: true,
-    performanceMode: false
-  },
-  
-  // Production optimized for performance
-  production: {
-    defaultVersion: 'vanilla',
+    defaultVersion: 'react',
     allowToggle: false,
     showToggleButton: false,
     persistChoice: false,
-    performanceMode: true
+    performanceMode: false
+  },
+  
+  // Production with React default
+  production: {
+    defaultVersion: 'react',
+    allowToggle: false,
+    showToggleButton: false,
+    persistChoice: false,
+    performanceMode: false
   },
   
   // Testing with React as default
   testing: {
     defaultVersion: 'react',
-    allowToggle: true,
-    showToggleButton: true,
+    allowToggle: false,
+    showToggleButton: false,
     persistChoice: false,
     performanceMode: false
   },
@@ -138,7 +138,7 @@ export const CONFIG_PRESETS = {
     performanceMode: false
   },
   
-  // Vanilla-only mode
+  // Vanilla-only mode (for comparison)
   vanillaOnly: {
     defaultVersion: 'vanilla',
     allowToggle: false,

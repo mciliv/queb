@@ -20,13 +20,8 @@ class VersionLoader {
   init() {
     if (this.config.showToggleButton) {
       this.setupToggle();
-    } else {
-      // Hide toggle button if disabled
-      const toggle = document.getElementById('version-toggle');
-      if (toggle) {
-        toggle.style.display = 'none';
-      }
     }
+    // No toggle button setup needed - React is the default
     this.loadVersion(this.currentVersion);
   }
 
@@ -53,7 +48,7 @@ class VersionLoader {
 
   updateToggleAppearance() {
     const toggle = document.getElementById('version-toggle');
-    if (!toggle) return;
+    if (!toggle) return; // No toggle button to update
 
     toggle.className = `version-toggle ${this.currentVersion}`;
     toggle.textContent = this.currentVersion === 'react' ? 'React' : 'Vanilla JS';
