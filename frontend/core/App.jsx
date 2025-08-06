@@ -45,14 +45,3 @@ function App() {
 }
 
 export default App;
-
-// Auto-render if loaded as main module
-if (import.meta.url === document.currentScript?.src) {
-  import('react').then(React => {
-    import('react-dom/client').then(({ createRoot }) => {
-      const root = createRoot(document.getElementById('root'));
-      root.render(React.createElement(App));
-      console.log('✅ React app auto-rendered');
-    });
-  });
-}

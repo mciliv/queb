@@ -239,29 +239,18 @@ class VersionLoader {
   }
 }
 
-// Initialize version loader
-async function initializeVersionLoader() {
-  let config;
-  try {
-    const { getFinalConfig } = await import('./version-config.js');
-    config = getFinalConfig();
-    console.log('🔧 Final config from version-config.js:', config);
-  } catch (error) {
-    console.warn('⚠️ Failed to load version config, using defaults:', error);
-    config = {
-      defaultVersion: 'react',
-      allowToggle: false,
-      showToggleButton: false,
-      persistChoice: false
-    };
-  }
+// Simple React default configuration
+const config = {
+  defaultVersion: 'react',
+  allowToggle: false,
+  showToggleButton: false,
+  persistChoice: false
+};
 
-  // Initialize version loader with configuration
-  window.versionLoader = new VersionLoader(config);
-}
+console.log('🔧 Using React default config:', config);
 
-// Start initialization
-initializeVersionLoader();
+// Initialize version loader with configuration
+window.versionLoader = new VersionLoader(config);
 
 // Global helper functions
 window.switchToReact = () => {
