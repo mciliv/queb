@@ -81,12 +81,15 @@ class AtomPredictor {
         messages,
         max_tokens: 1000,
         temperature: 0.1, // Keep low for consistency
+        response_format: {
+          type: "json_object"
+        }
       });
 
       const content = response.choices[0].message.content;
       
-      // Use the improved parsing with smart fallbacks
-      const parsed = parseAIResponseWithFallbacks(content);
+      // Parse JSON response directly since we're using structured output
+      const parsed = JSON.parse(content);
       
       // Validate and improve SMILES quality
       const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
@@ -125,12 +128,15 @@ Now analyze this specific object: "${object}"`;
         ],
         max_tokens: 1000,
         temperature: 0.1,
+        response_format: {
+          type: "json_object"
+        }
       });
 
       const content = response.choices[0].message.content;
       
-      // Use the improved parsing with smart fallbacks
-      const parsed = parseAIResponseWithFallbacks(content);
+      // Parse JSON response directly since we're using structured output
+      const parsed = JSON.parse(content);
       
       // Validate and improve SMILES quality
       const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
@@ -174,7 +180,7 @@ Now analyze this specific object: "${object}"`;
 
   // Keep the legacy parseAIResponse method for compatibility but mark as deprecated
   parseAIResponse(content) {
-    console.warn("Using deprecated parseAIResponse - consider updating to use fallback-handlers module");
+    console.warn("Using deprecated parseAIResponse - consider updating to use direct JSON parsing");
     return parseAIResponseWithFallbacks(content);
   }
 }
