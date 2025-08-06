@@ -49,13 +49,40 @@ class MolecularProcessor {
     if (!smiles || typeof smiles !== 'string') return false;
     if (smiles.trim() === '' || smiles === 'N/A') return false;
     
-    // Skip obvious molecular formulas (not comprehensive, just common cases)
-    // But allow single atoms like "O" for water, "N" for nitrogen, etc.
+    // Allow common SMILES patterns and reject obvious molecular formulas
     const cleaned = smiles.replace(/\s/g, '');
-    if (/^[A-Z][0-9]*([A-Z][0-9]*)+$/.test(cleaned)) {
-      return false; // Likely molecular formula like H2O, CaCO3, etc.
+    
+    // Common valid SMILES patterns
+    const validPatterns = [
+      /^[A-Z][A-Z][A-Z]$/, // CCO, CCC, etc.
+      /^[A-Z][A-Z]\(=O\)[A-Z]$/, // CC(=O)O, etc.
+      /^[A-Z]\([A-Z][A-Z]\)[A-Z]$/, // C(CC)C, etc.
+      /^[A-Z]1[A-Z]=[A-Z][A-Z]=[A-Z]1$/, // C1=CC=CC=C1 (benzene)
+      /^[A-Z]1[A-Z][A-Z][A-Z][A-Z][A-Z]1$/, // C1CCCCC1 (cyclohexane)
+      /^[A-Z]$/, // O, N, C, etc.
+    ];
+    
+    // Check if it matches any valid pattern
+    for (const pattern of validPatterns) {
+      if (pattern.test(cleaned)) {
+        return true;
+      }
     }
     
+    // Reject obvious molecular formulas (H2O, CaCO3, etc.)
+    if (/^[A-Z][a-z]?[0-9]*([A-Z][a-z]?[0-9]*)+$/.test(cleaned) && 
+        !cleaned.includes('(') && 
+        !cleaned.includes('=') && 
+        !cleaned.includes('[') && 
+        !cleaned.includes(']') && 
+        !cleaned.includes('@') && 
+        !cleaned.includes('#') && 
+        !cleaned.includes('\\') && 
+        !cleaned.includes('/')) {
+      return false;
+    }
+    
+    // Allow other patterns that might be valid SMILES
     return true;
   }
 
