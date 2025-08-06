@@ -364,8 +364,8 @@ class CameraManager {
       const { output } = await response.json();
       console.log('✅ Camera analysis completed:', output);
 
-      // Remove loading column
-      loadingColumn.remove();
+      // Complete progress and remove loading column
+      uiManager.completeProgress(loadingColumn);
       
       // Emit analysis result event for app to handle
       const event = new CustomEvent('imageAnalysisComplete', {

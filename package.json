@@ -179,6 +179,7 @@
     "html-escaper": "^2.0.2",
     "http-errors": "^2.0.0",
     "http-proxy-agent": "^7.0.2",
+    "http-proxy-middleware": "^3.0.5",
     "https-proxy-agent": "^7.0.6",
     "human-signals": "^2.1.0",
     "humanize-ms": "^1.2.1",

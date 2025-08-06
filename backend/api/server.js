@@ -23,6 +23,16 @@ const path = require("path");
 const HttpsServer = require("./https-server");
 const AtomPredictor = require("../services/AtomPredictor");
 const MolecularProcessor = require("../services/molecular-processor");
+
+// Development proxy for Vite
+let proxy = null;
+if (config.NODE_ENV === 'development') {
+  try {
+    proxy = require('http-proxy-middleware');
+  } catch (error) {
+    log.warning('⚠️ http-proxy-middleware not available - install with: npm install http-proxy-middleware');
+  }
+}
 // UserService import - only if database is available
 let UserService = null;
 try {
@@ -850,10 +860,21 @@ app.post("/generate-sdfs", async (req, res) => {
   }
 });
 
-// Static routes
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
-});
+// Development mode - redirect to Vite dev server
+console.log('NODE_ENV:', config.NODE_ENV);
+if (config.NODE_ENV === 'development') {
+  console.log('Setting up development redirect to Vite');
+  app.get("/", (req, res) => {
+    console.log('Redirecting to Vite dev server');
+    res.redirect('http://localhost:3001');
+  });
+} else {
+  console.log('Setting up production static routes');
+  // Production static routes
+  app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
+  });
+}
 
 // SEO routes
 app.get("/robots.txt", (req, res) => {

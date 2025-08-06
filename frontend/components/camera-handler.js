@@ -216,8 +216,7 @@ class CameraHandler {
         
         const { output } = await response.json();
 
-        loadingColumn.remove();
-        this.updateScrollHandles();
+        uiManager.completeProgress(loadingColumn);
 
         const objectName = output.object || "Uploaded image";
         this.emitAnalysisResult(output, "Photo", objectName, false, croppedBase64);
@@ -229,8 +228,7 @@ class CameraHandler {
         }
         
       } catch (err) {
-        loadingColumn.remove();
-        this.updateScrollHandles();
+        uiManager.completeProgress(loadingColumn);
         this.createClosableErrorMessage(`Error: ${err.message}`);
       }
     };

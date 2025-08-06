@@ -152,15 +152,28 @@ class UIManager {
     const loadingColumn = document.createElement("div");
     loadingColumn.className = "object-column";
 
-    // Create header
+    // Create header with progress bar
     const header = document.createElement("div");
-    header.className = "object-header";
-    header.innerHTML = `
-      <div class="object-title-container">
-        <div class="object-icon">🔬</div>
-        <div class="object-name">Analyzing...</div>
-      </div>
-    `;
+    header.className = "object-title";
+    
+    const titleText = document.createElement("span");
+    titleText.textContent = "Molecular Analysis";
+    header.appendChild(titleText);
+
+    // Add progress bar
+    const progressContainer = document.createElement("div");
+    progressContainer.className = "progress-container";
+    
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar";
+    
+    const progressFill = document.createElement("div");
+    progressFill.className = "progress-fill";
+    progressFill.style.width = "0%";
+    
+    progressBar.appendChild(progressFill);
+    progressContainer.appendChild(progressBar);
+    header.appendChild(progressContainer);
 
     loadingColumn.appendChild(header);
 
@@ -186,12 +199,45 @@ class UIManager {
 
     gldiv.appendChild(loadingColumn);
 
+    // Animate progress bar
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress > 90) progress = 90; // Don't complete until analysis is done
+      progressFill.style.width = `${progress}%`;
+    }, 200);
+
+    // Store interval reference for cleanup
+    loadingColumn.progressInterval = progressInterval;
+
     // Update scroll handles if available
     if (window.updateScrollHandles) {
       window.updateScrollHandles();
     }
 
     return loadingColumn;
+  }
+
+  // Complete progress bar and cleanup
+  completeProgress(loadingColumn) {
+    if (loadingColumn && loadingColumn.progressInterval) {
+      clearInterval(loadingColumn.progressInterval);
+      
+      const progressFill = loadingColumn.querySelector('.progress-fill');
+      if (progressFill) {
+        progressFill.style.width = '100%';
+        
+        // Remove the loading column after a short delay
+        setTimeout(() => {
+          if (loadingColumn.parentNode) {
+            loadingColumn.remove();
+            if (window.updateScrollHandles) {
+              window.updateScrollHandles();
+            }
+          }
+        }, 500);
+      }
+    }
   }
 
   // Show main app interface

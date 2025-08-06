@@ -45,13 +45,13 @@ class MolecularApp {
     
     // Auto-enable dev mode for dev.queb.space
     if (PAYMENT_CONFIG.devMode) {
-      console.log('🔧 Auto-enabling developer mode for dev.queb.space');
+      console.log('🔧 Auto-enabling developer mode');
       this.hasPaymentSetup = true;
     }    
     
     await cameraManager.initialize();
 
-    if (cameraManager.isSafari && !cameraManager.hasStoredCameraPermission()) {
+    if (!cameraManager.hasStoredCameraPermission()) {
       setTimeout(() => {
         cameraManager.requestPermission();
       }, 1000);
@@ -551,18 +551,44 @@ class MolecularApp {
       this.hasPaymentSetup = true; // Skip validation when disabled
     }
   }
+
+  // Cleanup method for version switching
+  cleanup() {
+    // Remove event listeners
+    if (this.objectInput) {
+      this.objectInput.removeEventListener("keyup", this.handleTextAnalysis);
+    }
+    
+    // Clean up camera
+    if (cameraManager) {
+      cameraManager.cleanup();
+    }
+    
+    // Clear results
+    this.clearResults();
+    
+    // Remove global references
+    window.molecularApp = null;
+    
+    console.log('🧹 Vanilla JS app cleaned up');
+  }
 }
 
-// Initialize app when DOM is ready
-document.addEventListener("DOMContentLoaded", async () => {
-  const app = new MolecularApp();
-  window.app = app; // Make app globally available for debugging
-  await app.initialize();
+// Export MolecularApp class for dynamic loading
+export default MolecularApp;
 
-  window.molecularApp = app;
-  
-  // Global helper functions for console access
-  window.enablePayments = () => app.togglePayments(true);
-  window.disablePayments = () => app.togglePayments(false);
-  window.togglePayments = (enabled) => app.togglePayments(enabled);
-});
+// Initialize app when DOM is ready (only if not loaded dynamically)
+if (!window.versionLoader) {
+  document.addEventListener("DOMContentLoaded", async () => {
+    const app = new MolecularApp();
+    window.app = app; // Make app globally available for debugging
+    await app.initialize();
+
+    window.molecularApp = app;
+    
+    // Global helper functions for console access
+    window.enablePayments = () => app.togglePayments(true);
+    window.disablePayments = () => app.togglePayments(false);
+    window.togglePayments = (enabled) => app.togglePayments(enabled);
+  });
+}
