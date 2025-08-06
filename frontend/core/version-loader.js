@@ -19,47 +19,11 @@ class VersionLoader {
   }
 
   init() {
-    if (this.config.showToggleButton) {
-      this.setupToggle();
-    }
-    // No toggle button setup needed - React is the default
+    // Load the default version (React)
     this.loadVersion(this.currentVersion);
   }
 
-  setupToggle() {
-    const toggle = document.getElementById('version-toggle');
-    if (!toggle) return;
 
-    // Only add event listener if toggling is allowed
-    if (this.config.allowToggle) {
-      toggle.addEventListener('click', () => {
-        if (this.isLoading) return;
-        
-        const newVersion = this.currentVersion === 'react' ? 'vanilla' : 'react';
-        this.switchVersion(newVersion);
-      });
-    } else {
-      toggle.style.cursor = 'not-allowed';
-      toggle.title = 'Version switching disabled';
-    }
-
-    // Update toggle appearance
-    this.updateToggleAppearance();
-  }
-
-  updateToggleAppearance() {
-    const toggle = document.getElementById('version-toggle');
-    if (!toggle) return; // No toggle button to update
-
-    toggle.className = `version-toggle ${this.currentVersion}`;
-    toggle.textContent = this.currentVersion === 'react' ? 'React' : 'Vanilla JS';
-    
-    if (this.config.allowToggle) {
-      toggle.title = `Switch to ${this.currentVersion === 'react' ? 'Vanilla JS' : 'React'}`;
-    } else {
-      toggle.title = 'Version switching disabled';
-    }
-  }
 
   async switchVersion(version) {
     if (!this.config.allowToggle) {
@@ -70,11 +34,6 @@ class VersionLoader {
     if (this.isLoading || version === this.currentVersion) return;
     
     this.isLoading = true;
-    const toggle = document.getElementById('version-toggle');
-    if (toggle) {
-      toggle.textContent = 'Switching...';
-      toggle.style.cursor = 'not-allowed';
-    }
 
     try {
       // Clear current app
@@ -97,7 +56,6 @@ class VersionLoader {
       await this.loadVersion(this.currentVersion);
     } finally {
       this.isLoading = false;
-      this.updateToggleAppearance();
     }
   }
 
@@ -121,7 +79,6 @@ class VersionLoader {
       throw error;
     } finally {
       this.isLoading = false;
-      this.updateToggleAppearance();
     }
   }
 
@@ -224,7 +181,7 @@ class VersionLoader {
   }
 }
 
-// Simple React default configuration
+// React-only configuration - no toggle UI
 const config = {
   defaultVersion: 'react',
   allowToggle: false,
