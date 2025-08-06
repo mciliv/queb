@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-const Results = ({ viewers, setViewers, lastAnalysis }) => {
+const Results = ({ viewers, setViewers, lastAnalysis, isProcessing, currentAnalysisType }) => {
   const glDivRef = useRef(null);
 
   useEffect(() => {
@@ -37,11 +37,21 @@ const Results = ({ viewers, setViewers, lastAnalysis }) => {
 
   return (
     <div className="results-section">
-      {/* Analysis Results Header */}
-      {lastAnalysis && lastAnalysis.object && viewers.length > 0 && (
+      {/* Analysis Results Header - show immediately when processing starts */}
+      {(isProcessing || (lastAnalysis && lastAnalysis.object && viewers.length > 0)) && (
         <div className="analysis-header">
-          <h3>Analysis Results: {lastAnalysis.object}</h3>
-          <p>Found {viewers.length} molecule{viewers.length !== 1 ? 's' : ''}</p>
+          <h3>
+            {isProcessing 
+              ? `Analyzing ${currentAnalysisType || 'input'}...` 
+              : `Analysis Results: ${lastAnalysis.object}`
+            }
+          </h3>
+          {!isProcessing && viewers.length > 0 && (
+            <p>Found {viewers.length} molecule{viewers.length !== 1 ? 's' : ''}</p>
+          )}
+          {isProcessing && (
+            <p>Processing molecular data...</p>
+          )}
         </div>
       )}
       

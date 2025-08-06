@@ -289,7 +289,13 @@ const MainLayout = ({
               />
             )}
 
-            <Results viewers={viewers} setViewers={setViewers} lastAnalysis={lastAnalysis} />
+            <Results 
+              viewers={viewers} 
+              setViewers={setViewers} 
+              lastAnalysis={lastAnalysis}
+              isProcessing={isProcessing}
+              currentAnalysisType={currentAnalysisType}
+            />
           </div>
 
           {/* Right side: Payment section */}
