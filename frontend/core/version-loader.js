@@ -1,13 +1,32 @@
 // Version Loader - Toggle between React and Vanilla JS implementations
 class VersionLoader {
-  constructor() {
-    this.currentVersion = localStorage.getItem('mol-version') || 'vanilla';
+  constructor(config = {}) {
+    // Configuration options
+    this.config = {
+      defaultVersion: config.defaultVersion || 'vanilla', // 'vanilla' | 'react'
+      allowToggle: config.allowToggle !== false, // true/false
+      showToggleButton: config.showToggleButton !== false, // true/false
+      persistChoice: config.persistChoice !== false, // true/false
+      ...config
+    };
+    
+    this.currentVersion = this.config.persistChoice 
+      ? (localStorage.getItem('mol-version') || this.config.defaultVersion)
+      : this.config.defaultVersion;
     this.isLoading = false;
     this.init();
   }
 
   init() {
-    this.setupToggle();
+    if (this.config.showToggleButton) {
+      this.setupToggle();
+    } else {
+      // Hide toggle button if disabled
+      const toggle = document.getElementById('version-toggle');
+      if (toggle) {
+        toggle.style.display = 'none';
+      }
+    }
     this.loadVersion(this.currentVersion);
   }
 
@@ -15,12 +34,18 @@ class VersionLoader {
     const toggle = document.getElementById('version-toggle');
     if (!toggle) return;
 
-    toggle.addEventListener('click', () => {
-      if (this.isLoading) return;
-      
-      const newVersion = this.currentVersion === 'react' ? 'vanilla' : 'react';
-      this.switchVersion(newVersion);
-    });
+    // Only add event listener if toggling is allowed
+    if (this.config.allowToggle) {
+      toggle.addEventListener('click', () => {
+        if (this.isLoading) return;
+        
+        const newVersion = this.currentVersion === 'react' ? 'vanilla' : 'react';
+        this.switchVersion(newVersion);
+      });
+    } else {
+      toggle.style.cursor = 'not-allowed';
+      toggle.title = 'Version switching disabled';
+    }
 
     // Update toggle appearance
     this.updateToggleAppearance();
@@ -32,10 +57,20 @@ class VersionLoader {
 
     toggle.className = `version-toggle ${this.currentVersion}`;
     toggle.textContent = this.currentVersion === 'react' ? 'React' : 'Vanilla JS';
-    toggle.title = `Switch to ${this.currentVersion === 'react' ? 'Vanilla JS' : 'React'}`;
+    
+    if (this.config.allowToggle) {
+      toggle.title = `Switch to ${this.currentVersion === 'react' ? 'Vanilla JS' : 'React'}`;
+    } else {
+      toggle.title = 'Version switching disabled';
+    }
   }
 
   async switchVersion(version) {
+    if (!this.config.allowToggle) {
+      console.warn('⚠️ Version switching is disabled in configuration');
+      return;
+    }
+    
     if (this.isLoading || version === this.currentVersion) return;
     
     this.isLoading = true;
@@ -54,7 +89,9 @@ class VersionLoader {
       
       // Update state
       this.currentVersion = version;
-      localStorage.setItem('mol-version', version);
+      if (this.config.persistChoice) {
+        localStorage.setItem('mol-version', version);
+      }
       
       console.log(`✅ Switched to ${version} version`);
       
@@ -66,6 +103,41 @@ class VersionLoader {
       this.isLoading = false;
       this.updateToggleAppearance();
     }
+  }
+
+  // Force load a specific version (bypasses toggle restrictions)
+  async forceLoadVersion(version) {
+    console.log(`🔄 Force loading ${version} version...`);
+    
+    this.isLoading = true;
+    try {
+      this.clearCurrentApp();
+      await this.loadVersion(version);
+      this.currentVersion = version;
+      
+      if (this.config.persistChoice) {
+        localStorage.setItem('mol-version', version);
+      }
+      
+      console.log(`✅ Force loaded ${version} version`);
+    } catch (error) {
+      console.error(`❌ Failed to force load ${version}:`, error);
+      throw error;
+    } finally {
+      this.isLoading = false;
+      this.updateToggleAppearance();
+    }
+  }
+
+  // Get current configuration
+  getConfig() {
+    return { ...this.config };
+  }
+
+  // Update configuration at runtime
+  updateConfig(newConfig) {
+    this.config = { ...this.config, ...newConfig };
+    console.log('⚙️ Configuration updated:', this.config);
   }
 
   clearCurrentApp() {
@@ -156,8 +228,12 @@ class VersionLoader {
   }
 }
 
-// Initialize version loader
-window.versionLoader = new VersionLoader();
+// Import configuration
+import { getFinalConfig } from './version-config.js';
+
+// Initialize version loader with configuration
+const config = getFinalConfig();
+window.versionLoader = new VersionLoader(config);
 
 // Global helper functions
 window.switchToReact = () => {
@@ -172,6 +248,23 @@ window.switchToVanilla = () => {
 
 window.getCurrentVersion = () => {
   return localStorage.getItem('mol-version') || 'vanilla';
+};
+
+// Configuration functions
+window.setVersionConfig = (config) => {
+  if (window.versionLoader) {
+    window.versionLoader.updateConfig(config);
+  }
+  window.VERSION_CONFIG = { ...window.VERSION_CONFIG, ...config };
+};
+
+window.getVersionConfig = () => {
+  return window.VERSION_CONFIG;
+};
+
+window.forceLoadVersion = (version) => {
+  const loader = window.versionLoader;
+  if (loader) return loader.forceLoadVersion(version);
 };
 
 // Test functions for development
@@ -190,6 +283,7 @@ window.logVersionInfo = () => {
   console.log('📊 Version Information:');
   console.log('- Current version:', window.getCurrentVersion());
   console.log('- Version loader:', window.versionLoader ? 'Loaded' : 'Not loaded');
+  console.log('- Configuration:', window.getVersionConfig());
   console.log('- React available:', typeof window.React !== 'undefined');
   console.log('- Vanilla app:', window.app ? 'Loaded' : 'Not loaded');
 }; 
