@@ -1,8 +1,6 @@
 // Version Loader - Toggle between React and Vanilla JS implementations
 class VersionLoader {
   constructor(config = {}) {
-    console.log('🔧 VersionLoader constructor called with config:', config);
-    
     // Configuration options
     this.config = {
       defaultVersion: config.defaultVersion || 'vanilla', // 'vanilla' | 'react'
@@ -12,13 +10,10 @@ class VersionLoader {
       ...config
     };
     
-    console.log('🔧 Final config:', this.config);
-    
     this.currentVersion = this.config.persistChoice 
       ? (localStorage.getItem('mol-version') || this.config.defaultVersion)
       : this.config.defaultVersion;
     
-    console.log('🔧 Current version will be:', this.currentVersion);
     this.isLoading = false;
     this.init();
   }
@@ -176,28 +171,18 @@ class VersionLoader {
 
   async loadReactVersion() {
     try {
-      console.log('🔄 Loading React version...');
-      
       // Load React and ReactDOM
       const React = await import('react');
       const { createRoot } = await import('react-dom/client');
-      console.log('✅ React and ReactDOM loaded');
       
       // Load React app
       const { default: App } = await import('./App.jsx');
-      console.log('✅ React App component loaded');
       
       const rootElement = document.getElementById('root');
-      console.log('✅ Root element found:', rootElement);
-      
       const root = createRoot(rootElement);
-      console.log('✅ React root created');
-      
       const appElement = React.createElement(App);
-      console.log('✅ App element created');
       
       root.render(appElement);
-      console.log('✅ React app rendered');
       
     } catch (error) {
       console.error('Failed to load React version:', error);
@@ -246,8 +231,6 @@ const config = {
   showToggleButton: false,
   persistChoice: false
 };
-
-console.log('🔧 Using React default config:', config);
 
 // Initialize version loader with configuration
 window.versionLoader = new VersionLoader(config);
