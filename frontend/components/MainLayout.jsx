@@ -243,3 +243,127 @@ const MainLayout = ({
     setLastAnalysis(result);
     setError('');
   }, [setViewers, setLastAnalysis, generateSDFs]);
+
+  const handleRetry = useCallback(() => {
+    if (lastSuccessfulAnalysis) {
+      handleTextAnalysis(objectInput || lastSuccessfulAnalysis.query);
+    }
+  }, [lastSuccessfulAnalysis, objectInput, handleTextAnalysis]);
+
+  return (
+    <div className="app-container">
+      <div className="main-app-interface">
+        <div className="main-content-layout">
+          {/* Left side: Analysis section */}
+          <div className="analysis-section">
+            <TextInput 
+              value={objectInput}
+              onChange={setObjectInput}
+              onSubmit={handleTextAnalysis}
+              isProcessing={isProcessing}
+              error={error}
+            />
+
+            <ModeSelector
+              cameraMode={cameraMode}
+              setCameraMode={setCameraMode}
+              photoMode={photoMode}
+              setPhotoMode={setPhotoMode}
+            />
+
+            {cameraMode && (
+              <CameraSection
+                isProcessing={isProcessing}
+                setIsProcessing={setIsProcessing}
+                setCurrentAnalysisType={setCurrentAnalysisType}
+                onAnalysisComplete={handleAnalysisComplete}
+              />
+            )}
+
+            {photoMode && (
+              <PhotoSection
+                isProcessing={isProcessing}
+                setIsProcessing={setIsProcessing}
+                setCurrentAnalysisType={setCurrentAnalysisType}
+                onAnalysisComplete={handleAnalysisComplete}
+              />
+            )}
+
+            <Results viewers={viewers} setViewers={setViewers} />
+          </div>
+
+          {/* Right side: Payment section */}
+          <PaymentSection />
+        </div>
+      </div>
+
+      {/* Help button */}
+      <button 
+        className="help-button"
+        onClick={() => setShowShortcuts(true)}
+        title={`Keyboard shortcuts (${navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+?)`}
+      >
+        ?
+      </button>
+
+      {/* Retry button for failed analyses */}
+      {error && lastSuccessfulAnalysis && (
+        <button 
+          className="retry-button"
+          onClick={handleRetry}
+          title="Retry last analysis"
+        >
+          ↻
+        </button>
+      )}
+
+      {/* Keyboard shortcuts help overlay */}
+      {showShortcuts && (
+        <div className="shortcuts-overlay" onClick={() => setShowShortcuts(false)}>
+          <div className="shortcuts-modal" onClick={e => e.stopPropagation()}>
+            <div className="shortcuts-header">
+              <h3>Keyboard Shortcuts</h3>
+              <button onClick={() => setShowShortcuts(false)}>×</button>
+            </div>
+            <div className="shortcuts-list">
+              <div className="shortcut-item">
+                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+K</kbd>
+                <span>Focus text input</span>
+              </div>
+              <div className="shortcut-item">
+                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+C</kbd>
+                <span>Toggle camera mode</span>
+              </div>
+              <div className="shortcut-item">
+                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+P</kbd>
+                <span>Toggle photo mode</span>
+              </div>
+              <div className="shortcut-item">
+                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+Enter</kbd>
+                <span>Submit text analysis</span>
+              </div>
+              <div className="shortcut-item">
+                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+⌫</kbd>
+                <span>Clear all results</span>
+              </div>
+              <div className="shortcut-item">
+                <kbd>Esc</kbd>
+                <span>Clear modes & focus input</span>
+              </div>
+              <div className="shortcut-item">
+                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+W</kbd>
+                <span>Close last molecule viewer</span>
+              </div>
+              <div className="shortcut-item">
+                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+?</kbd>
+                <span>Show/hide shortcuts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MainLayout;
