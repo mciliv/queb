@@ -50,7 +50,9 @@ class MolecularProcessor {
     if (smiles.trim() === '' || smiles === 'N/A') return false;
     
     // Skip obvious molecular formulas (not comprehensive, just common cases)
-    if (/^[A-Z][0-9]*([A-Z][0-9]*)*$/.test(smiles.replace(/\s/g, ''))) {
+    // But allow single atoms like "O" for water, "N" for nitrogen, etc.
+    const cleaned = smiles.replace(/\s/g, '');
+    if (/^[A-Z][0-9]*([A-Z][0-9]*)+$/.test(cleaned)) {
       return false; // Likely molecular formula like H2O, CaCO3, etc.
     }
     

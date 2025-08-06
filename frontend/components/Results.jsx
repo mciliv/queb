@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-const Results = ({ viewers, setViewers }) => {
+const Results = ({ viewers, setViewers, lastAnalysis }) => {
   const glDivRef = useRef(null);
 
   useEffect(() => {
@@ -37,6 +37,14 @@ const Results = ({ viewers, setViewers }) => {
 
   return (
     <div className="results-section">
+      {/* Analysis Results Header */}
+      {lastAnalysis && lastAnalysis.object && viewers.length > 0 && (
+        <div className="analysis-header">
+          <h3>Analysis Results: {lastAnalysis.object}</h3>
+          <p>Found {viewers.length} molecule{viewers.length !== 1 ? 's' : ''}</p>
+        </div>
+      )}
+      
       <div className="snapshots-container">
         {viewers.map((viewer, index) => (
           <MoleculeViewer 
