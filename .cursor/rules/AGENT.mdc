@@ -3,6 +3,7 @@ alwaysApply: true
 ---
 
 # Agent instructions
+Never assume perfection
 Maximally simple & straightforward
 only respond in code
 If anything can be seen as a principle, put here

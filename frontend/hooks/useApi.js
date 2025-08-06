@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-const API_BASE = window.location.hostname === 'localhost' ? 'https://localhost:3002' : '';
+const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8080' : '';
 
 // Default timeout and retry settings
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
