@@ -1,6 +1,8 @@
 // Version Loader - Toggle between React and Vanilla JS implementations
 class VersionLoader {
   constructor(config = {}) {
+    console.log('🔧 VersionLoader constructor called with config:', config);
+    
     // Configuration options
     this.config = {
       defaultVersion: config.defaultVersion || 'vanilla', // 'vanilla' | 'react'
@@ -10,9 +12,13 @@ class VersionLoader {
       ...config
     };
     
+    console.log('🔧 Final config:', this.config);
+    
     this.currentVersion = this.config.persistChoice 
       ? (localStorage.getItem('mol-version') || this.config.defaultVersion)
       : this.config.defaultVersion;
+    
+    console.log('🔧 Current version will be:', this.currentVersion);
     this.isLoading = false;
     this.init();
   }
@@ -172,15 +178,25 @@ class VersionLoader {
     try {
       console.log('🔄 Loading React version...');
       
-      // Load React app directly (Vite handles React dependencies)
+      // Load React and ReactDOM
+      const React = await import('react');
+      const { createRoot } = await import('react-dom/client');
+      console.log('✅ React and ReactDOM loaded');
+      
+      // Load React app
       const { default: App } = await import('./App.jsx');
       console.log('✅ React App component loaded');
       
-      const { createRoot } = await import('react-dom/client');
-      console.log('✅ ReactDOM createRoot loaded');
+      const rootElement = document.getElementById('root');
+      console.log('✅ Root element found:', rootElement);
       
-      const root = createRoot(document.getElementById('root'));
-      root.render(App());
+      const root = createRoot(rootElement);
+      console.log('✅ React root created');
+      
+      const appElement = React.createElement(App);
+      console.log('✅ App element created');
+      
+      root.render(appElement);
       console.log('✅ React app rendered');
       
     } catch (error) {
@@ -223,12 +239,29 @@ class VersionLoader {
   }
 }
 
-// Import configuration
-import { getFinalConfig } from './version-config.js';
+// Initialize version loader
+async function initializeVersionLoader() {
+  let config;
+  try {
+    const { getFinalConfig } = await import('./version-config.js');
+    config = getFinalConfig();
+    console.log('🔧 Final config from version-config.js:', config);
+  } catch (error) {
+    console.warn('⚠️ Failed to load version config, using defaults:', error);
+    config = {
+      defaultVersion: 'react',
+      allowToggle: false,
+      showToggleButton: false,
+      persistChoice: false
+    };
+  }
 
-// Initialize version loader with configuration
-const config = getFinalConfig();
-window.versionLoader = new VersionLoader(config);
+  // Initialize version loader with configuration
+  window.versionLoader = new VersionLoader(config);
+}
+
+// Start initialization
+initializeVersionLoader();
 
 // Global helper functions
 window.switchToReact = () => {
