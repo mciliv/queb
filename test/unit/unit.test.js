@@ -310,10 +310,12 @@ describe("Unit Tests", () => {
         // In test environment, valid SMILES will fail with mock spawn, invalid ones get filtered out
         // This test verifies error handling works correctly
         const result = await molecularProcessor.processSmiles(["CCO", "INVALID", "CC(=O)O"]);
-        expect(result.errors).toHaveLength(1); // CC(=O)O fails during spawn
-        expect(result.skipped).toHaveLength(2); // CCO and INVALID get filtered out during validation
-        expect(result.skipped[0]).toContain("CCO");
-        expect(result.skipped[1]).toContain("INVALID");
+        expect(result.errors).toHaveLength(2); // CCO and CC(=O)O fail during spawn (both pass validation)
+        expect(result.skipped).toHaveLength(1); // INVALID gets filtered out during validation
+        expect(result.skipped[0]).toContain("INVALID");
+        // Both CCO and CC(=O)O should be in errors since they pass validation but fail spawn
+        expect(result.errors.some(e => e.includes("CCO"))).toBe(true);
+        expect(result.errors.some(e => e.includes("CC(=O)O"))).toBe(true);
       });
     });
 
