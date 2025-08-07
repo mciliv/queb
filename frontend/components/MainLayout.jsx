@@ -5,6 +5,7 @@ import CameraSection from './CameraSection';
 import PhotoSection from './PhotoSection';
 import MolecularAnalysisResults from './Results';
 import PaymentSection from './PaymentSection';
+import MolecularTestPanel from './MolecularTestPanel';
 import { usePayment } from './PaymentContext';
 import { useApi } from '../hooks/useApi';
 
@@ -123,6 +124,16 @@ const MainLayout = ({
           if (modifier) {
             event.preventDefault();
             setShowShortcuts(prev => !prev);
+          }
+          break;
+        case 't':
+          if (modifier) {
+            event.preventDefault();
+            // Trigger test panel - find and click the test button
+            const testButton = document.querySelector('.test-panel-toggle');
+            if (testButton) {
+              testButton.click();
+            }
           }
           break;
       }
@@ -274,6 +285,11 @@ const MainLayout = ({
     }
   }, [lastSuccessfulAnalysis, objectInput, handleTextAnalysis]);
 
+  const handleTestAnalysis = useCallback(async (testInput) => {
+    console.log(`🧪 Running test analysis for: ${testInput}`);
+    await handleTextAnalysis(testInput);
+  }, [handleTextAnalysis]);
+
   return (
     <div className="app-container">
       <div className="main-app-interface">
@@ -389,10 +405,20 @@ const MainLayout = ({
                 <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+S</kbd>
                 <span>Show/hide shortcuts</span>
               </div>
+              <div className="shortcut-item">
+                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+T</kbd>
+                <span>Open test panel</span>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Molecular Test Panel for development */}
+      <MolecularTestPanel 
+        onTestAnalysis={handleTestAnalysis}
+        isProcessing={isProcessing}
+      />
     </div>
   );
 };
