@@ -1,7 +1,7 @@
 module.exports = {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/test/fixtures/setup.js'],
-  globalTeardown: '<rootDir>/test/fixtures/global-teardown.js',
+  setupFilesAfterEnv: ['<rootDir>/test/support/fixtures/setup.js'],
+  globalTeardown: '<rootDir>/test/support/fixtures/global-teardown.js',
   testMatch: [
     '<rootDir>/test/**/*.test.js'
   ],
@@ -38,9 +38,9 @@ module.exports = {
   projects: [
     {
       displayName: 'unit-frontend',
-      testMatch: ['**/test/unit/camera*.test.js', '**/test/unit/manual.test.js', '**/test/unit/front-end*.test.js'],
+      testMatch: ['**/test/suites/unit/camera*.test.js', '**/test/suites/unit/manual.test.js', '**/test/suites/unit/front-end*.test.js'],
       testEnvironment: 'jsdom',
-      setupFilesAfterEnv: ['<rootDir>/test/fixtures/setup.js'],
+      setupFilesAfterEnv: ['<rootDir>/test/support/fixtures/setup.js'],
       globals: {
         TextEncoder: TextEncoder,
         TextDecoder: TextDecoder
@@ -49,7 +49,7 @@ module.exports = {
     },
     {
       displayName: 'unit-backend', 
-      testMatch: ['**/test/unit/unit.test.js'],
+      testMatch: ['**/test/suites/unit/unit.test.js'],
       testEnvironment: 'node',
       globals: {
         TextEncoder: TextEncoder,
@@ -59,7 +59,7 @@ module.exports = {
     },
     {
       displayName: 'integration',
-      testMatch: ['**/test/integration/*.test.js'],
+      testMatch: ['**/test/suites/integration/*.test.js'],
       testEnvironment: 'node',
       globals: {
         TextEncoder: TextEncoder,

@@ -6,7 +6,7 @@ describe('Basic App Smoke Tests', () => {
   test('Core files exist', () => {
     const coreFiles = [
       'frontend/core/index.html',
-      'frontend/core/app.js', 
+      'frontend/core/molecular-space-app.js', 
       'backend/api/server.js',
       'package.json'
     ];

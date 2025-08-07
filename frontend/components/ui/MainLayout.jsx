@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import TextInput from './TextInput';
-import ModeSelector from './ModeSelector';
-import CameraSection from './CameraSection';
-import PhotoSection from './PhotoSection';
-import MolecularAnalysisResults from './Results';
+import TextInput from '../input/TextInput';
+import ModeSelector from '../input/ModeSelector';
+import CameraSection from '../input/CameraSection';
+import PhotoSection from '../input/PhotoSection';
+import MolecularAnalysisResults from '../visualization/Results';
 import PaymentSection from './PaymentSection';
-import MolecularTestPanel from './MolecularTestPanel';
+import MolecularTestPanel from '../visualization/MolecularTestPanel';
 import { usePayment } from './PaymentContext';
-import { useApi } from '../hooks/useApi';
+import { useApi } from '../../hooks/useApi';
 
 const MainLayout = ({ 
   isProcessing,

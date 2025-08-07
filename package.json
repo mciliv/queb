@@ -1,7 +1,7 @@
 {
-  "name": "mol",
+  "name": "molecular-space-analyzer",
   "version": "1.0.0",
-  "description": "Molecular analysis app",
+  "description": "Web application for analyzing molecular composition of spaces, objects, and images using AI vision and 3D visualization",
   "main": "backend/api/server.js",
   "scripts": {
     "start": "node backend/api/server.js",
@@ -390,21 +390,25 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mciliv/mol.git"
+    "url": "git+https://github.com/mciliv/molecular-space-analyzer.git"
   },
   "keywords": [
-    "molecular",
-    "analysis",
+    "molecular-analysis",
+    "space-analyzer", 
+    "ai-vision",
+    "3d-visualization",
     "chemistry",
-    "3d"
+    "smiles",
+    "molecular-viewer",
+    "image-analysis"
   ],
   "author": "",
   "license": "MIT",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/mciliv/mol/issues"
+    "url": "https://github.com/mciliv/molecular-space-analyzer/issues"
   },
-  "homepage": "https://github.com/mciliv/mol#readme",
+  "homepage": "https://github.com/mciliv/molecular-space-analyzer#readme",
   "devDependencies": {
     "@babel/core": "^7.28.0",
     "@babel/plugin-transform-modules-commonjs": "^7.27.1",
