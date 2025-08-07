@@ -4,13 +4,13 @@
 const request = require("supertest");
 const fs = require("fs");
 const path = require("path");
-const AtomPredictor = require("../../backend/services/AtomPredictor");
-const MolecularProcessor = require("../../backend/services/molecular-processor");
+const AtomPredictor = require("../../../backend/services/AtomPredictor");
+const MolecularProcessor = require("../../../backend/services/molecular-processor");
 const {
   ImageMoleculeSchema,
   TextMoleculeSchema,
   SdfGenerationSchema,
-} = require("../../backend/schemas/schemas");
+} = require("../../../backend/schemas/schemas");
 
 // Mock OpenAI API
 jest.mock("openai", () => ({
@@ -63,7 +63,7 @@ let app;
 beforeAll(() => {
   // Load server for all tests
   try {
-    app = require("../../backend/api/server");
+    app = require("../../../backend/api/server");
   } catch (error) {
     console.error("Failed to load server:", error.message);
     throw error;
