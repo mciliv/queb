@@ -24,7 +24,7 @@ const HttpsServer = require("./https-server");
 const AtomPredictor = require("../services/AtomPredictor");
 const MolecularProcessor = require("../services/molecular-processor");
 
-// Development proxy for Vite
+// Direct frontend serving (no proxy needed)
 let proxy = null;
 if (config.NODE_ENV === 'development') {
   try {
@@ -402,7 +402,7 @@ app.post("/generate-sdfs", async (req, res) => {
 // ==================== STATIC FILE SERVING ====================
 // Serve frontend files first (before API routes)
 
-app.use(express.static(path.join(__dirname, "..", "..", "frontend", "core")));
+app.use(express.static(path.join(__dirname, "..", "..", "frontend")));
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));
 app.use("/components", express.static(path.join(__dirname, "..", "..", "frontend", "components")));
 app.use("/sdf_files", express.static(path.join(__dirname, "..", "..", "data", "sdf_files")));
@@ -860,21 +860,12 @@ app.post("/generate-sdfs", async (req, res) => {
   }
 });
 
-// Development mode - redirect to Vite dev server
+// Serve frontend directly in all modes
 console.log('NODE_ENV:', config.NODE_ENV);
-if (config.NODE_ENV === 'development') {
-  console.log('Setting up development redirect to Vite');
-  app.get("/", (req, res) => {
-    console.log('Redirecting to Vite dev server');
-    res.redirect('http://localhost:3001');
-  });
-} else {
-  console.log('Setting up production static routes');
-  // Production static routes
-  app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
-  });
-}
+console.log('Setting up frontend static routes');
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "index.html"));
+});
 
 // SEO routes
 app.get("/robots.txt", (req, res) => {
@@ -899,7 +890,7 @@ app.get("*", (req, res, next) => {
   }
   
   // Serve index.html for all other routes (SPA behavior)
-  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "index.html"));
 });
 
 // Request logging middleware

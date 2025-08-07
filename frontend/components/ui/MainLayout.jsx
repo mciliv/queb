@@ -9,6 +9,57 @@ import MolecularTestPanel from '../visualization/MolecularTestPanel';
 import { usePayment } from './PaymentContext';
 import { useApi } from '../../hooks/useApi';
 
+// Inline styles for main layout
+const styles = {
+  appContainer: {
+    background: '#000000',
+    color: '#ffffff',
+    minHeight: '100vh',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontSize: '13px',
+    fontWeight: 400,
+    lineHeight: 1.4,
+    letterSpacing: '0.01em'
+  },
+  mainAppInterface: {
+    position: 'relative',
+    width: '100%',
+    minHeight: '100vh'
+  },
+  mainContentLayout: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '20px',
+    padding: '20px',
+    maxWidth: '100vw',
+    overflow: 'hidden'
+  },
+  analysisSection: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px',
+    maxWidth: 'calc(100vw - 320px)'
+  },
+  helpButton: {
+    position: 'fixed',
+    bottom: '20px',
+    left: '20px',
+    background: 'rgba(255, 255, 255, 0.1)',
+    border: 'none',
+    borderRadius: '50%',
+    width: '50px',
+    height: '50px',
+    color: '#ffffff',
+    cursor: 'pointer',
+    fontSize: '18px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000
+  }
+};
+
 const MainLayout = ({ 
   isProcessing,
   setIsProcessing,
@@ -291,11 +342,11 @@ const MainLayout = ({
   }, [handleTextAnalysis]);
 
   return (
-    <div className="app-container">
-      <div className="main-app-interface">
-        <div className="main-content-layout">
+    <div style={styles.appContainer}>
+      <div style={styles.mainAppInterface}>
+        <div style={styles.mainContentLayout}>
           {/* Left side: Analysis section */}
-          <div className="analysis-section">
+          <div style={styles.analysisSection}>
             <TextInput 
               value={objectInput}
               onChange={setObjectInput}
@@ -346,7 +397,7 @@ const MainLayout = ({
 
       {/* Help button */}
       <button 
-        className="help-button"
+        style={styles.helpButton}
         onClick={() => setShowShortcuts(true)}
         title={`Keyboard shortcuts (${navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+S)`}
       >

@@ -2,6 +2,73 @@ import React, { useRef, useEffect, useState } from 'react';
 import { usePayment } from '../ui/PaymentContext';
 import { useApi } from '../../hooks/useApi';
 
+// Inline styles for camera component
+const styles = {
+  cameraContainer: {
+    position: 'relative',
+    width: '100%',
+    maxWidth: '400px',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    cursor: 'pointer',
+    background: '#000',
+    aspectRatio: '4/3'
+  },
+  permissionMessage: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    color: '#ffffff',
+    textAlign: 'center',
+    padding: '20px',
+    background: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: '8px',
+    fontSize: '14px'
+  },
+  crosshair: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '60px',
+    height: '60px',
+    border: '2px solid rgba(255, 255, 255, 0.8)',
+    borderRadius: '50%',
+    pointerEvents: 'none'
+  },
+  switchCameraContainer: {
+    position: 'absolute',
+    top: '16px',
+    right: '16px'
+  },
+  switchCameraBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: 'rgba(0, 0, 0, 0.7)',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '20px',
+    padding: '8px 12px',
+    fontSize: '12px',
+    cursor: 'pointer'
+  },
+  instructionText: {
+    position: 'absolute',
+    bottom: '16px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    color: '#ffffff',
+    fontSize: '12px',
+    textAlign: 'center',
+    background: 'rgba(0, 0, 0, 0.7)',
+    padding: '8px 12px',
+    borderRadius: '16px',
+    whiteSpace: 'nowrap'
+  }
+};
+
 const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, onAnalysisComplete }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -107,26 +174,26 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
   };
 
   return (
-    <div className="camera-container" onClick={handleCameraClick}>
+    <div style={styles.cameraContainer} onClick={handleCameraClick}>
       <video 
         ref={videoRef}
         autoPlay 
         playsInline 
         muted 
-        style={{ width: '100%' }}
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
       
       {!hasPermission && (
-        <div className="permission-message">{permissionMessage}</div>
+        <div style={styles.permissionMessage}>{permissionMessage}</div>
       )}
       
-      <div className="crosshair"></div>
+      <div style={styles.crosshair}></div>
       
       {showSwitchCamera && (
-        <div className="switch-camera-container">
+        <div style={styles.switchCameraContainer}>
           <button 
             type="button" 
-            className="switch-camera-btn"
+            style={styles.switchCameraBtn}
             onClick={(e) => {
               e.stopPropagation();
               switchCamera();
@@ -141,7 +208,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
         </div>
       )}
       
-      <div className="instruction-text">
+      <div style={styles.instructionText}>
         Center object in circle & tap, or type name above
       </div>
     </div>

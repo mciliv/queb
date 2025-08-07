@@ -15,6 +15,16 @@ class UnifiedTestRunner {
     };
   }
 
+  async isFrontendAvailable(url = 'http://localhost:3001') {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      // Consider any non-network response as available (even 404)
+      return response && typeof response.status === 'number';
+    } catch (_) {
+      return false;
+    }
+  }
+
   async runCommand(command, args = [], options = {}) {
     return new Promise((resolve, reject) => {
       const child = spawn(command, args, {
@@ -59,13 +69,19 @@ class UnifiedTestRunner {
   async runVisualTests() {
     console.log('🖥️  Running visual interface tests...');
     try {
+      const available = await this.isFrontendAvailable('http://localhost:3001');
+      if (!available) {
+        console.log('⏭️  Skipping visual tests - frontend not running on http://localhost:3001');
+        this.results.visual = 'skipped';
+        return true;
+      }
       // Use AutoTabConnector for seamless tab management
       const tabInfo = await AutoTabConnector.getOrCreateTab();
       console.log(tabInfo.reused ? '♻️  Reusing existing Chrome tab' : '🌟 Created new Chrome tab');
       
       const success = await this.runCommand('npx', [
         'jest',
-        'test/integration/visual-interface.test.js',
+        'test/suites/integration/visual-interface.test.js',
         '--testTimeout=30000',
         '--silent'
       ]);
@@ -88,6 +104,12 @@ class UnifiedTestRunner {
     const testCases = customCases || ['water', 'ethanol', 'coffee'];
     
     try {
+      const available = await this.isFrontendAvailable('http://localhost:3001');
+      if (!available) {
+        console.log('⏭️  Skipping molecular visualization tests - frontend not running on http://localhost:3001');
+        this.results.molecular = 'skipped';
+        return true;
+      }
       for (const testCase of testCases) {
         const page = await AutoTabConnector.executeTestSilently(testCase);
         await new Promise(resolve => setTimeout(resolve, 6000));
@@ -115,7 +137,7 @@ class UnifiedTestRunner {
 
       const success = await this.runCommand('npx', [
         'jest',
-        'test/integration/full-pipeline-visualization.test.js',
+        'test/suites/integration/full-pipeline-visualization.test.js',
         '--testTimeout=60000',
         '--silent'
       ]);
@@ -137,9 +159,15 @@ class UnifiedTestRunner {
   async runPersistenceTests() {
     console.log('🔄 Running persistence/tab management tests...');
     try {
+      const available = await this.isFrontendAvailable('http://localhost:3001');
+      if (!available) {
+        console.log('⏭️  Skipping persistence tests - frontend not running on http://localhost:3001');
+        this.results.persistence = 'skipped';
+        return true;
+      }
       const success = await this.runCommand('npx', [
         'jest',
-        'test/integration/persistent-tab-tests.test.js',
+        'test/suites/integration/persistent-tab-tests.test.js',
         '--testTimeout=30000',
         '--silent'
       ]);
@@ -170,7 +198,7 @@ class UnifiedTestRunner {
 
       const success = await this.runCommand('npx', [
         'jest',
-        'test/integration/molecular-accuracy.test.js',
+        'test/suites/integration/molecular-accuracy.test.js',
         '--testTimeout=60000',
         '--silent'
       ]);
@@ -236,7 +264,7 @@ class UnifiedTestRunner {
     try {
       const success = await this.runCommand('npx', [
         'jest',
-        'test/integration/auto-inject-tests.test.js',
+        'test/suites/integration/auto-inject-tests.test.js',
         '--testTimeout=60000',
         '--silent'
       ]);

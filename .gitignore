@@ -17,6 +17,7 @@ certs/
 # Production build artifacts
 dist/
 build/
+deploy-temp/
 *.production.js
 
 # Debug files (excluded from production)
