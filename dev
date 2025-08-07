@@ -18,12 +18,12 @@ echo "=============================="
 log_clean "Cleaning up development processes..."
 ./cleanup 2>/dev/null || true
 
-# Run unit tests before starting development
-log_info "🧪 Running unit tests..."
-if npx jest --testPathPattern=unit.test.js --verbose --silent; then
-    log_success "✅ Unit tests passed!"
+# Run unified tests before starting development  
+log_info "🧪 Running comprehensive test suite..."
+if node test/scripts/unified-test-runner.js; then
+    log_success "✅ All tests passed!"
 else
-    log_error "❌ Unit tests failed! Fix tests before continuing."
+    log_error "❌ Tests failed! Fix issues before continuing."
     exit 1
 fi
 
