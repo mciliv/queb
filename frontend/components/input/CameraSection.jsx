@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { usePayment } from './PaymentContext';
-import { useApi } from '../hooks/useApi';
+import { usePayment } from '../ui/PaymentContext';
+import { useApi } from '../../hooks/useApi';
 
 const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, onAnalysisComplete }) => {
   const videoRef = useRef(null);

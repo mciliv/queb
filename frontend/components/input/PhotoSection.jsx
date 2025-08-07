@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { usePayment } from './PaymentContext';
-import { useApi } from '../hooks/useApi';
+import { usePayment } from '../ui/PaymentContext';
+import { useApi } from '../../hooks/useApi';
 
 const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, onAnalysisComplete }) => {
   const [photoUrl, setPhotoUrl] = useState('');
