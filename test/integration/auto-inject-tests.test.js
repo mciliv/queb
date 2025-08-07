@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
+const AutoTabConnector = require('../utils/auto-tab-connector');
 
 describe('Auto-Inject Molecular Tests', () => {
   let browser;
@@ -20,21 +21,27 @@ describe('Auto-Inject Molecular Tests', () => {
     console.log('🚀 Starting automated molecular injection tests...');
     console.log('   These tests will show REAL molecular visualizations!');
     
-    browser = await puppeteer.launch({
-      headless: false, // Always visible to see the molecular displays
-      defaultViewport: { width: 1600, height: 1000 },
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--new-window' // Use new window instead of new browser instance
-      ],
-      slowMo: 300, // Slow enough to see the molecular visualizations
-      userDataDir: './test/chrome-data' // Reuse Chrome profile
-    });
-    
-    page = await browser.newPage();
+    try {
+      const tabInfo = await AutoTabConnector.getOrCreateTab();
+      browser = tabInfo.browser;
+      page = tabInfo.page;
+      
+      if (tabInfo.reused) {
+        console.log('♻️  Reusing existing Chrome tab');
+      } else {
+        console.log('🌟 Created new Chrome tab');
+      }
+    } catch (error) {
+      console.error('Failed to get tab, falling back to new browser instance:', error);
+      browser = await puppeteer.launch({
+        headless: false,
+        defaultViewport: { width: 1600, height: 1000 },
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        slowMo: 300
+      });
+      page = await browser.newPage();
+      await page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+    }
     
     // Log molecular analysis activity
     page.on('console', msg => {
@@ -45,21 +52,18 @@ describe('Auto-Inject Molecular Tests', () => {
       }
     });
 
-    await page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
     await page.waitForSelector('input[type="text"]', { timeout: 15000 });
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     console.log('✅ Molecular app loaded and ready');
   });
 
   afterAll(async () => {
-    console.log('\n🎬 Keeping browser open for 10 seconds to view final results...');
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    console.log('🎯 Completed all molecular injection tests');
+    console.log('💡 Check the screenshots in test/screenshots/ to see molecular visualizations');
+    console.log('💡 Chrome tab remains open for continued testing');
     
-    if (browser) {
-      await browser.close();
-    }
-    console.log('✅ Auto-injection tests complete');
+    // Don't close browser - let it be reused by other tests
   });
 
   test('should auto-inject all test cases and show molecular visualizations', async () => {

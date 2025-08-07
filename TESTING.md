@@ -1,41 +1,81 @@
-# Molecular Analysis Testing
+# Unified Testing System
 
 ## Quick Start
 
+Run all tests:
 ```bash
-# Run all tests (recommended)
 npm test
-
-# Quick molecular test with specific compounds
-npm run test:quick water ethanol coffee
-
-# Watch mode for development
-npm run test:watch
 ```
 
-## What `npm test` Does
+Run specific test types:
+```bash
+npm run test:quick         # Quick molecular tests
+npm run test:visual        # Visual interface tests  
+npm run test:molecular     # Molecular visualization tests
+npm run test:pipeline      # Full pipeline tests (requires API key)
+npm run test:persistence   # Tab management tests
+npm run test:demo          # Visual demo tests (slow/visible)
+npm run test:cli           # Command line molecular tests
+npm run test:fake-data     # Fake data injection tests
+```
 
-The unified test runner automatically:
+## How It Works
 
-1. **🧪 Unit Tests** - Core functionality validation
-2. **🖥️ Visual Interface Tests** - UI components and interactions  
-3. **🧬 Molecular Visualization Tests** - 3D molecule rendering
-4. **🔗 API Integration Tests** - AI analysis pipeline (if API key available)
+The unified test runner (`test/scripts/unified-test-runner.js`) orchestrates all test types:
 
-## Key Features
+### Core Test Types
+1. **Unit Tests** - Core functionality validation
+2. **Visual Tests** - UI interaction and display  
+3. **Molecular Tests** - End-to-end molecular analysis
+4. **Pipeline Tests** - Full AI → SDF → Visualization flow
+5. **Persistence Tests** - Chrome tab management
+6. **Injection Tests** - Visual data injection
 
-- **Seamless Tab Management** - Automatically reuses existing Chrome tabs
-- **No Manual Setup** - Everything runs automatically
-- **Visual Screenshots** - Captures test results for inspection
-- **Parallel Execution** - Runs tests efficiently
-- **Smart Fallbacks** - Gracefully handles missing dependencies
+### Utility Tests
+- **Demo Tests** - Slow, visible test demonstrations
+- **CLI Tests** - Command line molecular testing
+- **Fake Data Tests** - Backend pipeline without AI
 
-## Test Results
+## Features
 
-Screenshots are saved to `test/screenshots/`:
-- Interface screenshots show UI state
-- Molecular screenshots show 3D visualizations
-- All tests leave Chrome open for manual inspection
+- **Tab Persistence** - Reuses Chrome tabs across test runs
+- **Smart Skipping** - Skips API tests when no key available  
+- **Parallel Execution** - Runs compatible tests simultaneously
+- **Screenshot Capture** - Visual test results saved to `test/screenshots/`
+- **Comprehensive Reporting** - Clear pass/fail status for each test type
+- **Organized Structure** - All test files properly organized in `test/` directory
+
+## Test File Organization
+
+```
+test/
+├── scripts/           # Standalone test scripts
+│   ├── unified-test-runner.js    # Main test orchestrator
+│   ├── test-molecular-ui.js      # CLI molecular tests
+│   ├── test-visual-demo.js       # Visual demo tests
+│   └── test-inject-fake-data.js  # Fake data tests
+├── integration/       # Jest integration tests
+│   ├── visual-interface.test.js
+│   ├── persistent-tab-tests.test.js
+│   ├── full-pipeline-visualization.test.js
+│   └── molecular-accuracy.test.js
+└── utils/            # Test utilities
+    ├── auto-tab-connector.js
+    └── chrome-tab-manager.js
+```
+
+## Arguments
+
+- No args: Full comprehensive test suite
+- `water ethanol`: Quick tests with specific molecules
+- `--quick [molecules]`: Fast molecular visualization tests
+- `--visual`: Visual interface and injection tests
+- `--molecular`: Molecular visualization tests only
+- `--pipeline`: Full pipeline tests (requires API key)
+- `--persistence`: Tab management tests
+- `--demo`: Slow/visible demo tests
+- `--cli`: Command line tests
+- `--fake-data`: Backend pipeline tests without AI
 
 ## Development Workflow
 
@@ -47,7 +87,13 @@ npm run dev
 npm test
 
 # Quick test specific molecules
-npm run test:quick "red wine" salt caffeine
+npm run test:quick water ethanol coffee
+
+# Run visual tests only
+npm run test:visual
+
+# Run demo (visible, slow tests)
+npm run test:demo
 ```
 
-The testing system integrates seamlessly with your development workflow - no complex setup required!
+The testing system integrates seamlessly with your development workflow - everything is organized under one unified runner!

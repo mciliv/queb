@@ -9,7 +9,9 @@ class UnifiedTestRunner {
       unit: null,
       integration: null,
       visual: null,
-      molecular: null
+      molecular: null,
+      pipeline: null,
+      persistence: null
     };
   }
 
@@ -82,24 +84,76 @@ class UnifiedTestRunner {
     }
   }
 
-  async runMolecularTests() {
-    console.log('🧬 Running molecular visualization tests...');
-    
-    const testCases = ['water', 'ethanol', 'coffee'];
+  async runMolecularTests(customCases = null) {
+    const testCases = customCases || ['water', 'ethanol', 'coffee'];
     
     try {
       for (const testCase of testCases) {
-        console.log(`  🔬 Testing: ${testCase}`);
-        await AutoTabConnector.executeTestSilently(testCase);
-        await new Promise(resolve => setTimeout(resolve, 3000)); // Brief wait
+        const page = await AutoTabConnector.executeTestSilently(testCase);
+        await new Promise(resolve => setTimeout(resolve, 6000));
+        
+        const screenshotPath = `test/screenshots/test_${testCase.replace(/\s+/g, '_')}.png`;
+        await page.screenshot({ path: screenshotPath, fullPage: true });
       }
       
       this.results.molecular = true;
-      console.log('✅ Molecular tests completed');
       return true;
     } catch (error) {
-      console.log('❌ Molecular tests error:', error.message);
       this.results.molecular = false;
+      return false;
+    }
+  }
+
+  async runPipelineTests() {
+    console.log('🧬 Running full pipeline tests...');
+    try {
+      if (!process.env.OPENAI_API_KEY) {
+        console.log('⚠️  Skipping pipeline tests - no OPENAI_API_KEY');
+        this.results.pipeline = 'skipped';
+        return true;
+      }
+
+      const success = await this.runCommand('npx', [
+        'jest',
+        'test/integration/full-pipeline-visualization.test.js',
+        '--testTimeout=60000',
+        '--silent'
+      ]);
+      
+      this.results.pipeline = success;
+      if (success) {
+        console.log('✅ Pipeline tests passed');
+      } else {
+        console.log('❌ Pipeline tests failed');
+      }
+      return success;
+    } catch (error) {
+      console.log('❌ Pipeline tests error:', error.message);
+      this.results.pipeline = false;
+      return false;
+    }
+  }
+
+  async runPersistenceTests() {
+    console.log('🔄 Running persistence/tab management tests...');
+    try {
+      const success = await this.runCommand('npx', [
+        'jest',
+        'test/integration/persistent-tab-tests.test.js',
+        '--testTimeout=30000',
+        '--silent'
+      ]);
+      
+      this.results.persistence = success;
+      if (success) {
+        console.log('✅ Persistence tests passed');
+      } else {
+        console.log('❌ Persistence tests failed');
+      }
+      return success;
+    } catch (error) {
+      console.log('❌ Persistence tests error:', error.message);
+      this.results.persistence = false;
       return false;
     }
   }
@@ -135,6 +189,65 @@ class UnifiedTestRunner {
     }
   }
 
+  async runCommandLineTests() {
+    console.log('💻 Running command line molecular tests...');
+    try {
+      const success = await this.runCommand('node', [
+        'test/scripts/test-molecular-ui.js'
+      ], { silent: true });
+      
+      return success;
+    } catch (error) {
+      console.log('❌ Command line tests error:', error.message);
+      return false;
+    }
+  }
+
+  async runDemoTests() {
+    console.log('🎭 Running visual demo tests...');
+    try {
+      const success = await this.runCommand('node', [
+        'test/scripts/test-visual-demo.js'
+      ], { silent: true });
+      
+      return success;
+    } catch (error) {
+      console.log('❌ Demo tests error:', error.message);
+      return false;
+    }
+  }
+
+  async runFakeDataTests() {
+    console.log('🎯 Running fake data injection tests...');
+    try {
+      const success = await this.runCommand('node', [
+        'test/scripts/test-inject-fake-data.js'
+      ], { silent: true });
+      
+      return success;
+    } catch (error) {
+      console.log('❌ Fake data tests error:', error.message);
+      return false;
+    }
+  }
+
+  async runInjectionTests() {
+    console.log('💉 Running visual injection tests...');
+    try {
+      const success = await this.runCommand('npx', [
+        'jest',
+        'test/integration/auto-inject-tests.test.js',
+        '--testTimeout=60000',
+        '--silent'
+      ]);
+      
+      return success;
+    } catch (error) {
+      console.log('❌ Injection tests error:', error.message);
+      return false;
+    }
+  }
+
   printSummary() {
     console.log('\n📊 Test Summary');
     console.log('================');
@@ -149,6 +262,8 @@ class UnifiedTestRunner {
     console.log(`${statusIcon(this.results.unit)} Unit Tests`);
     console.log(`${statusIcon(this.results.visual)} Visual Interface Tests`);
     console.log(`${statusIcon(this.results.molecular)} Molecular Visualization Tests`);
+    console.log(`${statusIcon(this.results.pipeline)} Full Pipeline Tests`);
+    console.log(`${statusIcon(this.results.persistence)} Tab Persistence Tests`);
     console.log(`${statusIcon(this.results.integration)} API Integration Tests`);
 
     const failedTests = Object.values(this.results).filter(r => r === false).length;
@@ -163,30 +278,91 @@ class UnifiedTestRunner {
   }
 
   async run() {
-    console.log('🚀 Unified Test Runner');
-    console.log('======================');
-    console.log('Running all molecular analysis tests...\n');
+    const args = process.argv.slice(2);
+    
+    // Handle specific test types
+    if (args.includes('--visual')) {
+      await this.runVisualTests();
+      await this.runInjectionTests();
+      this.printSummary();
+      return;
+    }
+    
+    if (args.includes('--molecular')) {
+      await this.runMolecularTests();
+      this.printSummary();
+      return;
+    }
+    
+    if (args.includes('--pipeline')) {
+      await this.runPipelineTests();
+      this.printSummary();
+      return;
+    }
+    
+    if (args.includes('--persistence')) {
+      await this.runPersistenceTests();
+      this.printSummary();
+      return;
+    }
+    
+    if (args.includes('--demo')) {
+      await this.runDemoTests();
+      this.printSummary();
+      return;
+    }
+    
+    if (args.includes('--fake-data')) {
+      await this.runFakeDataTests();
+      this.printSummary();
+      return;
+    }
+    
+    if (args.includes('--cli')) {
+      await this.runCommandLineTests();
+      this.printSummary();
+      return;
+    }
+    
+    if (args.includes('--quick')) {
+      const testCases = args.filter(arg => !arg.startsWith('--'));
+      await this.runMolecularTests(testCases.length > 0 ? testCases : ['water', 'ethanol']);
+      this.printSummary();
+      return;
+    }
+    
+    // Quick mode: just run molecular tests with custom cases (legacy support)
+    if (args.length > 0 && !args[0].startsWith('--')) {
+      for (const testCase of args) {
+        const page = await AutoTabConnector.executeTestSilently(testCase);
+        await new Promise(resolve => setTimeout(resolve, 6000));
+        const screenshotPath = `test/screenshots/test_${testCase.replace(/\s+/g, '_')}.png`;
+        await page.screenshot({ path: screenshotPath, fullPage: true });
+      }
+      return;
+    }
 
-    // Run tests in parallel where possible
+    // Full test suite
+    console.log('🚀 Running comprehensive test suite...\n');
+    
     const unitSuccess = await this.runUnitTests();
     
-    // Only continue with integration tests if unit tests pass
     if (unitSuccess) {
       // Run visual and molecular tests in parallel
       await Promise.all([
         this.runVisualTests(),
-        this.runMolecularTests()
+        this.runMolecularTests(),
+        this.runPersistenceTests()
       ]);
       
-      // Run API tests last
-      await this.runApiTests();
-    } else {
-      console.log('❌ Unit tests failed - skipping integration tests');
+      // Run API-dependent tests
+      await Promise.all([
+        this.runPipelineTests(),
+        this.runApiTests()
+      ]);
     }
 
     this.printSummary();
-    
-    // Exit code based on critical test failures
     const criticalFailures = [this.results.unit, this.results.visual].filter(r => r === false).length;
     process.exit(criticalFailures > 0 ? 1 : 0);
   }

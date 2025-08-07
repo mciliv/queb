@@ -4,6 +4,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
   const [localError, setLocalError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const inputRef = useRef(null);
+  const lastTriggerTimeRef = useRef(0);
   const isMac = navigator.platform.toLowerCase().includes('mac');
   const keyboardHint = isMac ? '⌘K' : 'Ctrl+K';
 
@@ -38,6 +39,17 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
     if (e.key === 'Enter' && !isProcessing) {
       e.preventDefault();
       e.stopPropagation();
+      
+      // Prevent multiple rapid triggers with debouncing
+      const now = Date.now();
+      const DEBOUNCE_MS = 1000; // 1 second cooldown
+      
+      if (now - lastTriggerTimeRef.current < DEBOUNCE_MS) {
+        console.log('🚫 Enter key debounced - too soon since last trigger');
+        return;
+      }
+      
+      lastTriggerTimeRef.current = now;
       
       const validationError = validateInput(value);
       if (validationError) {

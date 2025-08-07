@@ -201,9 +201,19 @@ class ChromeTabManager {
   async typeInput(text) {
     if (!this.page) return;
     
-    await this.clearInput();
-    await this.page.focus('input[type="text"]');
-    await this.page.type('input[type="text"]', text, { delay: 100 });
+    // Clear and type in one operation to avoid timing issues
+    await this.page.evaluate((inputText) => {
+      const input = document.querySelector('input[type="text"]');
+      if (input) {
+        input.value = '';
+        input.focus();
+        input.value = inputText;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }, text);
+    
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
 
   async triggerAnalysis() {

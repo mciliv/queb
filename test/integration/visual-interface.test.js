@@ -85,9 +85,9 @@ describe('Visual Interface Tests', () => {
     for (const testInput of testInputs) {
       console.log(`📝 Testing input injection: "${testInput}"`);
       
-      // Find and fill the text input
+      // Find and clear the text input
       const textInput = await page.$('input[type="text"], textarea');
-      await textInput.click({ clickCount: 3 }); // Select all
+      await textInput.evaluate(el => el.value = ''); // Clear directly
       await textInput.type(testInput);
       
       // Verify the input was set
@@ -96,8 +96,7 @@ describe('Visual Interface Tests', () => {
       console.log(`✅ Successfully injected: "${inputValue}"`);
       
       // Clear for next test
-      await textInput.click({ clickCount: 3 });
-      await page.keyboard.press('Delete');
+      await textInput.evaluate(el => el.value = ''); // Clear directly
     }
   });
 

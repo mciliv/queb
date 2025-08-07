@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3Dmol.js Debug Test</title>
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+</head>
+<body>
+    <h2>3Dmol.js Debug Test</h2>
+    <div id="viewer" style="width: 400px; height: 300px; border: 1px solid black;"></div>
+    
+    <script>
+        console.log('Testing 3Dmol.js library...');
+        console.log('window.$3Dmol available:', !!window.$3Dmol);
+        
+        // Wait for library to load
+        function waitFor3Dmol() {
+            if (window.$3Dmol) {
+                console.log('3Dmol.js is loaded!');
+                testViewer();
+            } else {
+                console.log('Waiting for 3Dmol.js...');
+                setTimeout(waitFor3Dmol, 500);
+            }
+        }
+        
+        function testViewer() {
+            try {
+                const container = document.getElementById('viewer');
+                console.log('Creating viewer in container:', container);
+                
+                const viewer = window.$3Dmol.createViewer(container, {
+                    backgroundColor: 'white',
+                    antialias: true
+                });
+                
+                console.log('Viewer created:', viewer);
+                
+                // Add a simple water molecule
+                const sdfData = `
+  Mrv2014 08072025152D          
+
+  3  2  0  0  0  0            999 V2000
+   -0.4125    0.7145    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1270    0.3020    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3020    0.3020    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+M  END
+$$$$
+`;
+                
+                viewer.addModel(sdfData, 'sdf');
+                viewer.setStyle({}, { sphere: { scale: 0.8 } });
+                viewer.zoomTo();
+                viewer.render();
+                
+                console.log('Water molecule should be visible now!');
+                
+            } catch (error) {
+                console.error('Error testing 3Dmol viewer:', error);
+            }
+        }
+        
+        waitFor3Dmol();
+    </script>
+</body>
+</html>

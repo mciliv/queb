@@ -86,9 +86,25 @@ class MolecularApp {
   }
    
   setupTextAnalysis() {
-    this.objectInput.addEventListener("keyup", async (e) => {
-      if (e.key !== "Enter") return;
-      await this.handleTextAnalysis();
+    if (!this.objectInput) return;
+    
+    // Prevent multiple rapid triggers with debouncing
+    let lastTriggerTime = 0;
+    const DEBOUNCE_MS = 1000; // 1 second cooldown
+    
+    this.objectInput.addEventListener("keydown", async (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        
+        const now = Date.now();
+        if (now - lastTriggerTime < DEBOUNCE_MS) {
+          console.log('🚫 Enter key debounced - too soon since last trigger');
+          return;
+        }
+        
+        lastTriggerTime = now;
+        await this.handleTextAnalysis();
+      }
     });
   }
 

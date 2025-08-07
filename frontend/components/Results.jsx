@@ -9,7 +9,15 @@ const MolecularAnalysisResults = ({ moleculeViewers, setMoleculeViewers, lastAna
       const threeDMolScript = document.createElement('script');
       threeDMolScript.src = 'https://3Dmol.org/build/3Dmol-min.js';
       threeDMolScript.async = true;
+      threeDMolScript.onload = () => {
+        console.log('3Dmol.js library loaded successfully');
+      };
+      threeDMolScript.onerror = () => {
+        console.error('Failed to load 3Dmol.js library');
+      };
       document.head.appendChild(threeDMolScript);
+    } else {
+      console.log('3Dmol.js already loaded');
     }
   }, []);
 
@@ -198,8 +206,36 @@ const ThreeDimensionalMolecularViewer = ({ molecularData, spatialIndex, onCloseM
 
   useEffect(() => {
     const loadMolecularStructuralData = async () => {
-      if (!molecularData.sdfData || !threeDMolViewerRef.current || !window.$3Dmol) {
+      if (!molecularData.sdfData || !threeDMolViewerRef.current) {
         return;
+      }
+
+      // Wait for 3Dmol.js to load if not available yet
+      if (!window.$3Dmol) {
+        console.log('Waiting for 3Dmol.js to load...');
+        const waitFor3Dmol = () => {
+          return new Promise((resolve) => {
+            const checkInterval = setInterval(() => {
+              if (window.$3Dmol) {
+                clearInterval(checkInterval);
+                console.log('3Dmol.js is now available');
+                resolve();
+              }
+            }, 100);
+            // Timeout after 10 seconds
+            setTimeout(() => {
+              clearInterval(checkInterval);
+              console.error('Timeout waiting for 3Dmol.js to load');
+              resolve();
+            }, 10000);
+          });
+        };
+        await waitFor3Dmol();
+        
+        if (!window.$3Dmol) {
+          setMolecularVisualizationError('3Dmol.js library failed to load');
+          return;
+        }
       }
 
       setIsLoadingMolecularVisualization(true);
@@ -220,6 +256,10 @@ const ThreeDimensionalMolecularViewer = ({ molecularData, spatialIndex, onCloseM
 
         // If we have SDF structural content, render 3D molecular visualization using 3Dmol.js
         if (sdfStructuralContent && sdfStructuralContent.trim()) {
+          console.log('Creating 3Dmol viewer with SDF data length:', sdfStructuralContent.length);
+          console.log('Container element:', threeDMolViewerRef.current);
+          console.log('3Dmol available:', !!window.$3Dmol);
+          
           const threeDMolViewer = window.$3Dmol.createViewer(threeDMolViewerRef.current, {
             backgroundColor: 'transparent',  // Transparent background as in original
             antialias: true,
@@ -230,8 +270,11 @@ const ThreeDimensionalMolecularViewer = ({ molecularData, spatialIndex, onCloseM
             showInfo: false
           });
           
+          console.log('3Dmol viewer created:', threeDMolViewer);
+          
           // Add molecular model with SDF format support
-          threeDMolViewer.addModel(sdfStructuralContent, 'sdf');
+          const model = threeDMolViewer.addModel(sdfStructuralContent, 'sdf');
+          console.log('Model added:', model);
           
           // CRITICAL: Use ONLY sphere representation with van der Waals radii at 0.8 scale (as in original)
           threeDMolViewer.setStyle({}, { 
@@ -244,8 +287,10 @@ const ThreeDimensionalMolecularViewer = ({ molecularData, spatialIndex, onCloseM
           threeDMolViewer.zoomTo();
           threeDMolViewer.render();
           
+          console.log('3Dmol viewer rendered successfully');
           setStructuralDataFile(sdfStructuralContent);
         } else {
+          console.error('No SDF structural data available for visualization');
           setMolecularVisualizationError('No molecular structural data available');
         }
       } catch (molecularRenderingError) {
