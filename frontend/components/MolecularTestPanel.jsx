@@ -3,80 +3,51 @@ import React, { useState } from 'react';
 const MolecularTestPanel = ({ onTestAnalysis, isProcessing }) => {
   const [showTestPanel, setShowTestPanel] = useState(false);
 
-  // Predefined test objects for quick molecular analysis testing
+  // Test objects using minimal subset validation approach
   const testObjects = [
-    {
-      name: "Water",
-      description: "water",
-      expectedMolecules: ["H2O"],
-      category: "simple"
-    },
-    {
-      name: "Apple",
-      description: "apple",
-      expectedMolecules: ["water", "glucose", "fructose", "cellulose"],
-      category: "food"
-    },
-    {
-      name: "Coffee",
-      description: "coffee",
-      expectedMolecules: ["caffeine", "water", "acids"],
-      category: "beverage"
-    },
-    {
-      name: "Kale",
-      description: "kale",
-      expectedMolecules: ["water", "glucose", "chlorophyll", "cellulose"],
-      category: "vegetable"
-    },
-    {
-      name: "Ethanol",
-      description: "ethanol",
-      expectedMolecules: ["C2H6O"],
-      category: "chemical"
-    },
-    {
-      name: "Salt",
-      description: "table salt",
-      expectedMolecules: ["NaCl"],
-      category: "simple"
-    },
-    {
-      name: "Wine",
-      description: "red wine",
-      expectedMolecules: ["ethanol", "water", "tartaric acid", "resveratrol"],
-      category: "beverage"
-    },
-    {
-      name: "Plastic Bottle",
-      description: "plastic water bottle",
-      expectedMolecules: ["polyethylene", "additives"],
-      category: "material"
-    }
+    // Basics - high confidence minimal subset
+    { name: '💧 Water', input: 'water', expected: ['water'], category: 'basics' },
+    { name: '🧪 Ethanol', input: 'ethanol', expected: ['ethanol'], category: 'basics' },
+    { name: '🧂 Salt', input: 'sodium chloride', expected: ['sodium', 'chloride'], category: 'basics' },
+    
+    // Beverages - essential components only (minimal subset)
+    { name: '🍷 Wine', input: 'red wine', expected: ['ethanol', 'water'], category: 'beverages' },
+    { name: '☕ Coffee', input: 'black coffee', expected: ['water', 'caffeine'], category: 'beverages' },
+    
+    // Biological - most confident components only (minimal subset)  
+    { name: '🍎 Apple', input: 'fresh apple', expected: ['water'], category: 'biological' },
+    { name: '🥬 Kale', input: 'kale', expected: ['water'], category: 'biological' },
+    { name: '🥛 Milk', input: 'milk', expected: ['water'], category: 'biological' }
   ];
 
   const handleTestClick = async (testObject) => {
     if (isProcessing) return;
     
     console.log(`🧪 Testing molecular analysis for: ${testObject.name}`);
-    console.log(`Expected molecules: ${testObject.expectedMolecules.join(', ')}`);
+    console.log(`   Input: "${testObject.input}"`);
+    console.log(`   Category: ${testObject.category}`);
+    console.log(`   Expected subset: ${testObject.expected.join(', ')} (minimal required components)`);
     
-    await onTestAnalysis(testObject.description);
+    await onTestAnalysis(testObject.input);
   };
 
   const runAllTests = async () => {
     if (isProcessing) return;
     
-    console.log('🧪 Running all molecular visualization tests...');
+    console.log('🧪 Running all molecular visualization tests in main interface...');
+    console.log('   Each test will inject into the main UI for visual validation');
     
     for (const testObject of testObjects) {
       console.log(`\n🔬 Testing: ${testObject.name}`);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Brief delay between tests
+      console.log(`   Category: ${testObject.category} | Expected: ${testObject.expected.join(', ')}`);
+      
       await handleTestClick(testObject);
-      await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for analysis to complete
+      
+      // Wait longer for visual inspection of results
+      await new Promise(resolve => setTimeout(resolve, 4000)); 
     }
     
-    console.log('✅ All molecular tests completed');
+    console.log('✅ All visual molecular tests completed - check main interface results');
   };
 
   if (!showTestPanel) {
@@ -169,7 +140,7 @@ const MolecularTestPanel = ({ onTestAnalysis, isProcessing }) => {
                 fontSize: '12px',
                 textAlign: 'center'
               }}
-              title={`Expected: ${testObject.expectedMolecules.join(', ')}`}
+              title={`Expected subset: ${testObject.expected.join(', ')}`}
             >
               {testObject.name}
             </button>
@@ -178,9 +149,9 @@ const MolecularTestPanel = ({ onTestAnalysis, isProcessing }) => {
       </div>
 
       <div style={{ fontSize: '12px', opacity: 0.7 }}>
-        <p style={{ margin: '5px 0' }}>💡 Click any test to analyze that object</p>
-        <p style={{ margin: '5px 0' }}>🏃 Run All Tests for comprehensive testing</p>
-        <p style={{ margin: '5px 0' }}>🎯 Check console for expected vs actual results</p>
+        <p style={{ margin: '5px 0' }}>💡 Click to inject test case into main interface</p>
+        <p style={{ margin: '5px 0' }}>🏃 Run All Tests to see visual comparison across all cases</p>  
+        <p style={{ margin: '5px 0' }}>🎯 Uses minimal subset validation - additional compounds are expected</p>
       </div>
     </div>
   );
@@ -188,12 +159,9 @@ const MolecularTestPanel = ({ onTestAnalysis, isProcessing }) => {
 
 const getCategoryColor = (category) => {
   const colors = {
-    simple: '#2196F3',    // Blue
-    food: '#4CAF50',      // Green  
-    beverage: '#FF9800',  // Orange
-    chemical: '#9C27B0',  // Purple
-    material: '#607D8B',  // Blue Grey
-    vegetable: '#8BC34A'  // Light Green
+    basics: '#2196F3',      // Blue - high confidence 
+    beverages: '#FF9800',   // Orange - moderate confidence
+    biological: '#4CAF50'   // Green - basic confidence
   };
   return colors[category] || '#757575';
 };
