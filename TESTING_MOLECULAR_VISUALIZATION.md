@@ -21,10 +21,10 @@ npm run test:pipeline
 - ✅ Error Handling: Invalid inputs, SDF generation failures
 - ✅ Performance: Pipeline completion within reasonable time
 
-**Test Categories:**
-- **Basics**: water, ethanol, sodium chloride (95% accuracy expected)
-- **Beverages**: red wine, black coffee (75-80% accuracy expected)  
-- **Biological**: fresh apple (65% accuracy expected)
+**Test Categories (Minimal Subset Validation):**
+- **Basics**: water, ethanol, sodium chloride (high confidence subset)
+- **Beverages**: red wine (ethanol+water), black coffee (water+caffeine) (essential subset)  
+- **Biological**: fresh apple (water only) (most confident subset)
 
 **Requirements:**
 - Set `OPENAI_API_KEY` environment variable
@@ -68,21 +68,21 @@ npm run dev
 - File accessibility verification
 - Success/failure rates
 
-## Chemical Test Data
+## Chemical Test Data (Minimal Subset Approach)
 
-All testing uses the same validated chemical compositions:
+Tests validate that expected chemicals are found as a **minimal subset** within the AI response. Additional compounds in the response are acceptable and expected.
 
-### Basics (High Accuracy Expected)
-- **Water**: `O`
-- **Ethanol**: `CCO`  
-- **Sodium Chloride**: `[Na+].[Cl-]`
+### Basics (High Confidence Minimal Subset)
+- **Water**: `O` (expect: water)
+- **Ethanol**: `CCO` (expect: ethanol)  
+- **Sodium Chloride**: `[Na+].[Cl-]` (expect: sodium, chloride)
 
-### Beverages (Realistic Composition)
-- **Red Wine**: Ethanol, water, tartaric acid
-- **Black Coffee**: Water, caffeine
+### Beverages (Essential Components Only)
+- **Red Wine**: (expect: ethanol, water) + may contain tartaric acid, glucose, tannins, etc.
+- **Black Coffee**: (expect: water, caffeine) + may contain chlorogenic acid, etc.
 
-### Biological (Complex but Realistic)
-- **Fresh Apple**: Water, fructose, glucose, cellulose
+### Biological (Most Confident Components)
+- **Fresh Apple**: (expect: water) + may contain fructose, glucose, cellulose, malic acid, etc.
 
 ## Usage Recommendations
 
@@ -143,24 +143,29 @@ npm run test:pipeline
 ## Example Output
 
 ```
-🧪 Testing full pipeline for: red wine
+   🧪 Testing full pipeline for: red wine
    Category: beverages
-   Expected components: 3
+   Expected components: 2 (minimal subset)
    📊 Step 1: AI Analysis...
-   ✅ Analysis complete: 4 molecules found
+   ✅ Analysis complete: 6 molecules found
       1. Ethanol (CCO)
       2. Water (O)
       3. Tartaric acid (OC(C(O)C(O)=O)C(O)=O)
       4. Glucose (C(C(C(C(C(C=O)O)O)O)O)O)
+      5. Resveratrol (C1=CC(=CC=C1C=CC2=CC(=CC(=C2)O)O)O)
+      6. Malic acid (C(C(=O)O)C(C(=O)O)O)
    📁 Step 2: SDF Generation...
-   ✅ SDF generation: 4 files created
+   ✅ SDF generation: 6 files created
    🔗 Step 3: File Accessibility...
-   ✅ File access: 4/4 files accessible
+   ✅ File access: 6/6 files accessible
    🎯 Step 4: Visualization Data...
-   ✅ Visualization data ready for 4 molecules
+   ✅ Visualization data ready for 6 molecules
    📈 Step 5: Quality Assessment...
-   📋 Required chemicals found: 3/3
-   🧬 SMILES quality: 100.0% (4/4)
+   📋 Expected subset validation: 2/2 required chemicals found
+      Expected subset: ethanol, water
+      Found in response: ethanol, water
+      Total response: 6 chemicals (may include additional valid compounds)
+   🧬 SMILES quality: 100.0% (6/6)
    🎉 Pipeline completed successfully!
 ```
 
