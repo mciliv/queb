@@ -16,6 +16,7 @@
     "test:all": "node test/config/test-runner.js --all",
     "test:unit": "node test/config/test-runner.js --layer unit",
     "test:molecular": "jest test/integration/molecular-visualization.test.js --testTimeout=60000 --verbose",
+    "test:pipeline": "jest test/integration/full-pipeline-visualization.test.js --testTimeout=60000 --verbose",
     "test:api": "node test/config/test-runner.js --layer api",
     "test:integration": "node test/config/test-runner.js --layer integration",
     "test:e2e": "node test/config/test-runner.js --layer e2e",

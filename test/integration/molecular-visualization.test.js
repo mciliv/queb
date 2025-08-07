@@ -6,23 +6,16 @@ const path = require('path');
 const fs = require('fs');
 
 // Import server for testing
-const createServer = require('../../backend/api/server');
+const app = require('../../backend/api/server');
 
 describe('Molecular Visualization Integration Tests', () => {
-  let app;
-  let server;
-
   beforeAll(async () => {
     // Set test environment
     process.env.NODE_ENV = 'test';
-    app = createServer();
-    server = app.listen(0); // Use random available port
   });
 
   afterAll(async () => {
-    if (server) {
-      await new Promise((resolve) => server.close(resolve));
-    }
+    // Cleanup if needed
   });
 
   const testObjects = [

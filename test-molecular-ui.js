@@ -8,16 +8,23 @@
 
 const readline = require('readline');
 
-// Test objects for molecular analysis
+// Test objects for molecular analysis (matches integration test data)
 const testObjects = [
-  { name: '💧 Water', input: 'water', expected: ['water', 'H2O'] },
-  { name: '🍎 Apple', input: 'apple', expected: ['water', 'glucose', 'fructose', 'cellulose'] },
-  { name: '☕ Coffee', input: 'coffee', expected: ['caffeine', 'water', 'acids'] },
-  { name: '🥬 Kale', input: 'kale', expected: ['water', 'glucose', 'chlorophyll', 'cellulose'] },
-  { name: '🍷 Wine', input: 'red wine', expected: ['ethanol', 'water', 'tartaric acid'] },
-  { name: '🧪 Ethanol', input: 'ethanol', expected: ['ethanol'] },
-  { name: '🧂 Salt', input: 'table salt', expected: ['sodium chloride'] },
-  { name: '🥛 Milk', input: 'milk', expected: ['water', 'lactose', 'proteins', 'fats'] }
+  // Basics - high accuracy expected
+  { name: '💧 Water', input: 'water', expected: ['water'], category: 'basics' },
+  { name: '🧪 Ethanol', input: 'ethanol', expected: ['ethanol'], category: 'basics' },
+  { name: '🧂 Salt', input: 'sodium chloride', expected: ['sodium', 'chloride'], category: 'basics' },
+  
+  // Beverages - realistic composition
+  { name: '🍷 Wine', input: 'red wine', expected: ['ethanol', 'water', 'tartaric acid'], category: 'beverages' },
+  { name: '☕ Coffee', input: 'black coffee', expected: ['water', 'caffeine'], category: 'beverages' },
+  
+  // Biological - complex but realistic
+  { name: '🍎 Apple', input: 'fresh apple', expected: ['water', 'fructose', 'glucose'], category: 'biological' },
+  
+  // Additional useful tests
+  { name: '🥬 Kale', input: 'kale', expected: ['water', 'glucose', 'chlorophyll', 'cellulose'], category: 'biological' },
+  { name: '🥛 Milk', input: 'milk', expected: ['water', 'lactose', 'proteins', 'fats'], category: 'biological' }
 ];
 
 async function testMolecularAnalysis(testObject) {
@@ -26,6 +33,7 @@ async function testMolecularAnalysis(testObject) {
   try {
     console.log(`\n🧪 Testing: ${testObject.name}`);
     console.log(`   Input: "${testObject.input}"`);
+    console.log(`   Category: ${testObject.category || 'general'}`);
     console.log(`   Expected molecules: ${testObject.expected.join(', ')}`);
     
     // Step 1: Analyze the object
