@@ -3,7 +3,7 @@ import TextInput from './TextInput';
 import ModeSelector from './ModeSelector';
 import CameraSection from './CameraSection';
 import PhotoSection from './PhotoSection';
-import Results from './Results';
+import MolecularAnalysisResults from './Results';
 import PaymentSection from './PaymentSection';
 import { usePayment } from './PaymentContext';
 import { useApi } from '../hooks/useApi';
@@ -44,6 +44,28 @@ const MainLayout = ({
   }, [apiError]);
 
   // Handle keyboard shortcuts
+  // API hook for connection testing
+  const { testConnection } = useApi();
+  
+  // Debug: Test API connection on component mount
+  useEffect(() => {
+    const runConnectionTest = async () => {
+      try {
+        console.log('🔍 Testing API connection...');
+        const isConnected = await testConnection();
+        if (isConnected) {
+          console.log('✅ API connection successful');
+        } else {
+          console.log('❌ API connection failed');
+        }
+      } catch (error) {
+        console.log('❌ API connection test failed:', error.message);
+      }
+    };
+    
+    runConnectionTest();
+  }, [testConnection]);
+
   useEffect(() => {
     const handleKeyDown = (event) => {
       // Ignore shortcuts when typing in input fields
@@ -97,7 +119,7 @@ const MainLayout = ({
             handleTextAnalysis(objectInput);
           }
           break;
-        case '?':
+        case 's':
           if (modifier) {
             event.preventDefault();
             setShowShortcuts(prev => !prev);
@@ -124,9 +146,11 @@ const MainLayout = ({
     
     try {
       const result = await analyzeText(value);
+      console.log('🧪 Full API response:', result); // Debug the response
       
       // Handle both 'molecules' and 'chemicals' field names for compatibility
       const molecules = result.molecules || result.chemicals || [];
+      console.log('🧪 Extracted molecules:', molecules); // Debug molecule extraction
       
       if (molecules && molecules.length > 0) {
         // Extract SMILES strings for SDF generation
@@ -147,7 +171,7 @@ const MainLayout = ({
               };
             });
             
-            setViewers(prev => [...prev, ...newViewers]);
+            setViewers(newViewers);
             setLastSuccessfulAnalysis(result);
             setRetryCount(0); // Reset retry count on success
           } catch (sdfError) {
@@ -158,7 +182,7 @@ const MainLayout = ({
               sdfData: null,
               smiles: mol.smiles
             }));
-            setViewers(prev => [...prev, ...newViewers]);
+            setViewers(newViewers);
             setLastSuccessfulAnalysis(result);
             setRetryCount(0);
           }
@@ -289,13 +313,13 @@ const MainLayout = ({
               />
             )}
 
-            <Results 
-              viewers={viewers} 
-              setViewers={setViewers} 
-              lastAnalysis={lastAnalysis}
-              isProcessing={isProcessing}
+            <MolecularAnalysisResults 
+              moleculeViewers={viewers} 
+              setMoleculeViewers={setViewers} 
+              lastAnalysisResult={lastAnalysis}
+              isAnalyzing={isProcessing}
               currentAnalysisType={currentAnalysisType}
-              objectInput={objectInput}
+              targetObjectInput={objectInput}
             />
           </div>
 
@@ -308,7 +332,7 @@ const MainLayout = ({
       <button 
         className="help-button"
         onClick={() => setShowShortcuts(true)}
-        title={`Keyboard shortcuts (${navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+?)`}
+        title={`Keyboard shortcuts (${navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+S)`}
       >
         ?
       </button>
@@ -362,7 +386,7 @@ const MainLayout = ({
                 <span>Close last molecule viewer</span>
               </div>
               <div className="shortcut-item">
-                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+?</kbd>
+                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+S</kbd>
                 <span>Show/hide shortcuts</span>
               </div>
             </div>

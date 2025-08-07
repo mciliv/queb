@@ -1,6 +1,16 @@
 import { useState, useCallback } from 'react';
 
-const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
+// Auto-detect the correct API base URL based on current environment
+const getApiBase = () => {
+  // For development, always use localhost:3000 where backend is running
+  if (window.location.hostname === 'localhost' || window.location.hostname === 'dev.queb.space') {
+    return 'http://localhost:3000';
+  }
+  // For production, use relative URLs
+  return '';
+};
+
+const API_BASE = getApiBase();
 
 // Default timeout and retry settings
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
@@ -20,6 +30,7 @@ export const useApi = () => {
 
     try {
       const url = `${API_BASE}${endpoint}`;
+      console.log(`🔗 API Call: ${url}`); // Debug logging
       
       // Create abort controller for timeout
       const controller = new AbortController();
@@ -42,6 +53,7 @@ export const useApi = () => {
       }
 
       const data = await response.json();
+      console.log('📨 API Response received:', data); // Debug API responses
       return data;
     } catch (err) {
       // Handle different types of errors
@@ -125,6 +137,24 @@ export const useApi = () => {
     setError(null);
   }, []);
 
+  const testConnection = useCallback(async () => {
+    try {
+      const url = `${API_BASE}/health`;
+      console.log(`🏥 Testing connection to: ${url}`);
+      const response = await fetch(url);
+      if (response.ok) {
+        console.log('✅ Backend connection successful');
+        return true;
+      } else {
+        console.log('❌ Backend responded with error:', response.status);
+        return false;
+      }
+    } catch (err) {
+      console.log('❌ Backend connection failed:', err.message);
+      return false;
+    }
+  }, []);
+
   return {
     loading,
     error,
@@ -133,5 +163,6 @@ export const useApi = () => {
     analyzeImage,
     generateSDFs,
     clearError,
+    testConnection,
   };
 };

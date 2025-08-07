@@ -88,8 +88,8 @@ class AtomPredictor {
 
       const content = response.choices[0].message.content;
       
-      // Parse JSON response directly since we're using structured output
-      const parsed = JSON.parse(content);
+      // Use fallback handler for robust JSON parsing
+      const parsed = parseAIResponseWithFallbacks(content);
       
       // Validate and improve SMILES quality
       const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
@@ -135,8 +135,8 @@ Now analyze this specific object: "${object}"`;
 
       const content = response.choices[0].message.content;
       
-      // Parse JSON response directly since we're using structured output
-      const parsed = JSON.parse(content);
+      // Use fallback handler for robust JSON parsing
+      const parsed = parseAIResponseWithFallbacks(content);
       
       // Validate and improve SMILES quality
       const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);

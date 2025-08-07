@@ -80,7 +80,81 @@ function parseAIResponseWithFallbacks(content) {
     };
 
   } catch (error) {
-    console.error("Failed to parse AI response:", content);
+    console.error("Failed to parse AI response:", error.message);
+    console.error("Content length:", content.length);
+    console.error("Content preview:", content.substring(0, 500) + "...");
+    
+    // Try to repair and extract valid JSON from malformed response
+    try {
+      console.log("🔧 Attempting to repair malformed JSON...");
+      
+      // Find the JSON object
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        let cleanedJson = jsonMatch[0];
+        
+        // Fix common JSON issues
+        // 1. Remove incomplete entries that don't have closing quotes
+        cleanedJson = cleanedJson.replace(/,\s*"name":\s*"[^"]*$/g, ''); // Remove incomplete entries at end
+        cleanedJson = cleanedJson.replace(/,\s*\{\s*"name":\s*[^}]*$/g, ''); // Remove incomplete objects
+        
+        // Remove incomplete molecules with truncated SMILES at end of array
+        cleanedJson = cleanedJson.replace(/,\s*\{\s*"name":\s*"[^"]*",\s*"smiles":\s*"[^"]*$/g, '');
+        
+        // 2. Handle extremely long SMILES that cause truncation
+        // Remove any incomplete SMILES strings that are way too long
+        cleanedJson = cleanedJson.replace(/"smiles":\s*"[^"]{200,}$/g, '');
+        
+        // 3. Ensure arrays are properly closed
+        if (!cleanedJson.includes(']}')) {
+          cleanedJson = cleanedJson.replace(/[,\s]*$/, '') + ']}';
+        }
+        
+        // 3. Remove trailing commas
+        cleanedJson = cleanedJson.replace(/,(\s*[}\]])/g, '$1');
+        
+        console.log("🔧 Repaired JSON preview:", cleanedJson.substring(0, 200) + "...");
+        
+        const parsed = JSON.parse(cleanedJson);
+        console.log("✅ Successfully parsed repaired JSON!");
+        return {
+          object: parsed.object || "Unknown object",
+          chemicals: parsed.chemicals || []
+        };
+      }
+    } catch (extractError) {
+      console.error("Failed to repair JSON:", extractError.message);
+      
+      // Fallback: Try to extract at least the object name and simple chemicals
+      try {
+        const objectMatch = content.match(/"object":\s*"([^"]+)"/);
+        const chemicalMatches = content.match(/"name":\s*"([^"]+)",\s*"smiles":\s*"([^"]+)"/g);
+        
+        if (objectMatch || chemicalMatches) {
+          const chemicals = [];
+          if (chemicalMatches) {
+            chemicalMatches.forEach(match => {
+              const nameMatch = match.match(/"name":\s*"([^"]+)"/);
+              const smilesMatch = match.match(/"smiles":\s*"([^"]+)"/);
+              if (nameMatch && smilesMatch) {
+                chemicals.push({
+                  name: nameMatch[1],
+                  smiles: smilesMatch[1]
+                });
+              }
+            });
+          }
+          
+          console.log("✅ Extracted chemicals using regex fallback:", chemicals.length);
+          return {
+            object: objectMatch ? objectMatch[1] : "Unknown object",
+            chemicals: chemicals
+          };
+        }
+      } catch (regexError) {
+        console.error("Regex extraction also failed:", regexError.message);
+      }
+    }
     
     // Only use smart fallbacks for actual refusal patterns, not parsing errors
     if (typeof content === "string" && content.length > 10) {

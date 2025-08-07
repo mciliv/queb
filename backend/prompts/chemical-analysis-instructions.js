@@ -16,12 +16,13 @@ function buildChemicalAnalysisInstructions() {
 
 CRITICAL RULES FOR ACCURATE SMILES:
 1. Generate ONLY valid, verified SMILES notation - double-check each one
-2. Use standard SMILES from established databases (PubChem, ChEBI)
+2. Use standard SMILES from established databases (PubChem, ChEBI)  
 3. For complex molecules, use representative fragments or simplified forms
 4. For polymers, use short repeat units (max 20-30 atoms)
 5. For minerals, use simple ionic representations like "[Ca+2]" and "[CO3-2]"
-6. Keep SMILES strings under 100 characters when possible
-7. Verify SMILES follow proper syntax: atoms, bonds, rings, charges
+6. Keep SMILES strings under 100 characters when possible - NO EXCEPTIONS
+7. For chlorophyll, use simplified porphyrin fragment: "C1=CC2=NC1=CC3=NC=CC4=NC=CC(=N2)C=C43"
+8. Verify SMILES follow proper syntax: atoms, bonds, rings, charges
 
 Response format:
 {
