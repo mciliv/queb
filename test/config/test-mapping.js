@@ -145,7 +145,7 @@ const FILE_TEST_MAPPING = {
   },
 
   // Chemistry Processors
-  'chemistry/processors/**.py': {
+      'molecular-conversion/processors/**.py': {
     direct: ['test/unit/test_*.py'],
     layers: [TEST_LAYERS.UNIT],
     related: [

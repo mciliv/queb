@@ -18,7 +18,7 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Check for Python dependencies if chemistry tests are needed
-if [ -f "chemistry/processors/sdf.py" ]; then
+if [ -f "molecular-conversion/processors/sdf.py" ]; then
     echo "🐍 Checking Python dependencies..."
     python3 -c "import rdkit" 2>/dev/null || echo "⚠️ RDKit not found - chemistry tests may fail"
 fi

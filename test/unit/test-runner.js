@@ -111,7 +111,7 @@ class ComponentTestRunner {
       'frontend/components/ui-utils.js',
       'backend/api/server.js',
       'backend/services/molecular-processor.js',
-      'chemistry/processors/sdf.py'
+      'molecular-conversion/processors/sdf.py'
     ];
     
     let allFilesExist = true;

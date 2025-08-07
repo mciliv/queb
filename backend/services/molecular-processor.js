@@ -122,7 +122,7 @@ class MolecularProcessor {
       }
 
       const pythonProcess = spawn("python", [
-        path.join(__dirname, "..", "..", "chemistry", "processors", "sdf.py"),
+        path.join(__dirname, "..", "..", "molecular-conversion", "processors", "sdf.py"),
         chemical,
         "--dir",
         this.sdfDir,

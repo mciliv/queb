@@ -73,7 +73,7 @@ node test-sdf-pipeline.js
 
 ### 1. Check SDF File Generation
 ```bash
-python chemistry/processors/sdf.py CCO --dir test_output --overwrite
+python molecular-conversion/processors/sdf.py CCO --dir test_output --overwrite
 ```
 
 ### 2. Check HTTP Accessibility
