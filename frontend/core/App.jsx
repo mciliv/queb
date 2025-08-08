@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PaymentProvider } from '../components/PaymentContext';
-import MainLayout from '../components/MainLayout';
+import { PaymentProvider } from '../components/ui/PaymentContext';
+import MainLayout from '../components/ui/MainLayout';
 import '../assets/style.css';
 
 // Payment toggle configuration
 const PAYMENT_CONFIG = {
   enabled: false, // Set to true to enable payment functionality
-  devMode: window.location.hostname === 'dev.queb.space'
+  devMode: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
 };
 
 function App() {
@@ -17,9 +17,9 @@ function App() {
   const [lastAnalysis, setLastAnalysis] = useState(null);
 
   useEffect(() => {
-    // Auto-enable dev mode for dev.queb.space
+    // Auto-enable dev mode for localhost
     if (PAYMENT_CONFIG.devMode) {
-      console.log('🔧 Auto-enabling developer mode for dev.queb.space');
+      console.log('🔧 Auto-enabling developer mode for localhost');
       setIsPaymentSetup(true);
     }
     

@@ -106,8 +106,6 @@ DNS.1 = localhost
 DNS.2 = *.localhost
 DNS.3 = mol.local
 DNS.4 = *.mol.local
-DNS.5 = dev.queb.space
-DNS.6 = *.dev.queb.space
 IP.1 = 127.0.0.1
 IP.2 = 0.0.0.0
 IP.3 = ${this.localIP}
@@ -170,8 +168,7 @@ IP.4 = ::1
       
       return new Promise((resolve, reject) => {
         server.listen(this.actualPort, "0.0.0.0", () => {
-                    console.log(`https://dev.queb.space
- https://localhost:${this.actualPort}
+                    console.log(`https://localhost:${this.actualPort}
  https://${this.localIP}:${this.actualPort}`);
           resolve(server);
         });

@@ -27,11 +27,6 @@ else
     exit 1
 fi
 
-# Check if dev.queb.space is in /etc/hosts
-if ! grep -q "dev.queb.space" /etc/hosts; then
-    log_warning "dev.queb.space not in /etc/hosts. Run ./setup-queb-space.sh first"
-fi
-
 log_info "Starting development servers..."
 log_info "Press Ctrl+C to stop"
 echo ""
@@ -49,8 +44,9 @@ if kill -0 $BACKEND_PID 2>/dev/null; then
     log_success "✅ Backend server is running!"
     
     echo ""
-    log_success "🌐 Development URL:"
-    log_success "   🌟 https://dev.queb.space"
+    log_success "🌐 Development URLs:"
+    log_success "   http://localhost:3000"
+    log_success "   https://localhost:3002"
     echo ""
     
     # Store PID for cleanup

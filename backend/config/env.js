@@ -50,7 +50,7 @@ const config = {
 // Payment configuration helper
 const getPaymentConfig = () => {
   const isDev = config.NODE_ENV === 'development';
-  const isDevDomain = process.env.HOSTNAME === 'dev.queb.space';
+  const isDevDomain = process.env.HOSTNAME === 'localhost' || process.env.HOSTNAME === '127.0.0.1';
   
   return {
     enabled: config.PAYMENTS_ENABLED || false,

@@ -20,7 +20,6 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-const HttpsServer = require("./https-server");
 const AtomPredictor = require("../services/AtomPredictor");
 const MolecularProcessor = require("../services/molecular-processor");
 
@@ -116,7 +115,6 @@ const testDatabaseConnection = async () => {
 // ==================== CONFIGURATION ====================
 const app = express();
 const DEFAULT_PORT = 8080;
-const HTTPS_PORT = process.env.HTTPS_PORT || 3002;
 
 // Utility function to get local IP address
 const getLocalIPAddress = () => {
@@ -403,6 +401,7 @@ app.post("/generate-sdfs", async (req, res) => {
 // Serve frontend files first (before API routes)
 
 app.use(express.static(path.join(__dirname, "..", "..", "frontend")));
+app.use("/dist", express.static(path.join(__dirname, "..", "..", "frontend", "dist")));
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));
 app.use("/components", express.static(path.join(__dirname, "..", "..", "frontend", "components")));
 app.use("/sdf_files", express.static(path.join(__dirname, "..", "..", "data", "sdf_files")));
@@ -921,9 +920,8 @@ const isTestMode =
 const isIntegrationTest = config.INTEGRATION_TEST;
 const isServerless = isCloudFunction || isNetlify;
 
-// Store server instances for cleanup
+// Store server instance for cleanup
 let httpServer;
-let httpsServerInstance;
 
 console.log('Server conditions:', { isServerless, isTestMode, isIntegrationTest });
 
@@ -1019,49 +1017,7 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
       process.exit(1);
     });
 
-  // Start HTTPS server for development
-  if (process.env.NODE_ENV !== "production") {
-    const startHttpsServer = async () => {
-      try {
-        const httpsServer = new HttpsServer(app, HTTPS_PORT);
-        httpsServerInstance = await httpsServer.start();
-        
-        if (httpsServerInstance) {
-          log.success("✅ HTTPS server started successfully");
-          
-          // Handle HTTPS server errors after startup
-          httpsServerInstance.on("error", (error) => {
-            console.error("❌ HTTPS server error after startup:", error.message);
-            console.log("💡 HTTPS server will continue running if possible");
-          });
-          
-          // Register with cleanup system if available
-          try {
-            const cleanupRegistry = require('../test/fixtures/cleanup-registry');
-            cleanupRegistry.register(httpsServerInstance);
-          } catch (e) {
-            // Cleanup registry not available
-          }
-        } else {
-          log.warning("⚠️ HTTPS server not started - continuing with HTTP only");
-        }
-      } catch (error) {
-        console.error("❌ Failed to start HTTPS server:", error.message);
-        console.log("💡 Continuing with HTTP server only");
-      }
-    };
-
-    // Start HTTPS server after a short delay to avoid port conflicts
-    const httpsTimer = setTimeout(startHttpsServer, 1000);
-    
-    // Register timer with cleanup system if available
-    try {
-      const cleanupRegistry = require('../test/fixtures/cleanup-registry');
-      cleanupRegistry.registerTimer(httpsTimer);
-    } catch (e) {
-      // Cleanup registry not available
-    }
-  }
+  // HTTPS server disabled - using single HTTP port only
 } else {
   // Serverless mode
   if (isCloudFunction) {
@@ -1081,7 +1037,7 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
 // Graceful shutdown handling for nodemon restarts
 if (!isServerless && !isTestMode) {
   const gracefulShutdown = (signal) => {
-    console.log(`\n${signal} received: closing HTTP/HTTPS servers gracefully`);
+    console.log(`\n${signal} received: closing HTTP server gracefully`);
 
     const closeServer = (server, name) => {
       return new Promise((resolve) => {
@@ -1096,10 +1052,7 @@ if (!isServerless && !isTestMode) {
       });
     };
 
-    Promise.all([
-      closeServer(httpServer, "HTTP"),
-      closeServer(httpsServerInstance, "HTTPS"),
-    ]).then(() => {
+    closeServer(httpServer, "HTTP").then(() => {
       console.log("Shutdown complete");
       process.exit(0);
     });

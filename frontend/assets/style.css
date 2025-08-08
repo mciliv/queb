@@ -1,0 +1,36 @@
+/* Minimal styles for molecular app */
+body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* No extraneous lines or borders per UI rules */
+button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 8px 16px;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+input {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  padding: 8px;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}

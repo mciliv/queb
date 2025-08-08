@@ -4,21 +4,14 @@ set -e
 
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# ensure hosts maps dev.queb.space to localhost
-if ! grep -q "dev.queb.space" /etc/hosts; then
-  echo "127.0.0.1 dev.queb.space" | sudo tee -a /etc/hosts >/dev/null
-fi
-
 # clean stale processes/ports
 ./cleanup >/dev/null 2>&1 || true
 
-# start lightweight dev server on port 3000; https on 3002
-HOSTNAME=dev.queb.space PORT=3000 HTTPS_PORT=3002 NODE_ENV=development nohup npx nodemon --quiet backend/api/server.js >/tmp/mol_dev.out 2>&1 &
+# start lightweight dev server on port 3000 only
+PORT=3000 NODE_ENV=development nohup npx nodemon --quiet backend/api/server.js >/tmp/mol_dev.out 2>&1 &
 
-# quick health checks
+# quick health check
 sleep 2
-curl -sS http://dev.queb.space:3000/health | cat || true
-curl -skS https://dev.queb.space:3002/health | cat || true
+curl -sS http://localhost:3000/health | cat || true
 
-echo "http://dev.queb.space:3000"
-echo "https://dev.queb.space:3002"
+echo "http://localhost:3000"

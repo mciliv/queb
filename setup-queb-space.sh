@@ -73,12 +73,12 @@ EOF
     echo ""
 fi
 
-# Function to setup local development (dev.queb.space)
+# Function to setup local development (localhost)
 setup_local_dev() {
-    log_info "Setting up local development (dev.queb.space)..."
+    log_info "Setting up local development (localhost)..."
     
-    # Check SSL certificates for dev.queb.space
-    log_info "Checking SSL certificates for dev.queb.space..."
+    # Check SSL certificates for localhost
+    log_info "Checking SSL certificates for localhost..."
     if [ ! -d "backend/api/certs" ]; then
         mkdir -p backend/api/certs
     fi
@@ -91,14 +91,8 @@ setup_local_dev() {
         log_success "SSL certificates already exist"
     fi
     
-    # Add dev.queb.space to /etc/hosts if not present
-    if ! grep -q "dev.queb.space" /etc/hosts; then
-        log_info "Adding dev.queb.space to /etc/hosts..."
-        echo "127.0.0.1 dev.queb.space" | sudo tee -a /etc/hosts > /dev/null
-        log_success "Added dev.queb.space to /etc/hosts"
-    else
-        log_success "dev.queb.space already in /etc/hosts"
-    fi
+    # Hosts update no longer required; using localhost
+    log_success "Hosts file changes not required"
     
     # Install missing dependencies if needed
     if ! command -v browser-sync >/dev/null 2>&1; then
@@ -107,7 +101,7 @@ setup_local_dev() {
     fi
     
     log_success "Local development setup complete"
-    echo "   🌐 Access: https://dev.queb.space"
+    echo "   🌐 Access: http://localhost:3000 (or https://localhost:3002)"
     echo "   🔧 Start: ./dev-queb-space"
     echo ""
 }

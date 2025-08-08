@@ -38,8 +38,8 @@ echo "========================="
 echo ""
 
 # Check local development environment
-echo "🏠 Local Development (dev.queb.space)"
-echo "-----------------------------------"
+echo "🏠 Local Development (localhost)"
+echo "-------------------------------"
 
 # Check .env file
 if [ -f ".env" ]; then
@@ -55,12 +55,8 @@ else
     log_error "SSL certificates missing"
 fi
 
-# Check /etc/hosts entry
-if grep -q "dev.queb.space" /etc/hosts; then
-    log_success "dev.queb.space in /etc/hosts"
-else
-    log_error "dev.queb.space not in /etc/hosts"
-fi
+## Hosts entry no longer required
+log_success "Using localhost (no hosts entry needed)"
 
 # Check Node.js server
 if pgrep -f "node.*server.js" > /dev/null; then
@@ -69,12 +65,7 @@ else
     log_warning "Node.js server is not running"
 fi
 
-# Test local domain resolution
-if nslookup dev.queb.space > /dev/null 2>&1; then
-    log_success "dev.queb.space resolves locally"
-else
-    log_error "dev.queb.space does not resolve"
-fi
+echo "DNS: localhost always resolves"
 
 echo ""
 
@@ -191,7 +182,7 @@ echo "📋 Summary:"
 echo "==========="
 
 # Local development summary
-if [ -f ".env" ] && [ -f "backend/api/certs/cert.pem" ] && grep -q "dev.queb.space" /etc/hosts; then
+if [ -f ".env" ] && [ -f "backend/api/certs/cert.pem" ]; then
     log_success "Local development ready"
     echo "   Start: ./dev-queb-space"
 else

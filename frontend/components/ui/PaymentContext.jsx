@@ -23,7 +23,7 @@ export const PaymentProvider = ({ children, config }) => {
     }
 
     if (config.devMode) {
-      console.log('🔧 Auto-enabling developer mode for dev.queb.space');
+      console.log('🔧 Auto-enabling developer mode for localhost');
       setIsPaymentSetup(true);
     }
   }, [config]);

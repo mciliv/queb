@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-# Agent instructions
+# Claude-4 instructions
 Never assume perfection
 Maximally simple & straightforward
 only respond in code
