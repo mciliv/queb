@@ -864,7 +864,7 @@ app.post("/generate-sdfs", async (req, res) => {
 console.log('NODE_ENV:', config.NODE_ENV);
 console.log('Setting up frontend static routes');
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "..", "frontend", "index.html"));
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
 });
 
 // SEO routes
@@ -890,7 +890,7 @@ app.get("*", (req, res, next) => {
   }
   
   // Serve index.html for all other routes (SPA behavior)
-  res.sendFile(path.join(__dirname, "..", "..", "frontend", "index.html"));
+  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
 });
 
 // Request logging middleware
