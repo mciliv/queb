@@ -7,11 +7,19 @@ cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # clean stale processes/ports
 ./cleanup >/dev/null 2>&1 || true
 
-# start lightweight dev server on port 3000 only
-PORT=3000 NODE_ENV=development nohup npx nodemon --quiet backend/api/server.js >/tmp/mol_dev.out 2>&1 &
+# start lightweight dev server on port 3000, HTTPS on 3001
+PORT=3000 HTTPS_PORT=3001 NODE_ENV=development nohup npx nodemon --quiet backend/api/server.js >/tmp/mol_dev.out 2>&1 &
 
-# quick health check
+# quick health checks
 sleep 2
 curl -sS http://localhost:3000/health | cat || true
+curl -skS https://localhost:3001/health 2>/dev/null | cat || true
 
-echo "http://localhost:3000"
+# Get local IP for mobile access
+LOCAL_IP=$(ipconfig getifaddr en0 || ifconfig en0 | grep 'inet ' | awk '{print $2}' || echo "127.0.0.1")
+
+echo "🌐 HTTP:  http://localhost:3000"
+echo "🔒 HTTPS: https://localhost:3001 (trusted certificates)"
+echo ""
+echo "📱 Mobile access (same WiFi network):"
+echo "   HTTPS: https://$LOCAL_IP:3001"

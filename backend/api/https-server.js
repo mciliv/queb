@@ -64,83 +64,31 @@ class HttpsServer {
     throw new Error(`No available ports found in range ${startPort}-${startPort + 99}`);
   }
 
-  generateSelfSignedCert() {
+  loadCertificates() {
     const certDir = path.join(__dirname, "certs");
     const keyPath = path.join(certDir, "key.pem");
     const certPath = path.join(certDir, "cert.pem");
-    const configPath = path.join(certDir, "openssl.conf");
 
+    // Check for mkcert certificates
     if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
-      log.success("✅ Using existing SSL certificates");
+      log.success("✅ Using mkcert SSL certificates (trusted on this machine)");
       return { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
     }
 
-    if (!fs.existsSync(certDir)) fs.mkdirSync(certDir, { recursive: true });
-
-    log.success(
-      "🔐 Generating self-signed SSL certificates for development...",
-    );
-
-    try {
-      const configContent = `[req]
-distinguished_name = req_distinguished_name
-req_extensions = v3_req
-prompt = no
-
-[req_distinguished_name]
-C = US
-ST = Development
-L = Local
-O = MolecularAnalysisApp
-OU = Development
-CN = localhost
-
-[v3_req]
-basicConstraints = CA:FALSE
-keyUsage = digitalSignature, keyEncipherment, dataEncipherment
-extendedKeyUsage = serverAuth, clientAuth
-subjectAltName = @alt_names
-
-[alt_names]
-DNS.1 = localhost
-DNS.2 = *.localhost
-DNS.3 = mol.local
-DNS.4 = *.mol.local
-IP.1 = 127.0.0.1
-IP.2 = 0.0.0.0
-IP.3 = ${this.localIP}
-IP.4 = ::1
-`;
-
-      fs.writeFileSync(configPath, configContent);
-
-      execSync(`openssl genrsa -out ${keyPath} 2048`, { stdio: "pipe" });
-      execSync(
-        `openssl req -new -x509 -key ${keyPath} -out ${certPath} -days 3650 -config ${configPath}`,
-        { stdio: "pipe" },
-      );
-
-      fs.unlinkSync(configPath);
-
-      console.log("✅ SSL certificates generated successfully!");
-      log.success("📄 Certificate location:", certPath);
-      log.success("🔒 To avoid 'trust website' prompts, you can:");
-      log.success("   macOS: sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain " + certPath);
-      log.success("   Or open Chrome and click 'Advanced' → 'Proceed to localhost (unsafe)' once");
-      log.success("💡 Certificate valid for 10 years (3650 days)");
-      
-      return { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
-    } catch (err) {
-      log.error("❌ Failed to generate SSL certificates:", err.message);
-      return null;
-    }
+    // No certificates found
+    log.error("❌ No SSL certificates found in:", certDir);
+    log.warning("💡 To generate trusted certificates, run:");
+    log.warning("   cd backend/api/certs");
+    log.warning(`   mkcert -key-file key.pem -cert-file cert.pem localhost 127.0.0.1 ::1 ${this.localIP}`);
+    
+    return null;
   }
 
   async start() {
     try {
-      const credentials = this.generateSelfSignedCert();
+      const credentials = this.loadCertificates();
       if (!credentials) {
-        log.warning("⚠️ HTTPS not started — SSL certificate generation failed");
+        log.warning("⚠️ HTTPS not started — SSL certificates not found");
         return null;
       }
 
@@ -168,8 +116,10 @@ IP.4 = ::1
       
       return new Promise((resolve, reject) => {
         server.listen(this.actualPort, "0.0.0.0", () => {
-                    console.log(`https://localhost:${this.actualPort}
- https://${this.localIP}:${this.actualPort}`);
+          console.log(`🔒 HTTPS server running:
+   Local: https://localhost:${this.actualPort}
+   Network: https://${this.localIP}:${this.actualPort} (for mobile/other devices)
+   ✅ No certificate warnings - trusted by mkcert`);
           resolve(server);
         });
 
