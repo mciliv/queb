@@ -1,2 +1,3 @@
-2025/08/07-15:23:31.835 127f5d Creating DB /Users/m/mol/test/chrome-molecular-profile/Default/GCM Store since it was missing.
-2025/08/07-15:23:31.846 127f5d Reusing MANIFEST /Users/m/mol/test/chrome-molecular-profile/Default/GCM Store/MANIFEST-000001
+2025/08/08-20:19:18.257 505ed Reusing MANIFEST /Users/m/mol/test/chrome-molecular-profile/Default/GCM Store/MANIFEST-000001
+2025/08/08-20:19:18.257 505ed Recovering log #3
+2025/08/08-20:19:18.258 505ed Reusing old log /Users/m/mol/test/chrome-molecular-profile/Default/GCM Store/000003.log 

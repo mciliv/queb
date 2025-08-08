@@ -9,7 +9,7 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || isProcessing) return;
+    if (!file) return;
 
     if (checkPaymentRequired()) {
       return;
@@ -43,7 +43,7 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
   };
 
   const handleUrlAnalysis = async () => {
-    if (!photoUrl.trim() || isProcessing) return;
+    if (!photoUrl.trim()) return;
 
     if (checkPaymentRequired()) {
       return;
@@ -76,7 +76,6 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
           id="photo-upload" 
           accept="image/*"
           onChange={handleFileUpload}
-          disabled={isProcessing}
         />
         <label htmlFor="photo-upload" className="upload-label">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -94,13 +93,11 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
             placeholder="Paste image URL..."
             value={photoUrl}
             onChange={(e) => setPhotoUrl(e.target.value)}
-            disabled={isProcessing}
           />
           <button 
             type="button" 
             className="url-button"
             onClick={handleUrlAnalysis}
-            disabled={isProcessing || !photoUrl.trim()}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"/>

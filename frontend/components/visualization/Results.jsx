@@ -86,13 +86,7 @@ const MolecularAnalysisResults = ({ moleculeViewers, setMoleculeViewers, lastAna
 
   return (
     <div className="molecular-analysis-results-section">
-      {/* Molecular analysis progress indicator */}
-      {isAnalyzing && (
-        <div className="spatial-analysis-header">
-          <h3>Analyzing Molecular Content: {getTargetObjectDescription()}</h3>
-          <p>Estimating molecules in specified space...</p>
-        </div>
-      )}
+
       
       {/* 3dmoljs gridviewer container with main app background */}
       <div id="gldiv" ref={molecularVisualizationContainerRef} className="molecular-gridviewer-container">
@@ -201,7 +195,6 @@ const SpatialMolecularColumn = ({ targetObjectName, molecularViewers, spatialAna
 const ThreeDimensionalMolecularViewer = ({ molecularData, spatialIndex, onCloseMoleculeVisualization, isWithinGridLayout = false }) => {
   const threeDMolViewerRef = useRef(null);
   const [structuralDataFile, setStructuralDataFile] = useState(null);
-  const [isLoadingMolecularVisualization, setIsLoadingMolecularVisualization] = useState(false);
   const [molecularVisualizationError, setMolecularVisualizationError] = useState(null);
 
   useEffect(() => {
@@ -238,7 +231,6 @@ const ThreeDimensionalMolecularViewer = ({ molecularData, spatialIndex, onCloseM
         }
       }
 
-      setIsLoadingMolecularVisualization(true);
       setMolecularVisualizationError(null);
 
       try {
@@ -296,8 +288,6 @@ const ThreeDimensionalMolecularViewer = ({ molecularData, spatialIndex, onCloseM
       } catch (molecularRenderingError) {
         console.error('Failed to load molecular structural data:', molecularRenderingError);
         setMolecularVisualizationError('Failed to load molecule visualization');
-      } finally {
-        setIsLoadingMolecularVisualization(false);
       }
     };
 
@@ -321,12 +311,7 @@ const ThreeDimensionalMolecularViewer = ({ molecularData, spatialIndex, onCloseM
         className="mol-viewer-container"
         style={{ height: '300px', width: '400px', background: 'transparent' }}
       />
-      {isLoadingMolecularVisualization && (
-        <div className="molecular-visualization-loading">
-          <span className="molecular-spinner"></span>
-          Loading molecular visualization...
-        </div>
-      )}
+
       {molecularVisualizationError && (
         <div className="molecular-visualization-error">
           <div className="molecular-error-message">{molecularVisualizationError}</div>

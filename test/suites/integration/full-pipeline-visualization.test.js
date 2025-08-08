@@ -66,7 +66,7 @@ describe('Full Pipeline Molecular Visualization Tests', () => {
 
   beforeAll(async () => {
     // Import server for testing
-    app = require('../../backend/api/server');
+    app = require('../../../backend/api/server');
     process.env.NODE_ENV = 'test';
     
     // Check if we have OpenAI API key for testing
@@ -104,9 +104,9 @@ describe('Full Pipeline Molecular Visualization Tests', () => {
               .expect(200);
 
             expect(analysisResponse.body).toBeDefined();
-            expect(analysisResponse.body.output).toBeDefined();
+            expect(analysisResponse.body.chemicals).toBeDefined();
             
-            const analysis = analysisResponse.body.output;
+            const analysis = analysisResponse.body;
             const molecules = analysis.chemicals || [];
 
             console.log(`   ✅ Analysis complete: ${molecules.length} molecules found`);
@@ -176,17 +176,36 @@ describe('Full Pipeline Molecular Visualization Tests', () => {
 
             for (const sdfPath of sdfResponse.body.sdfPaths.slice(0, 5)) { // Test first 5 files
               try {
+                console.log(`      Testing SDF access: ${sdfPath}`);
                 const fileResponse = await request(app)
-                  .get(sdfPath)
-                  .expect(200);
+                  .get(sdfPath);
                 
-                expect(fileResponse.text).toBeDefined();
-                expect(fileResponse.text.length).toBeGreaterThan(0);
-                expect(fileResponse.text).toContain('$$$$'); // SDF format marker
+                console.log(`      Response status: ${fileResponse.status}`);
+                console.log(`      Content-Type:`, fileResponse.headers['content-type']);
+                console.log(`      Content-Length:`, fileResponse.headers['content-length']);
+                if (fileResponse.status === 404) {
+                  console.log(`      Response body:`, fileResponse.body);
+                }
                 
-                accessibleFiles++;
-                fileAccessResults.push({ path: sdfPath, accessible: true });
+                if (fileResponse.status === 200) {
+                  // For binary/octet-stream responses, supertest puts data in body as Buffer
+                  const fileContent = fileResponse.body ? fileResponse.body.toString() : fileResponse.text;
+                  console.log(`      File content length: ${fileContent?.length || 0}`);
+                  console.log(`      First 100 chars:`, fileContent?.substring(0, 100));
+                  console.log(`      Contains $$$$: ${fileContent?.includes('$$$$') || false}`);
+                  
+                  expect(fileContent).toBeDefined();
+                  expect(fileContent.length).toBeGreaterThan(0);
+                  expect(fileContent).toContain('$$$$'); // SDF format marker
+                  
+                  accessibleFiles++;
+                  fileAccessResults.push({ path: sdfPath, accessible: true });
+                } else {
+                  console.log(`      HTTP ${fileResponse.status} for ${sdfPath}`);
+                  fileAccessResults.push({ path: sdfPath, accessible: false, error: `HTTP ${fileResponse.status}` });
+                }
               } catch (error) {
+                console.log(`      ERROR accessing ${sdfPath}:`, error.message);
                 fileAccessResults.push({ path: sdfPath, accessible: false, error: error.message });
               }
             }
@@ -298,11 +317,11 @@ describe('Full Pipeline Molecular Visualization Tests', () => {
         .expect(200);
 
       // Should not crash, should provide fallback data
-      expect(response.body.output).toBeDefined();
-      expect(response.body.output.chemicals).toBeDefined();
-      expect(Array.isArray(response.body.output.chemicals)).toBe(true);
+      expect(response.body).toBeDefined();
+      expect(response.body.chemicals).toBeDefined();
+      expect(Array.isArray(response.body.chemicals)).toBe(true);
       
-      console.log(`   ✅ Error handling: Returned ${response.body.output.chemicals.length} fallback molecules`);
+      console.log(`   ✅ Error handling: Returned ${response.body.chemicals.length} fallback molecules`);
     });
 
     test('should handle SDF generation failures gracefully', async () => {

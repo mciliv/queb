@@ -69,23 +69,6 @@ const styles = {
     fontSize: '12px',
     marginTop: '8px',
     padding: '0 4px'
-  },
-  processingIndicator: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: '12px',
-    marginTop: '8px',
-    padding: '0 4px'
-  },
-  spinner: {
-    width: '12px',
-    height: '12px',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
-    borderTop: '2px solid #ffffff',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
   }
 };
 
@@ -115,17 +98,35 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
     if (!text || !text.trim()) {
       return 'Please enter a molecule or object to analyze';
     }
-    if (text.trim().length < 2) {
+    
+    const trimmed = text.trim().toLowerCase();
+    
+    if (trimmed.length < 2) {
       return 'Input must be at least 2 characters long';
     }
-    if (text.trim().length > 500) {
+    if (trimmed.length > 500) {
       return 'Input must be less than 500 characters';
     }
+    
+    // Check for obvious non-physical objects
+    const nonPhysicalPatterns = [
+      /^(love|hate|happy|sad|angry|joy|fear|hope|dream|idea|thought|feeling|emotion)/,
+      /^(running|walking|talking|thinking|sleeping|eating|drinking)$/,
+      /^[a-z]{1,2}$/,  // Single letters or very short nonsense
+      /^[^a-z]*$/,     // Only numbers/symbols
+      /^(asdf|qwerty|test|random|nothing|something|anything|everything)$/i,
+      /^(the|a|an|and|or|but|if|then|when|where|why|how|what|who)$/
+    ];
+    
+    if (nonPhysicalPatterns.some(pattern => pattern.test(trimmed))) {
+      return 'Please describe a real, physical object (food, materials, plants, etc.)';
+    }
+    
     return null;
   };
 
   const handleKeyDown = async (e) => {
-    if (e.key === 'Enter' && !isProcessing) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       e.stopPropagation();
       
@@ -159,7 +160,6 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
   };
 
   const handleSubmit = async () => {
-    if (isProcessing || isValidating) return;
     
     const validationError = validateInput(value);
     if (validationError) {
@@ -179,7 +179,6 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
   };
 
   const displayError = localError || error;
-  const isDisabled = isProcessing || isValidating;
 
   return (
     <div style={styles.topBar}>
@@ -188,18 +187,17 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           ref={inputRef}
           id="object-input"
           type="text"
-          placeholder="Specify an object or molecule (e.g., 'water', 'aspirin', 'CCO')..."
+          placeholder="Enter a physical object (e.g., 'coffee', 'glass', 'apple', 'aspirin')..."
           style={displayError ? styles.textInputError : styles.textInput}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={isDisabled}
           aria-describedby={displayError ? 'input-error' : undefined}
         />
         <div style={styles.keyboardHint}>
           <span style={styles.hintKey}>{keyboardHint}</span>
         </div>
-        {!isDisabled && value.trim() && (
+        {value.trim() && (
           <button 
             style={styles.submitButton}
             onClick={handleSubmit}
@@ -214,12 +212,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           {displayError}
         </div>
       )}
-      {(isProcessing || isValidating) && (
-        <div style={styles.processingIndicator}>
-          <span style={styles.spinner}></span>
-          Analyzing...
-        </div>
-      )}
+
     </div>
   );
 };

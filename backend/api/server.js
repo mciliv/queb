@@ -23,6 +23,7 @@ const path = require("path");
 const HttpsServer = require("./https-server");
 const AtomPredictor = require("../services/AtomPredictor");
 const MolecularProcessor = require("../services/molecular-processor");
+const ScreenshotService = require("../services/screenshot-service");
 
 // Direct frontend serving (no proxy needed)
 let proxy = null;
@@ -407,6 +408,170 @@ app.use("/dist", express.static(path.join(__dirname, "..", "..", "frontend", "di
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));
 app.use("/components", express.static(path.join(__dirname, "..", "..", "frontend", "components")));
 app.use("/sdf_files", express.static(path.join(__dirname, "..", "..", "data", "sdf_files")));
+
+// ==================== SCREENSHOT ROUTES ====================
+
+// Initialize screenshot service
+const screenshotService = new ScreenshotService();
+
+// Serve screenshot files for LLM access
+app.use("/api/screenshot", express.static(path.join(__dirname, "..", "..", "screenshots")));
+
+// Capture current app state
+app.post("/api/capture-screenshot", async (req, res) => {
+  try {
+    const { filename } = req.body;
+    const result = await screenshotService.captureApp(filename);
+    
+    res.json({
+      success: true,
+      screenshot: result,
+      message: "Screenshot captured successfully"
+    });
+  } catch (error) {
+    log.error(`Screenshot capture failed: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Capture screenshot with text input
+app.post("/api/capture-with-input", async (req, res) => {
+  try {
+    const { inputText, filename } = req.body;
+    
+    if (!inputText) {
+      return res.status(400).json({
+        success: false,
+        error: "inputText is required"
+      });
+    }
+    
+    if (!screenshotService) {
+      return res.status(503).json({ error: "Screenshot service not available" });
+    }
+    const result = await screenshotService.captureWithInput(inputText, filename);
+    
+    res.json({
+      success: true,
+      screenshot: result,
+      message: "Screenshot with input captured successfully"
+    });
+  } catch (error) {
+    log.error(`Screenshot with input failed: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Capture screenshot after analysis
+app.post("/api/capture-analysis", async (req, res) => {
+  try {
+    const { inputText, filename } = req.body;
+    
+    if (!inputText) {
+      return res.status(400).json({
+        success: false,
+        error: "inputText is required"
+      });
+    }
+    
+    if (!screenshotService) {
+      return res.status(503).json({ error: "Screenshot service not available" });
+    }
+    const result = await screenshotService.captureAnalysis(inputText, filename);
+    
+    res.json({
+      success: true,
+      screenshot: result,
+      message: "Analysis screenshot captured successfully"
+    });
+  } catch (error) {
+    log.error(`Analysis screenshot failed: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// List all available screenshots
+app.get("/api/screenshots", async (req, res) => {
+  try {
+    if (!screenshotService) {
+      return res.status(503).json({ error: "Screenshot service not available" });
+    }
+    const screenshots = await screenshotService.listScreenshots();
+    
+    res.json({
+      success: true,
+      screenshots: screenshots,
+      count: screenshots.length
+    });
+  } catch (error) {
+    log.error(`Failed to list screenshots: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get specific screenshot info
+app.get("/api/screenshot-info/:filename", async (req, res) => {
+  try {
+    const { filename } = req.params;
+    if (!screenshotService) {
+      return res.status(503).json({ error: "Screenshot service not available" });
+    }
+    const screenshotPath = await screenshotService.getScreenshotPath(filename);
+    
+    const stats = fs.statSync(screenshotPath);
+    
+    res.json({
+      success: true,
+      screenshot: {
+        filename: filename,
+        path: screenshotPath,
+        url: `/api/screenshot/${filename}`,
+        size: stats.size,
+        created: stats.birthtime,
+        modified: stats.mtime
+      }
+    });
+  } catch (error) {
+    res.status(404).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Cleanup old screenshots
+app.post("/api/cleanup-screenshots", async (req, res) => {
+  try {
+    const { keepCount = 10 } = req.body;
+    if (!screenshotService) {
+      return res.status(503).json({ error: "Screenshot service not available" });
+    }
+    await screenshotService.cleanupOldScreenshots(keepCount);
+    
+    res.json({
+      success: true,
+      message: `Cleaned up old screenshots, kept ${keepCount} most recent`
+    });
+  } catch (error) {
+    log.error(`Screenshot cleanup failed: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 // ==================== PAYMENT ROUTES ====================
 
@@ -1074,13 +1239,10 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
 // Graceful shutdown handling for nodemon restarts
 if (!isServerless && !isTestMode) {
   const gracefulShutdown = (signal) => {
-    console.log(`\n${signal} received: closing HTTP/HTTPS servers gracefully`);
-
     const closeServer = (server, name) => {
       return new Promise((resolve) => {
         if (server) {
           server.close(() => {
-            console.log(`${name} server closed`);
             resolve();
           });
         } else {
@@ -1093,13 +1255,11 @@ if (!isServerless && !isTestMode) {
       closeServer(httpServer, "HTTP"),
       closeServer(httpsServerInstance, "HTTPS"),
     ]).then(() => {
-      console.log("Shutdown complete");
       process.exit(0);
     });
 
     // Force exit after 5 seconds
     setTimeout(() => {
-      console.error("Forced shutdown after timeout");
       process.exit(1);
     }, 5000);
   };
@@ -1112,15 +1272,11 @@ if (!isServerless && !isTestMode) {
 
 // Global error handlers
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
-  console.log(
-    "💡 This usually indicates a network or API error. Check your internet connection and API keys.",
-  );
+  console.error("❌ Unhandled Rejection:", reason);
 });
 
 process.on("uncaughtException", (error) => {
   console.error("❌ Uncaught Exception:", error.message);
-  console.log("💡 Application crashed. Check the error details above.");
   process.exit(1);
 });
 

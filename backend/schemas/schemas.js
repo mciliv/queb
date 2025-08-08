@@ -19,7 +19,28 @@ const ImageMoleculeSchema = z.object({
 
 // Schema for text molecule analysis
 const TextMoleculeSchema = z.object({
-  object: z.string().min(1, "Object description is required"),
+  object: z.string()
+    .min(1, "Object description is required")
+    .refine(
+      (value) => {
+        // Basic validation for physical objects
+        const text = value.toLowerCase().trim();
+        
+        // Reject obviously non-physical things
+        const nonPhysicalPatterns = [
+          /^(love|hate|happy|sad|angry|joy|fear|hope|dream|idea|thought|feeling|emotion)/,
+          /^(running|walking|talking|thinking|sleeping|eating|drinking)$/,
+          /^[a-z]{1,2}$/,  // Single letters or very short nonsense
+          /^[^a-z]*$/,     // Only numbers/symbols
+          /^(asdf|qwerty|test|random|nothing|something|anything|everything)$/i
+        ];
+        
+        return !nonPhysicalPatterns.some(pattern => pattern.test(text));
+      },
+      {
+        message: "Please describe a real, physical object (food, materials, plants, etc.)"
+      }
+    )
 });
 
 // Schema for SDF generation

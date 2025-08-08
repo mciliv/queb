@@ -1,2 +1,3 @@
-2025/08/07-15:23:28.029 127f70 Creating DB /Users/m/mol/test/chrome-molecular-profile/Default/Site Characteristics Database since it was missing.
-2025/08/07-15:23:28.032 127f70 Reusing MANIFEST /Users/m/mol/test/chrome-molecular-profile/Default/Site Characteristics Database/MANIFEST-000001
+2025/08/08-20:19:14.582 505f7 Reusing MANIFEST /Users/m/mol/test/chrome-molecular-profile/Default/Site Characteristics Database/MANIFEST-000001
+2025/08/08-20:19:14.583 505f7 Recovering log #3
+2025/08/08-20:19:14.583 505f7 Reusing old log /Users/m/mol/test/chrome-molecular-profile/Default/Site Characteristics Database/000003.log 

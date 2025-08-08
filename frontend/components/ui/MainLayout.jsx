@@ -1,12 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import TextInput from '../input/TextInput';
 import ModeSelector from '../input/ModeSelector';
 import CameraSection from '../input/CameraSection';
 import PhotoSection from '../input/PhotoSection';
-import MolecularAnalysisResults from '../visualization/Results';
-import PaymentSection from './PaymentSection';
-import MolecularTestPanel from '../visualization/MolecularTestPanel';
-import { usePayment } from './PaymentContext';
+import LinkSection from '../input/LinkSection';
 import { useApi } from '../../hooks/useApi';
 
 // Inline styles for main layout
@@ -21,106 +18,68 @@ const styles = {
     lineHeight: 1.4,
     letterSpacing: '0.01em'
   },
-  mainAppInterface: {
-    position: 'relative',
-    width: '100%',
-    minHeight: '100vh'
+  mainLayout: {
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '20px',
+    gap: '20px'
   },
-  mainContentLayout: {
+  inputSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    maxWidth: '600px'
+  },
+  columnsContainer: {
     display: 'flex',
     flexDirection: 'row',
     gap: '20px',
-    padding: '20px',
-    maxWidth: '100vw',
-    overflow: 'hidden'
+    overflowX: 'auto',
+    padding: '20px 0',
+    minHeight: '400px'
   },
-  analysisSection: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px',
-    maxWidth: 'calc(100vw - 320px)'
-  },
-  helpButton: {
-    position: 'fixed',
-    bottom: '20px',
-    left: '20px',
-    background: 'rgba(255, 255, 255, 0.1)',
-    border: 'none',
-    borderRadius: '50%',
-    width: '50px',
-    height: '50px',
-    color: '#ffffff',
-    cursor: 'pointer',
-    fontSize: '18px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000
+  column: {
+    minWidth: '400px',
+    background: 'transparent',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px',
+    padding: '20px'
   }
 };
 
-const MainLayout = ({ 
-  isProcessing,
-  setIsProcessing,
-  viewers,
-  setViewers,
-  currentAnalysisType,
-  setCurrentAnalysisType,
-  lastAnalysis,
-  setLastAnalysis
-}) => {
+// Global flag to ensure 3Dmol is only loaded once
+let threeDmolLoading = false;
+let threeDmolLoaded = false;
+
+const MainLayout = () => {
   const [objectInput, setObjectInput] = useState('');
   const [cameraMode, setCameraMode] = useState(false);
   const [photoMode, setPhotoMode] = useState(false);
-  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [linkMode, setLinkMode] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [columns, setColumns] = useState([]);
   const [error, setError] = useState('');
-  const [retryCount, setRetryCount] = useState(0);
-  const [lastSuccessfulAnalysis, setLastSuccessfulAnalysis] = useState(null);
-  const { checkPaymentRequired } = usePayment();
-  const { analyzeText, generateSDFs, error: apiError } = useApi();
-  const maxRetries = 3;
+  const { analyzeText, generateSDFs } = useApi();
 
-  // Clear error when input changes
+  // Load 3Dmol.js once at app start
   useEffect(() => {
-    if (error && objectInput) {
-      setError('');
+    if (!threeDmolLoaded && !threeDmolLoading && typeof window.$3Dmol === 'undefined') {
+      threeDmolLoading = true;
+      const script = document.createElement('script');
+      script.src = 'https://3Dmol.org/build/3Dmol-min.js';
+      script.async = true;
+      script.onload = () => {
+        threeDmolLoaded = true;
+        threeDmolLoading = false;
+        console.log('3Dmol.js loaded successfully');
+      };
+      document.head.appendChild(script);
     }
-  }, [objectInput, error]);
-
-  // Handle API errors
-  useEffect(() => {
-    if (apiError) {
-      setError(`API Error: ${apiError}`);
-    }
-  }, [apiError]);
+  }, []);
 
   // Handle keyboard shortcuts
-  // API hook for connection testing
-  const { testConnection } = useApi();
-  
-  // Debug: Test API connection on component mount
-  useEffect(() => {
-    const runConnectionTest = async () => {
-      try {
-        console.log('🔍 Testing API connection...');
-        const isConnected = await testConnection();
-        if (isConnected) {
-          console.log('✅ API connection successful');
-        } else {
-          console.log('❌ API connection failed');
-        }
-      } catch (error) {
-        console.log('❌ API connection test failed:', error.message);
-      }
-    };
-    
-    runConnectionTest();
-  }, [testConnection]);
-
   useEffect(() => {
     const handleKeyDown = (event) => {
-      // Ignore shortcuts when typing in input fields
       if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
         return;
       }
@@ -128,171 +87,79 @@ const MainLayout = ({
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const modifier = isMac ? event.metaKey : event.ctrlKey;
 
-      switch (event.key.toLowerCase()) {
-        case 'k':
-          if (modifier) {
-            event.preventDefault();
-            document.getElementById('object-input')?.focus();
-          }
-          break;
-        case 'c':
-          if (modifier) {
-            event.preventDefault();
-            setCameraMode(prev => !prev);
-            setPhotoMode(false);
-          }
-          break;
-        case 'p':
-          if (modifier) {
-            event.preventDefault();
-            setPhotoMode(prev => !prev);
-            setCameraMode(false);
-          }
-          break;
-        case 'escape':
-          // Clear modes and focus
-          setCameraMode(false);
-          setPhotoMode(false);
-          setShowShortcuts(false);
-          setError('');
-          document.getElementById('object-input')?.focus();
-          break;
-        case 'backspace':
-          if (modifier) {
-            event.preventDefault();
-            setViewers([]);
-            setLastAnalysis(null);
-            setError('');
-          }
-          break;
-        case 'enter':
-          if (modifier && objectInput.trim()) {
-            event.preventDefault();
-            handleTextAnalysis(objectInput);
-          }
-          break;
-        case 's':
-          if (modifier) {
-            event.preventDefault();
-            setShowShortcuts(prev => !prev);
-          }
-          break;
-        case 't':
-          if (modifier) {
-            event.preventDefault();
-            // Trigger test panel - find and click the test button
-            const testButton = document.querySelector('.test-panel-toggle');
-            if (testButton) {
-              testButton.click();
-            }
-          }
-          break;
+      if (modifier && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        document.getElementById('object-input')?.focus();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [objectInput, setViewers, setLastAnalysis]);
+  }, []);
 
   const handleTextAnalysis = useCallback(async (value) => {
-    if (isProcessing || !value.trim()) return;
-
-    if (checkPaymentRequired()) {
-      // Show payment modal
-      return;
-    }
+    if (!value.trim()) return;
 
     setIsProcessing(true);
-    setCurrentAnalysisType('text');
     setError('');
     
     try {
       const result = await analyzeText(value);
-      console.log('🧪 Full API response:', result); // Debug the response
-      
-      // Handle both 'molecules' and 'chemicals' field names for compatibility
       const molecules = result.molecules || result.chemicals || [];
-      console.log('🧪 Extracted molecules:', molecules); // Debug molecule extraction
       
       if (molecules && molecules.length > 0) {
-        // Extract SMILES strings for SDF generation
         const smilesArray = molecules.map(mol => mol.smiles).filter(Boolean);
         
         if (smilesArray.length > 0) {
           try {
-            // Generate SDF data from SMILES
             const sdfResult = await generateSDFs(smilesArray, false);
             
-            // Create viewers with SDF data
-            const newViewers = molecules.map((mol, index) => {
+            const viewers = molecules.map((mol, index) => {
               const sdfPath = sdfResult.sdfPaths && sdfResult.sdfPaths[index];
               return {
                 name: mol.name || value,
-                sdfData: sdfPath ? `file://${sdfPath}` : null, // Use file path for SDF data
+                sdfData: sdfPath ? `file://${sdfPath}` : null,
                 smiles: mol.smiles
               };
             });
             
-            setViewers(newViewers);
-            setLastSuccessfulAnalysis(result);
-            setRetryCount(0); // Reset retry count on success
+            // Add new column for this analysis
+            setColumns(prev => [...prev, {
+              id: Date.now(),
+              query: value,
+              viewers: viewers
+            }]);
           } catch (sdfError) {
             console.error('SDF generation failed:', sdfError);
-            // Still show molecules even if SDF generation fails
-            const newViewers = molecules.map(mol => ({
-              name: mol.name || value,
-              sdfData: null,
-              smiles: mol.smiles
-            }));
-            setViewers(newViewers);
-            setLastSuccessfulAnalysis(result);
-            setRetryCount(0);
+            setError('Failed to generate molecular structures');
           }
         } else {
           setError('No valid SMILES found in the analysis results.');
         }
       } else {
-        setError('No molecules found for this input. Try a different chemical name or formula.');
+        setError('No molecules found for this input.');
       }
       
-      setLastAnalysis(result);
       setObjectInput('');
     } catch (error) {
       console.error('Analysis failed:', error);
-      
-      // Implement retry logic
-      if (retryCount < maxRetries) {
-        setRetryCount(prev => prev + 1);
-        setError(`Analysis failed. Retrying... (${retryCount + 1}/${maxRetries})`);
-        
-        // Retry after a short delay
-        setTimeout(() => {
-          handleTextAnalysis(value);
-        }, 1000 * (retryCount + 1)); // Exponential backoff
-      } else {
-        setError(`Analysis failed after ${maxRetries} attempts. Please check your input and try again.`);
-        setRetryCount(0);
-      }
+      setError('Analysis failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
-  }, [isProcessing, analyzeText, generateSDFs, setViewers, setLastAnalysis, checkPaymentRequired, retryCount]);
+  }, [isProcessing, analyzeText, generateSDFs]);
 
   const handleAnalysisComplete = useCallback(async (result) => {
-    // Handle both 'molecules' and 'chemicals' field names for compatibility
     const molecules = result.molecules || result.chemicals || [];
     
     if (molecules && molecules.length > 0) {
-      // Extract SMILES strings for SDF generation
       const smilesArray = molecules.map(mol => mol.smiles).filter(Boolean);
       
       if (smilesArray.length > 0) {
         try {
-          // Generate SDF data from SMILES
           const sdfResult = await generateSDFs(smilesArray, false);
           
-          // Create viewers with SDF data
-          const newViewers = molecules.map((mol, index) => {
+          const viewers = molecules.map((mol, index) => {
             const sdfPath = sdfResult.sdfPaths && sdfResult.sdfPaths[index];
             return {
               name: mol.name || 'Captured object',
@@ -301,175 +168,194 @@ const MainLayout = ({
             };
           });
           
-          setViewers(prev => [...prev, ...newViewers]);
-          setLastSuccessfulAnalysis(result);
+          // Add new column for this analysis
+          setColumns(prev => [...prev, {
+            id: Date.now(),
+            query: 'Captured from ' + (cameraMode ? 'camera' : 'image'),
+            viewers: viewers
+          }]);
         } catch (sdfError) {
           console.error('SDF generation failed:', sdfError);
-          // Still show molecules even if SDF generation fails
-          const newViewers = molecules.map(mol => ({
-            name: mol.name || 'Captured object',
-            sdfData: null,
-            smiles: mol.smiles
-          }));
-          setViewers(prev => [...prev, ...newViewers]);
-          setLastSuccessfulAnalysis(result);
         }
-      } else {
-        // Show molecules without SDF data
-        const newViewers = molecules.map(mol => ({
-          name: mol.name || 'Captured object',
-          sdfData: null,
-          smiles: mol.smiles
-        }));
-        setViewers(prev => [...prev, ...newViewers]);
-        setLastSuccessfulAnalysis(result);
       }
     }
     
-    setLastAnalysis(result);
     setError('');
-  }, [setViewers, setLastAnalysis, generateSDFs]);
+  }, [generateSDFs, cameraMode]);
 
-  const handleRetry = useCallback(() => {
-    if (lastSuccessfulAnalysis) {
-      handleTextAnalysis(objectInput || lastSuccessfulAnalysis.query);
-    }
-  }, [lastSuccessfulAnalysis, objectInput, handleTextAnalysis]);
-
-  const handleTestAnalysis = useCallback(async (testInput) => {
-    console.log(`🧪 Running test analysis for: ${testInput}`);
-    await handleTextAnalysis(testInput);
-  }, [handleTextAnalysis]);
+  const removeColumn = useCallback((columnId) => {
+    setColumns(prev => prev.filter(col => col.id !== columnId));
+  }, []);
 
   return (
     <div style={styles.appContainer}>
-      <div style={styles.mainAppInterface}>
-        <div style={styles.mainContentLayout}>
-          {/* Left side: Analysis section */}
-          <div style={styles.analysisSection}>
-            <TextInput 
-              value={objectInput}
-              onChange={setObjectInput}
-              onSubmit={handleTextAnalysis}
+      <div style={styles.mainLayout}>
+        {/* Input section */}
+        <div style={styles.inputSection}>
+          <TextInput 
+            value={objectInput}
+            onChange={setObjectInput}
+            onSubmit={handleTextAnalysis}
+            isProcessing={isProcessing}
+            error={error}
+          />
+
+          <ModeSelector
+            cameraMode={cameraMode}
+            setCameraMode={setCameraMode}
+            photoMode={photoMode}
+            setPhotoMode={setPhotoMode}
+            linkMode={linkMode}
+            setLinkMode={setLinkMode}
+          />
+
+          {cameraMode && (
+            <CameraSection
               isProcessing={isProcessing}
-              error={error}
+              setIsProcessing={setIsProcessing}
+              setCurrentAnalysisType={() => {}}
+              onAnalysisComplete={handleAnalysisComplete}
             />
+          )}
 
-            <ModeSelector
-              cameraMode={cameraMode}
-              setCameraMode={setCameraMode}
-              photoMode={photoMode}
-              setPhotoMode={setPhotoMode}
+          {photoMode && (
+            <PhotoSection
+              isProcessing={isProcessing}
+              setIsProcessing={setIsProcessing}
+              setCurrentAnalysisType={() => {}}
+              onAnalysisComplete={handleAnalysisComplete}
             />
+          )}
 
-            {cameraMode && (
-              <CameraSection
-                isProcessing={isProcessing}
-                setIsProcessing={setIsProcessing}
-                setCurrentAnalysisType={setCurrentAnalysisType}
-                onAnalysisComplete={handleAnalysisComplete}
-              />
-            )}
-
-            {photoMode && (
-              <PhotoSection
-                isProcessing={isProcessing}
-                setIsProcessing={setIsProcessing}
-                setCurrentAnalysisType={setCurrentAnalysisType}
-                onAnalysisComplete={handleAnalysisComplete}
-              />
-            )}
-
-            <MolecularAnalysisResults 
-              moleculeViewers={viewers} 
-              setMoleculeViewers={setViewers} 
-              lastAnalysisResult={lastAnalysis}
-              isAnalyzing={isProcessing}
-              currentAnalysisType={currentAnalysisType}
-              targetObjectInput={objectInput}
+          {linkMode && (
+            <LinkSection
+              isProcessing={isProcessing}
+              setIsProcessing={setIsProcessing}
+              onAnalysisComplete={handleAnalysisComplete}
             />
-          </div>
+          )}
+        </div>
 
-          {/* Right side: Payment section */}
-          <PaymentSection />
+        {/* Columns container */}
+        <div style={styles.columnsContainer}>
+          {columns.map(column => (
+            <MolecularColumn
+              key={column.id}
+              column={column}
+              onRemove={() => removeColumn(column.id)}
+            />
+          ))}
         </div>
       </div>
+    </div>
+  );
+};
 
-      {/* Help button */}
-      <button 
-        style={styles.helpButton}
-        onClick={() => setShowShortcuts(true)}
-        title={`Keyboard shortcuts (${navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+S)`}
-      >
-        ?
-      </button>
+// Individual column component
+const MolecularColumn = ({ column, onRemove }) => {
+  const gridViewerRef = useRef(null);
+  const [viewer, setViewer] = useState(null);
 
-      {/* Retry button for failed analyses */}
-      {error && lastSuccessfulAnalysis && (
+  useEffect(() => {
+    const initializeGridViewer = async () => {
+      // Wait for 3Dmol to be loaded
+      while (typeof window.$3Dmol === 'undefined') {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      if (!gridViewerRef.current || viewer) return;
+
+      try {
+        console.log(`Creating grid viewer for ${column.viewers.length} molecules`);
+        
+        // Create a grid viewer for all molecules in this column
+        const gridConfig = {
+          rows: column.viewers.length,
+          cols: 1,
+          control_all: false
+        };
+        
+        const gridViewer = window.$3Dmol.createViewerGrid(gridViewerRef.current, gridConfig, {
+          backgroundColor: 'transparent',
+          antialias: true,
+          defaultcolors: window.$3Dmol.rasmolElementColors
+        });
+        
+        // Load each molecule into its grid position
+        for (let i = 0; i < column.viewers.length; i++) {
+          const molecularData = column.viewers[i];
+          if (molecularData.sdfData && molecularData.sdfData.startsWith('file://')) {
+            const path = molecularData.sdfData.replace('file://', '');
+            try {
+              const response = await fetch(`/sdf_files/${path.split('/').pop()}`);
+              if (response.ok) {
+                const sdfContent = await response.text();
+                console.log(`Loading ${molecularData.name} into grid position ${i}`);
+                gridViewer.addModel(sdfContent, 'sdf', {}, i);
+                gridViewer.setStyle({}, { sphere: { scale: 0.8 } }, i);
+                gridViewer.zoomTo(i);
+                gridViewer.render(i);
+              }
+            } catch (err) {
+              console.error(`Failed to load ${molecularData.name}:`, err);
+            }
+          }
+        }
+        
+        setViewer(gridViewer);
+      } catch (error) {
+        console.error('Failed to create grid viewer:', error);
+      }
+    };
+
+    initializeGridViewer();
+  }, [column.viewers]);
+
+  return (
+    <div style={styles.column}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <h3>{column.query}</h3>
         <button 
-          className="retry-button"
-          onClick={handleRetry}
-          title="Retry last analysis"
+          onClick={onRemove}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#ffffff',
+            fontSize: '20px',
+            cursor: 'pointer'
+          }}
         >
-          ↻
+          ×
         </button>
-      )}
-
-      {/* Keyboard shortcuts help overlay */}
-      {showShortcuts && (
-        <div className="shortcuts-overlay" onClick={() => setShowShortcuts(false)}>
-          <div className="shortcuts-modal" onClick={e => e.stopPropagation()}>
-            <div className="shortcuts-header">
-              <h3>Keyboard Shortcuts</h3>
-              <button onClick={() => setShowShortcuts(false)}>×</button>
-            </div>
-            <div className="shortcuts-list">
-              <div className="shortcut-item">
-                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+K</kbd>
-                <span>Focus text input</span>
-              </div>
-              <div className="shortcut-item">
-                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+C</kbd>
-                <span>Toggle camera mode</span>
-              </div>
-              <div className="shortcut-item">
-                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+P</kbd>
-                <span>Toggle photo mode</span>
-              </div>
-              <div className="shortcut-item">
-                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+Enter</kbd>
-                <span>Submit text analysis</span>
-              </div>
-              <div className="shortcut-item">
-                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+⌫</kbd>
-                <span>Clear all results</span>
-              </div>
-              <div className="shortcut-item">
-                <kbd>Esc</kbd>
-                <span>Clear modes & focus input</span>
-              </div>
-              <div className="shortcut-item">
-                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+W</kbd>
-                <span>Close last molecule viewer</span>
-              </div>
-              <div className="shortcut-item">
-                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+S</kbd>
-                <span>Show/hide shortcuts</span>
-              </div>
-              <div className="shortcut-item">
-                <kbd>{navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+T</kbd>
-                <span>Open test panel</span>
-              </div>
-            </div>
-          </div>
+      </div>
+      
+      {/* Labels for each molecule */}
+      {column.viewers.map((mol, idx) => (
+        <div key={idx} style={{ 
+          background: 'rgba(255, 255, 255, 0.05)', 
+          padding: '8px', 
+          marginBottom: '5px',
+          borderRadius: '4px',
+          fontSize: '14px'
+        }}>
+          {mol.name}
         </div>
-      )}
-
-      {/* Molecular Test Panel for development */}
-      <MolecularTestPanel 
-        onTestAnalysis={handleTestAnalysis}
-        isProcessing={isProcessing}
+      ))}
+      
+      {/* Grid viewer container */}
+      <div 
+        ref={gridViewerRef}
+        style={{ 
+          height: `${column.viewers.length * 200}px`, 
+          width: '100%', 
+          background: 'transparent',
+          border: '1px solid rgba(255, 255, 255, 0.05)'
+        }}
       />
+      
+      <div style={{ marginTop: '10px', fontSize: '12px', opacity: 0.7 }}>
+        {column.viewers.length} molecule{column.viewers.length !== 1 ? 's' : ''} detected
+      </div>
     </div>
   );
 };

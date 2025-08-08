@@ -63,6 +63,11 @@ function parseAIResponseWithFallbacks(content) {
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       
+      // Check for AI rejection of non-physical objects
+      if (parsed.error && parsed.error.includes("Not a valid physical object")) {
+        throw new Error("The input does not describe a valid physical object that can be analyzed for chemical composition.");
+      }
+      
       // Validate the parsed response has required fields
       if (parsed.object && parsed.chemicals && Array.isArray(parsed.chemicals)) {
         return {

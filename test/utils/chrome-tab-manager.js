@@ -55,9 +55,12 @@ class ChromeTabManager {
   async launchNewBrowser() {
     console.log('🚀 Launching new Chrome instance...');
     
+    const userDataDir = `./test/chrome-molecular-profile-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     this.browser = await puppeteer.launch({
       headless: false,
       defaultViewport: { width: 1600, height: 1000 },
+      userDataDir: userDataDir,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -67,7 +70,9 @@ class ChromeTabManager {
         '--disable-default-apps',
         '--disable-extensions',
         `--remote-debugging-port=${this.debuggingPort}`,
-        '--user-data-dir=./test/chrome-molecular-profile' // Persistent profile
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
       ],
       slowMo: 200,
       ignoreDefaultArgs: ['--disable-extensions'] // Allow extensions if needed
@@ -154,11 +159,11 @@ class ChromeTabManager {
   async waitForMolecularApp() {
     try {
       // Wait for the molecular app to be ready
-      await this.page.waitForSelector('input[type="text"]', { timeout: 15000 });
+      await this.page.waitForSelector('#object-input', { timeout: 15000 });
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Verify app is interactive
-      const inputExists = await this.page.$('input[type="text"]');
+      const inputExists = await this.page.$('#object-input');
       if (!inputExists) {
         throw new Error('Molecular app input not found');
       }
@@ -187,7 +192,7 @@ class ChromeTabManager {
     if (!this.page) return;
     
     await this.page.evaluate(() => {
-      const input = document.querySelector('input[type="text"]');
+      const input = document.querySelector('#object-input');
       if (input) {
         input.value = '';
         input.focus();
@@ -203,7 +208,7 @@ class ChromeTabManager {
     
     // Clear and type in one operation to avoid timing issues
     await this.page.evaluate((inputText) => {
-      const input = document.querySelector('input[type="text"]');
+      const input = document.querySelector('#object-input');
       if (input) {
         input.value = '';
         input.focus();

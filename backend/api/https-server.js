@@ -100,7 +100,7 @@ class HttpsServer {
           log.warning(
             `⚠️ HTTPS port ${this.requestedPort} in use, using port ${this.actualPort} instead`
           );
-        }
+        j}
       } catch (error) {
         log.error(`❌ Could not find available HTTPS port: ${error.message}`);
         log.warning("💡 Try stopping other services or use a different port range");

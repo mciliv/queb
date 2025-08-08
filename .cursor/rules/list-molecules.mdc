@@ -1,7 +1,13 @@
 ---
-alwaysApply: true
+match: "list-molecules"
 ---
 
-The goal of this application is to maximize user's ability to get the world's best estimate & visualization of what molecules are contained in a given section of space, this is currently done by image, or average for an object for the user's specification of an object.
+The goal of this application is to maximize user's ability to get the world's best estimate & visualization o what molecules are contained in a given section o space, this is currently done by image, or average or an object or the user's speciication o an object.
 
-Visualize molecules as a 3dmoljs gridviewer list w same background as main app
+the app should have the following structure:
+Text input (⌘+k)
+camera|image/link input buttons in which none, either/or can be selected
+
+upon selecting the input, 
+a column is added to the below, to the right in column exists
+the column should be a 3dmoljs gridviewer where each viewer has a viewer w same background as main app

@@ -1,4 +1,4 @@
-const ChromeTabManager = require('../utils/chrome-tab-manager');
+const ChromeTabManager = require('../../utils/chrome-tab-manager');
 const path = require('path');
 
 describe('Persistent Tab Molecular Tests', () => {
@@ -92,12 +92,12 @@ describe('Persistent Tab Molecular Tests', () => {
     console.log(`   🌐 Current URL: ${tabInfo.url}`);
     
     // Check that we can still interact with the page
-    const inputExists = await page.$('input[type="text"]');
+    const inputExists = await page.$('#object-input');
     expect(inputExists).toBeTruthy();
     
     // Verify page is responsive
     await tabManager.typeInput('test persistence');
-    const inputValue = await page.$eval('input[type="text"]', el => el.value);
+    const inputValue = await page.$eval('#object-input', el => el.value);
     expect(inputValue).toBe('test persistence');
     
     console.log('✅ Tab persistence verified - same tab used throughout all tests!');

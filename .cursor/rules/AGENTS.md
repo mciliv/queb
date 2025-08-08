@@ -4,11 +4,12 @@ alwaysApply: true
 
 # Claude-4 instructions
 Never assume perfection
+
+# General
 Maximally simple & straightforward
-only respond in code
+Use code instead of anything meta wherever possible
 If anything can be seen as a principle, put here
 No logging
-Prefer code comments over chat text
 Show code chunks not descriptions
 Don't create extraneous files; no markdown, if anything, simplify the code & tell me why to look at it
 

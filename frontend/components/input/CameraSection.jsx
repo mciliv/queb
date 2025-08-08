@@ -114,7 +114,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
   };
 
   const handleCameraClick = async () => {
-    if (isProcessing || !hasPermission || !videoRef.current) return;
+    if (!hasPermission || !videoRef.current) return;
 
     if (checkPaymentRequired()) {
       return;

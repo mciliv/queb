@@ -2,9 +2,9 @@ import { useState, useCallback } from 'react';
 
 // Auto-detect the correct API base URL based on current environment
 const getApiBase = () => {
-  // For development, always use localhost:3000 where backend is running
+  // For development, always use localhost:3001 where backend is running
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:3000';
+    return 'http://localhost:3001';
   }
   // For production, use relative URLs
   return '';

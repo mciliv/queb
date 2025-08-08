@@ -14,6 +14,16 @@
 function buildChemicalAnalysisInstructions() {
   return `You are a molecular analysis expert. Analyze the object and provide a JSON response with accurate chemical composition.
 
+OBJECT VALIDATION RULES:
+1. ONLY analyze if the input describes a real, physical object or substance
+2. REJECT abstract concepts, emotions, actions, or non-physical things
+3. REJECT nonsensical text, random words, or incomplete descriptions
+4. REJECT if the input is clearly not describing a tangible material
+5. For invalid inputs, respond with: {"error": "Not a valid physical object", "object": "", "chemicals": []}
+
+VALID OBJECTS: food, drinks, materials, plants, minerals, chemicals, household items, etc.
+INVALID OBJECTS: love, happiness, running, thinking, "asdfgh", incomplete words, etc.
+
 CRITICAL RULES FOR ACCURATE SMILES:
 1. Generate ONLY valid, verified SMILES notation - double-check each one
 2. Use standard SMILES from established databases (PubChem, ChEBI)  

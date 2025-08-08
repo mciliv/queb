@@ -1,0 +1,65 @@
+#!/bin/bash
+
+set -e
+
+# Get project root
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$PROJECT_ROOT"
+
+# Colors for output
+source infrastructure/scripts/colors.sh
+
+# Check if there are changes
+if [[ -z $(git status --porcelain) ]]; then
+    log_info "No changes to commit"
+    exit 0
+fi
+
+# Add all changes
+log_info "Adding all changes..."
+git add .
+
+# Generate commit message
+log_info "🤖 Generating commit message..."
+COMMIT_MSG=$(node scripts/generate-commit-message.js 2>/dev/null || echo "chore: update files")
+
+# Show what will be committed
+log_info "Changes to be committed:"
+git status --short
+echo ""
+log_info "Generated commit message: $COMMIT_MSG"
+echo ""
+
+# Ask for confirmation
+read -p "Proceed with commit and push? (y/n/e to edit message): " -n 1 -r
+echo ""
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    git commit -m "$COMMIT_MSG"
+    log_success "✅ Changes committed!"
+    
+    # Push to remote
+    log_info "🚀 Pushing to remote..."
+    if git push; then
+        log_success "✅ Changes pushed successfully!"
+    else
+        log_error "❌ Push failed. You may need to pull first or resolve conflicts."
+    fi
+elif [[ $REPLY =~ ^[Ee]$ ]]; then
+    # Let user edit the message
+    read -p "Enter commit message: " CUSTOM_MSG
+    git commit -m "$CUSTOM_MSG"
+    log_success "✅ Changes committed with custom message!"
+    
+    # Push to remote
+    log_info "🚀 Pushing to remote..."
+    if git push; then
+        log_success "✅ Changes pushed successfully!"
+    else
+        log_error "❌ Push failed. You may need to pull first or resolve conflicts."
+    fi
+else
+    log_info "Commit cancelled"
+    # Reset staged changes
+    git reset HEAD
+fi

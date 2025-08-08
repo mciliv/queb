@@ -1,2 +1,3 @@
-2025/08/07-15:23:28.076 127fa9 Creating DB /Users/m/mol/test/chrome-molecular-profile/Default/Local Storage/leveldb since it was missing.
-2025/08/07-15:23:28.083 127fa9 Reusing MANIFEST /Users/m/mol/test/chrome-molecular-profile/Default/Local Storage/leveldb/MANIFEST-000001
+2025/08/08-20:19:14.618 50632 Reusing MANIFEST /Users/m/mol/test/chrome-molecular-profile/Default/Local Storage/leveldb/MANIFEST-000001
+2025/08/08-20:19:14.620 50632 Recovering log #3
+2025/08/08-20:19:14.620 50632 Reusing old log /Users/m/mol/test/chrome-molecular-profile/Default/Local Storage/leveldb/000003.log 

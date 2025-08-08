@@ -11,28 +11,16 @@ cd "$PROJECT_ROOT"
 # Colors for output
 source infrastructure/scripts/colors.sh
 
-echo "🚀 Starting Development Server"
-echo "=============================="
-
 # Clean up any existing processes
-log_clean "Cleaning up development processes..."
 ./cleanup 2>/dev/null || true
 
 # Run unified tests before starting development  
-log_info "🧪 Running comprehensive test suite..."
-if node test/scripts/unified-test-runner.js; then
-    log_success "✅ All tests passed!"
-else
-    log_error "❌ Tests failed! Fix issues before continuing."
+if ! node test/scripts/unified-test-runner.js; then
+    log_error "❌ Tests failed!"
     exit 1
 fi
 
-log_info "Starting development servers..."
-log_info "Press Ctrl+C to stop"
-echo ""
-
 # Start the Node.js backend server
-log_info "🔧 Starting Node.js backend..."
 PORT=3000 NODE_ENV=development npx nodemon --quiet backend/api/server.js &
 BACKEND_PID=$!
 
@@ -41,26 +29,15 @@ sleep 3
 
 # Check if backend is running
 if kill -0 $BACKEND_PID 2>/dev/null; then
-    log_success "✅ Backend server is running!"
-    
-    echo ""
-    log_success "🌐 Development URLs:"
-    log_success "   http://localhost:3000"
-    log_success "   https://localhost:3002"
-    echo ""
+    log_success "✅ http://localhost:3000"
     
     # Store PID for cleanup
     echo $BACKEND_PID > /tmp/dev_backend_pid
-    
-    log_success "✅ Development server ready!"
-    log_info "   📝 Edit frontend files - restart server to see changes"
-    log_info "   🌐 Single server serves everything on port 3000"
     
     # Wait for process to exit, then cleanup
     wait $BACKEND_PID
     
     # Cleanup when process exits
-    log_info "🔄 Shutting down development server..."
     kill $BACKEND_PID 2>/dev/null || true
     
 else

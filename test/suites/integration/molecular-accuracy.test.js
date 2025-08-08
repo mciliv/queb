@@ -2,7 +2,7 @@
 // Tests actual AtomPredictor responses against known chemical compositions
 // Run with: npm test -- test/integration/molecular-accuracy.test.js
 
-const AtomPredictor = require("../../backend/services/AtomPredictor");
+const AtomPredictor = require("../../../backend/services/AtomPredictor");
 
 // Known molecular compositions for testing prompt accuracy
 const REFERENCE_MATERIALS = {

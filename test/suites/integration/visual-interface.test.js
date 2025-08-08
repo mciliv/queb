@@ -5,7 +5,7 @@
 
 const puppeteer = require('puppeteer');
 const path = require('path');
-const AutoTabConnector = require('../utils/auto-tab-connector');
+const AutoTabConnector = require('../../utils/auto-tab-connector');
 
 describe('Visual Interface Tests', () => {
   let browser;
@@ -15,33 +15,31 @@ describe('Visual Interface Tests', () => {
   beforeAll(async () => {
     console.log('🚀 Starting visual interface tests...');
     
-    // Try to reuse existing tab first
-    try {
-      const tabInfo = await AutoTabConnector.getOrCreateTab();
-      browser = tabInfo.browser;
-      page = tabInfo.page;
-      
-      if (tabInfo.reused) {
-        console.log('♻️  Reusing existing Chrome tab');
-      } else {
-        console.log('🌟 Launched new Chrome instance');
-      }
-    } catch (error) {
-      // Fallback to traditional approach
-      browser = await puppeteer.launch({
-        headless: process.env.HEADLESS === 'false' ? false : 'new',
-        defaultViewport: { width: 1280, height: 720 },
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        slowMo: process.env.HEADLESS === 'false' ? 300 : 0
-      });
-      
-      page = await browser.newPage();
-      await page.goto(frontendUrl, { waitUntil: 'networkidle0' });
-    }
+    // Use simple, reliable browser launch
+    browser = await puppeteer.launch({
+      headless: process.env.HEADLESS === 'false' ? false : 'new',
+      defaultViewport: { width: 1280, height: 720 },
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-web-security',
+        '--no-first-run',
+        '--disable-default-apps'
+      ],
+      slowMo: process.env.HEADLESS === 'false' ? 300 : 0
+    });
+    
+    page = await browser.newPage();
     
     // Enable console logging from the page
     page.on('console', msg => {
       console.log(`📄 Browser: ${msg.text()}`);
+    });
+    
+    console.log(`🌐 Navigating to ${frontendUrl}...`);
+    await page.goto(frontendUrl, { 
+      waitUntil: 'networkidle0',
+      timeout: 15000 
     });
     
     // Wait for the app to load
@@ -50,9 +48,10 @@ describe('Visual Interface Tests', () => {
   });
 
   afterAll(async () => {
-    // Don't close browser - leave it open for seamless reuse
+    if (browser) {
+      await browser.close();
+    }
     console.log('✅ Global teardown complete');
-    console.log('💡 Chrome tab remains open for reuse');
   });
 
   test('should load the molecular analysis interface', async () => {
@@ -67,15 +66,19 @@ describe('Visual Interface Tests', () => {
   });
 
   test('should find input elements', async () => {
-    // Find text input
-    const textInput = await page.$('input[type="text"], textarea');
+    // Find the React text input specifically
+    const textInput = await page.$('#object-input');
     expect(textInput).toBeTruthy();
-    console.log('✅ Found text input field');
+    console.log('✅ Found React text input field');
 
     // Find analyze button  
     const buttons = await page.$$('button');
     expect(buttons.length).toBeGreaterThan(0);
     console.log(`✅ Found ${buttons.length} buttons`);
+    
+    // Check for mode selector elements
+    const modeElements = await page.$$('[class*="mode"], [class*="Mode"]');
+    console.log(`🎛️ Found ${modeElements.length} mode selector elements`);
   });
 
   test('should inject test data into input field', async () => {
@@ -85,8 +88,8 @@ describe('Visual Interface Tests', () => {
     for (const testInput of testInputs) {
       console.log(`📝 Testing input injection: "${testInput}"`);
       
-      // Find and clear the text input
-      const textInput = await page.$('input[type="text"], textarea');
+      // Find and clear the React text input
+      const textInput = await page.$('#object-input');
       await textInput.evaluate(el => el.value = ''); // Clear directly
       await textInput.type(testInput);
       

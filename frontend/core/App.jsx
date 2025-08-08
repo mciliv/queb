@@ -28,18 +28,7 @@ function App() {
 
   return (
     <PaymentProvider config={PAYMENT_CONFIG}>
-      <MainLayout 
-        isProcessing={isProcessing}
-        setIsProcessing={setIsProcessing}
-        viewers={viewers}
-        setViewers={setViewers}
-        currentAnalysisType={currentAnalysisType}
-        setCurrentAnalysisType={setCurrentAnalysisType}
-        lastAnalysis={lastAnalysis}
-        setLastAnalysis={setLastAnalysis}
-        isPaymentSetup={isPaymentSetup}
-        setIsPaymentSetup={setIsPaymentSetup}
-      />
+      <MainLayout />
     </PaymentProvider>
   );
 }

@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
-const AutoTabConnector = require('../utils/auto-tab-connector');
+const AutoTabConnector = require('../../utils/auto-tab-connector');
 
 describe('Auto-Inject Molecular Tests', () => {
   let browser;
@@ -52,7 +52,7 @@ describe('Auto-Inject Molecular Tests', () => {
       }
     });
 
-    await page.waitForSelector('input[type="text"]', { timeout: 15000 });
+    await page.waitForSelector('#object-input', { timeout: 15000 });
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     console.log('✅ Molecular app loaded and ready');
@@ -78,7 +78,7 @@ describe('Auto-Inject Molecular Tests', () => {
       
       // Clear previous input
       await page.evaluate(() => {
-        const input = document.querySelector('input[type="text"]');
+        const input = document.querySelector('#object-input');
         if (input) {
           input.value = '';
           input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -89,7 +89,7 @@ describe('Auto-Inject Molecular Tests', () => {
       
       // Type the test input
       console.log(`   ⌨️  Injecting: "${testCase.input}"`);
-      await page.type('input[type="text"]', testCase.input, { delay: 50 });
+      await page.type('#object-input', testCase.input, { delay: 50 });
       
       // Take before screenshot
       const beforePath = path.join(screenshotDir, `auto_${testCase.name.toLowerCase().replace(' ', '_')}_before.png`);
