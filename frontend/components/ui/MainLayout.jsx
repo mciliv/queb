@@ -41,8 +41,6 @@ const styles = {
   column: {
     minWidth: '400px',
     background: 'transparent',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '8px',
     padding: '20px'
   }
 };
@@ -349,7 +347,7 @@ const MolecularColumn = ({ column, onRemove }) => {
           height: `${column.viewers.length * 200}px`, 
           width: '100%', 
           background: 'transparent',
-          border: '1px solid rgba(255, 255, 255, 0.05)'
+          border: 'none'
         }}
       />
       

@@ -45,6 +45,24 @@ jest.mock("fs", () => ({
   mkdirSync: jest.fn(),
 }));
 
+// Mock puppeteer to prevent import issues
+jest.mock("puppeteer", () => ({
+  launch: jest.fn(),
+  connect: jest.fn()
+}));
+
+// Mock screenshot service to avoid puppeteer issues during tests
+jest.mock("../../../backend/services/screenshot-service", () => {
+  return jest.fn().mockImplementation(() => ({
+    captureApp: jest.fn().mockResolvedValue({ success: true, filename: 'mock.png' }),
+    captureWithInput: jest.fn().mockResolvedValue({ success: true, filename: 'mock.png' }),
+    captureAnalysis: jest.fn().mockResolvedValue({ success: true, filename: 'mock.png' }),
+    listScreenshots: jest.fn().mockResolvedValue(['mock1.png', 'mock2.png']),
+    getScreenshotPath: jest.fn().mockResolvedValue('/path/to/mock.png'),
+    cleanupOldScreenshots: jest.fn().mockResolvedValue({ cleaned: 2 })
+  }));
+});
+
 // Mock child_process
 jest.mock("child_process", () => ({
   execSync: jest.fn().mockReturnValue("test output"),
