@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e
+
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ensure hosts maps dev.queb.space to localhost
+if ! grep -q "dev.queb.space" /etc/hosts; then
+  echo "127.0.0.1 dev.queb.space" | sudo tee -a /etc/hosts >/dev/null
+fi
+
+# clean stale processes/ports
+./cleanup >/dev/null 2>&1 || true
+
+# start dev environment on port 3000; https on 3002
+HOSTNAME=dev.queb.space PORT=3000 HTTPS_PORT=3002 NODE_ENV=development nohup ./dev >/tmp/mol_dev.out 2>&1 &
+
+echo "http://dev.queb.space:3000"
