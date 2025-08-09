@@ -1,27 +1,14 @@
 /* Minimal styles for molecular app */
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  background: #000000 !important;
-  color: #ffffff !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  width: 100% !important;
-  height: 100% !important;
-  overflow-x: hidden;
+body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 * {
   box-sizing: border-box;
-}
-
-/* Ensure root container fills viewport */
-#root {
-  margin: 0 !important;
-  padding: 0 !important;
-  background: #000000 !important;
-  width: 100% !important;
-  height: 100vh !important;
-  min-height: 100vh !important;
 }
 
 /* No extraneous lines or borders per UI rules */

@@ -121,12 +121,24 @@ const MainLayout = () => {
               };
             });
             
-            // Add new column for this analysis
-            setColumns(prev => [...prev, {
-              id: Date.now(),
-              query: value,
-              viewers: viewers
-            }]);
+            // Add molecules to existing column or create new one
+            setColumns(prev => {
+              if (prev.length === 0) {
+                // First analysis - create new column
+                return [{
+                  id: Date.now(),
+                  query: value,
+                  viewers: viewers
+                }];
+              } else {
+                // Subsequent analyses - add to existing column
+                const updatedColumns = [...prev];
+                const lastColumn = updatedColumns[updatedColumns.length - 1];
+                lastColumn.viewers = [...lastColumn.viewers, ...viewers];
+                lastColumn.query = `${lastColumn.query} + ${value}`;
+                return updatedColumns;
+              }
+            });
           } catch (sdfError) {
             console.error('SDF generation failed:', sdfError);
             setError('Failed to generate molecular structures');
@@ -166,12 +178,25 @@ const MainLayout = () => {
             };
           });
           
-          // Add new column for this analysis
-          setColumns(prev => [...prev, {
-            id: Date.now(),
-            query: 'Captured from ' + (cameraMode ? 'camera' : 'image'),
-            viewers: viewers
-          }]);
+          // Add molecules to existing column or create new one  
+          setColumns(prev => {
+            const captureType = cameraMode ? 'camera' : 'image';
+            if (prev.length === 0) {
+              // First analysis - create new column
+              return [{
+                id: Date.now(),
+                query: `Captured from ${captureType}`,
+                viewers: viewers
+              }];
+            } else {
+              // Subsequent analyses - add to existing column
+              const updatedColumns = [...prev];
+              const lastColumn = updatedColumns[updatedColumns.length - 1];
+              lastColumn.viewers = [...lastColumn.viewers, ...viewers];
+              lastColumn.query = `${lastColumn.query} + Captured from ${captureType}`;
+              return updatedColumns;
+            }
+          });
         } catch (sdfError) {
           console.error('SDF generation failed:', sdfError);
         }

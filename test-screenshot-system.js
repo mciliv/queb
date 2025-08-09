@@ -104,3 +104,4 @@ async function testScreenshotSystem() {
 
 // Run the test
 testScreenshotSystem();
+
