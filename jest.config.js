@@ -77,5 +77,5 @@ module.exports = {
   forceExit: true,
   detectOpenHandles: true,
   testTimeout: 30000,
-  verbose: true
+  verbose: false
 }; 

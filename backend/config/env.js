@@ -5,7 +5,8 @@
 const path = require('path');
 require('dotenv').config({ 
   path: path.resolve(process.cwd(), '.env'),
-  debug: false // Set to true for debugging env loading
+  debug: false, // Set to true for debugging env loading
+  quiet: true  // Suppress all dotenv logs
 });
 
 const config = {

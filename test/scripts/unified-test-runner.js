@@ -48,8 +48,8 @@ class UnifiedTestRunner {
       const success = await this.runCommand('npx', [
         'jest', 
         '--testPathPattern=unit.test.js',
-        '--verbose',
-        '--silent'
+        '--silent',
+        '--reporters=default'
       ]);
       this.results.unit = success;
       // Unit test results recorded
@@ -74,7 +74,7 @@ class UnifiedTestRunner {
         'jest',
         'test/suites/integration/visual-interface.test.js',
         '--testTimeout=30000',
-        '--verbose'
+        '--silent'
       ]);
       
       this.results.visual = success;
@@ -223,7 +223,7 @@ class UnifiedTestRunner {
         'jest',
         'test/suites/integration/auto-inject-tests.test.js',
         '--testTimeout=60000',
-        '--verbose'
+        '--silent'
       ]);
       
       return success;
@@ -233,23 +233,21 @@ class UnifiedTestRunner {
   }
 
   printSummary() {
+    const totalTests = Object.values(this.results).filter(r => r !== null).length;
+    const passedTests = Object.values(this.results).filter(r => r === true).length;
     const failedTests = Object.values(this.results).filter(r => r === false).length;
     
+    // Always show summary
+    console.log(`\n${passedTests}/${totalTests} test suites passed`);
+    
     if (failedTests > 0) {
-      const statusIcon = (result) => {
-        if (result === true) return '✅';
-        if (result === 'skipped') return '⏭️ ';
-        if (result === false) return '❌';
-        return '❓';
-      };
-      
-      console.log('\n❌ Test failures:');
-      if (this.results.unit === false) console.log(`${statusIcon(this.results.unit)} Unit Tests`);
-      if (this.results.visual === false) console.log(`${statusIcon(this.results.visual)} Visual Interface Tests`);
-      if (this.results.molecular === false) console.log(`${statusIcon(this.results.molecular)} Molecular Visualization Tests`);
-      if (this.results.pipeline === false) console.log(`${statusIcon(this.results.pipeline)} Full Pipeline Tests`);
-      if (this.results.persistence === false) console.log(`${statusIcon(this.results.persistence)} Tab Persistence Tests`);
-      if (this.results.integration === false) console.log(`${statusIcon(this.results.integration)} API Integration Tests`);
+      console.log('\n❌ Failed:');
+      if (this.results.unit === false) console.log('  Unit Tests');
+      if (this.results.visual === false) console.log('  Visual Interface Tests');
+      if (this.results.molecular === false) console.log('  Molecular Visualization Tests');
+      if (this.results.pipeline === false) console.log('  Full Pipeline Tests');
+      if (this.results.persistence === false) console.log('  Tab Persistence Tests');
+      if (this.results.integration === false) console.log('  API Integration Tests');
     }
   }
 

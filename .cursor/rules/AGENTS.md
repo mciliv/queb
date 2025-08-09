@@ -21,5 +21,4 @@ git push origin main
 ```
 
 # Conventions
-
 Name files, variables, functions, classes specifically

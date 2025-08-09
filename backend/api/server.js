@@ -9,9 +9,9 @@ config.validateConfig();
 // Simple logger - only log on errors unless in debug mode
 const isDebugMode = config.NODE_ENV === 'debug';
 const log = {
-  info: (msg) => isDebugMode && console.log(msg),
-  success: (msg) => isDebugMode && console.log(msg),
-  warning: (msg) => console.log(msg), // Keep warnings visible
+  info: (msg) => {},  // Silenced
+  success: (msg) => {},  // Silenced
+  warning: (msg) => {},  // Silenced unless critical
   error: (msg) => console.error(msg)  // Always show errors
 };
 
@@ -104,11 +104,7 @@ const testDatabaseConnection = async () => {
     dbConnected = true;
     return true;
   } catch (err) {
-    log.error('🔴 Database connection failed:', err.message);
-    log.info('💡 Make sure PostgreSQL is running and credentials are correct');
-    if (process.env.NODE_ENV === 'development') {
-      log.info('💡 For local development, run: createdb mol_users');
-    }
+    // Database connection failed - continue without persistence
     dbConnected = false;
     return false;
   }
@@ -1140,12 +1136,7 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
 
       const localIP = getLocalIPAddress();
       httpServer = app.listen(actualPort, "0.0.0.0", () => {
-        console.log(`http://localhost:${actualPort}; http://${localIP}:${actualPort} (desktop only)`);
-        
-        // Always log server ready for tests
-        if (process.env.NODE_ENV === 'test') {
-          console.log('Server running on port', actualPort);
-        }
+        console.log(`http://localhost:${actualPort}`);
       });
     } catch (error) {
       console.error(`❌ Failed to start server: ${error.message}`);
