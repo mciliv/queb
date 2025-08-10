@@ -21,21 +21,23 @@ const styles = {
   mainLayout: {
     display: 'flex',
     flexDirection: 'column',
-    padding: '20px',
+    padding: '20px 0',
     gap: '20px'
   },
   inputSection: {
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
-    maxWidth: '600px'
+    maxWidth: '600px',
+    paddingLeft: '20px',
+    paddingRight: '20px'
   },
   columnsContainer: {
     display: 'flex',
     flexDirection: 'row',
     gap: '20px',
     overflowX: 'auto',
-    padding: '20px 0',
+    padding: '20px',
     minHeight: '400px'
   },
   column: {
