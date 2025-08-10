@@ -9,17 +9,34 @@ async function build() {
   const entry = path.resolve(__dirname, '..', 'frontend', 'core', 'index.jsx');
   fs.mkdirSync(outdir, { recursive: true });
 
-  await esbuild.build({
-    entryPoints: [entry],
-    outfile: path.join(outdir, 'bundle.js'),
-    bundle: true,
-    sourcemap: true,
-    minify: false,
-    loader: { '.js': 'jsx', '.jsx': 'jsx' },
-    define: { 'process.env.NODE_ENV': '"development"' },
-  });
+  const args = process.argv.slice(2);
+  const watch = args.includes('--watch');
 
-  console.log('✅ Frontend built to frontend/dist/bundle.js');
+  if (watch) {
+    const ctx = await esbuild.context({
+      entryPoints: [entry],
+      outfile: path.join(outdir, 'bundle.js'),
+      bundle: true,
+      sourcemap: true,
+      minify: false,
+      loader: { '.js': 'jsx', '.jsx': 'jsx' },
+      define: { 'process.env.NODE_ENV': '"development"' },
+    });
+    await ctx.watch();
+    console.log('👀 Frontend watch build started (esbuild)');
+  } else {
+    await esbuild.build({
+      entryPoints: [entry],
+      outfile: path.join(outdir, 'bundle.js'),
+      bundle: true,
+      sourcemap: true,
+      minify: false,
+      loader: { '.js': 'jsx', '.jsx': 'jsx' },
+      define: { 'process.env.NODE_ENV': '"development"' },
+    });
+  
+    console.log('✅ Frontend built to frontend/dist/bundle.js');
+  }
 }
 
 build().catch((err) => {

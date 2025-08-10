@@ -14,7 +14,7 @@ const styles = {
     minHeight: '100vh',
     width: '100vw',
     maxWidth: '100vw',
-    overflowX: 'hidden',
+    overflowX: 'clip',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     fontSize: '13px',
     fontWeight: 400,
@@ -26,6 +26,22 @@ const styles = {
     flexDirection: 'column',
     padding: '20px 0',
     gap: '20px'
+  },
+  visualToggleButton: {
+    position: 'fixed',
+    left: '12px',
+    bottom: '12px',
+    width: '40px',
+    height: '40px',
+    borderRadius: '20px',
+    background: 'rgba(255, 255, 255, 0.08)',
+    color: '#ffffff',
+    border: 'none',
+    outline: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer'
   },
   inputSection: {
     display: 'flex',
@@ -62,6 +78,7 @@ const MainLayout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [columns, setColumns] = useState([]);
   const [error, setError] = useState('');
+  const [autoVisualMode, setAutoVisualMode] = useState(true);
   const { analyzeText, generateSDFs } = useApi();
 
   // Load 3Dmol.js once at app start
@@ -211,6 +228,47 @@ const MainLayout = () => {
     setError('');
   }, [generateSDFs, cameraMode]);
 
+  // Predefined visual test inputs (SMILES or labels the backend understands)
+  const visualTests = useRef([
+    { label: 'Water', smiles: 'O' },
+    { label: 'Ethanol', smiles: 'CCO' },
+    { label: 'Acetic acid', smiles: 'CC(=O)O' }
+  ]);
+
+  // Auto-run visual tests sequentially, appending each as a column
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!autoVisualMode) return;
+      // If any columns already exist from manual usage, keep appending a new column per test
+      for (const test of visualTests.current) {
+        if (cancelled) break;
+        try {
+          // Analyze text path to reuse existing pipeline and SDF generation
+          const result = await analyzeText(test.smiles);
+          const molecules = result.molecules || result.chemicals || [];
+          const smilesArray = molecules.map(m => m.smiles).filter(Boolean);
+          if (smilesArray.length > 0) {
+            const sdfResult = await generateSDFs(smilesArray, false);
+            const viewers = molecules.map((mol, index) => {
+              const sdfPath = sdfResult.sdfPaths && sdfResult.sdfPaths[index];
+              return {
+                name: mol.name || test.label,
+                sdfData: sdfPath ? `file://${sdfPath}` : null,
+                smiles: mol.smiles
+              };
+            });
+            setColumns(prev => ([...prev, { id: Date.now() + Math.random(), query: test.label, viewers }]));
+          }
+        } catch (e) {
+          // Non-fatal; continue
+        }
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [autoVisualMode, analyzeText, generateSDFs]);
+
   const removeColumn = useCallback((columnId) => {
     setColumns(prev => prev.filter(col => col.id !== columnId));
   }, []);
@@ -218,6 +276,16 @@ const MainLayout = () => {
   return (
     <div style={styles.appContainer}>
       <div style={styles.mainLayout}>
+        {/* Visual tests toggle (beaker icon) */}
+        <button
+          aria-label="Toggle visual tests"
+          title="Toggle visual tests"
+          onClick={() => setAutoVisualMode(v => !v)}
+          style={styles.visualToggleButton}
+        >
+          {/* Beaker unicode */}
+          ⚗️
+        </button>
         {/* Input section */}
         <div style={styles.inputSection}>
           <TextInput 

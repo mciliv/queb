@@ -26,7 +26,11 @@ if ! NODE_OPTIONS="" node test/scripts/unified-test-runner.js; then
 fi
 
 # Trap to handle Ctrl+C and commit before exit
-trap 'commit_and_push; kill $BACKEND_PID 2>/dev/null || true; exit 0' INT TERM
+trap 'commit_and_push; kill $BACKEND_PID 2>/dev/null || true; kill $FRONTEND_PID 2>/dev/null || true; exit 0' INT TERM
+
+# Start frontend watch build
+NODE_OPTIONS="" node scripts/build-frontend.js --watch &
+FRONTEND_PID=$!
 
 # Start the Node.js backend server
 NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon --quiet backend/api/server.js &

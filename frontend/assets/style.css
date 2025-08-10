@@ -28,9 +28,17 @@ body {
   background: #000;
 }
 
+/* Force black around scrollable areas */
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar { background: #000; height: 8px; width: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
 * {
   box-sizing: border-box;
 }
+
+/* Prevent body-level horizontal scrolling issues */
+html, body { overflow-y: auto; }
 
 /* No extraneous lines or borders per UI rules */
 button {
