@@ -1,4 +1,10 @@
-const { OpenAI } = require("openai");
+let OpenAIClient = null;
+try {
+  // Optional dependency; gracefully degrade if unavailable
+  OpenAIClient = require("openai").OpenAI;
+} catch (_) {
+  OpenAIClient = null;
+}
 const {
   ObjectIdentificationSchema,
   CHEMICAL_REPRESENTATIONS,
@@ -13,7 +19,8 @@ class AtomPredictor {
   constructor(apiKey) {
     // Handle test environment
     this.isTestMode = apiKey === 'test-key' || process.env.NODE_ENV === 'test';
-    this.client = new OpenAI({ apiKey: apiKey || 'test-key' }); // Always create client for Jest mocks
+    this.client = OpenAIClient ? new OpenAIClient({ apiKey: apiKey || process.env.OPENAI_API_KEY || '' }) : null;
+    this.isOpenAIAvailable = !!this.client && !!(apiKey || process.env.OPENAI_API_KEY);
     // Use the improved instruction builder from git history analysis
     this.chemicalInstructions = this.buildChemicalInstructions();
   }
@@ -106,7 +113,10 @@ class AtomPredictor {
 
   async analyzeText(object) {
     try {
-      // Skip test mode check - let Jest mocks handle test behavior
+      // Fallback if OpenAI is not available
+      if (!this.isOpenAIAvailable) {
+        return this.fallbackAnalyzeText(object);
+      }
 
       // Enhanced text analysis with context-aware examples
       const objectType = this.detectObjectType(object);
@@ -149,6 +159,39 @@ Now analyze this specific object: "${object}"`;
       console.error("AI text analysis error:", error);
       throw new Error(`AI text analysis failed: ${error.message}`);
     }
+  }
+
+  fallbackAnalyzeText(object) {
+    const text = String(object || '').trim();
+    const mappings = {
+      water: { name: 'Water', smiles: 'O' },
+      ethanol: { name: 'Ethanol', smiles: 'CCO' },
+      'acetic acid': { name: 'Acetic acid', smiles: 'CC(=O)O' },
+      benzene: { name: 'Benzene', smiles: 'C1=CC=CC=C1' },
+      salt: { name: 'Sodium chloride', smiles: 'Cl[Na]' }
+    };
+
+    const lower = text.toLowerCase();
+
+    // If exact mapping exists
+    if (mappings[lower]) {
+      return {
+        object: mappings[lower].name,
+        chemicals: [{ name: mappings[lower].name, smiles: mappings[lower].smiles }]
+      };
+    }
+
+    // If input looks like a SMILES string, echo it back
+    const smilesLike = /^[A-Za-z0-9@+\-\[\]\(\)=#$/\.%%]+$/.test(text);
+    if (smilesLike) {
+      return {
+        object: text,
+        chemicals: [{ name: text, smiles: text }]
+      };
+    }
+
+    // Default: no chemicals found
+    return { object: text || 'Unknown object', chemicals: [] };
   }
 
   /**

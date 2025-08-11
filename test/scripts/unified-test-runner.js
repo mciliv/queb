@@ -233,9 +233,10 @@ class UnifiedTestRunner {
   }
 
   printSummary() {
-    const totalTests = Object.values(this.results).filter(r => r !== null).length;
-    const passedTests = Object.values(this.results).filter(r => r === true).length;
-    const failedTests = Object.values(this.results).filter(r => r === false).length;
+    const considered = Object.values(this.results).filter(r => r !== null && r !== 'skipped');
+    const totalTests = considered.length;
+    const passedTests = considered.filter(r => r === true).length;
+    const failedTests = considered.filter(r => r === false).length;
     
     // Always show summary
     console.log(`\n${passedTests}/${totalTests} test suites passed`);

@@ -113,12 +113,15 @@ export class InputSection {
 
   async analyzeImage(imageData, imageName) {
     try {
-      const response = await fetch('/api/analyze-image', {
+      const base64 = typeof imageData === 'string' && imageData.startsWith('data:')
+        ? imageData.split(',')[1]
+        : imageData;
+
+      const response = await fetch('/image-molecules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          image: imageData,
-          imageName: imageName
+          imageBase64: base64
         })
       });
 

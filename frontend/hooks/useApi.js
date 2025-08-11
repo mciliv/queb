@@ -1,14 +1,7 @@
 import { useState, useCallback } from 'react';
 
-// Auto-detect the correct API base URL based on current environment
-const getApiBase = () => {
-  // For development, always use localhost:3001 where backend is running
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:3001';
-  }
-  // For production, use relative URLs
-  return '';
-};
+// Use same-origin for all API calls to avoid port/protocol mismatches
+const getApiBase = () => '';
 
 const API_BASE = getApiBase();
 
@@ -106,11 +99,15 @@ export const useApi = () => {
       throw new Error('Image data is required');
     }
 
-    return apiCall('/analyze-image', {
+    // Strip data URL prefix if present; backend expects raw base64
+    const base64 = typeof imageData === 'string' && imageData.startsWith('data:')
+      ? imageData.split(',')[1]
+      : imageData;
+
+    return apiCall('/image-molecules', {
       method: 'POST',
       body: JSON.stringify({ 
-        image: imageData,
-        object_name: objectName 
+        imageBase64: base64
       }),
       maxRetries: 1, // Don't retry image analysis as much
       timeout: 60000, // 60 seconds for image analysis

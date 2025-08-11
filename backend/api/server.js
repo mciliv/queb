@@ -1077,17 +1077,21 @@ const isCloudFunction =
   config.K_SERVICE ||
   config.GOOGLE_CLOUD_PROJECT ||
   config.GCP_PROJECT;
-const isNetlify = config.NETLIFY;
+const isNetlify = !!config.NETLIFY;
 const isTestMode =
-  config.NODE_ENV === "test" || process.env.JEST_WORKER_ID;
-const isIntegrationTest = config.INTEGRATION_TEST;
-const isServerless = isCloudFunction || isNetlify;
+  config.NODE_ENV === "test" || !!process.env.JEST_WORKER_ID;
+const isIntegrationTest = !!config.INTEGRATION_TEST;
+const isServerless = !!(isCloudFunction || isNetlify);
 
 // Store server instances for cleanup
 let httpServer;
 let httpsServerInstance;
 
-console.log('Server conditions:', { isServerless, isTestMode, isIntegrationTest });
+console.log('Server conditions:', { 
+  isServerless: isServerless || false, 
+  isTestMode: isTestMode || false, 
+  isIntegrationTest: isIntegrationTest || false 
+});
 
 if (!isServerless && (!isTestMode || isIntegrationTest)) {
   console.log('Starting server in local development mode...');

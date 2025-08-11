@@ -66,9 +66,12 @@ const styles = {
   }
 };
 
-// Global flag to ensure 3Dmol is only loaded once
-let threeDmolLoading = false;
-let threeDmolLoaded = false;
+// Preset visual tests (module-scoped constant, no refs)
+const PRESET_VISUAL_TESTS = [
+  { label: 'Water', smiles: 'O' },
+  { label: 'Ethanol', smiles: 'CCO' },
+  { label: 'Acetic acid', smiles: 'CC(=O)O' }
+];
 
 const MainLayout = () => {
   const [objectInput, setObjectInput] = useState('');
@@ -81,20 +84,15 @@ const MainLayout = () => {
   const [autoVisualMode, setAutoVisualMode] = useState(true);
   const { analyzeText, generateSDFs } = useApi();
 
-  // Load 3Dmol.js once at app start
+  // Load 3Dmol.js once at app start (simplified)
   useEffect(() => {
-    if (!threeDmolLoaded && !threeDmolLoading && typeof window.$3Dmol === 'undefined') {
-      threeDmolLoading = true;
-      const script = document.createElement('script');
-      script.src = 'https://3Dmol.org/build/3Dmol-min.js';
-      script.async = true;
-      script.onload = () => {
-        threeDmolLoaded = true;
-        threeDmolLoading = false;
-        console.log('3Dmol.js loaded successfully');
-      };
-      document.head.appendChild(script);
-    }
+    if (typeof window.$3Dmol !== 'undefined') return;
+    if (document.getElementById('threedmol-script')) return;
+    const script = document.createElement('script');
+    script.id = 'threedmol-script';
+    script.src = 'https://3Dmol.org/build/3Dmol-min.js';
+    script.async = true;
+    document.head.appendChild(script);
   }, []);
 
   // Handle keyboard shortcuts
@@ -228,12 +226,7 @@ const MainLayout = () => {
     setError('');
   }, [generateSDFs, cameraMode]);
 
-  // Predefined visual test inputs (SMILES or labels the backend understands)
-  const visualTests = useRef([
-    { label: 'Water', smiles: 'O' },
-    { label: 'Ethanol', smiles: 'CCO' },
-    { label: 'Acetic acid', smiles: 'CC(=O)O' }
-  ]);
+  // Predefined visual test inputs (module constant)
 
   // Auto-run visual tests sequentially, appending each as a column
   useEffect(() => {
@@ -241,7 +234,7 @@ const MainLayout = () => {
     const run = async () => {
       if (!autoVisualMode) return;
       // If any columns already exist from manual usage, keep appending a new column per test
-      for (const test of visualTests.current) {
+      for (const test of PRESET_VISUAL_TESTS) {
         if (cancelled) break;
         try {
           // Analyze text path to reuse existing pipeline and SDF generation
@@ -347,70 +340,67 @@ const MainLayout = () => {
   );
 };
 
-// Individual column component
-const MolecularColumn = ({ column, onRemove }) => {
-  const gridViewerRef = useRef(null);
-  const [viewer, setViewer] = useState(null);
+// Minimal per-molecule viewer component
+const SimpleMoleculeViewer = ({ molecularData }) => {
+  const ref = useRef(null);
 
   useEffect(() => {
-    const initializeGridViewer = async () => {
-      // Wait for 3Dmol to be loaded
+    let cancelled = false;
+    const initialize = async () => {
       while (typeof window.$3Dmol === 'undefined') {
         await new Promise(resolve => setTimeout(resolve, 100));
+        if (cancelled) return;
+      }
+      if (!ref.current) return;
+
+      const viewer = window.$3Dmol.createViewer(ref.current, {
+        backgroundColor: 'transparent',
+        antialias: true,
+        defaultcolors: window.$3Dmol.rasmolElementColors
+      });
+
+      let sdfContent = null;
+      if (molecularData.sdfData && molecularData.sdfData.startsWith('file://')) {
+        const path = molecularData.sdfData.replace('file://', '');
+        const response = await fetch(`/sdf_files/${path.split('/').pop()}`);
+        if (response.ok) {
+          sdfContent = await response.text();
+        }
       }
 
-      if (!gridViewerRef.current || viewer) return;
-
-      try {
-        console.log(`Creating grid viewer for ${column.viewers.length} molecules`);
-        
-        // Create a grid viewer for all molecules in this column
-        const gridConfig = {
-          rows: column.viewers.length,
-          cols: 1,
-          control_all: false
-        };
-        
-        const gridViewer = window.$3Dmol.createViewerGrid(gridViewerRef.current, gridConfig, {
-          backgroundColor: 'transparent',
-          antialias: true,
-          defaultcolors: window.$3Dmol.rasmolElementColors
-        });
-        
-        // Load each molecule into its grid position
-        for (let i = 0; i < column.viewers.length; i++) {
-          const molecularData = column.viewers[i];
-          if (molecularData.sdfData && molecularData.sdfData.startsWith('file://')) {
-            const path = molecularData.sdfData.replace('file://', '');
-            try {
-              const response = await fetch(`/sdf_files/${path.split('/').pop()}`);
-              if (response.ok) {
-                const sdfContent = await response.text();
-                console.log(`Loading ${molecularData.name} into grid position ${i}`);
-                gridViewer.addModel(sdfContent, 'sdf', {}, i);
-                gridViewer.setStyle({}, { sphere: { scale: 0.8 } }, i);
-                gridViewer.zoomTo(i);
-                gridViewer.render(i);
-              }
-            } catch (err) {
-              console.error(`Failed to load ${molecularData.name}:`, err);
-            }
-          }
-        }
-        
-        setViewer(gridViewer);
-      } catch (error) {
-        console.error('Failed to create grid viewer:', error);
+      if (sdfContent) {
+        viewer.addModel(sdfContent, 'sdf');
+        viewer.setStyle({}, { sphere: { scale: 0.8 } });
+        viewer.zoomTo();
+        viewer.render();
       }
     };
 
-    initializeGridViewer();
-  }, [column.viewers]);
+    initialize();
+    return () => {
+      cancelled = true;
+      if (ref.current) {
+        ref.current.innerHTML = '';
+      }
+    };
+  }, [molecularData.sdfData]);
 
+  return (
+    <div style={{ marginBottom: '12px' }}>
+      <div 
+        ref={ref}
+        style={{ height: '200px', width: '100%', background: 'transparent', border: 'none' }}
+      />
+    </div>
+  );
+};
+
+// Individual column component (simplified)
+const MolecularColumn = ({ column, onRemove }) => {
   return (
     <div style={styles.column}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h3>{column.query}</h3>
+        <div aria-hidden role="img" style={{ opacity: 0.8 }}>🧪</div>
         <button 
           onClick={onRemove}
           style={{
@@ -424,34 +414,10 @@ const MolecularColumn = ({ column, onRemove }) => {
           ×
         </button>
       </div>
-      
-      {/* Labels for each molecule */}
+
       {column.viewers.map((mol, idx) => (
-        <div key={idx} style={{ 
-          background: 'rgba(255, 255, 255, 0.05)', 
-          padding: '8px', 
-          marginBottom: '5px',
-          borderRadius: '4px',
-          fontSize: '14px'
-        }}>
-          {mol.name}
-        </div>
+        <SimpleMoleculeViewer key={idx} molecularData={mol} />
       ))}
-      
-      {/* Grid viewer container */}
-      <div 
-        ref={gridViewerRef}
-        style={{ 
-          height: `${column.viewers.length * 200}px`, 
-          width: '100%', 
-          background: 'transparent',
-          border: 'none'
-        }}
-      />
-      
-      <div style={{ marginTop: '10px', fontSize: '12px', opacity: 0.7 }}>
-        {column.viewers.length} molecule{column.viewers.length !== 1 ? 's' : ''} detected
-      </div>
     </div>
   );
 };
