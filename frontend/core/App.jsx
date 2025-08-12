@@ -356,7 +356,11 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
   };
 
   const handleCameraClick = async (event) => {
-    if (!hasPermission || !videoRef.current || isProcessing) return;
+    if (!hasPermission) {
+      await requestCameraAccess();
+      return;
+    }
+    if (!videoRef.current || isProcessing) return;
 
     if (checkPaymentRequired()) {
       return;
@@ -380,12 +384,27 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
     try {
       const canvas = document.createElement('canvas');
       const video = videoRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext('2d');
+
+      // If user clicked, draw a centered crop square around click (25% of min dimension)
+      const cropSide = Math.floor(Math.min(width, height) * 0.25);
+      const cropX = Math.max(0, Math.min(width - cropSide, Math.round((x * (width / rect.width)) - cropSide / 2)));
+      const cropY = Math.max(0, Math.min(height - cropSide, Math.round((y * (height / rect.height)) - cropSide / 2)));
+
       ctx.drawImage(video, 0, 0);
-      
-      const imageData = canvas.toDataURL('image/jpeg', 0.8);
+      const fullImageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+      // Extract cropped region as separate base64 to boost accuracy
+      const cropCanvas = document.createElement('canvas');
+      cropCanvas.width = cropSide;
+      cropCanvas.height = cropSide;
+      const cropCtx = cropCanvas.getContext('2d');
+      cropCtx.drawImage(canvas, cropX, cropY, cropSide, cropSide, 0, 0, cropSide, cropSide);
+      const croppedImageDataUrl = cropCanvas.toDataURL('image/jpeg', 0.8);
       
       // Pass click coordinates to the API (scaled to video dimensions)
       const scaleX = video.videoWidth / rect.width;
@@ -393,7 +412,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       const centerX = Math.round(x * scaleX);
       const centerY = Math.round(y * scaleY);
       
-      const result = await analyzeImage(imageData, 'Camera capture', centerX, centerY);
+      const result = await analyzeImage(fullImageDataUrl, 'Camera capture', centerX, centerY, cropX + Math.floor(cropSide/2), cropY + Math.floor(cropSide/2), cropSide);
       
       if (onAnalysisComplete) {
         onAnalysisComplete(result);
