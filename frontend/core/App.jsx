@@ -436,7 +436,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       maxWidth: '400px',
       borderRadius: '8px',
       overflow: 'hidden',
-      cursor: isProcessing ? 'not-allowed' : 'crosshair',
+      cursor: 'crosshair',
       background: '#000',
       aspectRatio: '4/3'
     }} onClick={handleCameraClick}>
