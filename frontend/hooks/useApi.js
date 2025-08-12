@@ -86,7 +86,7 @@ export const useApi = () => {
       throw new Error('Text input is required');
     }
 
-    return apiCall('/molecularize-text', {
+    return apiCall('/structuralize-text', {
       method: 'POST',
       body: JSON.stringify({ object: text }),
       maxRetries: 2,
@@ -94,7 +94,7 @@ export const useApi = () => {
     });
   }, [apiCall]);
 
-  const molecularizeImage = useCallback(async (
+  const structuralizeImage = useCallback(async (
     imageData,
     _label,
     x,
@@ -119,7 +119,7 @@ export const useApi = () => {
     if (typeof cropMiddleY === 'number') payload.cropMiddleY = cropMiddleY;
     if (typeof cropSize === 'number') payload.cropSize = cropSize;
 
-    return apiCall('/molecularize-image', {
+    return apiCall('/structuralize-image', {
       method: 'POST',
       body: JSON.stringify(payload),
       maxRetries: 1,
@@ -170,7 +170,7 @@ export const useApi = () => {
     error,
     apiCall,
     analyzeText: estimateText,
-    analyzeImage: molecularizeImage,
+    analyzeImage: structuralizeImage,
     generateSDFs,
     clearError,
     testConnection,

@@ -17,7 +17,7 @@ describe("Smoke Tests", () => {
       const response = await request(app).get("/");
       expect(response.status).toBe(200);
       expect(response.text).toContain("<!doctype html>");
-      expect(response.text).toContain("Atomizer - Molecular Analysis");
+      expect(response.text).toContain("Structuralizer - Structural Analysis");
     });
 
     test("should have required core files", () => {

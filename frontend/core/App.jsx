@@ -98,7 +98,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
 
   const validateInput = (text) => {
     if (!text || !text.trim()) {
-      return 'Enter a thing to molecularize';
+      return 'Enter a thing to structuralize';
     }
     
     const trimmed = text.trim().toLowerCase();
@@ -151,8 +151,8 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
       try {
         await onSubmit(value.trim());
         setLocalError('');
-      } catch (err) {
-        setLocalError(err.message || 'Molecularization failed. Please try again.');
+        } catch (err) {
+          setLocalError(err.message || 'Structuralization failed. Please try again.');
       } finally {
         setIsValidating(false);
       }
@@ -171,7 +171,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
       await onSubmit(value.trim());
       setLocalError('');
     } catch (err) {
-      setLocalError(err.message || 'Molecularization failed. Please try again.');
+      setLocalError(err.message || 'Structuralization failed. Please try again.');
     } finally {
       setIsValidating(false);
     }
@@ -221,7 +221,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
               justifyContent: 'center'
             }}
             onClick={handleSubmit}
-            aria-label="Molecularize"
+            aria-label="Structuralize"
           >
             →
          </button>
@@ -350,7 +350,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       setShowSwitchCamera(videoDevices.length > 1);
     } catch (error) {
       console.error('Camera access error:', error);
-      setPermissionMessage('Camera access required to molecularize from camera');
+      setPermissionMessage('Camera access required to structuralize from camera');
       setHasPermission(false);
     }
   };
@@ -398,8 +398,8 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       if (onAnalysisComplete) {
         onAnalysisComplete(result);
       }
-    } catch (error) {
-      console.error('Camera molecularization failed:', error);
+      } catch (error) {
+        console.error('Camera structuralization failed:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -539,8 +539,8 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
           if (onAnalysisComplete) {
             onAnalysisComplete(result);
           }
-        } catch (error) {
-          console.error('Photo molecularization failed:', error);
+      } catch (error) {
+        console.error('Photo structuralization failed:', error);
         } finally {
           setIsProcessing(false);
         }
@@ -692,9 +692,9 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
         onAnalysisComplete(result);
       }
       setImageUrl('');
-    } catch (error) {
-      console.error('URL molecularization failed:', error);
-      setUrlError('Failed to molecularize from URL');
+      } catch (error) {
+        console.error('URL structuralization failed:', error);
+        setUrlError('Failed to structuralize from URL');
     } finally {
       setIsProcessing(false);
     }

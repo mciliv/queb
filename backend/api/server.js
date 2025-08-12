@@ -937,8 +937,8 @@ app.post("/estimate-image", async (req, res) => {
   }
 });
 
-// Molecularize alias routes (preferred naming)
-app.post("/molecularize-text", async (req, res) => {
+// Structuralize alias routes (preferred naming)
+app.post("/structuralize-text", async (req, res) => {
   try {
     const { object } = req.body;
     if (!object || typeof object !== "string" || object.trim().length === 0) {
@@ -947,11 +947,11 @@ app.post("/molecularize-text", async (req, res) => {
     const result = await atomPredictor.analyzeText(object || "");
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: `Molecularization failed: ${error.message}` });
+    res.status(500).json({ error: `Structuralization failed: ${error.message}` });
   }
 });
 
-app.post("/molecularize-image", async (req, res) => {
+app.post("/structuralize-image", async (req, res) => {
   try {
     const { imageBase64 } = req.body;
     if (!imageBase64) {
