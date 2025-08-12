@@ -1,0 +1,21 @@
+---
+match: "app"
+---
+
+The goal of this application is for users to estimate & visualize what molecules are contained in a given section(s) of space
+
+UI structure:
+# Text input (⌘k)
+# camera|image|link input buttons in which 0/1 can be selected
+## Camera 
+### Mobile
+    Rectangle reticle in center of screen, click screen to capture
+### Non-mobile
+    Click area in the image in which the click position is the center of a red square, whose crop is used as input for identification
+
+# Molecule x object grid
+upon entered input, 
+a column is added to the right if a column already exists
+A column contains a header, specified by the object specification or inference (Load immediately upon input submittance)
+each molecule have name title which links to wiki 
+3dmoljs gridviewer seems best

@@ -15,14 +15,20 @@ class UnifiedTestRunner {
     };
   }
 
-  async isFrontendAvailable(url = 'http://localhost:3001') {
-    try {
-      const response = await fetch(url, { method: 'HEAD' });
-      // Consider any non-network response as available (even 404)
-      return response && typeof response.status === 'number';
-    } catch (_) {
-      return false;
+  async isFrontendAvailable() {
+    const urlsToTry = [
+      process.env.FRONTEND_URL || 'http://localhost:8080',
+      'http://localhost:3001'
+    ];
+    for (const url of urlsToTry) {
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        if (response && typeof response.status === 'number') return true;
+      } catch (_) {
+        // try next
+      }
     }
+    return false;
   }
 
   async runCommand(command, args = [], options = {}) {
@@ -62,7 +68,7 @@ class UnifiedTestRunner {
 
   async runVisualTests() {
     try {
-      const available = await this.isFrontendAvailable('http://localhost:3001');
+      const available = await this.isFrontendAvailable();
       if (!available) {
         this.results.visual = 'skipped';
         return true;
@@ -90,7 +96,7 @@ class UnifiedTestRunner {
     const testCases = customCases || ['water', 'ethanol', 'coffee'];
     
     try {
-      const available = await this.isFrontendAvailable('http://localhost:3001');
+      const available = await this.isFrontendAvailable();
       if (!available) {
         this.results.molecular = 'skipped';
         return true;
@@ -136,7 +142,7 @@ class UnifiedTestRunner {
 
   async runPersistenceTests() {
     try {
-      const available = await this.isFrontendAvailable('http://localhost:3001');
+      const available = await this.isFrontendAvailable();
       if (!available) {
         this.results.persistence = 'skipped';
         return true;

@@ -909,6 +909,60 @@ app.post("/analyze-text", async (req, res) => {
   }
 });
 
+// Estimation alias routes (preferred wording)
+app.post("/estimate-text", async (req, res) => {
+  try {
+    const { object } = req.body;
+    if (!object || typeof object !== "string" || object.trim().length === 0) {
+      return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
+    }
+    const result = await atomPredictor.analyzeText(object || "");
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: `Estimation failed: ${error.message}` });
+  }
+});
+
+app.post("/estimate-image", async (req, res) => {
+  try {
+    const { imageBase64 } = req.body;
+    if (!imageBase64) {
+      return res.status(400).json({ error: "No image data provided" });
+    }
+    // Reuse analysis pipeline for estimation wording
+    const result = await atomPredictor.analyzeImage(imageBase64);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Molecularize alias routes (preferred naming)
+app.post("/molecularize-text", async (req, res) => {
+  try {
+    const { object } = req.body;
+    if (!object || typeof object !== "string" || object.trim().length === 0) {
+      return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
+    }
+    const result = await atomPredictor.analyzeText(object || "");
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: `Molecularization failed: ${error.message}` });
+  }
+});
+
+app.post("/molecularize-image", async (req, res) => {
+  try {
+    const { imageBase64 } = req.body;
+    if (!imageBase64) {
+      return res.status(400).json({ error: "No image data provided" });
+    }
+    const result = await atomPredictor.analyzeImage(imageBase64);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // Text analysis route (legacy endpoint)
 app.post("/object-molecules", async (req, res) => {
   try {

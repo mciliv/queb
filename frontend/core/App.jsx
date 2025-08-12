@@ -98,7 +98,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
 
   const validateInput = (text) => {
     if (!text || !text.trim()) {
-      return 'Please enter a molecule or object to analyze';
+      return 'Enter a thing to molecularize';
     }
     
     const trimmed = text.trim().toLowerCase();
@@ -152,7 +152,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
         await onSubmit(value.trim());
         setLocalError('');
       } catch (err) {
-        setLocalError(err.message || 'Analysis failed. Please try again.');
+        setLocalError(err.message || 'Molecularization failed. Please try again.');
       } finally {
         setIsValidating(false);
       }
@@ -171,7 +171,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
       await onSubmit(value.trim());
       setLocalError('');
     } catch (err) {
-      setLocalError(err.message || 'Analysis failed. Please try again.');
+      setLocalError(err.message || 'Molecularization failed. Please try again.');
     } finally {
       setIsValidating(false);
     }
@@ -186,7 +186,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           ref={inputRef}
           id="object-input"
           type="text"
-          placeholder="Enter a physical object (e.g., 'coffee', 'glass', 'apple', 'aspirin')..."
+          placeholder=""
           style={{
             width: '100%',
             padding: '12px 16px',
@@ -203,22 +203,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           onKeyDown={handleKeyDown}
           aria-describedby={displayError ? 'input-error' : undefined}
         />
-        <div style={{
-          position: 'absolute',
-          right: '50px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          pointerEvents: 'none'
-        }}>
-          <span style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            color: 'rgba(255, 255, 255, 0.6)',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontSize: '11px',
-            fontWeight: '500'
-          }}>{keyboardHint}</span>
-        </div>
+        
         {value.trim() && (
           <button 
             style={{
@@ -236,7 +221,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
               justifyContent: 'center'
             }}
             onClick={handleSubmit}
-            aria-label="Submit analysis"
+            aria-label="Molecularize"
           >
             →
          </button>
@@ -272,21 +257,19 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
 
   const buttonStyle = {
     background: 'transparent',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
+    border: 'none',
     color: '#ffffff',
-    padding: '8px 16px',
+    padding: '8px 12px',
     borderRadius: '4px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
     fontSize: '13px',
     transition: 'all 0.2s'
   };
 
   const activeStyle = {
-    background: 'rgba(255, 255, 255, 0.1)',
-    borderColor: 'rgba(255, 255, 255, 0.4)'
+    background: 'rgba(255, 255, 255, 0.1)'
   };
 
   return (
@@ -300,7 +283,6 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
           <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8"/>
           <circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
         </svg>
-        Camera
       </button>
 
       <button 
@@ -313,7 +295,6 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
           <circle cx="9" cy="9" r="2"/>
           <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
         </svg>
-        Image
       </button>
 
       <button 
@@ -325,7 +306,6 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
         </svg>
-        Link
       </button>
     </div>
   );
@@ -370,7 +350,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       setShowSwitchCamera(videoDevices.length > 1);
     } catch (error) {
       console.error('Camera access error:', error);
-      setPermissionMessage('Camera access required for molecular analysis');
+      setPermissionMessage('Camera access required to molecularize from camera');
       setHasPermission(false);
     }
   };
@@ -419,7 +399,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
         onAnalysisComplete(result);
       }
     } catch (error) {
-      console.error('Camera analysis failed:', error);
+      console.error('Camera molecularization failed:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -523,26 +503,12 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
               <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8"/>
               <circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
             </svg>
-            <span>Switch Camera</span>
+            
           </button>
         </div>
       )}
       
-      <div style={{
-        position: 'absolute',
-        bottom: '16px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        color: '#ffffff',
-        fontSize: '12px',
-        textAlign: 'center',
-        background: 'rgba(0, 0, 0, 0.7)',
-        padding: '8px 12px',
-        borderRadius: '16px',
-        whiteSpace: 'nowrap'
-      }}>
-        {isProcessing ? 'Processing...' : 'Click on object to analyze'}
-      </div>
+      
     </div>
   );
 };
@@ -574,7 +540,7 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
             onAnalysisComplete(result);
           }
         } catch (error) {
-          console.error('Photo analysis failed:', error);
+          console.error('Photo molecularization failed:', error);
         } finally {
           setIsProcessing(false);
         }
@@ -637,12 +603,12 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
             gap: '8px'
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
             <circle cx="9" cy="9" r="2"/>
             <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
           </svg>
-          Select Image
+          
         </button>
       </div>
     );
@@ -666,14 +632,14 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
         style={{
           width: '100%',
           height: '200px',
-          border: isDragOver ? '2px solid #ff0000' : '2px dashed rgba(255, 255, 255, 0.3)',
+          border: 'none',
           borderRadius: '8px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          background: isDragOver ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+          background: isDragOver ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.05)',
           transition: 'all 0.2s ease',
           gap: '12px'
         }}
@@ -683,9 +649,7 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
           <circle cx="9" cy="9" r="2"/>
           <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
         </svg>
-        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', textAlign: 'center' }}>
-          {isDragOver ? 'Drop image here' : 'Click to select or drag image here'}
-        </div>
+        
       </div>
     </div>
   );
@@ -729,8 +693,8 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
       }
       setImageUrl('');
     } catch (error) {
-      console.error('URL analysis failed:', error);
-      setUrlError('Failed to analyze image from URL');
+      console.error('URL molecularization failed:', error);
+      setUrlError('Failed to molecularize from URL');
     } finally {
       setIsProcessing(false);
     }
@@ -867,11 +831,8 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
             rel="noopener noreferrer"
             style={{
               color: '#ffffff',
-              textDecoration: 'none',
-              borderBottom: '1px dotted rgba(255,255,255,0.5)'
+              textDecoration: 'none'
             }}
-            onMouseOver={(e) => e.target.style.borderBottom = '1px solid rgba(255,255,255,0.8)'}
-            onMouseOut={(e) => e.target.style.borderBottom = '1px dotted rgba(255,255,255,0.5)'}
           >
             {molecularData.name}
           </a>
@@ -884,7 +845,6 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
           height: '200px', 
           width: '100%', 
           background: 'transparent', 
-          border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',
@@ -1120,7 +1080,7 @@ function App() {
     setError('');
   }, [generateSDFs, cameraMode]);
 
-  // Auto-run visual tests - bypass AI analysis and go straight to SDF generation
+  // Auto-run visual tests - bypass AI and go straight to SDF generation
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
@@ -1159,14 +1119,7 @@ function App() {
     <PaymentProvider config={PAYMENT_CONFIG}>
       <div style={styles.appContainer}>
         <div style={styles.mainLayout}>
-          <button
-            aria-label="Toggle visual tests"
-            title="Toggle visual tests"
-            onClick={() => setAutoVisualMode(v => !v)}
-            style={styles.visualToggleButton}
-          >
-            ⚗️
-          </button>
+          {/* Beaker toggle removed for minimal UI */}
           
           <div style={styles.inputSection}>
             <div style={{ marginBottom: '15px' }}>

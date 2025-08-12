@@ -22,9 +22,10 @@ class AutoTabConnector {
         for (const page of pages) {
           try {
             const url = page.url();
-            if (url.includes('localhost:3001')) {
+            if (url.includes('localhost:8080') || url.includes('localhost:3001')) {
               // Found existing molecular tab, refresh it to clean state
-              await page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+              const targetUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+              await page.goto(targetUrl, { waitUntil: 'networkidle0' });
               await page.waitForSelector('input[type="text"]', { timeout: 10000 });
               
               return { browser, page, reused: true };
@@ -37,7 +38,8 @@ class AutoTabConnector {
         // Use existing tab and navigate to molecular app
         if (pages.length > 0) {
           const page = pages[0];
-          await page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+          const targetUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+          await page.goto(targetUrl, { waitUntil: 'networkidle0' });
           await page.waitForSelector('input[type="text"]', { timeout: 10000 });
           
           return { browser, page, reused: true };
@@ -45,7 +47,8 @@ class AutoTabConnector {
         
         // Create new tab in existing browser
         const page = await browser.newPage();
-        await page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+        const targetUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+        await page.goto(targetUrl, { waitUntil: 'networkidle0' });
         await page.waitForSelector('input[type="text"]', { timeout: 10000 });
         
         return { browser, page, reused: true };
@@ -79,7 +82,8 @@ class AutoTabConnector {
     });
     
     const page = await browser.newPage();
-    await page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+    const targetUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+    await page.goto(targetUrl, { waitUntil: 'networkidle0' });
     await page.waitForSelector('input[type="text"]', { timeout: 10000 });
     
     return { browser, page, reused: false };

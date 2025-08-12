@@ -81,20 +81,28 @@ export const useApi = () => {
     }
   }, []);
 
-  const analyzeText = useCallback(async (text) => {
+  const estimateText = useCallback(async (text) => {
     if (!text || !text.trim()) {
       throw new Error('Text input is required');
     }
 
-    return apiCall('/analyze-text', {
+    return apiCall('/molecularize-text', {
       method: 'POST',
       body: JSON.stringify({ object: text }),
       maxRetries: 2,
-      timeout: 45000, // 45 seconds for text analysis
+      timeout: 30000,
     });
   }, [apiCall]);
 
-  const analyzeImage = useCallback(async (imageData, objectName) => {
+  const molecularizeImage = useCallback(async (
+    imageData,
+    _label,
+    x,
+    y,
+    cropMiddleX,
+    cropMiddleY,
+    cropSize
+  ) => {
     if (!imageData) {
       throw new Error('Image data is required');
     }
@@ -104,13 +112,18 @@ export const useApi = () => {
       ? imageData.split(',')[1]
       : imageData;
 
-    return apiCall('/image-molecules', {
+    const payload = { imageBase64: base64 };
+    if (typeof x === 'number') payload.x = x;
+    if (typeof y === 'number') payload.y = y;
+    if (typeof cropMiddleX === 'number') payload.cropMiddleX = cropMiddleX;
+    if (typeof cropMiddleY === 'number') payload.cropMiddleY = cropMiddleY;
+    if (typeof cropSize === 'number') payload.cropSize = cropSize;
+
+    return apiCall('/molecularize-image', {
       method: 'POST',
-      body: JSON.stringify({ 
-        imageBase64: base64
-      }),
-      maxRetries: 1, // Don't retry image analysis as much
-      timeout: 60000, // 60 seconds for image analysis
+      body: JSON.stringify(payload),
+      maxRetries: 1,
+      timeout: 60000,
     });
   }, [apiCall]);
 
@@ -156,8 +169,8 @@ export const useApi = () => {
     loading,
     error,
     apiCall,
-    analyzeText,
-    analyzeImage,
+    analyzeText: estimateText,
+    analyzeImage: molecularizeImage,
     generateSDFs,
     clearError,
     testConnection,

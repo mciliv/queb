@@ -32,8 +32,8 @@ trap 'commit_and_push; kill $BACKEND_PID 2>/dev/null || true; kill $FRONTEND_PID
 NODE_OPTIONS="" node scripts/build-frontend.js --watch &
 FRONTEND_PID=$!
 
-# Start the Node.js backend server
-NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon --quiet backend/api/server.js &
+# Start the Node.js backend server with debugger
+NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon --quiet --exec "node --inspect=9229" backend/api/server.js &
 BACKEND_PID=$!
 
 # Wait for backend to start
