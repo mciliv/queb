@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import TextInput from '../input/TextInput';
 import ModeSelector from '../input/ModeSelector';
-import CameraSection from '../input/CameraSection';
-import PhotoSection from '../input/PhotoSection';
 import LinkSection from '../input/LinkSection';
 import { useApi } from '../../hooks/useApi';
 
@@ -226,41 +224,7 @@ const MainLayout = () => {
     setError('');
   }, [generateSDFs, cameraMode]);
 
-  // Predefined visual test inputs (module constant)
-
-  // Auto-run visual tests sequentially, appending each as a column
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      if (!autoVisualMode) return;
-      // If any columns already exist from manual usage, keep appending a new column per test
-      for (const test of PRESET_VISUAL_TESTS) {
-        if (cancelled) break;
-        try {
-          // Analyze text path to reuse existing pipeline and SDF generation
-          const result = await analyzeText(test.smiles);
-          const molecules = result.molecules || result.chemicals || [];
-          const smilesArray = molecules.map(m => m.smiles).filter(Boolean);
-          if (smilesArray.length > 0) {
-            const sdfResult = await generateSDFs(smilesArray, false);
-            const viewers = molecules.map((mol, index) => {
-              const sdfPath = sdfResult.sdfPaths && sdfResult.sdfPaths[index];
-              return {
-                name: mol.name || test.label,
-                sdfData: sdfPath ? `file://${sdfPath}` : null,
-                smiles: mol.smiles
-              };
-            });
-            setColumns(prev => ([...prev, { id: Date.now() + Math.random(), query: test.label, viewers }]));
-          }
-        } catch (e) {
-          // Non-fatal; continue
-        }
-      }
-    };
-    run();
-    return () => { cancelled = true; };
-  }, [autoVisualMode, analyzeText, generateSDFs]);
+  // Auto visual tests removed (beaker toggle removed)
 
   const removeColumn = useCallback((columnId) => {
     setColumns(prev => prev.filter(col => col.id !== columnId));
@@ -269,16 +233,7 @@ const MainLayout = () => {
   return (
     <div style={styles.appContainer}>
       <div style={styles.mainLayout}>
-        {/* Visual tests toggle (beaker icon) */}
-        <button
-          aria-label="Toggle visual tests"
-          title="Toggle visual tests"
-          onClick={() => setAutoVisualMode(v => !v)}
-          style={styles.visualToggleButton}
-        >
-          {/* Beaker unicode */}
-          ⚗️
-        </button>
+        {/* Beaker toggle removed */}
         {/* Input section */}
         <div style={styles.inputSection}>
           <TextInput 
@@ -298,23 +253,7 @@ const MainLayout = () => {
             setLinkMode={setLinkMode}
           />
 
-          {cameraMode && (
-            <CameraSection
-              isProcessing={isProcessing}
-              setIsProcessing={setIsProcessing}
-              setCurrentAnalysisType={() => {}}
-              onAnalysisComplete={handleAnalysisComplete}
-            />
-          )}
-
-          {photoMode && (
-            <PhotoSection
-              isProcessing={isProcessing}
-              setIsProcessing={setIsProcessing}
-              setCurrentAnalysisType={() => {}}
-              onAnalysisComplete={handleAnalysisComplete}
-            />
-          )}
+          {/* Camera and Photo sections removed */}
 
           {linkMode && (
             <LinkSection
@@ -400,7 +339,7 @@ const MolecularColumn = ({ column, onRemove }) => {
   return (
     <div style={styles.column}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <div aria-hidden role="img" style={{ opacity: 0.8 }}>🧪</div>
+        <div aria-hidden role="img" style={{ opacity: 0.8 }}>{column.loading ? '⏳' : '🧪'}</div>
         <button 
           onClick={onRemove}
           style={{

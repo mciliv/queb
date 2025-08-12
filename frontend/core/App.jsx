@@ -4,6 +4,12 @@ import { useApi } from '../hooks/useApi';
 import { PRESET_VISUAL_TESTS } from './constants.js';
 import '../assets/style.css';
 
+// Device detection utility
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+         (window.innerWidth <= 768 && 'ontouchstart' in window);
+};
+
 // Configuration
 const PAYMENT_CONFIG = {
   enabled: false, // Set to true to enable payment functionality
@@ -23,10 +29,12 @@ const styles = {
     fontSize: '13px',
     fontWeight: 400,
     lineHeight: 1.4,
-    letterSpacing: '0.01em'
+    letterSpacing: '0.01em',
+    userSelect: 'text'
   },
   mainLayout: {
-    padding: '20px'
+    padding: '20px',
+    userSelect: 'text'
   },
   visualToggleButton: {
     position: 'fixed',
@@ -54,14 +62,16 @@ const styles = {
     gap: '20px',
     overflowX: 'auto',
     position: 'relative',
-    zIndex: 1
+    zIndex: 1,
+    userSelect: 'text'
   },
   column: {
     minWidth: '400px',
     background: 'transparent',
     padding: '20px',
     position: 'relative',
-    zIndex: 1
+    zIndex: 1,
+    userSelect: 'text'
   }
 };
 
@@ -327,6 +337,8 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
   const [permissionMessage, setPermissionMessage] = useState('');
   const [showSwitchCamera, setShowSwitchCamera] = useState(false);
   const [stream, setStream] = useState(null);
+  const [clickPosition, setClickPosition] = useState(null);
+  const [showOutline, setShowOutline] = useState(false);
   const { checkPaymentRequired } = usePayment();
   const { analyzeImage } = useApi();
 
@@ -363,12 +375,24 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
     }
   };
 
-  const handleCameraClick = async () => {
-    if (!hasPermission || !videoRef.current) return;
+  const handleCameraClick = async (event) => {
+    if (!hasPermission || !videoRef.current || isProcessing) return;
 
     if (checkPaymentRequired()) {
       return;
     }
+
+    // Get click position relative to video element
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Store click position for outline box
+    setClickPosition({ x, y });
+    setShowOutline(true);
+    
+    // Hide outline after 2 seconds
+    setTimeout(() => setShowOutline(false), 2000);
 
     setIsProcessing(true);
     setCurrentAnalysisType('camera');
@@ -383,7 +407,13 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       
       const imageData = canvas.toDataURL('image/jpeg', 0.8);
       
-      const result = await analyzeImage(imageData, 'Camera capture');
+      // Pass click coordinates to the API (scaled to video dimensions)
+      const scaleX = video.videoWidth / rect.width;
+      const scaleY = video.videoHeight / rect.height;
+      const centerX = Math.round(x * scaleX);
+      const centerY = Math.round(y * scaleY);
+      
+      const result = await analyzeImage(imageData, 'Camera capture', centerX, centerY);
       
       if (onAnalysisComplete) {
         onAnalysisComplete(result);
@@ -426,7 +456,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       maxWidth: '400px',
       borderRadius: '8px',
       overflow: 'hidden',
-      cursor: 'pointer',
+      cursor: isProcessing ? 'not-allowed' : 'crosshair',
       background: '#000',
       aspectRatio: '4/3'
     }} onClick={handleCameraClick}>
@@ -450,20 +480,23 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
           background: 'rgba(0, 0, 0, 0.8)',
           borderRadius: '8px',
           fontSize: '14px'
-        }}>{permissionMessage}</div>
+        }}>{permissionMessage || 'Click to enable camera'}</div>
       )}
       
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '60px',
-        height: '60px',
-        border: '2px solid rgba(255, 255, 255, 0.8)',
-        borderRadius: '50%',
-        pointerEvents: 'none'
-      }}></div>
+      {/* Red outline box where user clicked */}
+      {showOutline && clickPosition && (
+        <div style={{
+          position: 'absolute',
+          left: `${clickPosition.x - 25}px`,
+          top: `${clickPosition.y - 25}px`,
+          width: '50px',
+          height: '50px',
+          border: '2px solid #ff0000',
+          borderRadius: '4px',
+          pointerEvents: 'none',
+          animation: 'pulse 0.5s ease-in-out'
+        }}></div>
+      )}
       
       {showSwitchCamera && (
         <div style={{ position: 'absolute', top: '16px', right: '16px' }}>
@@ -508,7 +541,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
         borderRadius: '16px',
         whiteSpace: 'nowrap'
       }}>
-        Center object in circle & tap, or type name above
+        {isProcessing ? 'Processing...' : 'Click on object to analyze'}
       </div>
     </div>
   );
@@ -516,8 +549,10 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
 
 const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, onAnalysisComplete }) => {
   const fileInputRef = useRef(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const { checkPaymentRequired } = usePayment();
   const { analyzeImage } = useApi();
+  const isMobile = isMobileDevice();
 
   const handleFileSelect = async (event) => {
     const file = event.target.files[0];
@@ -551,6 +586,69 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
     }
   };
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        handleFileSelect({ target: { files: [file] } });
+      }
+    }
+  };
+
+  // Mobile: Simple button interface
+  if (isMobile) {
+    return (
+      <div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            width: '100%',
+            padding: '12px',
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: 'none',
+            borderRadius: '8px',
+            color: '#ffffff',
+            fontSize: '14px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="9" cy="9" r="2"/>
+            <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
+          Select Image
+        </button>
+      </div>
+    );
+  }
+
+  // Desktop: Click area with red outline and drag-and-drop
   return (
     <div>
       <input
@@ -560,30 +658,35 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
         onChange={handleFileSelect}
         style={{ display: 'none' }}
       />
-      <button
+      <div
         onClick={() => fileInputRef.current?.click()}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         style={{
           width: '100%',
-          padding: '12px',
-          background: 'rgba(255, 255, 255, 0.08)',
-          border: 'none',
+          height: '200px',
+          border: isDragOver ? '2px solid #ff0000' : '2px dashed rgba(255, 255, 255, 0.3)',
           borderRadius: '8px',
-          color: '#ffffff',
-          fontSize: '14px',
-          cursor: 'pointer',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '8px'
+          cursor: 'pointer',
+          background: isDragOver ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+          transition: 'all 0.2s ease',
+          gap: '12px'
         }}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.6 }}>
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
           <circle cx="9" cy="9" r="2"/>
           <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
         </svg>
-        Select Image
-      </button>
+        <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', textAlign: 'center' }}>
+          {isDragOver ? 'Drop image here' : 'Click to select or drag image here'}
+        </div>
+      </div>
     </div>
   );
 };
@@ -750,13 +853,30 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
   return (
     <div style={{ marginBottom: '12px' }}>
       <div style={{ 
-        background: 'rgba(255, 255, 255, 0.05)', 
+        background: 'transparent', 
         padding: '8px', 
         marginBottom: '5px',
         borderRadius: '4px',
-        fontSize: '14px'
+        fontSize: '14px',
+        userSelect: 'text'
       }}>
-        {molecularData.name} {status === 'loading' && '⏳'} {status === 'failed' && '❌'}
+        {molecularData.name && (
+          <a 
+            href={`https://en.wikipedia.org/wiki/${encodeURIComponent(molecularData.name)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#ffffff',
+              textDecoration: 'none',
+              borderBottom: '1px dotted rgba(255,255,255,0.5)'
+            }}
+            onMouseOver={(e) => e.target.style.borderBottom = '1px solid rgba(255,255,255,0.8)'}
+            onMouseOut={(e) => e.target.style.borderBottom = '1px dotted rgba(255,255,255,0.5)'}
+          >
+            {molecularData.name}
+          </a>
+        )}
+        {status === 'loading' && ' ⏳'} {status === 'failed' && ' ❌'}
       </div>
       <div 
         ref={ref}
@@ -775,8 +895,8 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
           zIndex: 1
         }}
       >
-        {status === 'loading' && 'Loading 3D model...'}
-        {status === 'failed' && 'Failed to load model'}
+        {status === 'loading' && '⏳'}
+        {status === 'failed' && '❌'}
       </div>
     </div>
   );
@@ -785,8 +905,13 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
 const MolecularColumn = ({ column, onRemove }) => {
   return (
     <div style={styles.column}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <div aria-hidden role="img" style={{ opacity: 0.8 }}>🧪</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', userSelect: 'text' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', userSelect: 'text' }}>
+          <div aria-hidden role="img" style={{ opacity: 0.8, fontSize: '16px', userSelect: 'none' }}>🧪</div>
+          <div style={{ fontSize: '14px', opacity: 0.7, userSelect: 'text' }}>
+            {column.query} {column.loading && '⏳'}
+          </div>
+        </div>
         <button 
           onClick={onRemove}
           style={{
@@ -794,12 +919,25 @@ const MolecularColumn = ({ column, onRemove }) => {
             border: 'none',
             color: '#ffffff',
             fontSize: '20px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            userSelect: 'none'
           }}
         >
           ×
         </button>
       </div>
+
+      {column.loading && column.viewers.length === 0 && (
+        <div style={{ 
+          padding: '20px', 
+          textAlign: 'center', 
+          color: 'rgba(255,255,255,0.5)',
+          fontSize: '13px',
+          userSelect: 'text'
+        }}>
+          Analyzing molecules...
+        </div>
+      )}
 
       {column.viewers.map((mol, idx) => (
         <SimpleMoleculeViewer key={idx} molecularData={mol} />
@@ -864,6 +1002,25 @@ function App() {
     setIsProcessing(true);
     setError('');
     
+    // Create column header immediately
+    const columnId = Date.now();
+    setColumns(prev => {
+      if (prev.length === 0) {
+        return [{
+          id: columnId,
+          query: value,
+          viewers: [],
+          loading: true
+        }];
+      } else {
+        const updatedColumns = [...prev];
+        const lastColumn = updatedColumns[updatedColumns.length - 1];
+        lastColumn.query = `${lastColumn.query} + ${value}`;
+        lastColumn.loading = true;
+        return updatedColumns;
+      }
+    });
+    
     try {
       const result = await analyzeText(value);
       const molecules = result.molecules || result.chemicals || [];
@@ -884,36 +1041,69 @@ function App() {
               };
             });
             
+            // Update column with loaded molecules
             setColumns(prev => {
-              if (prev.length === 0) {
-                return [{
-                  id: Date.now(),
-                  query: value,
-                  viewers: viewers
-                }];
+              const updatedColumns = [...prev];
+              if (prev.length === 1 && prev[0].id === columnId) {
+                // First column - replace with loaded data
+                updatedColumns[0] = {
+                  ...updatedColumns[0],
+                  viewers: viewers,
+                  loading: false
+                };
               } else {
-                const updatedColumns = [...prev];
+                // Adding to existing column
                 const lastColumn = updatedColumns[updatedColumns.length - 1];
                 lastColumn.viewers = [...lastColumn.viewers, ...viewers];
-                lastColumn.query = `${lastColumn.query} + ${value}`;
-                return updatedColumns;
+                lastColumn.loading = false;
               }
+              return updatedColumns;
             });
           } catch (sdfError) {
             console.error('SDF generation failed:', sdfError);
             setError('Failed to generate molecular structures');
+            // Mark column as failed
+            setColumns(prev => {
+              const updatedColumns = [...prev];
+              if (updatedColumns.length > 0) {
+                updatedColumns[updatedColumns.length - 1].loading = false;
+              }
+              return updatedColumns;
+            });
           }
         } else {
           setError('No valid SMILES found in the analysis results.');
+          setColumns(prev => {
+            const updatedColumns = [...prev];
+            if (updatedColumns.length > 0) {
+              updatedColumns[updatedColumns.length - 1].loading = false;
+            }
+            return updatedColumns;
+          });
         }
       } else {
         setError('No molecules found for this input.');
+        setColumns(prev => {
+          const updatedColumns = [...prev];
+          if (updatedColumns.length > 0) {
+            updatedColumns[updatedColumns.length - 1].loading = false;
+          }
+          return updatedColumns;
+        });
       }
       
       setObjectInput('');
     } catch (error) {
       console.error('Analysis failed:', error);
       setError('Analysis failed. Please try again.');
+      // Mark column as failed
+      setColumns(prev => {
+        const updatedColumns = [...prev];
+        if (updatedColumns.length > 0) {
+          updatedColumns[updatedColumns.length - 1].loading = false;
+        }
+        return updatedColumns;
+      });
     } finally {
       setIsProcessing(false);
     }

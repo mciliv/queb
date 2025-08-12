@@ -6,5 +6,20 @@
   "python.poetryPath": "/Users/m/.pyenv/versions/3.12.9/bin/poetry",
   "python.terminal.activateEnvironment": true,
   "editor.vim.enabled": true,
-  "vim.useSystemClipboard": true
+  "vim.useSystemClipboard": true,
+  "vim.visualModeKeyBindings": [
+    {
+      "before": ["<C-c>"],
+      "after": ["<Esc>"]
+    }
+  ],
+  "vim.normalModeKeyBindings": [
+    {
+      "before": ["<C-a>"],
+      "after": ["g", "g", "V", "G"]
+    }
+  ],
+  "editor.columnSelection": false,
+  "editor.selectionClipboard": false,
+  "editor.multiCursorModifier": "ctrlCmd"
 }

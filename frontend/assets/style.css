@@ -1,4 +1,19 @@
 /* Minimal styles for molecular app */
+
+@keyframes pulse {
+  0% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+}
 html {
   margin: 0;
   padding: 0;
@@ -19,6 +34,7 @@ body {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+  user-select: text;
 }
 
 #root {
@@ -35,6 +51,7 @@ body {
 
 * {
   box-sizing: border-box;
+  user-select: text;
 }
 
 /* Prevent body-level horizontal scrolling issues */
@@ -47,6 +64,7 @@ button {
   color: #fff;
   cursor: pointer;
   padding: 8px 16px;
+  user-select: none;
 }
 
 button:hover {
@@ -64,6 +82,21 @@ input::placeholder {
   color: rgba(255, 255, 255, 0.5);
 }
 
+/* ==================== TEXT SELECTION FIX ==================== */
+
+/* Ensure text elements allow proper selection */
+p, div, span, pre, code, 
+.molecule-name, .object-title, .target-object-title,
+.detected-molecule-name, .detected-molecule-count,
+.molecular-error-message, .smiles-structural-fallback {
+  user-select: text !important;
+}
+
+/* Prevent selection on interactive elements */
+button, input, canvas, video, svg {
+  user-select: none !important;
+}
+
 /* ==================== MOLECULAR VIEWER ESSENTIAL STYLES ==================== */
 
 /* 3Dmol.js integration */
@@ -75,6 +108,7 @@ input::placeholder {
   background: transparent !important;
   border: none !important;
   outline: none !important;
+  user-select: none !important;
 }
 
 /* Main results container */
