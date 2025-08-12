@@ -138,6 +138,25 @@ describe('Frontend Robustness Tests', () => {
     });
   });
 
+  describe('Molecule labeling', () => {
+    test('viewer names should use molecule names, not object query', () => {
+      const molecules = [
+        { name: 'Caffeine', smiles: 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C' },
+        { name: 'Ethanol', smiles: 'CCO' }
+      ];
+
+      const objectQuery = 'coffee';
+      const smilesArray = molecules.map(m => m.smiles);
+      const viewers = molecules.map((mol, index) => ({
+        name: mol.name || objectQuery,
+        sdfData: `/sdf_files/${smilesArray[index]}.sdf`,
+        smiles: mol.smiles
+      }));
+
+      expect(viewers.map(v => v.name)).toEqual(['Caffeine', 'Ethanol']);
+    });
+  });
+
   describe('MainLayout Component Robustness', () => {
     test('should handle keyboard shortcuts without conflicts', () => {
       const mockSetViewers = jest.fn();

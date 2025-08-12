@@ -239,7 +239,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
             aria-label="Submit analysis"
           >
             →
-          </button>
+         </button>
         )}
       </div>
       {displayError && (
@@ -1002,24 +1002,17 @@ function App() {
     setIsProcessing(true);
     setError('');
     
-    // Create column header immediately
+    // Create a new column immediately (always add to the right)
     const columnId = Date.now();
-    setColumns(prev => {
-      if (prev.length === 0) {
-        return [{
-          id: columnId,
-          query: value,
-          viewers: [],
-          loading: true
-        }];
-      } else {
-        const updatedColumns = [...prev];
-        const lastColumn = updatedColumns[updatedColumns.length - 1];
-        lastColumn.query = `${lastColumn.query} + ${value}`;
-        lastColumn.loading = true;
-        return updatedColumns;
+    setColumns(prev => ([
+      ...prev,
+      {
+        id: columnId,
+        query: value,
+        viewers: [],
+        loading: true
       }
-    });
+    ]));
     
     try {
       const result = await analyzeText(value);
@@ -1041,55 +1034,29 @@ function App() {
               };
             });
             
-            // Update column with loaded molecules
-            setColumns(prev => {
-              const updatedColumns = [...prev];
-              if (prev.length === 1 && prev[0].id === columnId) {
-                // First column - replace with loaded data
-                updatedColumns[0] = {
-                  ...updatedColumns[0],
-                  viewers: viewers,
-                  loading: false
-                };
-              } else {
-                // Adding to existing column
-                const lastColumn = updatedColumns[updatedColumns.length - 1];
-                lastColumn.viewers = [...lastColumn.viewers, ...viewers];
-                lastColumn.loading = false;
-              }
-              return updatedColumns;
-            });
+            // Update the newly created column by id
+            setColumns(prev => prev.map(col => (
+              col.id === columnId ? { ...col, viewers, loading: false } : col
+            )));
           } catch (sdfError) {
             console.error('SDF generation failed:', sdfError);
             setError('Failed to generate molecular structures');
-            // Mark column as failed
-            setColumns(prev => {
-              const updatedColumns = [...prev];
-              if (updatedColumns.length > 0) {
-                updatedColumns[updatedColumns.length - 1].loading = false;
-              }
-              return updatedColumns;
-            });
+            // Mark this column as not loading
+            setColumns(prev => prev.map(col => (
+              col.id === columnId ? { ...col, loading: false } : col
+            )));
           }
         } else {
           setError('No valid SMILES found in the analysis results.');
-          setColumns(prev => {
-            const updatedColumns = [...prev];
-            if (updatedColumns.length > 0) {
-              updatedColumns[updatedColumns.length - 1].loading = false;
-            }
-            return updatedColumns;
-          });
+          setColumns(prev => prev.map(col => (
+            col.id === columnId ? { ...col, loading: false } : col
+          )));
         }
       } else {
         setError('No molecules found for this input.');
-        setColumns(prev => {
-          const updatedColumns = [...prev];
-          if (updatedColumns.length > 0) {
-            updatedColumns[updatedColumns.length - 1].loading = false;
-          }
-          return updatedColumns;
-        });
+        setColumns(prev => prev.map(col => (
+          col.id === columnId ? { ...col, loading: false } : col
+        )));
       }
       
       setObjectInput('');
@@ -1165,13 +1132,15 @@ function App() {
       for (const test of PRESET_VISUAL_TESTS) {
         if (cancelled) break;
         try {
-          // Direct SDF generation from known SMILES (bypass AI analysis)
-          const sdfResult = await generateSDFs([test.smiles], false);
-          const viewers = [{
+          // Generate SDFs for multiple compounds per object
+          const smilesArray = test.smilesList || [];
+          if (smilesArray.length === 0) continue;
+          const sdfResult = await generateSDFs(smilesArray, false);
+          const viewers = smilesArray.map((sm, idx) => ({
             name: test.label,
-            sdfData: sdfResult.sdfPaths?.[0] ? `file://${sdfResult.sdfPaths[0]}` : null,
-            smiles: test.smiles
-          }];
+            sdfData: sdfResult.sdfPaths?.[idx] ? `file://${sdfResult.sdfPaths[idx]}` : null,
+            smiles: sm
+          }));
           setColumns(prev => ([...prev, { id: Date.now() + Math.random(), query: test.label, viewers }]));
         } catch (e) {
           console.log(`Failed to create column for ${test.label}:`, e);

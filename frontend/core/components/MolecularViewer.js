@@ -1,4 +1,4 @@
-// MolecularViewer.js - 3D molecular visualization and SDF processing
+````// MolecularViewer.js - 3D molecular visualization and SDF processing
 export class MolecularViewer {
   constructor() {
     this.viewers = [];
