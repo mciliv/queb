@@ -1056,46 +1056,40 @@ function App() {
   }, [isProcessing, analyzeText, generateSDFs]);
 
   const handleAnalysisComplete = useCallback(async (result) => {
-    const molecules = result.molecules || result.chemicals || [];
-    
+    const molecules = result?.molecules || result?.chemicals || [];
+    const objectLabel = (result && (result.object || (result.result && result.result.object))) || (cameraMode ? 'Camera capture' : 'Image capture');
+
     if (molecules && molecules.length > 0) {
       const smilesArray = molecules.map(mol => mol.smiles).filter(Boolean);
-      
+
       if (smilesArray.length > 0) {
         try {
           const sdfResult = await generateSDFs(smilesArray, false);
-          
+
           const viewers = molecules.map((mol, index) => {
             const sdfPath = sdfResult.sdfPaths && sdfResult.sdfPaths[index];
             return {
-              name: mol.name || 'Captured object',
+              name: mol.name || objectLabel,
               sdfData: sdfPath ? `file://${sdfPath}` : null,
               smiles: mol.smiles
             };
           });
-          
-          setColumns(prev => {
-            const captureType = cameraMode ? 'camera' : 'image';
-            if (prev.length === 0) {
-              return [{
-                id: Date.now(),
-                query: `Captured from ${captureType}`,
-                viewers: viewers
-              }];
-            } else {
-              const updatedColumns = [...prev];
-              const lastColumn = updatedColumns[updatedColumns.length - 1];
-              lastColumn.viewers = [...lastColumn.viewers, ...viewers];
-              lastColumn.query = `${lastColumn.query} + Captured from ${captureType}`;
-              return updatedColumns;
+
+          // Always create a new column for each image analysis, mirroring text behavior
+          setColumns(prev => ([
+            ...prev,
+            {
+              id: Date.now(),
+              query: objectLabel,
+              viewers
             }
-          });
+          ]));
         } catch (sdfError) {
           console.error('SDF generation failed:', sdfError);
         }
       }
     }
-    
+
     setError('');
   }, [generateSDFs, cameraMode]);
 
