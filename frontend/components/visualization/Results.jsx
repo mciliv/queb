@@ -85,11 +85,22 @@ const MolecularAnalysisResults = ({ moleculeViewers, setMoleculeViewers, lastAna
   }
 
   return (
-    <div className="molecular-analysis-results-section">
-
-      
-      {/* 3dmoljs gridviewer container with main app background */}
-      <div id="gldiv" ref={molecularVisualizationContainerRef} className="molecular-gridviewer-container">
+    <div style={{ width: '100%', background: '#000' }}>
+      <div
+        id="gldiv"
+        ref={molecularVisualizationContainerRef}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          gap: '20px',
+          padding: '20px',
+          background: '#000',
+          minHeight: '100px',
+          width: '100%',
+          overflowX: 'auto',
+          overflowY: 'hidden'
+        }}
+      >
         {molecularAnalysisGroups.map((spatialAnalysisGroup, groupIndex) => (
           <SpatialMolecularColumn
             key={groupIndex}
@@ -150,33 +161,34 @@ const SpatialMolecularColumn = ({ targetObjectName, molecularViewers, spatialAna
   }, [useGridViewer, molecularViewers]);
 
   return (
-    <div className="spatial-molecular-column">
-      {/* Spatial analysis header */}
-      <div className="spatial-target-container">
-        <h3 className="target-object-title">{targetObjectName}</h3>
-        <div className="detected-molecule-count">
-          {molecularViewers.length} molecule{molecularViewers.length !== 1 ? 's' : ''} detected
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: '400px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {molecularViewers.length > 3 && (
           <button 
-            className="grid-toggle-btn"
             onClick={() => setUseGridViewer(!useGridViewer)}
-            title={useGridViewer ? 'Switch to individual viewers' : 'Switch to grid view'}
+            style={{
+              background: 'rgba(255,255,255,0.1)',
+              border: 'none',
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: '16px',
+              padding: '8px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+            aria-label="Toggle grid view"
           >
             {useGridViewer ? '□' : '⊞'}
           </button>
         )}
       </div>
 
-      {/* 3dmoljs molecular gridviewer with main app background */}
       {useGridViewer ? (
         <div 
           ref={gridViewerRef}
-          className="molecule-grid"
           style={{ height: '400px', width: '100%', background: 'transparent' }}
         />
       ) : (
-        <div className="threeDmol-molecular-gridviewer">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
           {molecularViewers.map((molecularViewer, viewerIndex) => (
             <ThreeDimensionalMolecularViewer 
               key={viewerIndex} 
@@ -295,29 +307,50 @@ const ThreeDimensionalMolecularViewer = ({ molecularData, spatialIndex, onCloseM
   }, [molecularData.sdfData]);
 
   return (
-    <div className="threeDmol-molecular-viewer-container">
-      <div className="molecular-viewer-header">
-        <span className="detected-molecule-name">{molecularData.name}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', padding: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '8px' }}>
+        <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', fontWeight: 500, flex: 1, textAlign: 'left' }}>
+          {molecularData.name}
+        </span>
         <button 
-          className="close-molecular-visualization-btn"
           onClick={onCloseMoleculeVisualization}
-          title={`Close ${molecularData.name} visualization (${navigator.platform.toUpperCase().indexOf('MAC') >= 0 ? '⌘' : 'Ctrl'}+W)`}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'rgba(255,255,255,0.6)',
+            fontSize: '18px',
+            cursor: 'pointer',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            flexShrink: 0
+          }}
+          aria-label={`Close ${molecularData.name}`}
         >
           ×
         </button>
       </div>
       <div 
         ref={threeDMolViewerRef}
-        className="mol-viewer-container"
-        style={{ height: '300px', width: '400px', background: 'transparent' }}
+        style={{
+          position: 'relative',
+          width: '400px',
+          height: '300px',
+          background: 'transparent',
+          borderRadius: '4px',
+          overflow: 'hidden',
+          margin: 0,
+          border: 'none',
+          flexShrink: 0,
+          display: 'block'
+        }}
       />
 
       {molecularVisualizationError && (
-        <div className="molecular-visualization-error">
-          <div className="molecular-error-message">{molecularVisualizationError}</div>
+        <div style={{ padding: '16px', background: 'rgba(255, 50, 50, 0.1)', borderRadius: '4px' }}>
+          <div style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px', marginBottom: '8px' }}>{molecularVisualizationError}</div>
           {molecularData.smiles && (
-            <div className="smiles-structural-fallback">
-              SMILES Structure: <code>{molecularData.smiles}</code>
+            <div style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '3px', wordBreak: 'break-all' }}>
+              SMILES Structure: <code style={{ color: 'rgba(255,255,255,0.7)', background: 'none' }}>{molecularData.smiles}</code>
             </div>
           )}
         </div>
