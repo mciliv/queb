@@ -56,6 +56,6 @@
     "livereload": "^0.9.3",
     "nodemon": "^3.1.10",
     "prettier": "^3.2.5",
-    "puppeteer": "^21.0.0"
+    "puppeteer": "^24.16.1"
   }
 }
