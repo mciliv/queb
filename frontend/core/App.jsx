@@ -774,11 +774,24 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
 
         if (sdfContent) {
           viewer.addModel(sdfContent, 'sdf');
-          viewer.setStyle({}, { sphere: { scale: 0.8 } });
+          // Use sphere representation with proper element colors
+          // For ionic compounds like NaCl, show individual atoms clearly
+          viewer.setStyle({}, { 
+            sphere: { 
+              scale: 0.8
+            } 
+          });
+          // Ensure proper element-based coloring
+          viewer.setStyle({element: 'Na'}, { sphere: { color: 'purple', scale: 0.8 } });
+          viewer.setStyle({element: 'Cl'}, { sphere: { color: 'green', scale: 0.8 } });
+          viewer.setStyle({element: 'H'}, { sphere: { color: 'white', scale: 0.6 } });
+          viewer.setStyle({element: 'O'}, { sphere: { color: 'red', scale: 0.8 } });
+          viewer.setStyle({element: 'C'}, { sphere: { color: 'gray', scale: 0.8 } });
+          viewer.setStyle({element: 'N'}, { sphere: { color: 'blue', scale: 0.8 } });
           viewer.zoomTo();
           viewer.render();
           setStatus('loaded');
-          console.log(`${molecularData.name} rendered successfully`);
+          console.log(`${molecularData.name} rendered successfully with element colors`);
         } else {
           setStatus('failed');
         }
