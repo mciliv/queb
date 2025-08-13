@@ -12,23 +12,15 @@
  */
 
 function buildChemicalAnalysisInstructions() {
-  return `You are a molecular analysis expert. Analyze the object and provide a JSON response with accurate chemical composition.
+  return `Analyze object chemical composition. Return JSON.
 
-OBJECT VALIDATION RULES:
-1. ONLY analyze if the input describes a real, physical object or substance
-2. REJECT abstract concepts, emotions, actions, or non-physical things
-3. REJECT nonsensical text, random words, or incomplete descriptions
-4. REJECT if the input is clearly not describing a tangible material
+ONLY physical objects: food, drinks, materials, minerals, chemicals.
+REJECT: emotions, actions, nonsense text.
 
-VALID OBJECTS: food, drinks, materials, plants, minerals, chemicals, household items, etc.
-INVALID OBJECTS: love, happiness, running, thinking, "asdfgh", incomplete words, etc.
-
-CRITICAL RULES FOR ACCURATE SMILES:
-1. Generate ONLY valid, verified SMILES notation
-2. Use standard SMILES from established databases (PubChem, ChEBI)
-5. For ionic compounds, represent as single entries with dot notation: "[Na+].[Cl-]" not separate ions
-6. For minerals, use simple ionic representations like "[Ca+2].[CO3-2]"
-8. Verify SMILES follow proper syntax: atoms, bonds, rings, charges
+SMILES rules:
+- Valid notation only: "[Na+].[Cl-]" for ionic compounds
+- Standard database forms (PubChem, ChEBI)
+- Proper syntax: atoms, bonds, rings, charges
 
 Response format:
 {
@@ -39,36 +31,14 @@ Response format:
   ]
 }
 
-PROVEN EXAMPLES FROM WORKING VERSIONS:
-- Water: "O" (not H2O)
-- Ethanol: "CCO" (not C2H6O)  
-- Glucose: "C(C(C(C(C(C=O)O)O)O)O)O"
-- Caffeine: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
-- Benzene: "C1=CC=CC=C1"
-- Calcium carbonate: "[Ca+2].[O-]C([O-])=O"
-- Sodium chloride: "[Na+].[Cl-]"
-- Talc (simplified): "O[Si](O)O"
-- Cellulose unit: "C(C1C(C(C(C(O1)O)O)O)O)O"
+Examples:
+Water: "O", Ethanol: "CCO", NaCl: "[Na+].[Cl-]"
+Glucose: "C(C(C(C(C(C=O)O)O)O)O)O"
+Caffeine: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
 
-REALISTIC BREAKDOWN EXAMPLES:
-For beverages like wine, include:
-- Major: Ethanol "CCO", Water "O"  
-- Organic acids: Tartaric "OC(C(O)C(O)=O)C(O)=O", Malic "C(C(=O)O)C(C(=O)O)O"
-- Sugars: Glucose, Fructose with proper SMILES
-- Phenolics: Resveratrol simplified forms
+Wine: Ethanol "CCO", Water "O", Tartaric acid "OC(C(O)C(O)=O)C(O)=O"
 
-For biological materials, include:
-- Water "O" (always present)
-- Amino acids: Glycine "C(C(=O)O)N", Leucine "CC(C)CC(N)C(=O)O"
-- Fatty acids: Palmitic "CCCCCCCCCCCCCCCC(=O)O"
-- Simple sugars with verified SMILES
-
-AVOID THESE COMMON ERRORS:
-- Chemical formulas instead of SMILES (H2O vs O)
-- Overly complex polymer chains (>100 characters)
-- Invalid SMILES syntax (missing brackets for charges)
-- Unrealistic molecular representations
-- Generic responses without specific chemistry`;
+Avoid: H2O format, invalid syntax, unrealistic molecules`;
 }
 
 // Export for use in AtomPredictor
