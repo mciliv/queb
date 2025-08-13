@@ -161,7 +161,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           ref={inputRef}
           id="object-input"
           type="text"
-          placeholder=""
+          placeholder={`Type to analyze molecules (${keyboardHint} to focus)`}
           style={{
             width: '100%',
             padding: '12px 16px',
