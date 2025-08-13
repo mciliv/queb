@@ -464,7 +464,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
           background: 'rgba(0, 0, 0, 0.8)',
           borderRadius: '8px',
           fontSize: '14px'
-        }}>{permissionMessage || 'Click to enable camera'}</div>
+        }}>{permissionMessage}</div>
       )}
       
       {/* Red outline box where user clicked */}
