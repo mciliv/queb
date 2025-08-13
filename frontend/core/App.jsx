@@ -870,6 +870,21 @@ const MolecularColumn = ({ column, onRemove }) => {
         </button>
       </div>
 
+      {/* Failure indicator */}
+      {column.failed && (
+        <div style={{
+          marginBottom: '16px',
+          padding: '10px 12px',
+          background: 'rgba(255, 193, 7, 0.1)',
+          border: '1px solid rgba(255, 193, 7, 0.3)',
+          borderRadius: '4px',
+          fontSize: '13px',
+          color: 'rgba(255, 193, 7, 0.9)'
+        }}>
+          💡 AI failed to analyze - please report this
+        </div>
+      )}
+
       {column.loading && column.viewers.length === 0 && (
         <div style={{ 
           padding: '20px', 
@@ -898,8 +913,7 @@ function App() {
   const [columns, setColumns] = useState([]);
   const [error, setError] = useState('');
   const [autoVisualMode, setAutoVisualMode] = useState(false);
-  const [showFeedbackBox, setShowFeedbackBox] = useState(false);
-  const [lastFailedQuery, setLastFailedQuery] = useState('');
+
   const { analyzeText, generateSDFs } = useApi();
 
   // Load 3Dmol.js once at app start
@@ -946,7 +960,7 @@ function App() {
 
     setIsProcessing(true);
     setError('');
-    setShowFeedbackBox(false); // Hide any existing feedback
+
     
     // Create a new column immediately (always add to the right)
     const columnId = Date.now();
@@ -956,7 +970,8 @@ function App() {
         id: columnId,
         query: value,
         viewers: [],
-        loading: true
+        loading: true,
+        failed: false
       }
     ]));
     
@@ -982,34 +997,26 @@ function App() {
             
             // Update the newly created column by id
             setColumns(prev => prev.map(col => (
-              col.id === columnId ? { ...col, viewers, loading: false } : col
+              col.id === columnId ? { ...col, viewers, loading: false, failed: false } : col
             )));
-            // Success - hide feedback box
-            setShowFeedbackBox(false);
           } catch (sdfError) {
             console.error('SDF generation failed:', sdfError);
             setError('Failed to generate molecular structures');
-            setLastFailedQuery(value);
-            setShowFeedbackBox(true);
-            // Mark this column as not loading
+            // Mark this column as failed
             setColumns(prev => prev.map(col => (
-              col.id === columnId ? { ...col, loading: false } : col
+              col.id === columnId ? { ...col, loading: false, failed: true } : col
             )));
           }
         } else {
           setError('No valid SMILES found in the analysis results.');
-          setLastFailedQuery(value);
-          setShowFeedbackBox(true);
           setColumns(prev => prev.map(col => (
-            col.id === columnId ? { ...col, loading: false } : col
+            col.id === columnId ? { ...col, loading: false, failed: true } : col
           )));
         }
       } else {
         setError('No molecules found for this input.');
-        setLastFailedQuery(value);
-        setShowFeedbackBox(true);
         setColumns(prev => prev.map(col => (
-          col.id === columnId ? { ...col, loading: false } : col
+          col.id === columnId ? { ...col, loading: false, failed: true } : col
         )));
       }
       
@@ -1017,16 +1024,10 @@ function App() {
     } catch (error) {
       console.error('Analysis failed:', error);
       setError('Analysis failed. Please try again.');
-      setLastFailedQuery(value);
-      setShowFeedbackBox(true);
       // Mark column as failed
-      setColumns(prev => {
-        const updatedColumns = [...prev];
-        if (updatedColumns.length > 0) {
-          updatedColumns[updatedColumns.length - 1].loading = false;
-        }
-        return updatedColumns;
-      });
+      setColumns(prev => prev.map(col => (
+        col.id === columnId ? { ...col, loading: false, failed: true } : col
+      )));
     } finally {
       setIsProcessing(false);
     }
@@ -1044,7 +1045,8 @@ function App() {
         id: columnId,
         query: objectLabel,
         viewers: [],
-        loading: true
+        loading: true,
+        failed: false
       }
     ]));
 
@@ -1066,29 +1068,22 @@ function App() {
 
           // Update the column with viewers
           setColumns(prev => prev.map(col => (
-            col.id === columnId ? { ...col, viewers, loading: false } : col
+            col.id === columnId ? { ...col, viewers, loading: false, failed: false } : col
           )));
-          setShowFeedbackBox(false);
         } catch (sdfError) {
           console.error('SDF generation failed:', sdfError);
-          setLastFailedQuery(objectLabel);
-          setShowFeedbackBox(true);
           setColumns(prev => prev.map(col => (
-            col.id === columnId ? { ...col, loading: false } : col
+            col.id === columnId ? { ...col, loading: false, failed: true } : col
           )));
         }
       } else {
-        setLastFailedQuery(objectLabel);
-        setShowFeedbackBox(true);
         setColumns(prev => prev.map(col => (
-          col.id === columnId ? { ...col, loading: false } : col
+          col.id === columnId ? { ...col, loading: false, failed: true } : col
         )));
       }
     } else {
-      setLastFailedQuery(objectLabel);
-      setShowFeedbackBox(true);
       setColumns(prev => prev.map(col => (
-        col.id === columnId ? { ...col, loading: false } : col
+        col.id === columnId ? { ...col, loading: false, failed: true } : col
       )));
     }
 
@@ -1193,21 +1188,7 @@ function App() {
             )}
           </div>
 
-          {/* AI Error Feedback */}
-          {showFeedbackBox && (
-            <div style={{
-              marginBottom: '20px',
-              padding: '12px 16px',
-              background: 'rgba(255, 193, 7, 0.1)',
-              border: '1px solid rgba(255, 193, 7, 0.3)',
-              borderRadius: '6px',
-              fontSize: '14px',
-              color: 'rgba(255, 193, 7, 0.9)',
-              maxWidth: '600px'
-            }}>
-              💡 AI failed to analyze "{lastFailedQuery}" - please report this to improve accuracy
-            </div>
-          )}
+
 
           <div className="columns">
             {columns.map(column => (
