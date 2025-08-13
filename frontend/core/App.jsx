@@ -846,13 +846,48 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
 };
 
 const MolecularColumn = ({ column, onRemove }) => {
+  // Debug: Log column data to ensure headers have content
+  console.log('Rendering column header:', { query: column.query, loading: column.loading, failed: column.failed });
+  
   return (
     <div style={styles.column}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', userSelect: 'text' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', userSelect: 'text' }}>
-          <div aria-hidden role="img" style={{ opacity: 0.8, fontSize: '16px', userSelect: 'none' }}>🧪</div>
-          <div style={{ fontSize: '14px', opacity: 0.7, userSelect: 'text' }}>
-            {column.query} {column.loading && '⏳'}
+      {/* GUARANTEED VISIBLE HEADER */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '20px', 
+        userSelect: 'text',
+        minHeight: '24px',
+        position: 'relative',
+        zIndex: 10,
+        visibility: 'visible',
+        opacity: 1,
+        background: 'rgba(255, 255, 255, 0.02)', // Subtle background to ensure visibility
+        padding: '8px 0',
+        borderRadius: '4px'
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          userSelect: 'text',
+          flex: 1
+        }}>
+          <div aria-hidden role="img" style={{ 
+            opacity: 0.8, 
+            fontSize: '16px', 
+            userSelect: 'none',
+            minWidth: '16px'
+          }}>🧪</div>
+          <div style={{ 
+            fontSize: '14px', 
+            opacity: 0.7, 
+            userSelect: 'text',
+            color: '#ffffff',
+            fontWeight: '400'
+          }}>
+            {column.query || 'Analysis'} {column.loading && '⏳'}
           </div>
         </div>
         <button 
@@ -863,7 +898,11 @@ const MolecularColumn = ({ column, onRemove }) => {
             color: '#ffffff',
             fontSize: '20px',
             cursor: 'pointer',
-            userSelect: 'none'
+            userSelect: 'none',
+            minWidth: '24px',
+            minHeight: '24px',
+            padding: '2px',
+            flexShrink: 0
           }}
         >
           ×
