@@ -187,17 +187,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           id="object-input"
           type="text"
           placeholder=""
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: displayError ? '1px solid rgba(255, 100, 100, 0.5)' : 'none',
-            borderRadius: '8px',
-            color: '#ffffff',
-            fontSize: '14px',
-            outline: 'none',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-          }}
+          className={`input-base${displayError ? ' input-error' : ''}`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -206,20 +196,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
         
         {value.trim() && (
           <button 
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: 'none',
-              borderRadius: '6px',
-              color: '#ffffff',
-              padding: '8px 12px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              minWidth: '40px',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
+            className="btn-icon"
             onClick={handleSubmit}
             aria-label="Structuralize"
           >
@@ -1130,8 +1107,8 @@ function App() {
 
   return (
     <PaymentProvider config={PAYMENT_CONFIG}>
-      <div style={styles.appContainer}>
-        <div style={styles.mainLayout}>
+      <div className="app">
+        <div className="main">
           {/* Beaker toggle removed for minimal UI */}
           
           <div style={styles.inputSection}>
@@ -1189,7 +1166,7 @@ function App() {
             )}
           </div>
 
-          <div style={styles.columnsContainer}>
+          <div className="columns">
             {columns.map(column => (
               <MolecularColumn
                 key={column.id}
