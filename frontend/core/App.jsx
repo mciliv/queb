@@ -858,7 +858,7 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
   );
 };
 
-const MolecularColumn = ({ column, onRemove }) => {
+const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
   // Debug: Log column data to ensure headers have content
   console.log('Rendering column header:', { query: column.query, loading: column.loading, failed: column.failed });
   
@@ -903,23 +903,25 @@ const MolecularColumn = ({ column, onRemove }) => {
             {column.query} {column.loading && '⏳'}
           </div>
         </div>
-        <button 
-          onClick={onRemove}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: '#ffffff',
-            fontSize: '20px',
-            cursor: 'pointer',
-            userSelect: 'none',
-            minWidth: '24px',
-            minHeight: '24px',
-            padding: '2px',
-            flexShrink: 0
-          }}
-        >
-          ×
-        </button>
+        {showRemove && (
+          <button 
+            onClick={onRemove}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#ffffff',
+              fontSize: '20px',
+              cursor: 'pointer',
+              userSelect: 'none',
+              minWidth: '24px',
+              minHeight: '24px',
+              padding: '2px',
+              flexShrink: 0
+            }}
+          >
+            ×
+          </button>
+        )}
       </div>
 
       {/* Failure indicator */}
@@ -965,6 +967,8 @@ function App() {
   const [columns, setColumns] = useState([]);
   const [error, setError] = useState('');
   const [autoVisualMode, setAutoVisualMode] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [columnMode, setColumnMode] = useState('replace'); // 'replace' or 'accumulate'
 
   const { analyzeText, generateSDFs } = useApi();
 
@@ -1014,17 +1018,21 @@ function App() {
     setError('');
 
     
-    // Replace existing columns with new analysis
+    // Create column based on mode setting
     const columnId = Date.now();
-    setColumns([
-      {
-        id: columnId,
-        query: value,
-        viewers: [],
-        loading: true,
-        failed: false
-      }
-    ]);
+    const newColumn = {
+      id: columnId,
+      query: value,
+      viewers: [],
+      loading: true,
+      failed: false
+    };
+    
+    if (columnMode === 'replace') {
+      setColumns([newColumn]); // Replace existing
+    } else {
+      setColumns(prev => [...prev, newColumn]); // Add to existing
+    }
     
     try {
       const result = await analyzeText(value);
@@ -1082,23 +1090,27 @@ function App() {
     } finally {
       setIsProcessing(false);
     }
-  }, [isProcessing, analyzeText, generateSDFs]);
+  }, [isProcessing, analyzeText, generateSDFs, columnMode]);
 
   const handleAnalysisComplete = useCallback(async (result) => {
     const molecules = result?.molecules || result?.chemicals || [];
     const objectLabel = (result && (result.object || (result.result && result.result.object))) || (cameraMode ? 'Camera capture' : 'Image capture');
 
-    // Replace existing columns with new image analysis
+    // Create column based on mode setting
     const columnId = Date.now();
-    setColumns([
-      {
-        id: columnId,
-        query: objectLabel,
-        viewers: [],
-        loading: true,
-        failed: false
-      }
-    ]);
+    const newColumn = {
+      id: columnId,
+      query: objectLabel,
+      viewers: [],
+      loading: true,
+      failed: false
+    };
+    
+    if (columnMode === 'replace') {
+      setColumns([newColumn]); // Replace existing
+    } else {
+      setColumns(prev => [...prev, newColumn]); // Add to existing
+    }
 
     if (molecules && molecules.length > 0) {
       const smilesArray = molecules.map(mol => mol.smiles).filter(Boolean);
@@ -1138,7 +1150,7 @@ function App() {
     }
 
     setError('');
-  }, [generateSDFs, cameraMode]);
+  }, [generateSDFs, cameraMode, columnMode]);
 
   // Auto-run visual tests - bypass AI and go straight to SDF generation
   useEffect(() => {
@@ -1181,7 +1193,90 @@ function App() {
     <PaymentProvider config={PAYMENT_CONFIG}>
       <div className="app">
         <div className="main">
-          {/* Beaker toggle removed for minimal UI */}
+          {/* Settings gear icon in top right */}
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            style={{
+              position: 'fixed',
+              top: '20px',
+              right: '20px',
+              width: '40px',
+              height: '40px',
+              borderRadius: '20px',
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: 'none',
+              color: '#ffffff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '16px',
+              zIndex: 1000
+            }}
+            title="Settings"
+          >
+            ⚙️
+          </button>
+
+          {/* Settings Modal */}
+          {showSettings && (
+            <div style={{
+              position: 'fixed',
+              top: '70px',
+              right: '20px',
+              background: 'rgba(20, 20, 20, 0.95)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '8px',
+              padding: '20px',
+              minWidth: '250px',
+              zIndex: 1001,
+              backdropFilter: 'blur(10px)'
+            }}>
+              <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#ffffff' }}>Settings</h3>
+              
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ fontSize: '14px', color: '#ffffff', marginBottom: '8px', display: 'block' }}>
+                  Column Behavior:
+                </label>
+                <select
+                  value={columnMode}
+                  onChange={(e) => setColumnMode(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '4px',
+                    color: '#ffffff',
+                    fontSize: '14px'
+                  }}
+                >
+                  <option value="replace" style={{ background: '#222', color: '#fff' }}>
+                    Replace (Default) - New analysis displaces previous
+                  </option>
+                  <option value="accumulate" style={{ background: '#222', color: '#fff' }}>
+                    Accumulate - Add columns side by side
+                  </option>
+                </select>
+              </div>
+
+              <button
+                onClick={() => setShowSettings(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '4px',
+                  color: '#ffffff',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  width: '100%'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          )}
           
           <div style={styles.inputSection}>
             <div style={{ marginBottom: '15px' }}>
@@ -1246,6 +1341,7 @@ function App() {
                 key={column.id}
                 column={column}
                 onRemove={() => removeColumn(column.id)}
+                showRemove={columnMode === 'accumulate'}
               />
             ))}
           </div>
