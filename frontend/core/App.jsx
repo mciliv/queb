@@ -126,39 +126,6 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
     return null;
   };
 
-  const handleKeyDown = async (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const now = Date.now();
-      const DEBOUNCE_MS = 1000;
-      
-      if (now - lastTriggerTimeRef.current < DEBOUNCE_MS) {
-        console.log('🚫 Enter key debounced - too soon since last trigger');
-        return;
-      }
-      
-      lastTriggerTimeRef.current = now;
-      
-      const validationError = validateInput(value);
-      if (validationError) {
-        setLocalError(validationError);
-        return;
-      }
-
-      setIsValidating(true);
-      try {
-        await onSubmit(value.trim());
-        setLocalError('');
-        } catch (err) {
-          setLocalError(err.message || 'Structuralization failed. Please try again.');
-      } finally {
-        setIsValidating(false);
-      }
-    }
-  };
-
   const handleSubmit = async () => {
     const validationError = validateInput(value);
     if (validationError) {
@@ -174,6 +141,14 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
       setLocalError(err.message || 'Structuralization failed. Please try again.');
     } finally {
       setIsValidating(false);
+    }
+  };
+
+  const handleKeyDown = async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      await handleSubmit();
     }
   };
 
