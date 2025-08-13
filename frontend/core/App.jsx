@@ -187,7 +187,19 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           id="object-input"
           type="text"
           placeholder=""
-          className={`input-base${displayError ? ' input-error' : ''}`}
+          style={{
+            width: '100%',
+            padding: '12px 16px',
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: displayError ? '1px solid rgba(255, 100, 100, 0.5)' : 'none',
+            borderRadius: '8px',
+            color: '#ffffff',
+            fontSize: '14px',
+            outline: 'none',
+            WebkitAppearance: 'none',
+            appearance: 'none',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
