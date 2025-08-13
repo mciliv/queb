@@ -1192,92 +1192,102 @@ function App() {
   return (
     <PaymentProvider config={PAYMENT_CONFIG}>
       <div className="app">
-        <div className="main">
-          {/* Settings gear icon in top right */}
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            style={{
-              position: 'fixed',
-              top: '20px',
-              right: '20px',
-              width: '40px',
-              height: '40px',
-              borderRadius: '20px',
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: 'none',
-              color: '#ffffff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '16px',
-              zIndex: 1000
-            }}
-            title="Settings"
-          >
-            ⚙️
-          </button>
-
-          {/* Settings Modal */}
-          {showSettings && (
-            <div style={{
-              position: 'fixed',
-              top: '70px',
-              right: '20px',
-              background: 'rgba(20, 20, 20, 0.95)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '8px',
-              padding: '20px',
-              minWidth: '250px',
-              zIndex: 1001,
-              backdropFilter: 'blur(10px)'
-            }}>
-              <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#ffffff' }}>Settings</h3>
-              
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ fontSize: '14px', color: '#ffffff', marginBottom: '8px', display: 'block' }}>
-                  Column Behavior:
-                </label>
-                <select
-                  value={columnMode}
-                  onChange={(e) => setColumnMode(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '4px',
-                    color: '#ffffff',
-                    fontSize: '14px'
-                  }}
-                >
-                  <option value="replace" style={{ background: '#222', color: '#fff' }}>
-                    Replace (Default) - New analysis displaces previous
-                  </option>
-                  <option value="accumulate" style={{ background: '#222', color: '#fff' }}>
-                    Accumulate - Add columns side by side
-                  </option>
-                </select>
-              </div>
-
-              <button
-                onClick={() => setShowSettings(false)}
+        {/* Settings gear icon in top right - OUTSIDE main to avoid conflicts */}
+        <button
+          onClick={() => {
+            console.log('Settings button clicked, current state:', showSettings);
+            setShowSettings(!showSettings);
+          }}
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            width: '44px',
+            height: '44px',
+            borderRadius: '22px',
+            background: 'rgba(255, 255, 255, 0.15)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: '#ffffff',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            zIndex: 9999,
+            opacity: 1,
+            visibility: 'visible',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+          }}
+          title="Settings"
+        >
+          ⚙️
+        </button>
+        
+        {/* Settings Modal - OUTSIDE main for proper positioning */}
+        {showSettings && (
+          <div style={{
+            position: 'fixed',
+            top: '75px',
+            right: '20px',
+            background: 'rgba(20, 20, 20, 0.95)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '8px',
+            padding: '20px',
+            minWidth: '280px',
+            zIndex: 9998,
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
+          }}>
+            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#ffffff' }}>Settings</h3>
+            
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ fontSize: '14px', color: '#ffffff', marginBottom: '8px', display: 'block' }}>
+                Column Behavior:
+              </label>
+              <select
+                value={columnMode}
+                onChange={(e) => {
+                  console.log('Column mode changed to:', e.target.value);
+                  setColumnMode(e.target.value);
+                }}
                 style={{
+                  width: '100%',
+                  padding: '8px 12px',
                   background: 'rgba(255, 255, 255, 0.1)',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '4px',
                   color: '#ffffff',
-                  padding: '8px 16px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  width: '100%'
+                  fontSize: '14px'
                 }}
               >
-                Close
-              </button>
+                <option value="replace" style={{ background: '#222', color: '#fff' }}>
+                  Replace (Default) - New analysis displaces previous
+                </option>
+                <option value="accumulate" style={{ background: '#222', color: '#fff' }}>
+                  Accumulate - Add columns side by side
+                </option>
+              </select>
             </div>
-          )}
-          
+
+            <button
+              onClick={() => setShowSettings(false)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '4px',
+                color: '#ffffff',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                width: '100%'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        )}
+        
+        <div className="main">          
           <div style={styles.inputSection}>
             <div style={{ marginBottom: '15px' }}>
               <TextInput 
