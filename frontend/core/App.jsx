@@ -887,7 +887,7 @@ const MolecularColumn = ({ column, onRemove }) => {
             color: '#ffffff',
             fontWeight: '400'
           }}>
-            {column.query || 'Analysis'} {column.loading && '⏳'}
+            {column.query} {column.loading && '⏳'}
           </div>
         </div>
         <button 
