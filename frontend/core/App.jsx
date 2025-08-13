@@ -1036,6 +1036,18 @@ function App() {
     const molecules = result?.molecules || result?.chemicals || [];
     const objectLabel = (result && (result.object || (result.result && result.result.object))) || (cameraMode ? 'Camera capture' : 'Image capture');
 
+    // Always create a column immediately, just like text analysis
+    const columnId = Date.now();
+    setColumns(prev => ([
+      ...prev,
+      {
+        id: columnId,
+        query: objectLabel,
+        viewers: [],
+        loading: true
+      }
+    ]));
+
     if (molecules && molecules.length > 0) {
       const smilesArray = molecules.map(mol => mol.smiles).filter(Boolean);
 
@@ -1052,19 +1064,32 @@ function App() {
             };
           });
 
-          // Always create a new column for each image analysis, mirroring text behavior
-          setColumns(prev => ([
-            ...prev,
-            {
-              id: Date.now(),
-              query: objectLabel,
-              viewers
-            }
-          ]));
+          // Update the column with viewers
+          setColumns(prev => prev.map(col => (
+            col.id === columnId ? { ...col, viewers, loading: false } : col
+          )));
+          setShowFeedbackBox(false);
         } catch (sdfError) {
           console.error('SDF generation failed:', sdfError);
+          setLastFailedQuery(objectLabel);
+          setShowFeedbackBox(true);
+          setColumns(prev => prev.map(col => (
+            col.id === columnId ? { ...col, loading: false } : col
+          )));
         }
+      } else {
+        setLastFailedQuery(objectLabel);
+        setShowFeedbackBox(true);
+        setColumns(prev => prev.map(col => (
+          col.id === columnId ? { ...col, loading: false } : col
+        )));
       }
+    } else {
+      setLastFailedQuery(objectLabel);
+      setShowFeedbackBox(true);
+      setColumns(prev => prev.map(col => (
+        col.id === columnId ? { ...col, loading: false } : col
+      )));
     }
 
     setError('');
