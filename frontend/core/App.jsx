@@ -39,9 +39,11 @@ const styles = {
   },
   column: {
     minWidth: '400px',
+    maxWidth: '400px',
     padding: '20px',
     background: 'rgba(255, 255, 255, 0.02)',
-    borderRadius: '8px'
+    borderRadius: '8px',
+    flexShrink: 0
   },
   header: {
     display: 'flex',
@@ -227,14 +229,14 @@ function Column({ column, onRemove }) {
       )}
 
       {/* Show loading message */}
-      {column.loading && column.molecules.length === 0 && (
+      {column.loading && (!column.viewers || column.viewers.length === 0) && (
         <div style={{ textAlign: 'center', padding: '20px', opacity: 0.5 }}>
           Analyzing molecules...
         </div>
       )}
 
       {/* Show molecules */}
-      {column.molecules.map((molecule, index) => (
+      {column.viewers && column.viewers.map((molecule, index) => (
         <MoleculeViewer key={index} molecule={molecule} />
       ))}
     </div>
@@ -272,7 +274,7 @@ function App() {
     const newColumn = {
       id: Date.now(),
       query: textInput,
-      molecules: [],
+      viewers: [],
       loading: true,
       failed: false
     };
@@ -289,7 +291,7 @@ function App() {
         const sdfResult = await generateSDFs(smiles, false);
 
         // Create molecule objects with 3D data
-        const moleculeData = molecules.map((mol, index) => ({
+        const viewerData = molecules.map((mol, index) => ({
           name: mol.name || textInput,
           smiles: mol.smiles,
           sdfData: sdfResult.sdfPaths?.[index] ? `file://${sdfResult.sdfPaths[index]}` : null
@@ -298,7 +300,7 @@ function App() {
         // Update column with results
         setColumns(prev => prev.map(col =>
           col.id === newColumn.id
-            ? { ...col, molecules: moleculeData, loading: false, failed: false }
+            ? { ...col, viewers: viewerData, loading: false, failed: false }
             : col
         ));
       } else {
@@ -319,8 +321,8 @@ function App() {
       ));
     }
 
-    setTextInput('');
     setIsAnalyzing(false);
+    setTextInput(''); // Clear input after analysis
   }
 
   // Analyze image from camera
@@ -331,7 +333,7 @@ function App() {
     const newColumn = {
       id: Date.now(),
       query: 'Camera capture',
-      molecules: [],
+      viewers: [],
       loading: true,
       failed: false
     };
@@ -348,7 +350,7 @@ function App() {
         const sdfResult = await generateSDFs(smiles, false);
 
         // Create molecule objects with 3D data
-        const moleculeData = molecules.map((mol, index) => ({
+        const viewerData = molecules.map((mol, index) => ({
           name: mol.name || 'Camera capture',
           smiles: mol.smiles,
           sdfData: sdfResult.sdfPaths?.[index] ? `file://${sdfResult.sdfPaths[index]}` : null
@@ -357,7 +359,7 @@ function App() {
         // Update column with results
         setColumns(prev => prev.map(col =>
           col.id === newColumn.id
-            ? { ...col, molecules: moleculeData, loading: false, failed: false }
+            ? { ...col, viewers: viewerData, loading: false, failed: false }
             : col
         ));
       } else {
