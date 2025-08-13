@@ -76,7 +76,7 @@ const styles = {
 };
 
 // Input Components (Top Row)
-const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
+const TextInput = ({ value, onChange, onSubmit, isProcessing, error, enterPressCount, setEnterPressCount, setShowFeedbackBox, setLastFailedQuery }) => {
   const [localError, setLocalError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const inputRef = useRef(null);
@@ -148,6 +148,17 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       e.stopPropagation();
+      
+      // Track enter presses for feedback functionality
+      setEnterPressCount(prev => prev + 1);
+      
+      // If second enter press and no recent success, show feedback
+      if (enterPressCount >= 1 && (error || columns.length === 0)) {
+        setLastFailedQuery(value);
+        setShowFeedbackBox(true);
+        return;
+      }
+      
       await handleSubmit();
     }
   };
@@ -898,6 +909,10 @@ function App() {
   const [columns, setColumns] = useState([]);
   const [error, setError] = useState('');
   const [autoVisualMode, setAutoVisualMode] = useState(false);
+  const [showFeedbackBox, setShowFeedbackBox] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [lastFailedQuery, setLastFailedQuery] = useState('');
+  const [enterPressCount, setEnterPressCount] = useState(0);
   const { analyzeText, generateSDFs } = useApi();
 
   // Load 3Dmol.js once at app start
@@ -944,6 +959,7 @@ function App() {
 
     setIsProcessing(true);
     setError('');
+    setEnterPressCount(0); // Reset on new analysis
     
     // Create a new column immediately (always add to the right)
     const columnId = Date.now();
@@ -981,6 +997,7 @@ function App() {
             setColumns(prev => prev.map(col => (
               col.id === columnId ? { ...col, viewers, loading: false } : col
             )));
+            setEnterPressCount(0); // Reset on success
           } catch (sdfError) {
             console.error('SDF generation failed:', sdfError);
             setError('Failed to generate molecular structures');
@@ -1092,6 +1109,29 @@ function App() {
     setColumns(prev => prev.filter(col => col.id !== columnId));
   }, []);
 
+  const submitFeedback = useCallback(async (feedback) => {
+    if (!feedback.trim()) return;
+    
+    try {
+      // Send feedback to backend for logging/analysis
+      const response = await fetch('/api/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          error: `User feedback for query "${lastFailedQuery}": ${feedback}`,
+          context: { query: lastFailedQuery, timestamp: new Date().toISOString() }
+        })
+      });
+      
+      console.log('Feedback submitted:', feedback);
+      setFeedbackText('');
+      setShowFeedbackBox(false);
+      setEnterPressCount(0);
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
+    }
+  }, [lastFailedQuery]);
+
   return (
     <PaymentProvider config={PAYMENT_CONFIG}>
       <div className="app">
@@ -1106,6 +1146,10 @@ function App() {
                 onSubmit={handleTextAnalysis}
                 isProcessing={isProcessing}
                 error={error}
+                enterPressCount={enterPressCount}
+                setEnterPressCount={setEnterPressCount}
+                setShowFeedbackBox={setShowFeedbackBox}
+                setLastFailedQuery={setLastFailedQuery}
               />
             </div>
 
@@ -1152,6 +1196,89 @@ function App() {
               </div>
             )}
           </div>
+
+          {/* Feedback Box */}
+          {showFeedbackBox && (
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              background: 'rgba(255, 193, 7, 0.1)',
+              border: '1px solid rgba(255, 193, 7, 0.3)',
+              borderRadius: '8px',
+              maxWidth: '600px'
+            }}>
+              <div style={{
+                marginBottom: '12px',
+                fontSize: '14px',
+                color: 'rgba(255, 193, 7, 0.9)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                💡 Report issue with "{lastFailedQuery}"
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <textarea
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder="Describe what went wrong or what you expected to see..."
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    resize: 'vertical',
+                    minHeight: '80px',
+                    outline: 'none'
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      submitFeedback(feedbackText);
+                    }
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <button
+                    onClick={() => submitFeedback(feedbackText)}
+                    style={{
+                      background: 'rgba(255, 193, 7, 0.2)',
+                      border: 'none',
+                      borderRadius: '4px',
+                      color: '#ffffff',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    Send
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowFeedbackBox(false);
+                      setFeedbackText('');
+                      setEnterPressCount(0);
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '4px',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="columns">
             {columns.map(column => (
