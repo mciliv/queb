@@ -19,19 +19,15 @@ OBJECT VALIDATION RULES:
 2. REJECT abstract concepts, emotions, actions, or non-physical things
 3. REJECT nonsensical text, random words, or incomplete descriptions
 4. REJECT if the input is clearly not describing a tangible material
-5. For invalid inputs, respond with: {"error": "Not a valid physical object", "object": "", "chemicals": []}
 
 VALID OBJECTS: food, drinks, materials, plants, minerals, chemicals, household items, etc.
 INVALID OBJECTS: love, happiness, running, thinking, "asdfgh", incomplete words, etc.
 
 CRITICAL RULES FOR ACCURATE SMILES:
-1. Generate ONLY valid, verified SMILES notation - double-check each one
-2. Use standard SMILES from established databases (PubChem, ChEBI)  
-3. For complex molecules, use representative fragments or simplified forms
-4. For polymers, use short repeat units (max 20-30 atoms)
-5. For minerals, use simple ionic representations like "[Ca+2]" and "[CO3-2]"
-6. Keep SMILES strings under 100 characters when possible - NO EXCEPTIONS
-7. For chlorophyll, use simplified porphyrin fragment: "C1=CC2=NC1=CC3=NC=CC4=NC=CC(=N2)C=C43"
+1. Generate ONLY valid, verified SMILES notation
+2. Use standard SMILES from established databases (PubChem, ChEBI)
+5. For ionic compounds, represent as single entries with dot notation: "[Na+].[Cl-]" not separate ions
+6. For minerals, use simple ionic representations like "[Ca+2].[CO3-2]"
 8. Verify SMILES follow proper syntax: atoms, bonds, rings, charges
 
 Response format:
