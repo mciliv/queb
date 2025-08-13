@@ -1014,10 +1014,9 @@ function App() {
     setError('');
 
     
-    // Create a new column immediately (always add to the right)
+    // Replace existing columns with new analysis
     const columnId = Date.now();
-    setColumns(prev => ([
-      ...prev,
+    setColumns([
       {
         id: columnId,
         query: value,
@@ -1025,7 +1024,7 @@ function App() {
         loading: true,
         failed: false
       }
-    ]));
+    ]);
     
     try {
       const result = await analyzeText(value);
@@ -1089,10 +1088,9 @@ function App() {
     const molecules = result?.molecules || result?.chemicals || [];
     const objectLabel = (result && (result.object || (result.result && result.result.object))) || (cameraMode ? 'Camera capture' : 'Image capture');
 
-    // Always create a column immediately, just like text analysis
+    // Replace existing columns with new image analysis
     const columnId = Date.now();
-    setColumns(prev => ([
-      ...prev,
+    setColumns([
       {
         id: columnId,
         query: objectLabel,
@@ -1100,7 +1098,7 @@ function App() {
         loading: true,
         failed: false
       }
-    ]));
+    ]);
 
     if (molecules && molecules.length > 0) {
       const smilesArray = molecules.map(mol => mol.smiles).filter(Boolean);
