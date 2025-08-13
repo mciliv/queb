@@ -161,7 +161,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           ref={inputRef}
           id="object-input"
           type="text"
-          placeholder={`Type to analyze molecules (${keyboardHint} to focus)`}
+          placeholder="Type to analyze molecules..."
           style={{
             width: '100%',
             padding: '12px 16px',
@@ -189,6 +189,27 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           >
             →
          </button>
+        )}
+        
+        {/* Modern keyboard hint badge */}
+        {!value.trim() && (
+          <div style={{
+            position: 'absolute',
+            right: '12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '4px',
+            padding: '4px 8px',
+            fontSize: '11px',
+            color: 'rgba(255, 255, 255, 0.6)',
+            fontFamily: 'monospace',
+            pointerEvents: 'none',
+            userSelect: 'none'
+          }}>
+            {keyboardHint}
+          </div>
         )}
       </div>
       {displayError && (
