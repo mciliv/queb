@@ -357,11 +357,15 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
     const y = event.clientY - rect.top;
     
     // Store click position for outline box
+    console.log('Camera clicked at:', { x, y });
     setClickPosition({ x, y });
     setShowOutline(true);
     
     // Hide outline after 2 seconds
-    setTimeout(() => setShowOutline(false), 2000);
+    setTimeout(() => {
+      console.log('Hiding red outline box');
+      setShowOutline(false);
+    }, 2000);
 
     setIsProcessing(true);
     setCurrentAnalysisType('camera');
@@ -471,14 +475,17 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       {showOutline && clickPosition && (
         <div style={{
           position: 'absolute',
-          left: `${clickPosition.x - 25}px`,
-          top: `${clickPosition.y - 25}px`,
-          width: '50px',
-          height: '50px',
-          border: '2px solid #ff0000',
-          borderRadius: '4px',
+          left: `${clickPosition.x - 30}px`,
+          top: `${clickPosition.y - 30}px`,
+          width: '60px',
+          height: '60px',
+          border: '3px solid #ff3333',
+          borderRadius: '8px',
           pointerEvents: 'none',
-          animation: 'pulse 0.5s ease-in-out'
+          animation: 'pulse 0.5s ease-in-out',
+          zIndex: 100,
+          boxShadow: '0 0 10px rgba(255, 51, 51, 0.5)',
+          background: 'rgba(255, 51, 51, 0.1)'
         }}></div>
       )}
       
