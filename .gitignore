@@ -8,6 +8,7 @@ __pycache__/
 *.backup
 .*.sw?
 node_modules/
+s*/node_modules/
 sdf_files
 *.jpg
 .venv
