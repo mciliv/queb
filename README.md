@@ -1,6 +1,8 @@
-# Goal
+# Estimate & visualize what molecules are contained in a given section(s) of space
 
-Application to estimate & visualize what molecules are contained in a given section(s) of space
+Upload an image, take a photo, or describe an object → Get molecules → See interactive 3D molecular structures
+
+**Example**: Photo of coffee → Identifies caffeine, water, etc. → Displays 3D molecular models
 
 UI structure:
 # Text input (⌘k)
@@ -19,12 +21,6 @@ Options:
 A column contains a header, specified by the object specification or inference (Load immediately upon input submittance)
 each molecule have name title which links to wiki 
 3dmoljs gridviewer seems best
-## What It Does
-
-Upload an image, take a photo, or describe an object → Get AI-identified molecules → See interactive 3D molecular structures
-
-**Example**: Photo of coffee → Identifies caffeine, water, etc. → Displays 3D molecular models
-
 
 Visit `https://localhost:3001` or `http://localhost:8080`
 
@@ -60,34 +56,6 @@ molecular-space-analyzer/
 └── archive/                 # Historical research code
     └── molecular-docking-research/ # Archived docking pipeline
 ```
-
-## Key Features
-
-- **AI Image Analysis** - OpenAI Vision API identifies molecules in photos
-- **Text Analysis** - Describe objects to get molecular composition
-- **3D Visualization** - Interactive molecular structures using 3DMol.js
-- **Real-time Camera** - Point camera at objects for instant analysis
-- **SMILES Processing** - Converts chemical notation to 3D models
-
-## Technology Stack
-
-- **Frontend**: Vanilla JavaScript, 3DMol.js, CSS Grid
-- **Backend**: Node.js, Express, OpenAI API
-- **Chemistry**: RDKit (Python), SMILES notation, SDF files
-- **Testing**: Jest, Puppeteer
-- **Development**: Live reload, HTTPS, automated testing
-
-## Development Commands
-
-```bash
-npm run dev              # Full development server with live reload
-npm run test            # Run comprehensive test suite
-npm run test:unit       # Unit tests only
-npm run test:integration # Integration tests only
-npm run clean           # Clean up processes and temporary files
-```
-
-## Architecture Highlights
 
 ### Focused Codebase
 - **Separated Research Code**: Molecular docking research archived separately
