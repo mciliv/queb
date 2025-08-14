@@ -1005,9 +1005,9 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [columns, setColumns] = useState([]);
   const [error, setError] = useState('');
-  const [autoVisualMode, setAutoVisualMode] = useState(false);
+  const [autoVisualMode, setAutoVisualMode] = useState(process.env.NODE_ENV === 'development');
   const [showSettings, setShowSettings] = useState(false);
-  const [columnMode, setColumnMode] = useState('replace'); // 'replace' or 'accumulate'
+  const [columnMode, setColumnMode] = useState('accumulate'); // 'replace' or 'accumulate'
 
   const { analyzeText, generateSDFs } = useApi();
 
