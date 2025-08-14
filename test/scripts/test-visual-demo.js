@@ -40,8 +40,9 @@ async function runVisualDemo() {
   });
 
   try {
+    const targetUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     console.log('🌐 Navigating to molecular interface...');
-    await page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+    await page.goto(targetUrl, { waitUntil: 'networkidle0' });
     
     // Wait for user to see the page load
     console.log('⏳ Waiting 3 seconds for you to see the interface...');
