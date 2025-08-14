@@ -805,6 +805,13 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
         }
 
         if (sdfContent) {
+          // Ensure no residual models/styles from prior renders
+          if (typeof viewer.removeAllModels === 'function') {
+            viewer.removeAllModels();
+          }
+          if (typeof viewer.clear === 'function') {
+            viewer.clear();
+          }
           viewer.addModel(sdfContent, 'sdf');
           // Use sphere representation with proper element colors
           // For ionic compounds like NaCl, show individual atoms clearly
