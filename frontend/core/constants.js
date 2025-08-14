@@ -14,6 +14,12 @@ export const TEST_MOLECULES = {
   }
 };
 
+// Reverse lookup map for quick smiles→name mapping
+export const SMILES_NAME_MAP = Object.values(TEST_MOLECULES).reduce((acc, m) => {
+  acc[m.smiles] = m.name;
+  return acc;
+}, {});
+
 // Visual tests should be objects with many compounds (use multiple SMILES per object)
 // Use SMILES we can reliably generate offline from existing fixtures
 export const PRESET_VISUAL_TESTS = [

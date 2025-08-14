@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PaymentProvider, usePayment } from '../components/ui/PaymentContext';
 import { useApi } from '../hooks/useApi';
-import { PRESET_VISUAL_TESTS } from './constants.js';
+import { PRESET_VISUAL_TESTS, TEST_MOLECULES, SMILES_NAME_MAP } from './constants.js';
 import '../assets/style.css';
 
 // Device detection utility
@@ -1084,10 +1084,13 @@ function App() {
           try {
             const sdfResult = await generateSDFs(smilesArray, false);
             
-            const viewers = molecules.map((mol, index) => {
-              const sdfPath = sdfResult.sdfPaths && sdfResult.sdfPaths[index];
+            const smilesToSdf = new Map();
+            sdfResult.sdfPaths?.forEach((p, i) => { smilesToSdf.set(smilesArray[i], p); });
+
+            const viewers = molecules.map((mol) => {
+              const sdfPath = smilesToSdf.get(mol.smiles);
               return {
-                name: mol.name || value,
+                name: mol.name || (mol.smiles && SMILES_NAME_MAP[mol.smiles]) || mol.smiles || value,
                 sdfData: sdfPath ? `file://${sdfPath}` : null,
                 smiles: mol.smiles
               };
@@ -1158,10 +1161,13 @@ function App() {
         try {
           const sdfResult = await generateSDFs(smilesArray, false);
 
-          const viewers = molecules.map((mol, index) => {
-            const sdfPath = sdfResult.sdfPaths && sdfResult.sdfPaths[index];
+          const smilesToSdf = new Map();
+          sdfResult.sdfPaths?.forEach((p, i) => { smilesToSdf.set(smilesArray[i], p); });
+
+          const viewers = molecules.map((mol) => {
+            const sdfPath = smilesToSdf.get(mol.smiles);
             return {
-              name: mol.name || objectLabel,
+              name: mol.name || (mol.smiles && SMILES_NAME_MAP[mol.smiles]) || mol.smiles || objectLabel,
               sdfData: sdfPath ? `file://${sdfPath}` : null,
               smiles: mol.smiles
             };
