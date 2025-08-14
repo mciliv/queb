@@ -14,6 +14,8 @@ const {
 const { buildChemicalAnalysisInstructions } = require("../prompts/chemical-analysis-instructions");
 const { parseAIResponseWithFallbacks, validateSMILESQuality } = require("../prompts/fallback-handlers");
 const { getRelevantExamples } = require("../prompts/material-examples");
+const { buildNamesOnlyPrompt } = require("../prompts/names-only");
+const { buildNameToSmilesPrompt } = require("../prompts/name-to-smiles");
 
 class AtomPredictor {
   constructor(apiKey) {
@@ -180,6 +182,61 @@ Now analyze this specific object: "${object}"`;
     } catch (error) {
       console.error("AI text analysis error:", error);
       throw new Error(`AI text analysis failed: ${error.message}`);
+    }
+  }
+
+  async extractNamesOnly(object) {
+    if (!this.isOpenAIAvailable) {
+      return { object, molecules: [] };
+    }
+    const prompt = buildNamesOnlyPrompt(object);
+    try {
+      const response = await this.client.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 800,
+        temperature: 0.1,
+        response_format: { type: "json_object" }
+      });
+      const content = response.choices[0].message.content;
+      // Names-only step expects { object, molecules: [...] }
+      let parsed;
+      try {
+        parsed = JSON.parse(content);
+      } catch (_) {
+        const match = content && content.match(/\{[\s\S]*\}/);
+        parsed = match ? JSON.parse(match[0]) : { object, molecules: [] };
+      }
+      return {
+        object: parsed.object || object,
+        molecules: Array.isArray(parsed.molecules) ? parsed.molecules : []
+      };
+    } catch (error) {
+      console.error("Names-only extraction error:", error);
+      throw new Error(`Names-only extraction failed: ${error.message}`);
+    }
+  }
+
+  async convertNamesToSmiles(namesPayload) {
+    if (!this.isOpenAIAvailable) {
+      return { object: namesPayload?.object || "", molecules: [] };
+    }
+    const prompt = buildNameToSmilesPrompt(namesPayload);
+    try {
+      const response = await this.client.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 800,
+        temperature: 0.1,
+        response_format: { type: "json_object" }
+      });
+      const content = response.choices[0].message.content;
+      const parsed = parseAIResponseWithFallbacks(content);
+      parsed.molecules = validateSMILESQuality(parsed.molecules || []);
+      return parsed;
+    } catch (error) {
+      console.error("Name→SMILES conversion error:", error);
+      throw new Error(`Name→SMILES conversion failed: ${error.message}`);
     }
   }
 

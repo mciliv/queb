@@ -23,6 +23,13 @@ if [ -f /tmp/dev_watcher_pid ]; then
     rm -f /tmp/dev_watcher_pid
 fi
 
+# Kill dev browser manager if running
+if [ -f /tmp/dev_browser_pid ]; then
+    B_PID=$(cat /tmp/dev_browser_pid)
+    kill $B_PID 2>/dev/null || true
+    rm -f /tmp/dev_browser_pid
+fi
+
 # Kill our reload server (legacy)
 if [ -f /tmp/dev_reload_pid ]; then
     RELOAD_PID=$(cat /tmp/dev_reload_pid)

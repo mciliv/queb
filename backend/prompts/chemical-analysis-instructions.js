@@ -12,7 +12,7 @@
  */
 
 function buildChemicalAnalysisInstructions() {
-  return `Analyze object chemical composition. Return JSON.
+  return `Analyze object chemical composition. Return JSON response.
 
 ONLY physical objects: food, drinks, materials, minerals, chemicals.
 REJECT: emotions, actions, nonsense text.

@@ -77,12 +77,19 @@ class ScreenshotService {
         fullPage: true 
       });
 
+      // Also provide base64/data URL for direct prompt embedding
+      const fileBuffer = await fs.readFile(screenshotPath);
+      const base64 = fileBuffer.toString('base64');
+      const dataUrl = `data:image/png;base64,${base64}`;
+
       console.log(`📸 Screenshot saved: ${screenshotPath}`);
       
       return {
         path: screenshotPath,
         filename: filename,
         url: `/api/screenshot/${filename}`,
+        base64,
+        dataUrl,
         timestamp: new Date().toISOString()
       };
     } catch (error) {
@@ -133,12 +140,19 @@ class ScreenshotService {
         fullPage: true 
       });
 
+      // Also provide base64/data URL for direct prompt embedding
+      const fileBuffer = await fs.readFile(screenshotPath);
+      const base64 = fileBuffer.toString('base64');
+      const dataUrl = `data:image/png;base64,${base64}`;
+
       console.log(`📸 Screenshot with input saved: ${screenshotPath}`);
       
       return {
         path: screenshotPath,
         filename: filename,
         url: `/api/screenshot/${filename}`,
+        base64,
+        dataUrl,
         inputText: inputText,
         timestamp: new Date().toISOString()
       };
@@ -193,12 +207,19 @@ class ScreenshotService {
         fullPage: true 
       });
 
+      // Also provide base64/data URL for direct prompt embedding
+      const fileBuffer = await fs.readFile(screenshotPath);
+      const base64 = fileBuffer.toString('base64');
+      const dataUrl = `data:image/png;base64,${base64}`;
+
       console.log(`📸 Analysis screenshot saved: ${screenshotPath}`);
       
       return {
         path: screenshotPath,
         filename: filename,
         url: `/api/screenshot/${filename}`,
+        base64,
+        dataUrl,
         inputText: inputText,
         timestamp: new Date().toISOString()
       };
