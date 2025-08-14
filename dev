@@ -23,27 +23,70 @@ log_info "🔄 Cleaning up existing processes..."
 # Wait a moment for cleanup to complete
 sleep 1
 
-# Check for --quick flag to skip tests
-SKIP_TESTS=false
-if [[ "$1" == "--quick" || "$1" == "-q" ]]; then
-    SKIP_TESTS=true
-    log_info "⚡ Quick mode: skipping tests"
+# Parse flags
+SKIP_DEV_BROWSER=${SKIP_DEV_BROWSER:-false}
+
+# Test/visual modes
+TEST_MODE=${DEV_TESTS:-watch}   # watch|startup|off
+VISUAL_MODE=${DEV_VISUAL:-off}  # on|off
+TEST_MODE_SET=false
+QUICK_MODE=false
+
+for arg in "$@"; do
+  if [[ "$arg" == "--quick" || "$arg" == "-q" ]]; then
+    QUICK_MODE=true
+    log_info "⚡ Quick mode"
+  fi
+  if [[ "$arg" == "--no-browser" || "$arg" == "-B" ]]; then
+    SKIP_DEV_BROWSER=true
+    log_info "🧩 Using built-in browser: not launching external dev browser"
+  fi
+  if [[ "$arg" == --tests=* ]]; then
+    TEST_MODE="${arg#--tests=}"
+    TEST_MODE_SET=true
+  fi
+  if [[ "$arg" == "--tests-startup" ]]; then
+    TEST_MODE=startup
+    TEST_MODE_SET=true
+  fi
+  if [[ "$arg" == "--tests-watch" ]]; then
+    TEST_MODE=watch
+    TEST_MODE_SET=true
+  fi
+  if [[ "$arg" == "--tests-off" || "$arg" == "--no-tests" ]]; then
+    TEST_MODE=off
+    TEST_MODE_SET=true
+  fi
+  if [[ "$arg" == "--visual" ]]; then
+    VISUAL_MODE=on
+  fi
+done
+
+# If quick mode but no explicit tests preference, turn tests off
+if [[ "$QUICK_MODE" == true && "$TEST_MODE_SET" == false ]]; then
+  TEST_MODE=off
 fi
 
-# Run unified tests before starting development (unless --quick)
-if [ "$SKIP_TESTS" = false ]; then
-    log_info "🧪 Running tests..."
+# Tests handling (dev-only). Default: watch in background without blocking server
+if [ "$TEST_MODE" = "off" ]; then
+    log_info "⏭️  Tests: off"
+elif [ "$TEST_MODE" = "startup" ]; then
+    log_info "🧪 Running tests (startup mode)..."
     if ! NODE_OPTIONS="" node test/scripts/unified-test-runner.js; then
         log_error "❌ Tests failed!"
         exit 1
     fi
     log_success "✅ Tests passed"
 else
-    log_info "⏭️  Skipping tests (quick mode)"
+    # watch mode
+    log_info "👀 Tests: watch mode (non-blocking)"
+    NODE_OPTIONS="" node test/watch/file-watcher.js &
+    TEST_WATCHER_PID=$!
+    echo $TEST_WATCHER_PID > /tmp/dev_watcher_pid
 fi
 
 # Trap to handle Ctrl+C and commit before exit
-trap 'commit_and_push; kill $BACKEND_PID 2>/dev/null || true; kill $FRONTEND_PID 2>/dev/null || true; kill $DEV_BROWSER_PID 2>/dev/null || true; exit 0' INT TERM
+trap 'commit_and_push; kill $BACKEND_PID 2>/dev/null || true; kill $FRONTEND_PID 2>/dev/null || true; kill $DEV_BROWSER_PID 2>/dev/null || true; kill $TEST_WATCHER_PID 2>/dev/null || true; exit 0' INT TERM
 
 log_info "🚀 Starting development server..."
 
@@ -52,10 +95,12 @@ log_info "📦 Starting frontend watcher..."
 NODE_OPTIONS="" node scripts/build-frontend.js --watch &
 FRONTEND_PID=$!
 
-# Start dev browser manager (auto-close on changes, reopen on build complete)
-log_info "🌐 Starting dev browser manager..."
-NODE_OPTIONS="" node scripts/dev-browser.js &
-DEV_BROWSER_PID=$!
+if [[ "$SKIP_DEV_BROWSER" != true ]]; then
+  # Start dev browser manager (auto-close on changes, reopen on build complete)
+  log_info "🌐 Starting dev browser manager..."
+  NODE_OPTIONS="" node scripts/dev-browser.js &
+  DEV_BROWSER_PID=$!
+fi
 
 # Start the Node.js backend server with debugger
 log_info "⚙️  Starting backend server with debugger..."
@@ -76,6 +121,17 @@ if kill -0 $BACKEND_PID 2>/dev/null; then
     # Store PID for cleanup
     echo $BACKEND_PID > /tmp/dev_backend_pid
     
+    # Optionally autorun visual tests once server is ready
+    if [[ "$VISUAL_MODE" == on ]]; then
+      log_info "🖼️  Running visual tests..."
+      # Default to dev HTTP port 3000 if not provided
+      if [[ -z "$FRONTEND_URL" ]]; then
+        export FRONTEND_URL="http://localhost:3000"
+      fi
+      NODE_OPTIONS="" FRONTEND_URL="$FRONTEND_URL" node test/scripts/test-visual-demo.js || true
+      log_success "✅ Visual tests triggered"
+    fi
+
     # Wait for process to exit
     wait $BACKEND_PID
     

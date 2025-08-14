@@ -783,10 +783,14 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
         console.log(`Loading molecule: ${molecularData.name} with SMILES: ${molecularData.smiles}`);
         
         const viewer = window.$3Dmol.createViewer(ref.current, {
-          backgroundColor: 'transparent',
+          backgroundColor: '#000000',
           antialias: true,
           defaultcolors: window.$3Dmol.rasmolElementColors
         });
+        // Make background transparent while using a valid color (avoid 'transparent' error)
+        if (typeof viewer.setBackgroundColor === 'function') {
+          viewer.setBackgroundColor(0x000000, 0);
+        }
 
         let sdfContent = null;
         if (molecularData.sdfData && molecularData.sdfData.startsWith('file://')) {

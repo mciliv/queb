@@ -1,0 +1,21 @@
+---
+alwaysApply: true
+---
+
+# App rules
+
+# Dev workflow
+- After edits that affect the frontend or backend, run `./dev --quick` in an independent process. If it is already running, leave it running.
+- Always run `./cleanup` before starting `dev` if ports/processes are stuck.
+- When I ask to “show” or “see” the app, ensure `./dev --quick` is running and point to http://localhost:3000.
+
+# Logging/console
+- For local debugging, prefer `NODE_ENV=debug ./dev --quick` to enable backend `log.*` emitters.
+- Frontend `console.log` is forwarded to the server via `/api/log-error`; use it during dev only.
+
+# Tests
+- Use `npm run test:quick` during iteration. Do not block the dev server on failing tests.
+
+# Browser automation
+- The dev browser manager should remain enabled (auto-close on change, reopen after build) via `scripts/dev-browser.js`.
+

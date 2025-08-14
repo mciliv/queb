@@ -6,14 +6,21 @@ const config = require('../config/env');
 // Validate configuration
 config.validateConfig();
 
-// Simple logger - only log on errors unless in debug mode
+// Simple logger - emit logs only in debug mode (errors always shown)
 const isDebugMode = config.NODE_ENV === 'debug';
-const log = {
-  info: (msg) => {},  // Silenced
-  success: (msg) => {},  // Silenced
-  warning: (msg) => {},  // Silenced unless critical
-  error: (msg) => console.error(msg)  // Always show errors
-};
+const log = isDebugMode
+  ? {
+      info: (msg) => console.log(msg),
+      success: (msg) => console.log(msg),
+      warning: (msg) => console.warn(msg),
+      error: (msg) => console.error(msg),
+    }
+  : {
+      info: () => {},
+      success: () => {},
+      warning: () => {},
+      error: (msg) => console.error(msg),
+    };
 
 // ==================== IMPORTS ====================
 const express = require("express");
@@ -1195,6 +1202,9 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
       const localIP = getLocalIPAddress();
       httpServer = app.listen(actualPort, "0.0.0.0", () => {
         console.log(`http://localhost:${actualPort}`);
+        if (localIP) {
+          console.log(`On your phone: http://${localIP}:${actualPort}`);
+        }
       });
     } catch (error) {
       console.error(`❌ Failed to start server: ${error.message}`);

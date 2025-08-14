@@ -13,7 +13,7 @@ No logging
 Show existing code chunks wherever possible instead of descriptions
 Don't create extraneous files; no markdown, if anything, simplify the code & tell me why to look at it
 
-After completing change, run `dev` in an independent process
+run `dev` at end of every ∆
 If all tests pass,
 ```sh
 git commit -am "Brief description"

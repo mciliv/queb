@@ -9,8 +9,8 @@
 
 const chokidar = require('chokidar');
 const path = require('path');
-const { getTestsForFile } = require('../config/test-mapping');
-const TestRunner = require('../config/test-runner');
+const { getTestsForFile } = require('../support/config/test-mapping');
+const TestRunner = require('../support/config/test-runner');
 
 class FileWatcher {
   constructor(options = {}) {
