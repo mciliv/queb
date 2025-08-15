@@ -158,7 +158,7 @@ class AtomPredictor {
         return { object: parsed.object || object, chemicals: validatedChemicals };
       }
 
-      // Two-step flow: names → SMILES
+      // Two-step flow: names → SDF/SMILES
       const namesPayload = await this.extractNamesOnly(object);
       // Ensure structure
       const namesList = Array.isArray(namesPayload?.molecules) ? namesPayload.molecules : [];
@@ -177,7 +177,12 @@ class AtomPredictor {
         const content = response.choices[0].message.content;
         const parsed = parseAIResponseWithFallbacks(content);
         const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
-        return { object: parsed.object || object, chemicals: validatedChemicals };
+        return { 
+          object: parsed.object || object, 
+          chemicals: validatedChemicals,
+          molecules: validatedChemicals,
+          meta: { strategy: 'legacy', names: [], namesCount: 0, sdfCount: 0 }
+        };
       }
 
       // Convert names to SDFs (prefer CID→SDF, fallback to SMILES→SDF)
@@ -188,11 +193,15 @@ class AtomPredictor {
           resolved.push({ name: m.name, sdfPath });
         }
       }
-      return { object, chemicals: resolved };
+      const names = namesList.map(n => n.name);
+      const meta = { strategy: 'two-step', names, namesCount: names.length, sdfCount: resolved.length };
+      console.log('Two-step analysis:', meta);
+      return { object, chemicals: resolved, molecules: resolved, meta };
     } catch (error) {
       console.error("AI text analysis error:", error);
       // Graceful fallback to deterministic mapping when AI call fails
-      return this.fallbackAnalyzeText(object);
+      const fb = this.fallbackAnalyzeText(object);
+      return { ...fb, molecules: fb.chemicals, meta: { strategy: 'fallback', names: [], namesCount: 0, sdfCount: fb.chemicals?.length || 0 } };
     }
   }
 
