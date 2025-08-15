@@ -61,13 +61,15 @@ class MolecularProcessor {
 
   async generateSDFByName(name, overwrite = false) {
     // Resolve via PubChem; prefer direct SDF by CID; fallback to SMILES→SDF
-    const { cid, smiles } = await resolveName(name);
+    const { cid, smiles, title, iupac } = await resolveName(name);
+    const displayName = title || iupac || name;
     if (cid) {
       const byCid = await this.generateSDFByCID(cid);
-      if (byCid) return byCid;
+      if (byCid) return { sdfPath: byCid, name: displayName };
     }
     if (smiles) {
-      return this.generateSDF(smiles, overwrite);
+      const pathOrNull = await this.generateSDF(smiles, overwrite);
+      if (pathOrNull) return { sdfPath: pathOrNull, name: displayName };
     }
     return null;
   }

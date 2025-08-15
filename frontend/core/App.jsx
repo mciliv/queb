@@ -1083,43 +1083,51 @@ function App() {
     try {
       const result = await analyzeText(value);
       const molecules = result.molecules || result.chemicals || [];
-      
-      if (molecules && molecules.length > 0) {
-        const smilesArray = molecules.map(mol => mol.smiles).filter(Boolean);
-        
-        if (smilesArray.length > 0) {
-          try {
-            const sdfResult = await generateSDFs(smilesArray, false);
-            
-            const smilesToSdf = new Map();
-            sdfResult.sdfPaths?.forEach((p, i) => { smilesToSdf.set(smilesArray[i], p); });
 
-            const viewers = molecules.map((mol) => {
-              const sdfPath = smilesToSdf.get(mol.smiles);
-              return {
-                name: mol.name || (mol.smiles && SMILES_NAME_MAP[mol.smiles]) || mol.smiles || value,
-                sdfData: sdfPath ? `file://${sdfPath}` : null,
-                smiles: mol.smiles
-              };
-            });
-            
-            // Update the newly created column by id
-            setColumns(prev => prev.map(col => (
-              col.id === columnId ? { ...col, viewers, loading: false, failed: false } : col
-            )));
-          } catch (sdfError) {
-            console.error('SDF generation failed:', sdfError);
-            setError('Failed to generate molecular structures');
-            // Mark this column as failed
+      if (molecules && molecules.length > 0) {
+        // Prefer precomputed SDFs with canonical names
+        const precomputed = molecules.filter(m => m.sdfPath);
+        if (precomputed.length > 0) {
+          const viewers = precomputed.map(m => ({
+            name: m.name || value,
+            sdfData: m.sdfPath.startsWith('file://') ? m.sdfPath : `file://${m.sdfPath}`,
+            smiles: m.smiles
+          }));
+          setColumns(prev => prev.map(col => (
+            col.id === columnId ? { ...col, viewers, loading: false, failed: false } : col
+          )));
+        } else {
+          // Legacy path: generate SDFs from SMILES
+          const smilesArray = molecules.map(mol => mol.smiles).filter(Boolean);
+          if (smilesArray.length > 0) {
+            try {
+              const sdfResult = await generateSDFs(smilesArray, false);
+              const smilesToSdf = new Map();
+              sdfResult.sdfPaths?.forEach((p, i) => { smilesToSdf.set(smilesArray[i], p); });
+              const viewers = molecules.map((mol) => {
+                const sdfPath = smilesToSdf.get(mol.smiles);
+                return {
+                  name: mol.name || (mol.smiles && SMILES_NAME_MAP[mol.smiles]) || mol.smiles || value,
+                  sdfData: sdfPath ? `file://${sdfPath}` : null,
+                  smiles: mol.smiles
+                };
+              });
+              setColumns(prev => prev.map(col => (
+                col.id === columnId ? { ...col, viewers, loading: false, failed: false } : col
+              )));
+            } catch (sdfError) {
+              console.error('SDF generation failed:', sdfError);
+              setError('Failed to generate molecular structures');
+              setColumns(prev => prev.map(col => (
+                col.id === columnId ? { ...col, loading: false, failed: true } : col
+              )));
+            }
+          } else {
+            setError('No valid molecules returned by the analyzer.');
             setColumns(prev => prev.map(col => (
               col.id === columnId ? { ...col, loading: false, failed: true } : col
             )));
           }
-        } else {
-          setError('No valid SMILES found in the analysis results.');
-          setColumns(prev => prev.map(col => (
-            col.id === columnId ? { ...col, loading: false, failed: true } : col
-          )));
         }
       } else {
         setError('No molecules found for this input.');

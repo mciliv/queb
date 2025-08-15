@@ -160,12 +160,12 @@ class AtomPredictor {
         return { object, chemicals: [], molecules: [], meta: { strategy: 'two-step', names: [], namesCount: 0, sdfCount: 0 } };
       }
 
-      // Convert names to SDFs
+      // Convert names to SDFs (carry canonical name if provided)
       const resolved = [];
       for (const m of namesList) {
-        const sdfPath = await this.molecularProcessor.generateSDFByName(m.name, false);
-        if (sdfPath) {
-          resolved.push({ name: m.name, sdfPath });
+        const res = await this.molecularProcessor.generateSDFByName(m.name, false);
+        if (res && res.sdfPath) {
+          resolved.push({ name: res.name || m.name, sdfPath: res.sdfPath });
         }
       }
       const names = namesList.map(n => n.name);
