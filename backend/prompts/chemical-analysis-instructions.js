@@ -38,7 +38,16 @@ Caffeine: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
 
 Wine: Ethanol "CCO", Water "O", Tartaric acid "OC(C(O)C(O)=O)C(O)=O"
 
-Avoid: H2O format, invalid syntax, unrealistic molecules`;
+Avoid: H2O format, invalid syntax, unrealistic molecules
+
+If the task is names-only extraction, strictly output only:
+{
+  "object": "Object name",
+  "molecules": [
+    {"name": "canonical name", "cid": number|null}
+  ]
+}
+No SMILES when names-only is requested.`;
 }
 
 // Export for use in AtomPredictor

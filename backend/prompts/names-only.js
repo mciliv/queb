@@ -12,6 +12,9 @@ Requirements:
 - Include both major and minor constituents that are characteristic.
 - Strictly no SMILES in this step.
 - JSON response only, no prose.
+ - Maximum 12 molecules. Deduplicate strictly.
+ - Use canonical naming: prefer PubChem Title; if unavailable, use IUPAC; otherwise widely accepted common name.
+ - Exclude quantities, categories, or commentary.
 
 Schema:
 {
