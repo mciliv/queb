@@ -1030,6 +1030,13 @@ function App() {
     console.log('✅ Molecular analysis app initialized');
   }, []);
 
+  // Ensure accumulate mode during visual tests
+  useEffect(() => {
+    if (autoVisualMode && columnMode !== 'accumulate') {
+      setColumnMode('accumulate');
+    }
+  }, [autoVisualMode, columnMode]);
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event) => {
