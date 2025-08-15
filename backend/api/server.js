@@ -30,6 +30,7 @@ const path = require("path");
 const HttpsServer = require("./https-server");
 const AtomPredictor = require("../services/AtomPredictor");
 const MolecularProcessor = require("../services/molecular-processor");
+const { resolveName, getPropertiesByCID } = require("../services/name-resolver");
 const ScreenshotService = require("../services/screenshot-service");
 
 // Direct frontend serving (no proxy needed)
@@ -398,6 +399,44 @@ app.post("/generate-sdfs", async (req, res) => {
       skipped: result.skipped,
       message: `Generated ${result.sdfPaths.length} 3D structures from ${smiles.length} SMILES`,
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Programmatic name → SMILES conversion (PubChem-backed)
+app.post("/name-to-smiles", async (req, res) => {
+  try {
+    const { items } = req.body || {};
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ error: "items array is required" });
+    }
+    const results = [];
+    for (const it of items) {
+      let name = it?.name || '';
+      let cid = it?.cid ?? null;
+      let smiles = null;
+      try {
+        if (cid) {
+          const props = await getPropertiesByCID(cid);
+          smiles = props?.smiles || null;
+          if (!smiles) {
+            const res = await resolveName(name);
+            cid = res?.cid || cid;
+            smiles = res?.smiles || null;
+          }
+          // prefer canonical name when available
+          name = props?.title || props?.iupac || name;
+        } else {
+          const res = await resolveName(name);
+          cid = res?.cid || null;
+          smiles = res?.smiles || null;
+          name = res?.title || res?.iupac || name;
+        }
+      } catch (_) {}
+      results.push({ name, cid, smiles, status: smiles ? 'ok' : 'lookup_required' });
+    }
+    res.json({ molecules: results });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

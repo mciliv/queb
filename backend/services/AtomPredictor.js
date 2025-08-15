@@ -17,6 +17,7 @@ const { getRelevantExamples } = require("../prompts/material-examples");
 const MolecularProcessor = require("./molecular-processor");
 const { buildNamesOnlyPrompt } = require("../prompts/names-only");
 const { buildNameToSmilesPrompt } = require("../prompts/name-to-smiles");
+const { resolveName, getPropertiesByCID } = require("./name-resolver");
 
 class AtomPredictor {
   constructor(apiKey) {
@@ -231,6 +232,39 @@ class AtomPredictor {
       console.error("Name→SMILES conversion error:", error);
       throw new Error(`Name→SMILES conversion failed: ${error.message}`);
     }
+  }
+
+  async convertNamesToSmilesProgrammatically(namesPayload) {
+    const object = namesPayload?.object || "";
+    const input = Array.isArray(namesPayload?.molecules) ? namesPayload.molecules : [];
+    const results = [];
+    for (const mol of input) {
+      const name = mol?.name || '';
+      let cid = mol?.cid ?? null;
+      let smiles = null;
+      try {
+        if (cid) {
+          const props = await getPropertiesByCID(cid);
+          smiles = props?.smiles || null;
+          if (!smiles) {
+            const res = await resolveName(name);
+            cid = res?.cid || cid;
+            smiles = res?.smiles || null;
+          }
+        } else {
+          const res = await resolveName(name);
+          cid = res?.cid || null;
+          smiles = res?.smiles || null;
+        }
+      } catch (_) {}
+      results.push({
+        name,
+        cid,
+        smiles: smiles || null,
+        status: smiles ? 'ok' : 'lookup_required'
+      });
+    }
+    return { object, molecules: results };
   }
 
   /**
