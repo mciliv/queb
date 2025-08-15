@@ -196,28 +196,7 @@ class AtomPredictor {
     }
   }
 
-  async convertNamesToSmiles(namesPayload) {
-    if (!this.isOpenAIAvailable) {
-      return { object: namesPayload?.object || "", molecules: [] };
-    }
-    const prompt = namesToSmiles_prompt(namesPayload);
-    try {
-      const response = await this.client.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 800,
-        temperature: 0.1,
-        response_format: { type: "json_object" }
-      });
-      const content = response.choices[0].message.content;
-      const parsed = JSON.parse(content);
-      parsed.molecules = parsed.molecules || [];
-      return parsed;
-    } catch (error) {
-      console.error("Name→SMILES conversion error:", error);
-      throw new Error(`Name→SMILES conversion failed: ${error.message}`);
-    }
-  }
+  // Removed LLM name→SMILES in favor of PubChem programmatic resolution
 
   async convertNamesToSmilesProgrammatically(namesPayload) {
     const object = namesPayload?.object || "";

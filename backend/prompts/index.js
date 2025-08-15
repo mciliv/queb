@@ -2,27 +2,29 @@
 
 const { buildChemicalAnalysisInstructions } = require('./chemical-analysis-instructions');
 const { buildNamesOnlyPrompt, listChemicalsFromTextSpecification } = require('./names-only');
-const { buildNameToSmilesPrompt } = require('./name-to-smiles');
 const { inputToName } = require('./inputToName');
-const { inputToSmiles } = require('./inputToSmiles');
 
 // Aliases that clarify intent using input→output naming
 const imageToSmiles_instructions = buildChemicalAnalysisInstructions;
 const textToNames_prompt = buildNamesOnlyPrompt; // or listChemicalsFromTextSpecification
-const namesToSmiles_prompt = buildNameToSmilesPrompt;
+// Preferred generic grouping: inputTo*
+const inputToSmilesFromImage = buildChemicalAnalysisInstructions;
+const inputToNames = inputToName;
+// LLM name→SMILES prompt deprecated in favor of programmatic resolution
 
 module.exports = {
   // Original exports
   buildChemicalAnalysisInstructions,
   buildNamesOnlyPrompt,
   listChemicalsFromTextSpecification,
-  buildNameToSmilesPrompt,
   inputToName,
-  inputToSmiles,
+  // inputToSmiles intentionally omitted
   // Aliases (preferred naming style)
   imageToSmiles_instructions,
   textToNames_prompt,
-  namesToSmiles_prompt,
+  inputToSmilesFromImage,
+  inputToNames,
+  // namesToSmiles_prompt intentionally omitted
 };
 
 
