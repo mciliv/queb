@@ -22,7 +22,7 @@ SMILES rules:
 - Standard database forms (PubChem, ChEBI)
 - Proper syntax: atoms, bonds, rings, charges
 
-Response format:
+Response format (for image-based SMILES extraction only):
 {
   "object": "Object name",
   "chemicals": [
@@ -31,23 +31,14 @@ Response format:
   ]
 }
 
-Examples:
+Examples (for SMILES context only):
 Water: "O", Ethanol: "CCO", NaCl: "[Na+].[Cl-]"
 Glucose: "C(C(C(C(C(C=O)O)O)O)O)O"
 Caffeine: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
 
 Wine: Ethanol "CCO", Water "O", Tartaric acid "OC(C(O)C(O)=O)C(O)=O"
 
-Avoid: H2O format, invalid syntax, unrealistic molecules
-
-If the task is names-only extraction, strictly output only:
-{
-  "object": "Object name",
-  "molecules": [
-    {"name": "canonical name", "cid": number|null}
-  ]
-}
-No SMILES when names-only is requested.`;
+Avoid: H2O format, invalid syntax, unrealistic molecules`;
 }
 
 // Export for use in AtomPredictor

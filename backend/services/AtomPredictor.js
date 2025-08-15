@@ -13,7 +13,7 @@ const {
 // Import the new prompt engineering modules
 const { buildChemicalAnalysisInstructions } = require("../prompts/chemical-analysis-instructions");
 
-const { getRelevantExamples } = require("../prompts/material-examples");
+// const { getRelevantExamples } = require("../prompts/material-examples");
 const MolecularProcessor = require("./molecular-processor");
 const { buildNamesOnlyPrompt } = require("../prompts/names-only");
 const { buildNameToSmilesPrompt } = require("../prompts/name-to-smiles");
@@ -135,21 +135,10 @@ class AtomPredictor {
 
       // In test mode, keep single-step flow to satisfy mocks
       if (this.isTestMode) {
-        const objectType = this.detectObjectType(object);
-        const relevantExamples = getRelevantExamples(objectType);
-        const enhancedInstructions = `${this.chemicalInstructions}\n\n${relevantExamples}\n\nNow analyze this specific object: "${object}"`;
-        const response = await this.client.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            { role: "user", content: enhancedInstructions },
-          ],
-          max_tokens: 1000,
-          temperature: 0.1,
-          response_format: { type: "json_object" }
-        });
-        const content = response.choices[0].message.content;
-        const parsed = JSON.parse(content);
-        return { object: parsed.object || object, chemicals: parsed.chemicals || [] };
+        // Use names-only prompt even in test mode for consistency
+        const namesPayload = await this.extractNamesOnly(object);
+        const list = Array.isArray(namesPayload?.molecules) ? namesPayload.molecules : [];
+        return { object: namesPayload.object || object, chemicals: [], molecules: list };
       }
 
       // Two-step flow: names → SDF/SMILES
