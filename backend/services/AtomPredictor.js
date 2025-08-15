@@ -24,7 +24,6 @@ class AtomPredictor {
     this.isTestMode = apiKey === 'test-key' || process.env.NODE_ENV === 'test';
     this.client = OpenAIClient ? new OpenAIClient({ apiKey: apiKey || process.env.OPENAI_API_KEY || '' }) : null;
     this.isOpenAIAvailable = !!this.client && !!(apiKey || process.env.OPENAI_API_KEY);
-    // Use the improved instruction builder from git history analysis
     this.chemicalInstructions = this.buildChemicalInstructions();
     this.molecularProcessor = new MolecularProcessor();
   }
@@ -86,7 +85,7 @@ class AtomPredictor {
         },
       ];
 
-      // Add cropped region if available - improved focus text from git history
+      // Add cropped region if available
       if (croppedImageBase64) {
         let focusText = `Here's a cropped view of the area of interest. Analyze the chemical composition of the material or substance visible in this region. Use the examples above as your guide for accurate SMILES notation:`;
 
@@ -138,7 +137,7 @@ class AtomPredictor {
         throw new Error("AI service unavailable for names-only extraction");
       }
 
-      // In test mode, keep legacy single-step flow to satisfy mocks
+      // In test mode, keep single-step flow to satisfy mocks
       if (this.isTestMode) {
         const objectType = this.detectObjectType(object);
         const relevantExamples = getRelevantExamples(objectType);
@@ -167,7 +166,7 @@ class AtomPredictor {
         return { object, chemicals: [], molecules: [], meta: { strategy: 'two-step', names: [], namesCount: 0, sdfCount: 0 } };
       }
 
-      // Convert names to SDFs (prefer CID→SDF, fallback to SMILES→SDF)
+      // Convert names to SDFs
       const resolved = [];
       for (const m of namesList) {
         const sdfPath = await this.molecularProcessor.generateSDFByName(m.name, false);
@@ -300,9 +299,7 @@ class AtomPredictor {
     return 'general';
   }
 
-  // Keep the legacy parseAIResponse method for compatibility but mark as deprecated
   parseAIResponse(content) {
-    console.warn("Using deprecated parseAIResponse - consider updating to use direct JSON parsing");
     return parseAIResponseWithFallbacks(content);
   }
 }
