@@ -4,6 +4,7 @@
 // - Launches a dedicated Puppeteer browser for the app
 // - Closes the browser as soon as source changes are detected
 // - Reopens the browser when the frontend build output updates
+// - In human verification mode, do not auto-close; instead reload the page
 
 const fs = require('fs');
 const path = require('path');
@@ -16,6 +17,12 @@ const FRONTEND_DIST_FILE = path.join(PROJECT_ROOT, 'frontend', 'dist', 'bundle.j
 const TARGET_URL = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 3000}`;
 const USER_DATA_DIR = path.join(PROJECT_ROOT, 'test', `chrome-molecular-profile-${Date.now()}-dev`);
 const PID_FILE = '/tmp/dev_browser_pid';
+const STICKY = (
+  process.env.VISUAL_STICKY === '1' ||
+  process.env.HUMAN_VERIFY === '1' ||
+  process.env.VISUAL_MODE === 'on' ||
+  process.env.DEV_VISUAL === 'on'
+);
 
 let browser = null;
 let page = null;
@@ -106,7 +113,15 @@ function debounce(fn, delay) {
 function watchSources() {
   try {
     fs.watch(FRONTEND_SRC_DIR, { recursive: true }, debounce(async () => {
-      await closeBrowser();
+      if (STICKY && browser && page) {
+        try {
+          await page.reload({ waitUntil: 'networkidle0' });
+          await page.bringToFront().catch(() => {});
+          log('🔁 Dev browser reloaded (sticky)');
+        } catch (_) {}
+      } else {
+        await closeBrowser();
+      }
     }, 150));
     log('👀 Watching frontend sources for changes');
   } catch (err) {
@@ -117,7 +132,15 @@ function watchSources() {
       const dir = path.join(FRONTEND_SRC_DIR, d);
       if (fs.existsSync(dir)) {
         fs.watch(dir, { recursive: true }, debounce(async () => {
-          await closeBrowser();
+          if (STICKY && browser && page) {
+            try {
+              await page.reload({ waitUntil: 'networkidle0' });
+              await page.bringToFront().catch(() => {});
+              log('🔁 Dev browser reloaded (sticky)');
+            } catch (_) {}
+          } else {
+            await closeBrowser();
+          }
         }, 150));
       }
     });
@@ -130,9 +153,17 @@ function watchBuildArtifact() {
     fs.writeFileSync(FRONTEND_DIST_FILE, '');
   }
   fs.watchFile(FRONTEND_DIST_FILE, { interval: 200 }, debounce(async () => {
-    // Reopen only if currently closed
-    if (!browser) {
-      await openBrowser();
+    if (STICKY && browser && page) {
+      try {
+        await page.reload({ waitUntil: 'networkidle0' });
+        await page.bringToFront().catch(() => {});
+        log('🔁 Dev browser reloaded after build (sticky)');
+      } catch (_) {}
+    } else {
+      // Reopen only if currently closed
+      if (!browser) {
+        await openBrowser();
+      }
     }
   }, 100));
   log('🔄 Watching build output for completion');
