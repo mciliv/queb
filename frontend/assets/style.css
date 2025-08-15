@@ -69,10 +69,15 @@ body {
   display: flex;
   flex-direction: row;
   gap: 20px;
+  flex-wrap: nowrap;
   overflow-x: auto;
   position: relative;
   z-index: 1;
   user-select: text;
+}
+
+.columns > * {
+  flex: 0 0 auto;
 }
 
 .column {

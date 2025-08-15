@@ -1397,7 +1397,7 @@ function App() {
 
 
 
-          <div className="columns">
+          <div className="columns" style={{ display: 'flex', flexDirection: 'row', gap: '20px', overflowX: 'auto' }}>
             {columns.map(column => (
               <MolecularColumn
                 key={column.id}
