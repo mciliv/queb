@@ -58,15 +58,9 @@ class AtomPredictor {
         imageBase64 = buf.toString('base64');
       }
 
-      // Fallback when OpenAI is unavailable
+      // If OpenAI is unavailable, throw to be handled by caller
       if (!this.isOpenAIAvailable) {
-        return {
-          object: 'Image',
-          chemicals: [
-            { name: 'Water', smiles: 'O' },
-            { name: 'Ethanol', smiles: 'CCO' }
-          ]
-        };
+        throw new Error("AI service unavailable");
       }
 
       // Skip test mode check - let Jest mocks handle test behavior
@@ -131,14 +125,7 @@ class AtomPredictor {
       };
     } catch (error) {
       console.error("AI analysis error:", error);
-      // Graceful fallback when AI unavailable or network fails
-      return {
-        object: 'Image',
-        chemicals: [
-          { name: 'Water', smiles: 'O' },
-          { name: 'Ethanol', smiles: 'CCO' }
-        ]
-      };
+      throw new Error(`AI analysis failed: ${error.message}`);
     }
   }
 
