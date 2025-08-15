@@ -12,7 +12,7 @@ const {
 
 // Import the new prompt engineering modules
 const { buildChemicalAnalysisInstructions } = require("../prompts/chemical-analysis-instructions");
-const { parseAIResponseWithFallbacks, validateSMILESQuality } = require("../prompts/fallback-handlers");
+
 const { getRelevantExamples } = require("../prompts/material-examples");
 const MolecularProcessor = require("./molecular-processor");
 const { buildNamesOnlyPrompt } = require("../prompts/names-only");
@@ -114,15 +114,11 @@ class AtomPredictor {
 
       const content = response.choices[0].message.content;
       
-      // Use fallback handler for robust JSON parsing
-      const parsed = parseAIResponseWithFallbacks(content);
-      
-      // Validate and improve SMILES quality
-      const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
+      const parsed = JSON.parse(content);
 
       return {
         object: parsed.object || "Unknown object",
-        chemicals: validatedChemicals,
+        chemicals: parsed.chemicals || [],
       };
     } catch (error) {
       console.error("AI analysis error:", error);
@@ -132,7 +128,6 @@ class AtomPredictor {
 
   async analyzeText(object) {
     try {
-      // Fallback if OpenAI is not available
       if (!this.isOpenAIAvailable) {
         throw new Error("AI service unavailable for names-only extraction");
       }
@@ -152,9 +147,8 @@ class AtomPredictor {
           response_format: { type: "json_object" }
         });
         const content = response.choices[0].message.content;
-        const parsed = parseAIResponseWithFallbacks(content);
-        const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
-        return { object: parsed.object || object, chemicals: validatedChemicals };
+        const parsed = JSON.parse(content);
+        return { object: parsed.object || object, chemicals: parsed.chemicals || [] };
       }
 
       // Two-step flow: names → SDF/SMILES
@@ -230,8 +224,8 @@ class AtomPredictor {
         response_format: { type: "json_object" }
       });
       const content = response.choices[0].message.content;
-      const parsed = parseAIResponseWithFallbacks(content);
-      parsed.molecules = validateSMILESQuality(parsed.molecules || []);
+      const parsed = JSON.parse(content);
+      parsed.molecules = parsed.molecules || [];
       return parsed;
     } catch (error) {
       console.error("Name→SMILES conversion error:", error);
@@ -267,7 +261,7 @@ class AtomPredictor {
   }
 
   parseAIResponse(content) {
-    return parseAIResponseWithFallbacks(content);
+    return JSON.parse(content);
   }
 }
 
