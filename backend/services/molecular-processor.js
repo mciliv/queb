@@ -1,6 +1,9 @@
 const childProcess = require("child_process"); // dynamic spawn access
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
+const fsPromises = require("fs").promises;
+const { resolveName, downloadSDFByCID } = require("./name-resolver");
 
 class MolecularProcessor {
   constructor(sdfDir = "data/sdf_files") {
@@ -42,6 +45,31 @@ class MolecularProcessor {
     }
 
     return results;
+  }
+
+  async generateSDFByCID(cid) {
+    try {
+      const sdf = await downloadSDFByCID(cid);
+      const filename = `CID_${cid}.sdf`;
+      const dest = path.join(this.sdfDir, filename);
+      await fsPromises.writeFile(dest, sdf, "utf8");
+      return `/sdf_files/${filename}`;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async generateSDFByName(name, overwrite = false) {
+    // Resolve via PubChem; prefer direct SDF by CID; fallback to SMILES→SDF
+    const { cid, smiles } = await resolveName(name);
+    if (cid) {
+      const byCid = await this.generateSDFByCID(cid);
+      if (byCid) return byCid;
+    }
+    if (smiles) {
+      return this.generateSDF(smiles, overwrite);
+    }
+    return null;
   }
 
   // Basic SMILES format validation (not length-based)

@@ -14,6 +14,7 @@ const {
 const { buildChemicalAnalysisInstructions } = require("../prompts/chemical-analysis-instructions");
 const { parseAIResponseWithFallbacks, validateSMILESQuality } = require("../prompts/fallback-handlers");
 const { getRelevantExamples } = require("../prompts/material-examples");
+const MolecularProcessor = require("./molecular-processor");
 const { buildNamesOnlyPrompt } = require("../prompts/names-only");
 const { buildNameToSmilesPrompt } = require("../prompts/name-to-smiles");
 
@@ -25,6 +26,7 @@ class AtomPredictor {
     this.isOpenAIAvailable = !!this.client && !!(apiKey || process.env.OPENAI_API_KEY);
     // Use the improved instruction builder from git history analysis
     this.chemicalInstructions = this.buildChemicalInstructions();
+    this.molecularProcessor = new MolecularProcessor();
   }
 
   buildChemicalInstructions() {
@@ -178,13 +180,15 @@ class AtomPredictor {
         return { object: parsed.object || object, chemicals: validatedChemicals };
       }
 
-      const smilesPayload = await this.convertNamesToSmiles({ object: object, molecules: namesList });
-      const molecules = Array.isArray(smilesPayload?.molecules) ? smilesPayload.molecules : [];
-      const chemicals = molecules
-        .filter(m => typeof m.smiles === 'string' && m.smiles.length > 0)
-        .map(m => ({ name: m.name, smiles: m.smiles }));
-      const validatedChemicals = validateSMILESQuality(chemicals);
-      return { object: smilesPayload.object || object, chemicals: validatedChemicals };
+      // Convert names to SDFs (prefer CID→SDF, fallback to SMILES→SDF)
+      const resolved = [];
+      for (const m of namesList) {
+        const sdfPath = await this.molecularProcessor.generateSDFByName(m.name, false);
+        if (sdfPath) {
+          resolved.push({ name: m.name, sdfPath });
+        }
+      }
+      return { object, chemicals: resolved };
     } catch (error) {
       console.error("AI text analysis error:", error);
       // Graceful fallback to deterministic mapping when AI call fails
