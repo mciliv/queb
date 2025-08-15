@@ -1214,7 +1214,7 @@ function App() {
           if (smilesArray.length === 0) continue;
           const sdfResult = await generateSDFs(smilesArray, false);
           const viewers = smilesArray.map((sm, idx) => ({
-            name: test.label,
+            name: SMILES_NAME_MAP[sm] || sm,
             sdfData: sdfResult.sdfPaths?.[idx] ? `file://${sdfResult.sdfPaths[idx]}` : null,
             smiles: sm
           }));
