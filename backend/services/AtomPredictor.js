@@ -5,18 +5,14 @@ try {
 } catch (_) {
   OpenAIClient = null;
 }
-const {
-  ObjectIdentificationSchema,
-  CHEMICAL_REPRESENTATIONS,
-} = require("../schemas/schemas");
+// (schemas not needed here; keep file lean)
 
 // Import prompt builders via centralized index (clear input→output names)
 const { imageToSmiles_instructions, textToNames_prompt, namesToSmiles_prompt } = require("../prompts");
 
 // const { getRelevantExamples } = require("../prompts/material-examples");
 const MolecularProcessor = require("./molecular-processor");
-const { buildNamesOnlyPrompt } = require("../prompts/names-only");
-const { buildNameToSmilesPrompt } = require("../prompts/name-to-smiles");
+// Central prompt index covers names-only and name→SMILES
 const { resolveName, getPropertiesByCID } = require("./name-resolver");
 
 class AtomPredictor {
