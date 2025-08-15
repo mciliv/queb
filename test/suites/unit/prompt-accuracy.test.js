@@ -644,3 +644,25 @@ describe("Performance Metrics", () => {
     expect(highAccuracyCount).toBeGreaterThanOrEqual(Math.floor(results.length * 0.4));
   });
 }); 
+
+// Reporting: Names and compound counts
+describe("Prompt Output Reporting", () => {
+  let atomPredictor;
+
+  beforeEach(() => {
+    atomPredictor = new AtomPredictor("test-api-key");
+  });
+
+  test("should report names list (if present) and compound counts", async () => {
+    const materials = ["water", "ethanol", "wine", "coffee", "apple"];
+    for (const material of materials) {
+      const result = await atomPredictor.analyzeText(material);
+      const count = Array.isArray(result.chemicals) ? result.chemicals.length : 0;
+      const names = Array.isArray(result.meta?.names) ? result.meta.names : result.chemicals?.map(c => c.name) || [];
+      // Log a concise report line for CI visibility
+      // eslint-disable-next-line no-console
+      console.log(`[Report] ${material}: compounds=${count} names=${names.join(", ")}`);
+      expect(count).toBeGreaterThan(0);
+    }
+  });
+});
