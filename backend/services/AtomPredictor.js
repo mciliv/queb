@@ -239,39 +239,6 @@ class AtomPredictor {
     }
   }
 
-  fallbackAnalyzeText(object) {
-    const text = String(object || '').trim();
-    const mappings = {
-      water: { name: 'Water', smiles: 'O' },
-      ethanol: { name: 'Ethanol', smiles: 'CCO' },
-      'acetic acid': { name: 'Acetic acid', smiles: 'CC(=O)O' },
-      benzene: { name: 'Benzene', smiles: 'C1=CC=CC=C1' },
-      salt: { name: 'Sodium chloride', smiles: 'Cl[Na]' }
-    };
-
-    const lower = text.toLowerCase();
-
-    // If exact mapping exists
-    if (mappings[lower]) {
-      return {
-        object: mappings[lower].name,
-        chemicals: [{ name: mappings[lower].name, smiles: mappings[lower].smiles }]
-      };
-    }
-
-    // If input looks like a SMILES string, echo it back
-    const smilesLike = /^[A-Za-z0-9@+\-\[\]\(\)=#$/\.%%]+$/.test(text);
-    if (smilesLike) {
-      return {
-        object: text,
-        chemicals: [{ name: text, smiles: text }]
-      };
-    }
-
-    // Default: no chemicals found
-    return { object: text || 'Unknown object', chemicals: [] };
-  }
-
   /**
    * Detect object type for context-aware examples
    * Helps provide more relevant prompts to improve accuracy
