@@ -135,7 +135,7 @@ class AtomPredictor {
     try {
       // Fallback if OpenAI is not available
       if (!this.isOpenAIAvailable) {
-        return this.fallbackAnalyzeText(object);
+        throw new Error("AI service unavailable for names-only extraction");
       }
 
       // In test mode, keep legacy single-step flow to satisfy mocks
@@ -163,26 +163,8 @@ class AtomPredictor {
       // Ensure structure
       const namesList = Array.isArray(namesPayload?.molecules) ? namesPayload.molecules : [];
       if (namesList.length === 0) {
-        // Fallback to legacy single-step if names missing
-        const objectType = this.detectObjectType(object);
-        const relevantExamples = getRelevantExamples(objectType);
-        const enhancedInstructions = `${this.chemicalInstructions}\n\n${relevantExamples}\n\nNow analyze this specific object: "${object}"`;
-        const response = await this.client.chat.completions.create({
-          model: "gpt-4o",
-          messages: [ { role: "user", content: enhancedInstructions } ],
-          max_tokens: 1000,
-          temperature: 0.1,
-          response_format: { type: "json_object" }
-        });
-        const content = response.choices[0].message.content;
-        const parsed = parseAIResponseWithFallbacks(content);
-        const validatedChemicals = validateSMILESQuality(parsed.chemicals || []);
-        return { 
-          object: parsed.object || object, 
-          chemicals: validatedChemicals,
-          molecules: validatedChemicals,
-          meta: { strategy: 'legacy', names: [], namesCount: 0, sdfCount: 0 }
-        };
+        // Names-only is the sole method for now; return empty with meta
+        return { object, chemicals: [], molecules: [], meta: { strategy: 'two-step', names: [], namesCount: 0, sdfCount: 0 } };
       }
 
       // Convert names to SDFs (prefer CID→SDF, fallback to SMILES→SDF)
@@ -199,9 +181,7 @@ class AtomPredictor {
       return { object, chemicals: resolved, molecules: resolved, meta };
     } catch (error) {
       console.error("AI text analysis error:", error);
-      // Graceful fallback to deterministic mapping when AI call fails
-      const fb = this.fallbackAnalyzeText(object);
-      return { ...fb, molecules: fb.chemicals, meta: { strategy: 'fallback', names: [], namesCount: 0, sdfCount: fb.chemicals?.length || 0 } };
+      throw new Error(`AI text analysis failed: ${error.message}`);
     }
   }
 
