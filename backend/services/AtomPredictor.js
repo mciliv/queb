@@ -10,8 +10,8 @@ const {
   CHEMICAL_REPRESENTATIONS,
 } = require("../schemas/schemas");
 
-// Import the new prompt engineering modules
-const { buildChemicalAnalysisInstructions } = require("../prompts/chemical-analysis-instructions");
+// Import prompt builders via centralized index (clear input→output names)
+const { imageToSmiles_instructions, textToNames_prompt, namesToSmiles_prompt } = require("../prompts");
 
 // const { getRelevantExamples } = require("../prompts/material-examples");
 const MolecularProcessor = require("./molecular-processor");
@@ -31,7 +31,7 @@ class AtomPredictor {
 
   buildChemicalInstructions() {
     // Use the comprehensive instructions with proven techniques
-    return buildChemicalAnalysisInstructions();
+    return imageToSmiles_instructions();
   }
 
   async analyzeImage(
@@ -172,7 +172,7 @@ class AtomPredictor {
     if (!this.isOpenAIAvailable) {
       return { object, molecules: [] };
     }
-    const prompt = buildNamesOnlyPrompt(object);
+    const prompt = textToNames_prompt(object);
     try {
       const response = await this.client.chat.completions.create({
         model: "gpt-4o",
@@ -204,7 +204,7 @@ class AtomPredictor {
     if (!this.isOpenAIAvailable) {
       return { object: namesPayload?.object || "", molecules: [] };
     }
-    const prompt = buildNameToSmilesPrompt(namesPayload);
+    const prompt = namesToSmiles_prompt(namesPayload);
     try {
       const response = await this.client.chat.completions.create({
         model: "gpt-4o",
