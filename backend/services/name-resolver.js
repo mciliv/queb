@@ -1,9 +1,20 @@
-const fetch = require('node-fetch');
-
 const PUBCHEM_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
 
+let cachedFetch = null;
+async function getFetch() {
+  if (cachedFetch) return cachedFetch;
+  if (typeof fetch === 'function') {
+    cachedFetch = (...args) => global.fetch(...args);
+    return cachedFetch;
+  }
+  const mod = await import('node-fetch');
+  cachedFetch = mod.default;
+  return cachedFetch;
+}
+
 async function fetchJson(url) {
-  const resp = await fetch(url);
+  const f = await getFetch();
+  const resp = await f(url);
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
   return resp.json();
 }
@@ -29,10 +40,22 @@ async function getPropertiesByCID(cid) {
 
 async function downloadSDFByCID(cid) {
   const url = `${PUBCHEM_BASE}/compound/CID/${cid}/SDF`;
-  const resp = await fetch(url);
+  const f = await getFetch();
+  const resp = await f(url);
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
   const text = await resp.text();
   return text; // caller writes to file
+}
+
+async function downloadSDFBySmiles(smiles) {
+  // Attempt PubChem SMILES conversion endpoint
+  const encoded = encodeURIComponent(smiles);
+  const url = `${PUBCHEM_BASE}/compound/SMILES/${encoded}/SDF`;
+  const f = await getFetch();
+  const resp = await f(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const text = await resp.text();
+  return text;
 }
 
 async function resolveName(name) {
@@ -74,6 +97,7 @@ module.exports = {
   resolveNameToCID,
   getPropertiesByCID,
   downloadSDFByCID,
+  downloadSDFBySmiles,
 };
 
 

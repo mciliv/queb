@@ -24,7 +24,6 @@ class FileWatcher {
       'frontend/**/*.js', 
       'frontend/**/*.html',
       'frontend/**/*.css',
-      'molecular-conversion/**/*.py',
       'package.json'
     ];
     

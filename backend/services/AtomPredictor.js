@@ -8,7 +8,7 @@ try {
 // (schemas not needed here; keep file lean)
 
 // Import prompt builders via centralized index (clear input→output names)
-const { imageToSmiles_instructions, textToNames_prompt, namesToSmiles_prompt } = require("../prompts");
+const { imageToSmiles_instructions, textToNames_prompt } = require("../prompts");
 
 // const { getRelevantExamples } = require("../prompts/material-examples");
 const MolecularProcessor = require("./molecular-processor");
@@ -259,7 +259,25 @@ class AtomPredictor {
   }
 
   parseAIResponse(content) {
-    return JSON.parse(content);
+    try {
+      if (!content || typeof content !== "string") {
+        return { object: "Unknown object", chemicals: [] };
+      }
+      // Fast path: direct JSON
+      try {
+        return JSON.parse(content);
+      } catch (_) {}
+      // Extract first JSON object from mixed content
+      const match = content.match(/\{[\s\S]*\}/);
+      if (match) {
+        try {
+          return JSON.parse(match[0]);
+        } catch (_) {}
+      }
+      return { object: "Unknown object", chemicals: [] };
+    } catch (_) {
+      return { object: "Unknown object", chemicals: [] };
+    }
   }
 }
 

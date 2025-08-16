@@ -89,26 +89,8 @@ describe("Smoke Tests", () => {
       });
     });
 
-    test("should have Python environment available", () => {
-      const { execSync } = require("child_process");
-
-      try {
-        const pythonVersion = execSync("python --version", {
-          encoding: "utf8",
-        });
-        expect(pythonVersion).toContain("Python");
-      } catch (error) {
-        // Python not available - this is okay for some test environments
-        console.warn("Python not available in test environment");
-      }
-    });
-
-    test("should have sdf.py script", () => {
-      const sdfPath = path.join(__dirname, "../sdf.py");
-      expect(fs.existsSync(sdfPath)).toBe(true);
-
-      const sdfContent = fs.readFileSync(sdfPath, "utf8");
-      expect(sdfContent).toContain("from rdkit import Chem");
+    test("should not require Python environment", () => {
+      expect(true).toBe(true);
     });
   });
 

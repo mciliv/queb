@@ -71,47 +71,7 @@ async function testSDFPipeline() {
         console.log(`  ✗ SDF directory missing: ${sdfDir}`);
     }
 
-    // Test 4: Python SDF Generator
-    console.log('\n4. Testing Python SDF Generator');
-    const { spawn } = require('child_process');
-    
-    try {
-        const pythonProcess = spawn('python', [
-            path.join(__dirname, 'chemistry', 'processors', 'sdf.py'),
-            'CCO',
-            '--dir',
-            'test_sdf_output',
-            '--overwrite'
-        ], {
-            cwd: __dirname
-        });
-
-        await new Promise((resolve, reject) => {
-            let output = '';
-            let error = '';
-
-            pythonProcess.stdout.on('data', (data) => {
-                output += data.toString();
-            });
-
-            pythonProcess.stderr.on('data', (data) => {
-                error += data.toString();
-            });
-
-            pythonProcess.on('close', (code) => {
-                if (code === 0) {
-                    console.log(`  ✓ Python SDF generator successful`);
-                    if (output) console.log(`    Output: ${output.trim()}`);
-                } else {
-                    console.log(`  ✗ Python SDF generator failed (code ${code})`);
-                    if (error) console.log(`    Error: ${error.trim()}`);
-                }
-                resolve();
-            });
-        });
-    } catch (error) {
-        console.log(`  ✗ Python process error: ${error.message}`);
-    }
+    // Python SDF generator removed; HTTP-based pipeline replaces it
 
     console.log('\n✅ Pipeline test completed');
 }

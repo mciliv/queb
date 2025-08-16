@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const fsPromises = require("fs").promises;
-const { resolveName, downloadSDFByCID } = require("./name-resolver");
+const { resolveName, downloadSDFByCID, downloadSDFBySmiles } = require("./name-resolver");
 
 class MolecularProcessor {
   constructor(sdfDir = "data/sdf_files") {
@@ -141,55 +141,16 @@ class MolecularProcessor {
   }
 
   async generateSmilesSDF(chemical) {
-    return new Promise((resolve, reject) => {
-      const { spawn } = require("child_process");
-
-      // Only use fallback if spawn is genuinely unavailable (not mocked)
-      if (typeof spawn !== "function") {
-        if (/INVALID/i.test(chemical)) {
-          return reject(new Error("SMILES generation failed"));
-        }
-        const sanitized = chemical.replace(/[^a-zA-Z0-9]/g, ch => ch === "=" ? "__" : "_");
-        return resolve(`/sdf_files/${sanitized}.sdf`);
-      }
-
-      const pythonProcess = spawn("python", [
-        path.join(__dirname, "..", "..", "molecular-conversion", "processors", "sdf.py"),
-        chemical,
-        "--dir",
-        this.sdfDir,
-      ], {
-        cwd: path.join(__dirname, "..", "..")
-      });
-
-      let output = "";
-      pythonProcess.stdout.on("data", (data) => {
-        output += data.toString();
-      });
-
-      pythonProcess.stderr.on("data", () => {});
-
-      pythonProcess.on("error", (err) => {
-        reject(new Error(`Python spawn failed: ${err.message}`));
-      });
-
-      pythonProcess.on("close", (code) => {
-        if (code === 0) {
-          const sdfPath = this.findExistingSdfFile(chemical);
-          if (sdfPath) {
-            resolve(sdfPath);
-          } else {
-            reject(
-              new Error(
-                `SMILES succeeded but couldn't find SDF file for ${chemical}`,
-              ),
-            );
-          }
-        } else {
-          reject(new Error(`SMILES generation failed for ${chemical} (exit code: ${code})`));
-        }
-      });
-    });
+    try {
+      const sdf = await downloadSDFBySmiles(chemical);
+      // Write to file
+      const filename = `${chemical.replace(/[^a-zA-Z0-9]/g, ch => ch === "=" ? "__" : "_")}.sdf`;
+      const dest = path.join(this.sdfDir, filename);
+      await fsPromises.writeFile(dest, sdf, "utf8");
+      return `/sdf_files/${filename}`;
+    } catch (error) {
+      throw new Error("SMILES generation failed");
+    }
   }
 
   copyFallbackSdf(smiles) {

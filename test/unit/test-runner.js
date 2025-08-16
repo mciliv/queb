@@ -110,8 +110,7 @@ class ComponentTestRunner {
       'frontend/components/camera-handler.js',
       'frontend/components/ui-utils.js',
       'backend/api/server.js',
-      'backend/services/molecular-processor.js',
-      'molecular-conversion/processors/sdf.py'
+      'backend/services/molecular-processor.js'
     ];
     
     let allFilesExist = true;

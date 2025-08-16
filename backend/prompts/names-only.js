@@ -1,17 +1,14 @@
 // Names-only extraction prompt builder
 
 function buildNamesOnlyPrompt(objectDescription) {
-  return `Task: Identify only fully specific chemical molecules present in the object. JSON response.
+  return `Task: Extract specific molecule names only. JSON response.
 
 Object: ${objectDescription}
 
-Requirements:
-- Output ONLY fully specific molecule names (IUPAC or unique common names). No classes/families (e.g., "polyphenols", "sugars", "lipids"), no brand names.
-- Prefer the exact isomer/form when typical for the object (e.g., "chlorogenic acid", "(+)-catechin", "L-ascorbic acid").
-- If known, include PubChem CID (integer). If unknown, set cid to null.
-- Include both major and minor constituents that are characteristic.
- - Use canonical naming: prefer PubChem Title; if unavailable, use IUPAC; otherwise widely accepted common name.
- - Exclude quantities, categories, or commentary.
+Rules:
+- Only fully specific molecules (no categories or classes)
+- Prefer canonical PubChem Title; otherwise IUPAC/common
+- Include PubChem CID if confidently known, else null
 
 Schema:
 {
@@ -22,8 +19,9 @@ Schema:
 }`;
 }
 
-// Backwards-compatible alias for clarity
-const listChemicalsFromTextSpecification = buildNamesOnlyPrompt;
+function listChemicalsFromTextSpecification(text) {
+  return buildNamesOnlyPrompt(text);
+}
 
 module.exports = { buildNamesOnlyPrompt, listChemicalsFromTextSpecification };
 

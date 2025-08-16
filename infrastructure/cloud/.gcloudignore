@@ -26,8 +26,9 @@
 !schemas.js
 !molecular-processor.js
 !AtomPredictor.js
-!sdf.py
-!crystal.py
+#! Python scripts are no longer required at runtime
+# !sdf.py
+# !crystal.py
 !camera.svg
 !water.svg
 !waves.svg

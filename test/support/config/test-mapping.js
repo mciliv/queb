@@ -46,9 +46,7 @@ const FILE_TEST_MAPPING = {
   'backend/services/molecular-processor.js': {
     direct: ['test/unit/unit.test.js'],
     layers: [TEST_LAYERS.UNIT, TEST_LAYERS.API],
-    related: [
-      'test/unit/test_*.py',  // Python SDF tests
-    ]
+    related: []
   },
 
   'backend/services/user-service.js': {
@@ -144,14 +142,7 @@ const FILE_TEST_MAPPING = {
     ]
   },
 
-  // Chemistry Processors
-      'molecular-conversion/processors/**.py': {
-    direct: ['test/unit/test_*.py'],
-    layers: [TEST_LAYERS.UNIT],
-    related: [
-      'test/unit/unit.test.js'  // JS tests that depend on Python
-    ]
-  },
+  // Chemistry Processors (Python removed)
 
   // Infrastructure
   'package.json': {

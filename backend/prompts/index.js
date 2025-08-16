@@ -1,6 +1,6 @@
 // Centralized prompt exports with clear input→output aliases
 
-const { buildChemicalAnalysisInstructions } = require('./chemical-analysis-instructions');
+const { buildChemicalAnalysisInstructions } = require('./inputToSmiles');
 const { buildNamesOnlyPrompt, listChemicalsFromTextSpecification } = require('./names-only');
 const { inputToName } = require('./inputToName');
 
