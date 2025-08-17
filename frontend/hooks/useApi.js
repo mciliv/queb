@@ -23,7 +23,6 @@ export const useApi = () => {
 
     try {
       const url = `${API_BASE}${endpoint}`;
-      console.log(`🔗 API Call: ${url}`); // Debug logging
       
       // Create abort controller for timeout
       const controller = new AbortController();
@@ -46,7 +45,6 @@ export const useApi = () => {
       }
 
       const data = await response.json();
-      console.log('📨 API Response received:', data); // Debug API responses
       return data;
     } catch (err) {
       // Handle different types of errors
@@ -69,7 +67,6 @@ export const useApi = () => {
 
       // Retry logic
       if (shouldRetry) {
-        console.log(`API call failed, retrying... (${retryCount + 1}/${maxRetries + 1})`);
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
         return apiCall(endpoint, options, retryCount + 1);
       }
@@ -143,6 +140,22 @@ export const useApi = () => {
     });
   }, [apiCall]);
 
+  const twoNamesToSdf = useCallback(async (names, overwrite = false) => {
+    let list = names;
+    if (typeof names === 'string') {
+      list = names.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    if (!Array.isArray(list) || list.length === 0) {
+      throw new Error('Provide one or two names');
+    }
+    return apiCall('/two-names-to-sdf', {
+      method: 'POST',
+      body: JSON.stringify({ names: list, overwrite }),
+      maxRetries: 1,
+      timeout: 30000,
+    });
+  }, [apiCall]);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
@@ -150,17 +163,9 @@ export const useApi = () => {
   const testConnection = useCallback(async () => {
     try {
       const url = `${API_BASE}/health`;
-      console.log(`🏥 Testing connection to: ${url}`);
       const response = await fetch(url);
-      if (response.ok) {
-        console.log('✅ Backend connection successful');
-        return true;
-      } else {
-        console.log('❌ Backend responded with error:', response.status);
-        return false;
-      }
-    } catch (err) {
-      console.log('❌ Backend connection failed:', err.message);
+      return response.ok;
+    } catch (_) {
       return false;
     }
   }, []);
@@ -172,6 +177,7 @@ export const useApi = () => {
     analyzeText: estimateText,
     analyzeImage: structuralizeImage,
     generateSDFs,
+    twoNamesToSdf,
     clearError,
     testConnection,
   };

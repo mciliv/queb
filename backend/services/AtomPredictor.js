@@ -131,10 +131,12 @@ class AtomPredictor {
 
       // In test mode, keep single-step flow to satisfy mocks
       if (this.isTestMode) {
-        // Use names-only prompt even in test mode for consistency
+        // Use names-only prompt, then convert via programmatic resolvers to simulate full pipeline
         const namesPayload = await this.extractNamesOnly(object);
         const list = Array.isArray(namesPayload?.molecules) ? namesPayload.molecules : [];
-        return { object: namesPayload.object || object, chemicals: [], molecules: list };
+        const smilesPayload = await this.convertNamesToSmilesProgrammatically({ object, molecules: list });
+        const chemicals = Array.isArray(smilesPayload?.molecules) ? smilesPayload.molecules : [];
+        return { object: namesPayload.object || object, chemicals, molecules: list };
       }
 
       // Two-step flow: names → SDF/SMILES
@@ -186,9 +188,18 @@ class AtomPredictor {
         const match = content && content.match(/\{[\s\S]*\}/);
         parsed = match ? JSON.parse(match[0]) : { object, molecules: [] };
       }
+      // Accept legacy shape { chemicals: [{ name, cid?, smiles? }, ...] } by mapping to names-only
+      let molecules = [];
+      if (Array.isArray(parsed.molecules)) {
+        molecules = parsed.molecules;
+      } else if (Array.isArray(parsed.chemicals)) {
+        molecules = parsed.chemicals
+          .map((c) => ({ name: c?.name || c?.title || c?.iupac || '', cid: c?.cid ?? null }))
+          .filter((m) => typeof m.name === 'string' && m.name.trim().length > 0);
+      }
       return {
         object: parsed.object || object,
-        molecules: Array.isArray(parsed.molecules) ? parsed.molecules : []
+        molecules,
       };
     } catch (error) {
       console.error("Names-only extraction error:", error);

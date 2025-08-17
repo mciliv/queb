@@ -64,6 +64,20 @@ const KNOWN_COMPOSITIONS = {
 
   // Biological - test realistic biological compositions
   biological: {
+    "olives": {
+      expectedChemicals: [
+        "OC1=CC=C(C=C1CCO)O", // Hydroxytyrosol
+        "C1=CC(=CC=C1CCO)O",   // Tyrosol
+        "CC(=CC1=CC(=CC=C1)O)CC=O", // Oleocanthal
+        "C1=CC(=O)C2=C(O1)C(=CC(=C2O)O)C3=CC(=C(C=C3)O)O", // Luteolin
+        "C1=CC(=O)C2=C(O1)C(=CC(=C2O)O)C3=CC=CC=C3", // Apigenin
+        "CC1=CC(=C(C=C1OC2C(C(C(C(O2)CO)O)O)OC(=O)C=CC3=CC(=C(C=C3)O)O)O)OCC4C(C(C(C(O4)O)O)O)O" // Verbascoside
+      ],
+      mustContain: ["Oleuropein", "Hydroxytyrosol", "Tyrosol"],
+      mayContain: ["Luteolin", "Apigenin", "Verbascoside"],
+      forbiddenSmiles: ["H2O"],
+      minChemicals: 2
+    },
     "apple": {
       expectedChemicals: ["O", "C(C(C(C(C(C=O)O)O)O)O)O"], // Water, glucose/fructose
       mustContain: ["Water", "Fructose", "Glucose"],
@@ -393,6 +407,26 @@ jest.mock("openai", () => ({
                       { name: "Water", smiles: "O" },
                       { name: "Fructose", smiles: "C(C(C(C(C(C=O)O)O)O)O)O" },
                       { name: "Malic acid", smiles: "C(C(=O)O)C(C(=O)O)O" }
+                    ]
+                  })
+                }
+              }]
+            };
+          }
+
+          if (text.includes('olive')) {
+            return {
+              choices: [{
+                message: {
+                  content: JSON.stringify({
+                    object: "Olives",
+                    chemicals: [
+                      { name: "Hydroxytyrosol", smiles: "OC1=CC=C(C=C1CCO)O" },
+                      { name: "Tyrosol", smiles: "C1=CC(=CC=C1CCO)O" },
+                      { name: "Oleocanthal", smiles: "CC(=CC1=CC(=CC=C1)O)CC=O" },
+                      { name: "Luteolin", smiles: "C1=CC(=O)C2=C(O1)C(=CC(=C2O)O)C3=CC(=C(C=C3)O)O" },
+                      { name: "Apigenin", smiles: "C1=CC(=O)C2=C(O1)C(=CC(=C2O)O)C3=CC=CC=C3" },
+                      { name: "Verbascoside", smiles: "CC1=CC(=C(C=C1OC2C(C(C(C(O2)CO)O)O)OC(=O)C=CC3=CC(=C(C=C3)O)O)O)OCC4C(C(C(C(O4)O)O)O)O" }
                     ]
                   })
                 }

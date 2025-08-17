@@ -29,6 +29,14 @@ let page = null;
 let closing = false;
 let debounceTimer = null;
 
+function removeUserDataDir() {
+  try {
+    if (fs.existsSync(USER_DATA_DIR)) {
+      fs.rmSync(USER_DATA_DIR, { recursive: true, force: true });
+    }
+  } catch (_) {}
+}
+
 function log(msg) {
   console.log(msg);
 }
@@ -180,11 +188,19 @@ async function main() {
     fs.unwatchFile(FRONTEND_DIST_FILE);
     await closeBrowser();
     try { fs.unlinkSync(PID_FILE); } catch (_) {}
+    // Remove the temporary Chrome profile used for this dev run
+    removeUserDataDir();
     process.exit(0);
   };
 
   process.on('SIGINT', cleanup);
   process.on('SIGTERM', cleanup);
+  // Best-effort sync cleanup on process exit
+  process.on('exit', () => {
+    try { fs.unwatchFile(FRONTEND_DIST_FILE); } catch (_) {}
+    try { fs.unlinkSync(PID_FILE); } catch (_) {}
+    removeUserDataDir();
+  });
 }
 
 main().catch((err) => {

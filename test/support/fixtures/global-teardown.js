@@ -3,6 +3,10 @@
 module.exports = async () => {
   // Force cleanup of any remaining resources
   const { execSync } = require('child_process');
+  const fs = require('fs');
+  const path = require('path');
+  const ROOT = path.resolve(__dirname, '../../..');
+  const TEST_DIR = path.join(ROOT, 'test');
   
   try {
     // Kill any test servers on common ports
@@ -17,6 +21,22 @@ module.exports = async () => {
     await global.testCleanupRegistry.cleanup();
   }
   
+  // Remove any Chrome userDataDir left by tests
+  try {
+    if (fs.existsSync(TEST_DIR)) {
+      for (const name of fs.readdirSync(TEST_DIR)) {
+        if (
+          name.startsWith('chrome-molecular-profile-') ||
+          name === 'seamless-chrome-profile' ||
+          name === 'single-tab-chrome'
+        ) {
+          const fullPath = path.join(TEST_DIR, name);
+          try { fs.rmSync(fullPath, { recursive: true, force: true }); } catch (_) {}
+        }
+      }
+    }
+  } catch (_) {}
+
   // Force garbage collection if available
   if (global.gc) {
     global.gc();

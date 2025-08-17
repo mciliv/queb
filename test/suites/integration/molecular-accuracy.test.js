@@ -70,6 +70,20 @@ const REFERENCE_MATERIALS = {
       mayContain: ["malic", "cellulose", "pectin"],
       minComponents: 4,
       accuracy_threshold: 65
+    },
+    "olives": {
+      // Expected SMILES moved from prompt example into test expectations
+      expectedSMILES: [
+        "OC1=CC=C(C=C1CCO)O", // Hydroxytyrosol
+        "C1=CC(=CC=C1CCO)O",   // Tyrosol
+        "CC(=CC1=CC(=CC=C1)O)CC=O", // Oleocanthal
+        "C1=CC(=O)C2=C(O1)C(=CC(=C2O)O)C3=CC(=C(C=C3)O)O", // Luteolin
+        "C1=CC(=O)C2=C(O1)C(=CC(=C2O)O)C3=CC=CC=C3", // Apigenin
+        "CC1=CC(=C(C=C1OC2C(C(C(C(O2)CO)O)O)OC(=O)C=CC3=CC(=C(C=C3)O)O)O)OCC4C(C(C(C(O4)O)O)O)O" // Verbascoside (Acteoside)
+      ],
+      mayContain: ["oleuropein"],
+      minComponents: 3,
+      accuracy_threshold: 60
     }
   }
 };

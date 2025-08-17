@@ -404,6 +404,62 @@ app.post("/generate-sdfs", async (req, res) => {
   }
 });
 
+// Convert two names to SMILES and SDFs
+app.post("/two-names-to-sdf", async (req, res) => {
+  try {
+    const { names = [], overwrite = false } = req.body || {};
+    if (!Array.isArray(names) || names.length === 0) {
+      return res.status(400).json({ error: "names array is required" });
+    }
+    // Limit to first two names for this variant
+    const input = names.slice(0, 2);
+    const results = [];
+
+    for (const rawName of input) {
+      const nameStr = typeof rawName === 'string' ? rawName : '';
+      if (!nameStr || nameStr.trim().length === 0) {
+        results.push({ name: '', cid: null, smiles: null, sdfPath: null, status: 'invalid_name' });
+        continue;
+      }
+      try {
+        const reso = await resolveName(nameStr);
+        const canonicalName = reso?.title || reso?.iupac || nameStr;
+        const cid = reso?.cid ?? null;
+        const smiles = reso?.smiles || null;
+        let sdfPath = null;
+
+        if (smiles) {
+          try {
+            sdfPath = await molecularProcessor.generateSDF(smiles, overwrite);
+          } catch (_) {
+            sdfPath = null;
+          }
+        }
+        if (!sdfPath) {
+          const byName = await molecularProcessor.generateSDFByName(nameStr, overwrite);
+          if (byName && byName.sdfPath) {
+            sdfPath = byName.sdfPath;
+          }
+        }
+
+        results.push({
+          name: canonicalName,
+          cid,
+          smiles: smiles || null,
+          sdfPath: sdfPath || null,
+          status: sdfPath ? 'ok' : 'lookup_required'
+        });
+      } catch (_) {
+        results.push({ name: nameStr, cid: null, smiles: null, sdfPath: null, status: 'error' });
+      }
+    }
+
+    res.json({ molecules: results });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Programmatic name → SMILES conversion (PubChem-backed)
 app.post("/name-to-smiles", async (req, res) => {
   try {

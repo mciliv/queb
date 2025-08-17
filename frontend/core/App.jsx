@@ -357,13 +357,11 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
     const y = event.clientY - rect.top;
     
     // Store click position for outline box
-    console.log('Camera clicked at:', { x, y });
     setClickPosition({ x, y });
     setShowOutline(true);
     
     // Hide outline after 2 seconds
     setTimeout(() => {
-      console.log('Hiding red outline box');
       setShowOutline(false);
     }, 2000);
 
@@ -780,7 +778,7 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
         }
         if (!ref.current) return;
 
-        console.log(`Loading molecule: ${molecularData.name} with SMILES: ${molecularData.smiles}`);
+        // Loading molecule
         
         const viewer = window.$3Dmol.createViewer(ref.current, {
           backgroundColor: '#000000',
@@ -798,7 +796,7 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
           const response = await fetch(`/sdf_files/${path.split('/').pop()}`);
           if (response.ok) {
             sdfContent = await response.text();
-            console.log(`SDF loaded for ${molecularData.name}`);
+            // SDF fetched
           } else {
             console.error(`Failed to fetch SDF for ${molecularData.name}`);
           }
@@ -830,7 +828,7 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
           viewer.zoomTo();
           viewer.render();
           setStatus('loaded');
-          console.log(`${molecularData.name} rendered successfully with element colors`);
+          // Render complete
         } else {
           setStatus('failed');
         }
@@ -898,8 +896,7 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
 };
 
 const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
-  // Debug: Log column data to ensure headers have content
-  console.log('Rendering column header:', { query: column.query, loading: column.loading, failed: column.failed });
+  // Render column header and viewers
   
   return (
     <div style={styles.column}>
@@ -1009,7 +1006,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [columnMode, setColumnMode] = useState('accumulate'); // 'replace' or 'accumulate'
 
-  const { analyzeText, generateSDFs } = useApi();
+  const { analyzeText, generateSDFs, twoNamesToSdf } = useApi();
 
   // Load 3Dmol.js once at app start
   useEffect(() => {
@@ -1024,10 +1021,7 @@ function App() {
 
   // Auto-enable dev mode
   useEffect(() => {
-    if (PAYMENT_CONFIG.devMode) {
-      console.log('🔧 Auto-enabling developer mode for localhost');
-    }
-    console.log('✅ Molecular analysis app initialized');
+    // Dev-mode setup only
   }, []);
 
   // Ensure accumulate mode during visual tests
@@ -1081,10 +1075,40 @@ function App() {
     }
     
     try {
-      const result = await analyzeText(value);
+      // Use two-names→SDF flow only when EXACTLY two names are provided
+      const parts = value.split(',').map(s => s.trim()).filter(Boolean);
+      let result;
+      let usedTwoNames = false;
+      if (parts.length === 2) {
+        try {
+          const resp = await twoNamesToSdf(parts, false);
+          result = { object: value, molecules: resp.molecules || [] };
+          usedTwoNames = true;
+        } catch (e) {
+          // Fallback to standard analyzer if two-names call errors
+          result = await analyzeText(value);
+        }
+      } else {
+        result = await analyzeText(value);
+      }
       const molecules = result.molecules || result.chemicals || [];
 
       if (molecules && molecules.length > 0) {
+        // If two-names was used but we received no SDFs and no SMILES, fallback to analyzer
+        if (usedTwoNames) {
+          const hasAnySdf = molecules.some(m => !!m.sdfPath);
+          const hasAnySmiles = molecules.some(m => !!m.smiles);
+          if (!hasAnySdf && !hasAnySmiles) {
+            try {
+              const fallback = await analyzeText(value);
+              result = fallback;
+            } catch (_) {
+              // keep original result
+            }
+          }
+        }
+        // Refresh molecules after possible fallback
+        const molecules = result.molecules || result.chemicals || [];
         // Prefer precomputed SDFs with canonical names
         const precomputed = molecules.filter(m => m.sdfPath);
         if (precomputed.length > 0) {
@@ -1234,9 +1258,7 @@ function App() {
             smiles: sm
           }));
           setColumns(prev => ([...prev, { id: Date.now() + Math.random(), query: test.label, viewers }]));
-        } catch (e) {
-          console.log(`Failed to create column for ${test.label}:`, e);
-        }
+        } catch (e) {}
       }
     };
     run();

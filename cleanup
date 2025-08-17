@@ -57,6 +57,15 @@ rm -f /tmp/dev_backend_pid
 rm -f /tmp/dev_server_pid
 rm -f /tmp/frontend_last_check
 
+# Remove temporary Chrome user data directories created by helpers
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TEST_DIR="$ROOT_DIR/test"
+if [ -d "$TEST_DIR" ]; then
+  rm -rf "$TEST_DIR"/chrome-molecular-profile-* 2>/dev/null || true
+  rm -rf "$TEST_DIR"/seamless-chrome-profile 2>/dev/null || true
+  rm -rf "$TEST_DIR"/single-tab-chrome 2>/dev/null || true
+fi
+
 # Wait a moment for processes to fully terminate
 sleep 1
 

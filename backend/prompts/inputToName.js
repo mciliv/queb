@@ -19,6 +19,41 @@ Schema:
   "molecules": [
     {"name": "string", "cid": number|null}
   ]
+}
+  
+Example:
+{
+  "object": "olives",
+  "molecules": [
+    {
+      "name": "Oleuropein",
+      "cid": 5281544
+    },
+    {
+      "name": "Hydroxytyrosol",
+      "cid": 82755
+    },
+    {
+      "name": "Tyrosol",
+      "cid": 10388
+    },
+    {
+      "name": "Oleocanthal",
+      "cid": 5281547
+    },
+    {
+      "name": "Luteolin",
+      "cid": 5280445
+    },
+    {
+      "name": "Apigenin",
+      "cid": 5280443
+    },
+    {
+      "name": "Verbascoside (Acteoside)",
+      "cid": 5281800
+    }
+  ]
 }`;
 }
 

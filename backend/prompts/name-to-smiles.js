@@ -1,75 +1,55 @@
-// Name to SMILES conversion using algorithmic libraries with LLM backup
+// Name to SMILES conversion using external Python helpers with LLM backup
 
 const { spawn } = require('child_process');
+const path = require('path');
 
-async function convertNameToSmilesRDKit(name) {
+const PY_HELPER = path.join(__dirname, '..', 'python', 'name_to_smiles.py');
+const PY_TIMEOUT_MS = 15000;
+
+function runPythonNameToSmiles(toolkit, rawName, timeoutMs = PY_TIMEOUT_MS) {
+  const safeName = typeof rawName === 'string' ? rawName.trim() : '';
+  if (safeName.length === 0) {
+    return Promise.resolve(null);
+  }
   return new Promise((resolve) => {
-    const pythonScript = `
-from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
-import sys
-
-name = "${name.replace(/"/g, '\\"')}"
-try:
-    mol = Chem.MolFromName(name)
-    if mol:
-        smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
-        print(smiles)
-    else:
-        print("NONE")
-except:
-    print("NONE")
-`;
-    
-    const python = spawn('python3', ['-c', pythonScript]);
+    const args = [PY_HELPER, '--toolkit', toolkit, '--name', safeName];
+    const python = spawn('python3', args, { stdio: ['ignore', 'pipe', 'ignore'] });
     let output = '';
-    
+    let settled = false;
+
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(value);
+    };
+
+    const timer = setTimeout(() => {
+      try { python.kill('SIGKILL'); } catch (_) {}
+      finish(null);
+    }, timeoutMs);
+
     python.stdout.on('data', (data) => {
       output += data.toString();
     });
-    
-    python.on('close', (code) => {
-      const smiles = output.trim();
-      resolve(smiles === 'NONE' || !smiles ? null : smiles);
+
+    python.on('close', () => {
+      const smiles = (output || '').trim();
+      finish(smiles === 'NONE' || smiles.length === 0 ? null : smiles);
     });
-    
+
     python.on('error', () => {
-      resolve(null);
+      finish(null);
     });
   });
 }
 
+async function convertNameToSmilesRDKit(name) {
+  return runPythonNameToSmiles('rdkit', name);
+}
+
 async function convertNameToSmilesOpenEye(name) {
-  return new Promise((resolve) => {
-    const pythonScript = `
-try:
-    from openeye import oechem
-    mol = oechem.OEGraphMol()
-    if oechem.OEParseIUPACName(mol, "${name.replace(/"/g, '\\"')}"):
-        smiles = oechem.OEMolToSmiles(mol)
-        print(smiles)
-    else:
-        print("NONE")
-except:
-    print("NONE")
-`;
-    
-    const python = spawn('python3', ['-c', pythonScript]);
-    let output = '';
-    
-    python.stdout.on('data', (data) => {
-      output += data.toString();
-    });
-    
-    python.on('close', (code) => {
-      const smiles = output.trim();
-      resolve(smiles === 'NONE' || !smiles ? null : smiles);
-    });
-    
-    python.on('error', () => {
-      resolve(null);
-    });
-  });
+  return runPythonNameToSmiles('openeye', name);
 }
 
 async function convertNamesToSmiles(payload, llmClient = null) {
@@ -78,72 +58,86 @@ async function convertNamesToSmiles(payload, llmClient = null) {
   const results = [];
   
   for (const mol of input) {
-    const name = mol?.name || '';
+    const name = typeof mol?.name === 'string' ? mol.name.trim() : '';
     let cid = mol?.cid ?? null;
     let smiles = null;
     let method = null;
-    
-    // 1. Try OpenEye toolkit first (most comprehensive)
-    try {
-      smiles = await convertNameToSmilesOpenEye(name);
-      if (smiles) method = 'openeye';
-    } catch (_) {}
-    
-    // 2. Try RDKit if OpenEye fails
-    if (!smiles) {
-      try {
-        smiles = await convertNameToSmilesRDKit(name);
-        if (smiles) method = 'rdkit';
-      } catch (_) {}
-    }
-    
-    // 3. Try PubChem programmatic lookup
-    if (!smiles) {
-      try {
-        const { resolveName, getPropertiesByCID } = require('../services/pubchem');
-        
-        if (cid) {
-          const props = await getPropertiesByCID(cid);
-          smiles = props?.smiles || null;
-          if (smiles) method = 'pubchem_cid';
+
+    if (name) {
+      const openeye = await convertNameToSmilesOpenEye(name).catch(() => null);
+      if (openeye) {
+        smiles = openeye;
+        method = 'openeye';
+      }
+
+      if (!smiles) {
+        const rdkit = await convertNameToSmilesRDKit(name).catch(() => null);
+        if (rdkit) {
+          smiles = rdkit;
+          method = 'rdkit';
         }
-        
-        if (!smiles) {
-          const res = await resolveName(name);
-          cid = res?.cid || cid;
-          smiles = res?.smiles || null;
-          if (smiles) method = 'pubchem_name';
+      }
+
+      if (!smiles) {
+        let resolveNameFn = null;
+        let getPropertiesByCIDFn = null;
+        try {
+          const mod = require('../services/pubchem');
+          resolveNameFn = typeof mod?.resolveName === 'function' ? mod.resolveName : null;
+          getPropertiesByCIDFn = typeof mod?.getPropertiesByCID === 'function' ? mod.getPropertiesByCID : null;
+        } catch (_) {}
+
+        if (cid && getPropertiesByCIDFn) {
+          const props = await getPropertiesByCIDFn(cid).catch(() => null);
+          const found = props?.smiles || null;
+          if (found) {
+            smiles = found;
+            method = 'pubchem_cid';
+          }
         }
-      } catch (_) {}
-    }
-    
-    // 4. LLM backup for edge cases not in databases
-    if (!smiles && llmClient) {
-      try {
+
+        if (!smiles && resolveNameFn) {
+          const res = await resolveNameFn(name).catch(() => null);
+          if (res) {
+            cid = res?.cid || cid;
+            if (res?.smiles) {
+              smiles = res.smiles;
+              method = 'pubchem_name';
+            }
+          }
+        }
+      }
+
+      if (!smiles && llmClient) {
         const prompt = buildNameToSmilesPrompt({ object, molecules: [{ name, cid }] });
-        const response = await llmClient.chat.completions.create({
-          model: "gpt-4o",
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 500,
-          temperature: 0.1,
-          response_format: { type: "json_object" }
-        });
-        
-        const parsed = JSON.parse(response.choices[0].message.content);
-        const llmResult = parsed.molecules?.[0];
-        if (llmResult?.smiles) {
-          smiles = llmResult.smiles;
-          method = 'llm';
+        const response = await llmClient.chat.completions
+          .create({
+            model: 'gpt-4o',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 500,
+            temperature: 0.1,
+            response_format: { type: 'json_object' },
+          })
+          .catch(() => null);
+        if (response && response.choices?.[0]?.message?.content) {
+          try {
+            const parsed = JSON.parse(response.choices[0].message.content);
+            const llmResult = parsed.molecules?.[0];
+            if (llmResult?.smiles) {
+              smiles = llmResult.smiles;
+              method = 'llm';
+            }
+          } catch (_) {}
         }
-      } catch (_) {}
+      }
     }
-    
+
     results.push({
       name,
       cid,
       smiles: smiles || null,
       status: smiles ? 'ok' : 'lookup_required',
-      method: method || 'failed'
+      method: method || 'failed',
     });
   }
   
