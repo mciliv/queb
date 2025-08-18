@@ -48,33 +48,64 @@ async function downloadSDFByCID(cid) {
 }
 
 async function downloadSDFBySmiles(smiles) {
-  // Attempt PubChem SMILES conversion endpoint
-  const encoded = encodeURIComponent(smiles);
+  if (!smiles || typeof smiles !== 'string') {
+    throw new Error('Invalid SMILES input');
+  }
+  
+  const encoded = encodeURIComponent(smiles.trim());
   const url = `${PUBCHEM_BASE}/compound/SMILES/${encoded}/SDF`;
-  const f = await getFetch();
-  const resp = await f(url);
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  const text = await resp.text();
-  return text;
+  
+  try {
+    const f = await getFetch();
+    const resp = await f(url, { timeout: 10000 });
+    
+    if (!resp.ok) {
+      if (resp.status === 404) {
+        throw new Error(`Compound not found in PubChem`);
+      }
+      throw new Error(`PubChem API error: ${resp.status}`);
+    }
+    
+    const text = await resp.text();
+    if (!text || text.length < 100) {
+      throw new Error('Invalid SDF response from PubChem');
+    }
+    
+    return text;
+  } catch (error) {
+    if (error.name === 'AbortError' || error.code === 'ETIMEDOUT') {
+      throw new Error('PubChem request timeout');
+    }
+    throw error;
+  }
 }
 
 async function resolveName(name) {
   // Returns { cid, smiles, title, iupac } best-effort
+  if (!name || typeof name !== 'string') {
+    return { cid: null, smiles: null, title: null, iupac: null };
+  }
+  
   let cid = null;
   let title = null;
   let iupac = null;
+  let smiles = null;
+  
   try {
     cid = await resolveNameToCID(name);
-  } catch (_) {}
+  } catch (error) {
+    console.log(`CID lookup failed for ${name}: ${error.message}`);
+  }
 
-  let smiles = null;
   if (cid) {
     try {
       const p = await getPropertiesByCID(cid);
       smiles = p.smiles || null;
       title = p.title || null;
       iupac = p.iupac || null;
-    } catch (_) {}
+    } catch (error) {
+      console.log(`Properties lookup failed for CID ${cid}: ${error.message}`);
+    }
   } else {
     // Try direct properties by name
     try {
@@ -86,7 +117,9 @@ async function resolveName(name) {
       smiles = props.IsomericSMILES || null;
       title = props.Title || null;
       iupac = props.IUPACName || null;
-    } catch (_) {}
+    } catch (error) {
+      console.log(`Direct name lookup failed for ${name}: ${error.message}`);
+    }
   }
 
   return { cid, smiles, title, iupac };

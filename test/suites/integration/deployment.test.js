@@ -44,9 +44,6 @@ describe("Pre-Deployment Validation", () => {
     it("should have all core files present and valid", () => {
       const criticalFiles = [
         "server.js",
-        "index.html",
-        "app.js",
-        "style.css",
         "schemas.js",
         // no python scripts required
         "package.json",

@@ -32,7 +32,7 @@ Guidelines:
 - Single line only`;
 
       const response = await client.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+        model: process.env.OPENAI_COMMIT_MODEL || process.env.OPENAI_MODEL || process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 100,
         temperature: 0.3

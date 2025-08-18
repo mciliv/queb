@@ -7,9 +7,8 @@
     "*.png",
     "*.gif",
     "tests/**",
-    "app.js",
-    "index.html",
-    "style.css"
+    "frontend/**",
+    "dist/**"
   ],
   "ext": "js,json",
   "env": {

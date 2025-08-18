@@ -95,8 +95,7 @@ async function convertNamesToSmiles(payload, llmClient = null) {
             method = 'pubchem_cid';
           }
         }
-
-        if (!smiles && resolveNameFn) {
+         if (!smiles && resolveNameFn) {
           const res = await resolveNameFn(name).catch(() => null);
           if (res) {
             cid = res?.cid || cid;
@@ -112,7 +111,7 @@ async function convertNamesToSmiles(payload, llmClient = null) {
         const prompt = buildNameToSmilesPrompt({ object, molecules: [{ name, cid }] });
         const response = await llmClient.chat.completions
           .create({
-            model: 'gpt-4o',
+            model: process.env.OPENAI_MODEL || process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o',
             messages: [{ role: 'user', content: prompt }],
             max_tokens: 500,
             temperature: 0.1,

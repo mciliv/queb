@@ -23,9 +23,6 @@ describe("Smoke Tests", () => {
     test("should have required core files", () => {
       const requiredFiles = [
         "server.js",
-        "index.html",
-        "app.js",
-        "style.css",
         "schemas.js",
         "AtomPredictor.js",
         "molecular-processor.js",
@@ -134,9 +131,8 @@ describe("Smoke Tests", () => {
       );
 
       expect(htmlContent).toContain("<!doctype html>");
-      expect(htmlContent).toContain("<title>Atomic Reality</title>");
-      expect(htmlContent).toContain("app.js");
-      expect(htmlContent).toContain("style.css");
+      expect(htmlContent).toContain("<title>Structuralizer - Structural Analysis</title>");
+      expect(htmlContent).toContain("bundle.js");
     });
 
     test("should have valid CSS file", () => {
@@ -149,7 +145,6 @@ describe("Smoke Tests", () => {
 
     test("should have valid JavaScript files", () => {
       const jsFiles = [
-        "app.js",
         "server.js",
         "AtomPredictor.js",
         "molecular-processor.js",

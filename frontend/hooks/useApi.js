@@ -78,12 +78,12 @@ export const useApi = () => {
     }
   }, []);
 
-  const estimateText = useCallback(async (text) => {
+  const structuresFromText = useCallback(async (text) => {
     if (!text || !text.trim()) {
       throw new Error('Text input is required');
     }
 
-    return apiCall('/structuralize-text', {
+    return apiCall('/structures-from-text', {
       method: 'POST',
       body: JSON.stringify({ object: text }),
       maxRetries: 2,
@@ -174,7 +174,8 @@ export const useApi = () => {
     loading,
     error,
     apiCall,
-    analyzeText: estimateText,
+    analyzeText: structuresFromText,
+    structuresFromText,
     analyzeImage: structuralizeImage,
     generateSDFs,
     twoNamesToSdf,

@@ -17,10 +17,12 @@ const { resolveName, getPropertiesByCID } = require("./name-resolver");
 
 class AtomPredictor {
   constructor(apiKey) {
-    // Handle test environment
-    this.isTestMode = apiKey === 'test-key' || process.env.NODE_ENV === 'test';
+    // Handle test environment strictly via NODE_ENV
+    this.isTestMode = process.env.NODE_ENV === 'test';
     this.client = OpenAIClient ? new OpenAIClient({ apiKey: apiKey || process.env.OPENAI_API_KEY || '' }) : null;
     this.isOpenAIAvailable = !!this.client && !!(apiKey || process.env.OPENAI_API_KEY);
+    // Centralize model selection with environment override
+    this.modelName = process.env.OPENAI_MODEL || process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o';
     this.chemicalInstructions = this.buildChemicalInstructions();
     this.molecularProcessor = new MolecularProcessor();
   }
@@ -100,7 +102,7 @@ class AtomPredictor {
       }
 
       const response = await this.client.chat.completions.create({
-        model: "gpt-4o",
+        model: this.modelName,
         messages,
         max_tokens: 1000,
         temperature: 0.1, // Keep low for consistency
@@ -173,7 +175,7 @@ class AtomPredictor {
     const prompt = textToNames_prompt(object);
     try {
       const response = await this.client.chat.completions.create({
-        model: "gpt-4o",
+        model: this.modelName,
         messages: [{ role: "user", content: prompt }],
         max_tokens: 800,
         temperature: 0.1,

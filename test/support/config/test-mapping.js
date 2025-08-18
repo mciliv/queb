@@ -82,7 +82,7 @@ const FILE_TEST_MAPPING = {
   },
 
   // Frontend Core
-  'frontend/core/app.js': {
+  'frontend/core/App.jsx': {
     direct: ['test/unit/manual.test.js'],
     layers: [TEST_LAYERS.UNIT, TEST_LAYERS.INTEGRATION, TEST_LAYERS.E2E],
     related: [

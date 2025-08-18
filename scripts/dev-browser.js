@@ -94,7 +94,15 @@ async function openBrowser() {
       '--disable-renderer-backgrounding'
     ]
   });
-  page = await browser.newPage();
+  const pages = await browser.pages();
+  page = pages && pages.length > 0 ? pages[0] : await browser.newPage();
+  // Close any extra initial tabs (often about:blank)
+  if (pages && pages.length > 1) {
+    for (const extra of pages.slice(1)) {
+      try { await extra.close(); } catch (_) {}
+    }
+  }
+  await page.bringToFront().catch(() => {});
   await page.goto(TARGET_URL, { waitUntil: 'networkidle0' }).catch(() => {});
   log('🌐 Dev browser opened');
 }

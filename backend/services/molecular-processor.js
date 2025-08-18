@@ -148,8 +148,17 @@ class MolecularProcessor {
       const dest = path.join(this.sdfDir, filename);
       await fsPromises.writeFile(dest, sdf, "utf8");
       return `/sdf_files/${filename}`;
-    } catch (error) {
-      throw new Error("SMILES generation failed");
+    } catch (pubchemError) {
+      console.log(`PubChem failed for ${chemical}: ${pubchemError.message}`);
+      
+      // Try fallback SDF files
+      const fallbackPath = this.copyFallbackSdf(chemical);
+      if (fallbackPath) {
+        console.log(`Using fallback SDF for ${chemical}`);
+        return fallbackPath;
+      }
+      
+      throw new Error(`No SDF available for ${chemical}`);
     }
   }
 

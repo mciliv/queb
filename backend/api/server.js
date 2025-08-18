@@ -28,7 +28,7 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 const HttpsServer = require("./https-server");
-const AtomPredictor = require("../services/AtomPredictor");
+const Structuralizer = require("../services/Structuralizer");
 const MolecularProcessor = require("../services/molecular-processor");
 const { resolveName, getPropertiesByCID } = require("../services/name-resolver");
 const ScreenshotService = require("../services/screenshot-service");
@@ -207,9 +207,9 @@ const findAvailablePort = async (startPort) => {
 const PORT = config.PORT;
 
 // Initialize modules
-// Use mock API key for test environment if OPENAI_API_KEY not set
-const openaiApiKey = config.OPENAI_API_KEY || (config.NODE_ENV === 'test' ? 'test-key' : undefined);
-const atomPredictor = new AtomPredictor(openaiApiKey);
+// Do not inject a fake key; rely on real OPENAI_API_KEY or none
+const openaiApiKey = config.OPENAI_API_KEY;
+const structuralizer = new Structuralizer(openaiApiKey);
 const molecularProcessor = new MolecularProcessor();
 const userService = (pool && UserService) ? new UserService(pool) : null;
 
@@ -308,7 +308,7 @@ app.post("/image-molecules", async (req, res) => {
       return res.status(400).json({ error: "No image data provided" });
     }
 
-    const result = await atomPredictor.analyzeImage(
+    const result = await structuralizer.analyzeImage(
       imageBase64,
       croppedImageBase64,
       x,
@@ -341,7 +341,7 @@ app.post("/object-molecules", async (req, res) => {
       return res.status(400).json({ error: "No object description provided" });
     }
 
-    const result = await atomPredictor.analyzeText(object);
+    const result = await structuralizer.analyzeText(object);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -366,7 +366,7 @@ app.post("/analyze-text", async (req, res) => {
       return res.status(400).json({ error: "No object description provided" });
     }
 
-    const result = await atomPredictor.analyzeText(object);
+    const result = await structuralizer.analyzeText(object);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -976,7 +976,7 @@ app.post("/image-molecules", async (req, res) => {
       return res.status(400).json({ error: "No image data provided" });
     }
 
-    const result = await atomPredictor.analyzeImage(
+    const result = await structuralizer.analyzeImage(
       imageBase64,
       croppedImageBase64,
       x,
@@ -1001,13 +1001,27 @@ app.post("/analyze-text", async (req, res) => {
       return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
     }
 
-    const result = await atomPredictor.analyzeText(object || "");
+    const result = await structuralizer.analyzeText(object || "");
     res.json(result);
   } catch (error) {
     console.error("Text analysis error:", error);
     res.status(500).json({
       error: `Analysis failed: ${error.message}`,
     });
+  }
+});
+
+// Preferred naming alias: structures-from-text
+app.post("/structures-from-text", async (req, res) => {
+  try {
+    const { object } = req.body;
+    if (!object || typeof object !== "string" || object.trim().length === 0) {
+      return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
+    }
+    const result = await structuralizer.analyzeText(object || "");
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: `Analysis failed: ${error.message}` });
   }
 });
 
@@ -1018,7 +1032,7 @@ app.post("/estimate-text", async (req, res) => {
     if (!object || typeof object !== "string" || object.trim().length === 0) {
       return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
     }
-    const result = await atomPredictor.analyzeText(object || "");
+    const result = await structuralizer.analyzeText(object || "");
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: `Estimation failed: ${error.message}` });
@@ -1032,7 +1046,7 @@ app.post("/estimate-image", async (req, res) => {
       return res.status(400).json({ error: "No image data provided" });
     }
     // Reuse analysis pipeline for estimation wording
-    const result = await atomPredictor.analyzeImage(imageBase64);
+    const result = await structuralizer.analyzeImage(imageBase64);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1046,7 +1060,7 @@ app.post("/structuralize-text", async (req, res) => {
     if (!object || typeof object !== "string" || object.trim().length === 0) {
       return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
     }
-    const result = await atomPredictor.analyzeText(object || "");
+    const result = await structuralizer.analyzeText(object || "");
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: `Structuralization failed: ${error.message}` });
@@ -1059,10 +1073,23 @@ app.post("/structuralize-image", async (req, res) => {
     if (!imageBase64) {
       return res.status(400).json({ error: "No image data provided" });
     }
-    const result = await atomPredictor.analyzeImage(imageBase64);
+    const result = await structuralizer.analyzeImage(imageBase64);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Unified multimodal structuralization: accepts { object?, imageBase64? }
+app.post("/structuralize", async (req, res) => {
+  try {
+    if (!req.body || (typeof req.body !== 'object')) {
+      return res.status(400).json({ error: "Invalid payload" });
+    }
+    const out = await structuralizer.analyze(req.body);
+    res.json(out);
+  } catch (error) {
+    res.status(500).json({ error: `Structuralization failed: ${error.message}` });
   }
 });
 // Text analysis route (legacy endpoint)
@@ -1083,7 +1110,7 @@ app.post("/object-molecules", async (req, res) => {
       return res.status(400).json({ error: "No object description provided" });
     }
 
-    const result = await atomPredictor.analyzeText(object);
+    const result = await structuralizer.analyzeText(object);
     res.json(result);
   } catch (error) {
     console.error("Text analysis error:", error);

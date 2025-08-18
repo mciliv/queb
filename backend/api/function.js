@@ -5,7 +5,7 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-const AtomPredictor = require("../services/AtomPredictor");
+const Structuralizer = require("../services/StructurePredictor");
 const MolecularProcessor = require("../services/molecular-processor");
 const {
   ImageMoleculeSchema,
@@ -17,7 +17,7 @@ const {
 const app = express();
 
 // Initialize modules
-const atomPredictor = new AtomPredictor(process.env.OPENAI_API_KEY);
+const structuralizer = new Structuralizer(process.env.OPENAI_API_KEY);
 const molecularProcessor = new MolecularProcessor();
 
 // ==================== MIDDLEWARE ====================
@@ -26,10 +26,36 @@ app.use(express.json({ limit: "50mb" }));
 
 // ==================== ROUTES ====================
 
+// Shared text analysis handler (single implementation, multiple aliases)
+const handleTextAnalysis = async (req, res) => {
+  try {
+    const validation = TextMoleculeSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        error: "Invalid input data",
+        details: validation.error.issues,
+      });
+    }
+    const { object } = req.body;
+    if (!object || typeof object !== 'string' || object.trim().length === 0) {
+      return res.status(400).json({ error: "No object description provided" });
+    }
+    const result = await structuralizer.analyzeText(object.trim());
+    res.json({ output: result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// TEXT FIRST (primary + aliases)
+app.post("/structuralize-text", handleTextAnalysis);
+app.post("/analyze-text", handleTextAnalysis);
+app.post("/structures-from-text", handleTextAnalysis);
+app.post("/object-molecules", handleTextAnalysis);
+
 // Image analysis route
 app.post("/image-molecules", async (req, res) => {
   try {
-    // Validate input schema
     const validation = ImageMoleculeSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({
@@ -52,7 +78,7 @@ app.post("/image-molecules", async (req, res) => {
       return res.status(400).json({ error: "No image data provided" });
     }
 
-    const result = await atomPredictor.analyzeImage(
+    const result = await structuralizer.analyzeImage(
       imageBase64,
       croppedImageBase64,
       x,
@@ -63,59 +89,6 @@ app.post("/image-molecules", async (req, res) => {
     );
     res.json({ output: result });
   } catch (error) {
-
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Text analysis route
-app.post("/object-molecules", async (req, res) => {
-  try {
-    // Validate input schema
-    const validation = TextMoleculeSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        error: "Invalid input data",
-        details: validation.error.issues,
-      });
-    }
-
-    const { object } = req.body;
-
-    if (!object) {
-      return res.status(400).json({ error: "No object description provided" });
-    }
-
-    const result = await atomPredictor.analyzeText(object);
-    res.json({ output: result });
-  } catch (error) {
-
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Text analysis route (alias for frontend compatibility)
-app.post("/analyze-text", async (req, res) => {
-  try {
-    // Validate input schema
-    const validation = TextMoleculeSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        error: "Invalid input data",
-        details: validation.error.issues,
-      });
-    }
-
-    const { object } = req.body;
-
-    if (!object) {
-      return res.status(400).json({ error: "No object description provided" });
-    }
-
-    const result = await atomPredictor.analyzeText(object);
-    res.json({ output: result });
-  } catch (error) {
-
     res.status(500).json({ error: error.message });
   }
 });

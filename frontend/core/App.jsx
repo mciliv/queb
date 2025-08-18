@@ -4,7 +4,6 @@ import { useApi } from '../hooks/useApi';
 import { PRESET_VISUAL_TESTS, TEST_MOLECULES, SMILES_NAME_MAP } from './constants.js';
 import '../assets/style.css';
 
-// Device detection utility
 const isMobileDevice = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
          (window.innerWidth <= 768 && 'ontouchstart' in window);
@@ -16,55 +15,8 @@ const PAYMENT_CONFIG = {
   devMode: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
 };
 
-// Styles
+// Styles moved to CSS in assets/style.css
 const styles = {
-  appContainer: {
-    background: '#000000',
-    color: '#ffffff',
-    minHeight: '100vh',
-    width: '100vw',
-    maxWidth: '100vw',
-    overflowX: 'clip',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    fontSize: '13px',
-    fontWeight: 400,
-    lineHeight: 1.4,
-    letterSpacing: '0.01em',
-    userSelect: 'text'
-  },
-  mainLayout: {
-    padding: '20px',
-    userSelect: 'text'
-  },
-  visualToggleButton: {
-    position: 'fixed',
-    left: '12px',
-    bottom: '12px',
-    width: '40px',
-    height: '40px',
-    borderRadius: '20px',
-    background: 'rgba(255, 255, 255, 0.08)',
-    color: '#ffffff',
-    border: 'none',
-    outline: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer'
-  },
-  inputSection: {
-    marginBottom: '30px',
-    maxWidth: '600px'
-  },
-  columnsContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: '20px',
-    overflowX: 'auto',
-    position: 'relative',
-    zIndex: 1,
-    userSelect: 'text'
-  },
   column: {
     minWidth: '400px',
     background: 'transparent',
@@ -155,26 +107,14 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
   const displayError = localError || error;
 
   return (
-    <div style={{ position: 'relative', width: '100%', marginBottom: '20px' }}>
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className="input-wrapper">
+      <div className="input-row">
         <input
           ref={inputRef}
           id="object-input"
           type="text"
           placeholder="Type to analyze molecules..."
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: displayError ? '1px solid rgba(255, 100, 100, 0.5)' : 'none',
-            borderRadius: '8px',
-            color: '#ffffff',
-            fontSize: '14px',
-            outline: 'none',
-            WebkitAppearance: 'none',
-            appearance: 'none',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-          }}
+          className={`input-base${displayError ? ' input-error' : ''}`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -193,27 +133,11 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
         
         {/* Modern keyboard hint badge */}
         {!value.trim() && (
-          <div style={{
-            position: 'absolute',
-            right: '12px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '4px',
-            padding: '4px 8px',
-            fontSize: '11px',
-            color: 'rgba(255, 255, 255, 0.6)',
-            fontFamily: 'monospace',
-            pointerEvents: 'none',
-            userSelect: 'none'
-          }}>
-            {keyboardHint}
-          </div>
+          <div className="kbd-hint">{keyboardHint}</div>
         )}
       </div>
       {displayError && (
-        <div id="input-error" style={{ color: '#ff6b6b', fontSize: '12px', marginTop: '8px', padding: '0 4px' }} role="alert">
+        <div id="input-error" className="error-text" role="alert">
           {displayError}
         </div>
       )}
@@ -258,7 +182,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
   };
 
   return (
-    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+    <div className="mode-row">
       <button 
         style={{...buttonStyle, ...(cameraMode ? activeStyle : {})}}
         onClick={() => handleModeSelect('camera')}
@@ -436,73 +360,29 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
   };
 
   return (
-    <div style={{
-      position: 'relative',
-      width: '100%',
-      maxWidth: '400px',
-      borderRadius: '8px',
-      overflow: 'hidden',
-      cursor: 'crosshair',
-      background: '#000',
-      aspectRatio: '4/3'
-    }} onClick={handleCameraClick}>
+    <div className="camera-box" onClick={handleCameraClick}>
       <video 
         ref={videoRef}
         autoPlay 
         playsInline 
         muted 
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        className="camera-video"
       />
       
       {!hasPermission && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          color: '#ffffff',
-          textAlign: 'center',
-          padding: '20px',
-          background: 'rgba(0, 0, 0, 0.8)',
-          borderRadius: '8px',
-          fontSize: '14px'
-        }}>{permissionMessage}</div>
+        <div className="camera-permission">{permissionMessage}</div>
       )}
       
       {/* Red outline box where user clicked */}
       {showOutline && clickPosition && (
-        <div style={{
-          position: 'absolute',
-          left: `${clickPosition.x - 30}px`,
-          top: `${clickPosition.y - 30}px`,
-          width: '60px',
-          height: '60px',
-          border: '3px solid #ff3333',
-          borderRadius: '8px',
-          pointerEvents: 'none',
-          animation: 'pulse 0.5s ease-in-out',
-          zIndex: 100,
-          boxShadow: '0 0 10px rgba(255, 51, 51, 0.5)',
-          background: 'rgba(255, 51, 51, 0.1)'
-        }}></div>
+        <div className="click-outline" style={{ left: `${clickPosition.x - 30}px`, top: `${clickPosition.y - 30}px` }}></div>
       )}
       
       {showSwitchCamera && (
-        <div style={{ position: 'absolute', top: '16px', right: '16px' }}>
+        <div className="camera-switch">
           <button 
             type="button" 
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(0, 0, 0, 0.7)',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '20px',
-              padding: '8px 12px',
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
+            className="btn-ghost"
             onClick={(e) => {
               e.stopPropagation();
               switchCamera();
@@ -593,24 +473,11 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
           type="file"
           accept="image/*"
           onChange={handleFileSelect}
-          style={{ display: 'none' }}
+          className="hidden"
         />
         <button
           onClick={() => fileInputRef.current?.click()}
-          style={{
-            width: '100%',
-            padding: '12px',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: 'none',
-            borderRadius: '8px',
-            color: '#ffffff',
-            fontSize: '14px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px'
-          }}
+          className="btn-upload"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -631,29 +498,16 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
         type="file"
         accept="image/*"
         onChange={handleFileSelect}
-        style={{ display: 'none' }}
+        className="hidden"
       />
       <div
         onClick={() => fileInputRef.current?.click()}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        style={{
-          width: '100%',
-          height: '200px',
-          border: 'none',
-          borderRadius: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          background: isDragOver ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.05)',
-          transition: 'all 0.2s ease',
-          gap: '12px'
-        }}
+        className={`dropzone${isDragOver ? ' dragover' : ''}`}
       >
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.6 }}>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
           <circle cx="9" cy="9" r="2"/>
           <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
@@ -711,7 +565,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <div className="url-row">
         <input
           type="url"
           placeholder="Enter image URL..."
@@ -720,41 +574,18 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
             setImageUrl(e.target.value);
             if (urlError) setUrlError('');
           }}
-          style={{
-            flex: 1,
-            padding: '12px 16px',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: urlError ? '1px solid rgba(255, 100, 100, 0.5)' : 'none',
-            borderRadius: '8px',
-            color: '#ffffff',
-            fontSize: '14px',
-            outline: 'none'
-          }}
+          className={`input-base url-input${urlError ? ' input-error' : ''}`}
         />
         <button
           type="submit"
           disabled={!imageUrl.trim() || isProcessing}
-          style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: 'none',
-            borderRadius: '6px',
-            color: '#ffffff',
-            padding: '8px 12px',
-            cursor: imageUrl.trim() && !isProcessing ? 'pointer' : 'not-allowed',
-            fontSize: '16px',
-            minWidth: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: imageUrl.trim() && !isProcessing ? 1 : 0.5
-          }}
+          className="btn-icon"
         >
           →
         </button>
       </div>
       {urlError && (
-        <div style={{ color: '#ff6b6b', fontSize: '12px', marginTop: '8px' }}>
+        <div className="error-text">
           {urlError}
         </div>
       )}
@@ -763,7 +594,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
 };
 
 // Results Display Components (Bottom Content)
-const SimpleMoleculeViewer = ({ molecularData }) => {
+ const MoleculeViewer = ({ molecularData }) => {
   const ref = useRef(null);
   const [status, setStatus] = useState('loading');
 
@@ -778,38 +609,36 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
         }
         if (!ref.current) return;
 
-        // Loading molecule
-        
-        const viewer = window.$3Dmol.createViewer(ref.current, {
-          backgroundColor: '#000000',
-          antialias: true,
-          defaultcolors: window.$3Dmol.rasmolElementColors
-        });
-        // Make background transparent while using a valid color (avoid 'transparent' error)
-        if (typeof viewer.setBackgroundColor === 'function') {
-          viewer.setBackgroundColor(0x000000, 0);
-        }
-
+        // Keep existing viewer visible until new SDF is ready to avoid flash
+        const hadViewer = ref.current.childNodes && ref.current.childNodes.length > 0;
         let sdfContent = null;
         if (molecularData.sdfData && molecularData.sdfData.startsWith('file://')) {
-          const path = molecularData.sdfData.replace('file://', '');
-          const response = await fetch(`/sdf_files/${path.split('/').pop()}`);
+          const rawPath = molecularData.sdfData.replace('file://', '');
+          const url = rawPath.startsWith('/sdf_files/')
+            ? rawPath
+            : `/sdf_files/${rawPath.split('/').pop()}`;
+          const response = await fetch(url);
           if (response.ok) {
             sdfContent = await response.text();
             // SDF fetched
           } else {
-            console.error(`Failed to fetch SDF for ${molecularData.name}`);
+            console.log(`SDF fetch failed for ${molecularData.name}: HTTP ${response.status}`);
           }
         }
 
         if (sdfContent) {
-          // Ensure no residual models/styles from prior renders
-          if (typeof viewer.removeAllModels === 'function') {
-            viewer.removeAllModels();
+          // Now replace the canvas with a fresh viewer
+          ref.current.innerHTML = '';
+          const viewer = window.$3Dmol.createViewer(ref.current, {
+            backgroundColor: '#000000',
+            antialias: true,
+            defaultcolors: window.$3Dmol.rasmolElementColors
+          });
+          if (typeof viewer.setBackgroundColor === 'function') {
+            viewer.setBackgroundColor(0x000000, 0);
           }
-          if (typeof viewer.clear === 'function') {
-            viewer.clear();
-          }
+          if (typeof viewer.removeAllModels === 'function') viewer.removeAllModels();
+          if (typeof viewer.clear === 'function') viewer.clear();
           viewer.addModel(sdfContent, 'sdf');
           // Use sphere representation with proper element colors
           // For ionic compounds like NaCl, show individual atoms clearly
@@ -830,10 +659,13 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
           setStatus('loaded');
           // Render complete
         } else {
-          setStatus('failed');
+          // If there was already a viewer, keep it and avoid flashing failure UI
+          if (!hadViewer) {
+            setStatus('failed');
+          }
         }
       } catch (error) {
-        console.error(`Error loading ${molecularData.name}:`, error);
+        console.log(`Molecule load failed for ${molecularData.name}: ${error.message || 'Unknown error'}`);
         setStatus('failed');
       }
     };
@@ -841,31 +673,18 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
     initialize();
     return () => {
       cancelled = true;
-      if (ref.current) {
-        ref.current.innerHTML = '';
-      }
+      if (ref.current) ref.current.innerHTML = '';
     };
   }, [molecularData.sdfData, molecularData.name, molecularData.smiles]);
 
   return (
-    <div style={{ marginBottom: '12px' }}>
-      <div style={{ 
-        background: 'transparent', 
-        padding: '8px', 
-        marginBottom: '5px',
-        borderRadius: '4px',
-        fontSize: '14px',
-        userSelect: 'text'
-      }}>
+    <div className="molecule-card">
+      <div className="molecule-title">
         {molecularData.name && (
           <a 
             href={`https://en.wikipedia.org/wiki/${encodeURIComponent(molecularData.name)}`}
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              color: '#ffffff',
-              textDecoration: 'none'
-            }}
           >
             {molecularData.name}
           </a>
@@ -874,19 +693,7 @@ const SimpleMoleculeViewer = ({ molecularData }) => {
       </div>
       <div 
         ref={ref}
-        style={{ 
-          height: '200px', 
-          width: '100%', 
-          background: 'transparent', 
-          borderRadius: '4px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'rgba(255,255,255,0.5)',
-          position: 'relative',
-          overflow: 'hidden',
-          zIndex: 1
-        }}
+        className="viewer"
       >
         {status === 'loading' && '⏳'}
         {status === 'failed' && '❌'}
@@ -901,59 +708,17 @@ const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
   return (
     <div style={styles.column}>
       {/* GUARANTEED VISIBLE HEADER */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '20px', 
-        userSelect: 'text',
-        minHeight: '24px',
-        position: 'relative',
-        zIndex: 10,
-        visibility: 'visible',
-        opacity: 1,
-        background: 'rgba(255, 255, 255, 0.02)', // Subtle background to ensure visibility
-        padding: '8px 0',
-        borderRadius: '4px'
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px', 
-          userSelect: 'text',
-          flex: 1
-        }}>
-          <div aria-hidden role="img" style={{ 
-            opacity: 0.8, 
-            fontSize: '16px', 
-            userSelect: 'none',
-            minWidth: '16px'
-          }}>🧪</div>
-          <div style={{ 
-            fontSize: '14px', 
-            opacity: 0.7, 
-            userSelect: 'text',
-            color: '#ffffff',
-            fontWeight: '400'
-          }}>
+      <div className="column-header">
+        <div className="column-meta">
+          <div aria-hidden role="img" className="column-icon">🧪</div>
+          <div className="column-title">
             {column.query} {column.loading && '⏳'}
           </div>
         </div>
         {showRemove && (
           <button 
             onClick={onRemove}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#ffffff',
-              fontSize: '20px',
-              cursor: 'pointer',
-              userSelect: 'none',
-              minWidth: '24px',
-              minHeight: '24px',
-              padding: '2px',
-              flexShrink: 0
-            }}
+            className="btn-ghost"
           >
             ×
           </button>
@@ -962,33 +727,19 @@ const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
 
       {/* Failure indicator */}
       {column.failed && (
-        <div style={{
-          marginBottom: '16px',
-          padding: '10px 12px',
-          background: 'rgba(255, 193, 7, 0.1)',
-          border: '1px solid rgba(255, 193, 7, 0.3)',
-          borderRadius: '4px',
-          fontSize: '13px',
-          color: 'rgba(255, 193, 7, 0.9)'
-        }}>
+        <div className="alert-warning">
           💡 AI failed to analyze - please report this
         </div>
       )}
 
       {column.loading && column.viewers.length === 0 && (
-        <div style={{ 
-          padding: '20px', 
-          textAlign: 'center', 
-          color: 'rgba(255,255,255,0.5)',
-          fontSize: '13px',
-          userSelect: 'text'
-        }}>
+        <div className="analyzing">
           Analyzing molecules...
         </div>
       )}
 
       {column.viewers.map((mol, idx) => (
-        <SimpleMoleculeViewer key={idx} molecularData={mol} />
+        <MoleculeViewer key={idx} molecularData={mol} />
       ))}
     </div>
   );
@@ -1006,7 +757,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [columnMode, setColumnMode] = useState('accumulate'); // 'replace' or 'accumulate'
 
-  const { analyzeText, generateSDFs, twoNamesToSdf } = useApi();
+  const { structuresFromText: analyzeText, generateSDFs, twoNamesToSdf } = useApi();
 
   // Load 3Dmol.js once at app start
   useEffect(() => {
@@ -1252,11 +1003,20 @@ function App() {
           const smilesArray = test.smilesList || [];
           if (smilesArray.length === 0) continue;
           const sdfResult = await generateSDFs(smilesArray, false);
-          const viewers = smilesArray.map((sm, idx) => ({
-            name: SMILES_NAME_MAP[sm] || sm,
-            sdfData: sdfResult.sdfPaths?.[idx] ? `file://${sdfResult.sdfPaths[idx]}` : null,
-            smiles: sm
-          }));
+          // Prefer actual returned paths; fall back to deterministic filenames
+          const sanitizeSmiles = (s) => s.replace(/[^a-zA-Z0-9]/g, ch => ch === '=' ? '__' : '_');
+          const returnedPaths = Array.isArray(sdfResult?.sdfPaths) ? sdfResult.sdfPaths : [];
+          const returnedFileSet = new Set(returnedPaths.map(p => p.replace(/^\/*/, '/')));
+          const viewers = smilesArray.map((sm, idx) => {
+            const deterministic = `/sdf_files/${sanitizeSmiles(sm)}.sdf`;
+            const byIndex = returnedPaths[idx] || null;
+            const chosen = returnedFileSet.has(deterministic) ? deterministic : (byIndex || deterministic);
+            return {
+              name: SMILES_NAME_MAP[sm] || sm,
+              sdfData: chosen ? `file://${chosen}` : null,
+              smiles: sm
+            };
+          });
           setColumns(prev => ([...prev, { id: Date.now() + Math.random(), query: test.label, viewers }]));
         } catch (e) {}
       }
@@ -1280,26 +1040,7 @@ function App() {
             console.log('Settings button clicked, current state:', showSettings);
             setShowSettings(!showSettings);
           }}
-          style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            width: '44px',
-            height: '44px',
-            borderRadius: '22px',
-            background: 'rgba(255, 255, 255, 0.15)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: '#ffffff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '18px',
-            zIndex: 9999,
-            opacity: 1,
-            visibility: 'visible',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
-          }}
+          className="settings-btn"
           title="Settings"
         >
           ⚙️
@@ -1307,23 +1048,11 @@ function App() {
         
         {/* Settings Modal - OUTSIDE main for proper positioning */}
         {showSettings && (
-          <div style={{
-            position: 'fixed',
-            top: '75px',
-            right: '20px',
-            background: 'rgba(20, 20, 20, 0.95)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '8px',
-            padding: '20px',
-            minWidth: '280px',
-            zIndex: 9998,
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
-          }}>
-            <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#ffffff' }}>Settings</h3>
+          <div className="settings-modal">
+            <h3 className="settings-title">Settings</h3>
             
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ fontSize: '14px', color: '#ffffff', marginBottom: '8px', display: 'block' }}>
+            <div className="settings-field">
+              <label className="label">
                 Column Behavior:
               </label>
               <select
@@ -1332,15 +1061,7 @@ function App() {
                   console.log('Column mode changed to:', e.target.value);
                   setColumnMode(e.target.value);
                 }}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '4px',
-                  color: '#ffffff',
-                  fontSize: '14px'
-                }}
+                className="select"
               >
                 <option value="replace" style={{ background: '#222', color: '#fff' }}>
                   Replace (Default) - New analysis displaces previous
@@ -1353,16 +1074,7 @@ function App() {
 
             <button
               onClick={() => setShowSettings(false)}
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '4px',
-                color: '#ffffff',
-                padding: '8px 16px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                width: '100%'
-              }}
+              className="settings-close"
             >
               Close
             </button>
@@ -1370,8 +1082,8 @@ function App() {
         )}
         
         <div className="main">          
-          <div style={styles.inputSection}>
-            <div style={{ marginBottom: '15px' }}>
+          <div className="input-section">
+            <div className="mb-15">
               <TextInput 
                 value={objectInput}
                 onChange={setObjectInput}
@@ -1381,7 +1093,7 @@ function App() {
               />
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
+            <div className="mb-15">
               <ModeSelector
                 cameraMode={cameraMode}
                 setCameraMode={setCameraMode}
@@ -1393,7 +1105,7 @@ function App() {
             </div>
 
             {cameraMode && (
-              <div style={{ marginBottom: '15px' }}>
+              <div className="mb-15">
                 <CameraSection
                   isProcessing={isProcessing}
                   setIsProcessing={setIsProcessing}
@@ -1404,7 +1116,7 @@ function App() {
             )}
 
             {photoMode && (
-              <div style={{ marginBottom: '15px' }}>
+              <div className="mb-15">
                 <PhotoSection
                   isProcessing={isProcessing}
                   setIsProcessing={setIsProcessing}
@@ -1415,7 +1127,7 @@ function App() {
             )}
 
             {linkMode && (
-              <div style={{ marginBottom: '15px' }}>
+              <div className="mb-15">
                 <LinkSection
                   isProcessing={isProcessing}
                   setIsProcessing={setIsProcessing}
@@ -1427,7 +1139,7 @@ function App() {
 
 
 
-          <div className="columns" style={{ display: 'flex', flexDirection: 'row', gap: '20px', overflowX: 'auto' }}>
+          <div className="columns">
             {columns.map(column => (
               <MolecularColumn
                 key={column.id}

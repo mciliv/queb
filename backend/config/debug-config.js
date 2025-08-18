@@ -8,5 +8,5 @@ console.log('  config.OPENAI_API_KEY length:', config.OPENAI_API_KEY ? config.OP
 console.log('  process.env.OPENAI_API_KEY present:', !!process.env.OPENAI_API_KEY);
 
 // Test the server logic
-const openaiApiKey = config.OPENAI_API_KEY || (config.NODE_ENV === 'test' ? 'test-key' : undefined);
-console.log('  Final openaiApiKey:', openaiApiKey === 'test-key' ? 'test-key (FALLBACK!)' : 'real key');
+const openaiApiKey = config.OPENAI_API_KEY;
+console.log('  Final openaiApiKey present:', !!openaiApiKey);
