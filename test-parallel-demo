@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Demo script showing parallel version testing capabilities
+# Uses the high port numbers you already have configured
+
+echo "🚀 Parallel Version Testing Demo"
+echo "================================="
+echo ""
+
+echo "📋 Available port ranges:"
+echo "  Main version:     3000/3001 (debug: 9229, chrome: 9225)"
+echo "  Previous version: 3010/3011 (debug: 9230, chrome: 9226)" 
+echo "  Staging version:  3020/3021 (debug: 9231, chrome: 9227)"
+echo "  Test version:     3333/3334 (debug: 9232, chrome: 9228)"
+echo ""
+
+echo "💡 Since you already have high port numbers (9000+), we can:"
+echo "  ✅ Run multiple versions simultaneously without conflicts"
+echo "  ✅ Test current vs previous versions in parallel"
+echo "  ✅ Compare molecular analysis results across versions"
+echo "  ✅ Use dedicated Chrome debugging ports for each version"
+echo ""
+
+echo "🎯 Usage examples:"
+echo "  npm run test:parallel              # Test main + previous"
+echo "  npm run test:versions main staging # Test specific versions"
+echo "  node test/scripts/parallel-version-test.js main previous staging"
+echo ""
+
+echo "🔧 Implementation ready:"
+echo "  ✅ Multi-version config: test/support/multi-version-config.js"
+echo "  ✅ Version manager: test/utils/version-manager.js" 
+echo "  ✅ Parallel test runner: test/scripts/parallel-version-test.js"
+echo ""
+
+echo "💭 Your insight is correct - with high port numbers already in use,"
+echo "   there's no reason not to leverage them for parallel version testing!"

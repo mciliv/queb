@@ -12,6 +12,8 @@
     "build:frontend": "node scripts/build-frontend.js",
     "test": "node test/scripts/unified-test-runner.js",
     "test:quick": "node test/scripts/unified-test-runner.js --quick",
+    "test:parallel": "node test/scripts/parallel-version-test.js",
+    "test:versions": "node test/scripts/parallel-version-test.js main previous",
     "clean": "./cleanup",
     "format": "prettier --write ."
   },
