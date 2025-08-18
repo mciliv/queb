@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Sync versions from git history automatically
+# Useful for populating version registry from existing commits
+
+echo "🔄 Syncing Versions from Git History"
+echo "===================================="
+
+COUNT=${1:-10}  # Default to last 10 commits
+
+echo "📚 Analyzing last $COUNT commits..."
+echo ""
+
+node -e "
+const AutoVersioning = require('./test/support/auto-versioning');
+const autoVersioning = new AutoVersioning();
+
+try {
+    // Add versions from git history
+    console.log('📋 Adding versions from git history...');
+    const versions = autoVersioning.addVersionsFromHistory($COUNT, { 
+        useCommitNumber: true 
+    });
+    
+    console.log(\`✅ Added \${versions.length} versions from history\`);
+    console.log('');
+    
+    // Also add major versions
+    console.log('🎯 Adding major feature versions...');
+    const majorVersions = autoVersioning.addMajorVersions({ 
+        useCommitNumber: true 
+    });
+    
+    console.log(\`✅ Added \${majorVersions.length} major versions\`);
+    console.log('');
+    
+    console.log('📊 Version registry populated!');
+    console.log('');
+    console.log('💡 Next steps:');
+    console.log('  ./list-versions                    # See all versions');
+    console.log('  ./compare-versions <v1> <v2>       # Compare any two');
+    console.log('  npm run test:versions <v1> <v2>    # Test in parallel');
+    console.log('');
+    
+} catch (error) {
+    console.error('❌ Version sync failed:', error.message);
+    process.exit(1);
+}
+"

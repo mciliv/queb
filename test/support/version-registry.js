@@ -169,6 +169,21 @@ class VersionRegistry {
       execSync(`git checkout ${currentCommit}`, { stdio: 'ignore' });
     }
   }
+
+  // Set current version for testing
+  setCurrentVersion(versionName) {
+    const registry = this.loadRegistry();
+    if (!registry.versions[versionName]) {
+      throw new Error(`Version ${versionName} not found`);
+    }
+    registry.currentVersion = versionName;
+    this.saveRegistry(registry);
+  }
+
+  getCurrentVersion() {
+    const registry = this.loadRegistry();
+    return registry.currentVersion;
+  }
 }
 
 module.exports = VersionRegistry;

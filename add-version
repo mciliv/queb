@@ -1,48 +1,147 @@
 #!/bin/bash
 
-# Systematic version addition script
-# Usage: ./add-version <version-name> [description]
+# Systematic version addition script with automatic versioning
+# Usage: ./add-version [version-name] [description] [--auto] [--commit-based] [--semantic]
 
-if [ $# -lt 1 ]; then
-    echo "Usage: ./add-version <version-name> [description]"
-    echo ""
-    echo "Examples:"
-    echo "  ./add-version v1.2.3 'Release candidate'"
-    echo "  ./add-version feature-xyz 'New molecular detection'"
-    echo "  ./add-version baseline 'Current stable version'"
-    echo ""
+# Auto-versioning options
+AUTO_MODE=false
+COMMIT_BASED=false
+SEMANTIC_ONLY=false
+USE_HISTORY=false
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --auto)
+            AUTO_MODE=true
+            shift
+            ;;
+        --commit-based)
+            COMMIT_BASED=true
+            shift
+            ;;
+        --semantic)
+            SEMANTIC_ONLY=true
+            shift
+            ;;
+        --history)
+            USE_HISTORY=true
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: ./add-version [version-name] [description] [options]"
+            echo ""
+            echo "Options:"
+            echo "  --auto          Auto-generate version name from current commit"
+            echo "  --commit-based  Use commit number + hash (c123-abc12345)"
+            echo "  --semantic      Use semantic versioning (v1.2.3)"
+            echo "  --history       Add last 5 versions from git history"
+            echo ""
+            echo "Examples:"
+            echo "  ./add-version                           # Auto-detect version name"
+            echo "  ./add-version --commit-based            # Use commit-based naming"
+            echo "  ./add-version --semantic                # Use semantic versioning"
+            echo "  ./add-version --history                 # Add recent history"
+            echo "  ./add-version v1.2.3 'Release candidate'"
+            echo "  ./add-version feature-xyz 'New detection'"
+            echo ""
+            exit 0
+            ;;
+        *)
+            if [ -z "$VERSION_NAME" ]; then
+                VERSION_NAME="$1"
+            elif [ -z "$DESCRIPTION" ]; then
+                DESCRIPTION="$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+if [ "$AUTO_MODE" = true ] || [ "$COMMIT_BASED" = true ] || [ "$SEMANTIC_ONLY" = true ] || [ "$USE_HISTORY" = true ]; then
+    # Auto-versioning mode
+    echo "🤖 Auto-versioning mode"
+elif [ -z "$VERSION_NAME" ]; then
+    echo "Usage: ./add-version <version-name> [description] [options]"
+    echo "Or use --auto for automatic versioning. Use --help for more options."
     exit 1
 fi
 
-VERSION_NAME="$1"
-DESCRIPTION="${2:-Version $VERSION_NAME}"
-
-echo "📋 Adding version: $VERSION_NAME"
-echo "📝 Description: $DESCRIPTION"
-echo ""
-
-# Add version to registry
-node -e "
-const VersionRegistry = require('./test/support/version-registry');
-const registry = new VersionRegistry();
-
-try {
-    const version = registry.addVersion('$VERSION_NAME', { 
-        description: '$DESCRIPTION',
-        addedBy: 'add-version-script'
-    });
+# Handle auto-versioning modes
+if [ "$AUTO_MODE" = true ] || [ "$COMMIT_BASED" = true ] || [ "$SEMANTIC_ONLY" = true ] || [ "$USE_HISTORY" = true ]; then
+    node -e "
+    const AutoVersioning = require('./test/support/auto-versioning');
+    const autoVersioning = new AutoVersioning();
     
-    console.log('');
-    console.log('🎯 Version added successfully!');
-    console.log('');
-    console.log('📊 Available commands:');
-    console.log('  ./compare-versions $VERSION_NAME main');
-    console.log('  npm run test:versions $VERSION_NAME main');
-    console.log('  ./list-versions');
-    console.log('');
+    try {
+        if (process.env.USE_HISTORY === 'true') {
+            console.log('📚 Adding versions from git history...');
+            const versions = autoVersioning.addVersionsFromHistory(5, { 
+                useCommitNumber: process.env.COMMIT_BASED === 'true' 
+            });
+            console.log(\`✅ Added \${versions.length} versions from history\`);
+            
+        } else {
+            const options = {
+                useCommitNumber: process.env.COMMIT_BASED === 'true',
+                useSemantic: process.env.SEMANTIC_ONLY === 'true'
+            };
+            
+            console.log('🤖 Auto-generating version name...');
+            const suggestions = autoVersioning.suggestVersionNames();
+            console.log('💡 Suggestions:');
+            Object.entries(suggestions).forEach(([type, name]) => {
+                console.log(\`  \${type}: \${name}\`);
+            });
+            console.log('');
+            
+            const version = autoVersioning.addCurrentVersion(options);
+            console.log(\`✅ Added version: \${version.name}\`);
+        }
+        
+        console.log('');
+        console.log('📊 Available commands:');
+        console.log('  ./list-versions');
+        console.log('  ./compare-versions <version1> <version2>');
+        console.log('');
+        
+    } catch (error) {
+        console.error('❌ Auto-versioning failed:', error.message);
+        process.exit(1);
+    }
+    " USE_HISTORY=$USE_HISTORY COMMIT_BASED=$COMMIT_BASED SEMANTIC_ONLY=$SEMANTIC_ONLY
     
-} catch (error) {
-    console.error('❌ Failed to add version:', error.message);
-    process.exit(1);
-}
-"
+else
+    # Manual versioning mode
+    DESCRIPTION="${DESCRIPTION:-Version $VERSION_NAME}"
+    
+    echo "📋 Adding version: $VERSION_NAME"
+    echo "📝 Description: $DESCRIPTION"
+    echo ""
+
+    # Add version to registry
+    node -e "
+    const VersionRegistry = require('./test/support/version-registry');
+    const registry = new VersionRegistry();
+
+    try {
+        const version = registry.addVersion('$VERSION_NAME', { 
+            description: '$DESCRIPTION',
+            addedBy: 'add-version-script'
+        });
+        
+        console.log('');
+        console.log('🎯 Version added successfully!');
+        console.log('');
+        console.log('📊 Available commands:');
+        console.log('  ./compare-versions $VERSION_NAME main');
+        console.log('  npm run test:versions $VERSION_NAME main');
+        console.log('  ./list-versions');
+        console.log('');
+        
+    } catch (error) {
+        console.error('❌ Failed to add version:', error.message);
+        process.exit(1);
+    }
+    "
+fi
