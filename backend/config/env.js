@@ -20,9 +20,12 @@ const config = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   
   // Payment Configuration
-  PAYMENTS_ENABLED: process.env.PAYMENTS_ENABLED === 'false',
+  PAYMENTS_ENABLED: process.env.PAYMENTS_ENABLED === 'true',
   PAYMENTS_DEV_MODE: process.env.PAYMENTS_DEV_MODE === 'true',
-  PAYMENTS_REQUIRED: process.env.PAYMENTS_REQUIRED === 'false',
+  PAYMENTS_REQUIRED: process.env.PAYMENTS_REQUIRED === 'true',
+  
+  // Database Configuration
+  DB_ENABLED: process.env.DB_ENABLED !== 'false', // Default enabled, set DB_ENABLED=false to disable
   
   // Database Configuration (PostgreSQL)
   DB_HOST: process.env.DB_HOST || 'localhost',

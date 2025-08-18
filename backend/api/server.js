@@ -59,8 +59,12 @@ const {
 let pool = null;
 let dbConnected = false;
 
-try {
-  const { Pool } = require('pg');
+// Skip database setup entirely if disabled
+if (!config.DB_ENABLED) {
+  log.info('💡 Database disabled via DB_ENABLED=false - running without user storage');
+} else {
+  try {
+    const { Pool } = require('pg');
   
   // Database configuration with local development defaults
   const dbConfig = {
@@ -83,10 +87,11 @@ try {
     log.info('💡 Database connection will be retried automatically');
   });
   
-  log.success('✅ PostgreSQL module loaded successfully');
-} catch (error) {
-  log.warning('⚠️ PostgreSQL module not available - running without database');
-  log.info('💡 Install with: npm install pg pg-pool');
+    log.success('✅ PostgreSQL module loaded successfully');
+  } catch (error) {
+    log.warning('⚠️ PostgreSQL module not available - running without database');
+    log.info('💡 Install with: npm install pg pg-pool');
+  }
 }
 
 // Database connection error handling (only if pool exists)

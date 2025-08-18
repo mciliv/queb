@@ -628,6 +628,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
 
         if (sdfContent) {
           // Now replace the canvas with a fresh viewer
+          if (!ref.current) return;
           ref.current.innerHTML = '';
           const viewer = window.$3Dmol.createViewer(ref.current, {
             backgroundColor: '#000000',
@@ -673,7 +674,13 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
     initialize();
     return () => {
       cancelled = true;
-      if (ref.current) ref.current.innerHTML = '';
+      if (ref.current) {
+        try {
+          ref.current.innerHTML = '';
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
     };
   }, [molecularData.sdfData, molecularData.name, molecularData.smiles]);
 
@@ -994,7 +1001,7 @@ function App() {
       if (!autoVisualMode) return;
       
       // Wait a bit to ensure 3Dmol.js is loaded and DOM is ready
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       for (const test of PRESET_VISUAL_TESTS) {
         if (cancelled) break;
