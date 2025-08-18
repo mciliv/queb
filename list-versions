@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# List all registered versions for testing
+echo "📋 Registered Test Versions"
+echo "============================"
+echo ""
+
+node -e "
+const VersionRegistry = require('./test/support/version-registry');
+const registry = new VersionRegistry();
+
+const versions = registry.listVersions();
+const current = registry.getCurrentVersion();
+
+if (versions.length === 0) {
+    console.log('No versions registered yet.');
+    console.log('');
+    console.log('💡 Add a version:');
+    console.log('  ./add-version main \"Current stable version\"');
+    console.log('  ./add-version v1.2.3 \"Previous release\"');
+    process.exit(0);
+}
+
+console.log('Version Name'.padEnd(20) + 'Commit'.padEnd(10) + 'Branch'.padEnd(15) + 'Ports'.padEnd(25) + 'Date');
+console.log('─'.repeat(80));
+
+versions.forEach(v => {
+    const marker = v.name === current ? '→ ' : '  ';
+    const name = (marker + v.name).padEnd(20);
+    const commit = v.commit.padEnd(10);
+    const branch = v.branch.padEnd(15);
+    const ports = \`\${v.ports.http}/\${v.ports.debug}\`.padEnd(25);
+    const date = new Date(v.timestamp).toLocaleDateString();
+    
+    console.log(name + commit + branch + ports + date);
+});
+
+console.log('');
+console.log('🎯 Usage:');
+console.log('  ./compare-versions main v1.2.3');
+console.log('  npm run test:versions main previous');
+console.log('  ./add-version new-feature \"Description\"');
+"

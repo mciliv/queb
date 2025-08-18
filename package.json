@@ -14,6 +14,9 @@
     "test:quick": "node test/scripts/unified-test-runner.js --quick",
     "test:parallel": "node test/scripts/parallel-version-test.js",
     "test:versions": "node test/scripts/parallel-version-test.js main previous",
+    "add:version": "./add-version",
+    "compare:versions": "./compare-versions",
+    "list:versions": "./list-versions",
     "clean": "./cleanup",
     "format": "prettier --write ."
   },

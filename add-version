@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Systematic version addition script
+# Usage: ./add-version <version-name> [description]
+
+if [ $# -lt 1 ]; then
+    echo "Usage: ./add-version <version-name> [description]"
+    echo ""
+    echo "Examples:"
+    echo "  ./add-version v1.2.3 'Release candidate'"
+    echo "  ./add-version feature-xyz 'New molecular detection'"
+    echo "  ./add-version baseline 'Current stable version'"
+    echo ""
+    exit 1
+fi
+
+VERSION_NAME="$1"
+DESCRIPTION="${2:-Version $VERSION_NAME}"
+
+echo "📋 Adding version: $VERSION_NAME"
+echo "📝 Description: $DESCRIPTION"
+echo ""
+
+# Add version to registry
+node -e "
+const VersionRegistry = require('./test/support/version-registry');
+const registry = new VersionRegistry();
+
+try {
+    const version = registry.addVersion('$VERSION_NAME', { 
+        description: '$DESCRIPTION',
+        addedBy: 'add-version-script'
+    });
+    
+    console.log('');
+    console.log('🎯 Version added successfully!');
+    console.log('');
+    console.log('📊 Available commands:');
+    console.log('  ./compare-versions $VERSION_NAME main');
+    console.log('  npm run test:versions $VERSION_NAME main');
+    console.log('  ./list-versions');
+    console.log('');
+    
+} catch (error) {
+    console.error('❌ Failed to add version:', error.message);
+    process.exit(1);
+}
+"
