@@ -25,6 +25,8 @@ sleep 1
 
 # Parse flags
 SKIP_DEV_BROWSER=${SKIP_DEV_BROWSER:-false}
+GIT_REF=""  # Git reference to run (e.g., @, @^, @^2, commit hash)
+GIT_RANGE=""  # Git range to run (e.g., @..@~3, @^..@~5)
 
 # Test/visual modes
 TEST_MODE=${DEV_TESTS:-watch}   # watch|startup|off
@@ -59,6 +61,20 @@ for arg in "$@"; do
   fi
   if [[ "$arg" == "--visual" ]]; then
     VISUAL_MODE=on
+  fi
+  if [[ "$arg" == --commit=* ]]; then
+    GIT_REF="${arg#--commit=}"
+    log_info "🎯 Running commit: $GIT_REF"
+  fi
+  # Support git range syntax (e.g., @..@~3, @^..@~5, abc123..def456)
+  if [[ "$arg" =~ ^[^-].*\.\.[^-].*$ ]]; then
+    GIT_RANGE="$arg"
+    log_info "🎯 Running git range: $GIT_RANGE"
+  fi
+  # Support direct git references (single commits)
+  if [[ "$arg" =~ ^(@|\^|[a-f0-9]{6,}).*$ ]] && [[ ! "$arg" =~ \.\. ]]; then
+    GIT_REF="$arg"
+    log_info "🎯 Running git ref: $GIT_REF"
   fi
 done
 
@@ -100,6 +116,126 @@ if [[ "$SKIP_DEV_BROWSER" != true ]]; then
   log_info "🌐 Starting dev browser manager..."
   NODE_OPTIONS="" node scripts/dev-browser.js &
   DEV_BROWSER_PID=$!
+fi
+
+# Handle git range mode - run multiple versions in browser tabs
+if [[ -n "$GIT_RANGE" ]]; then
+  log_info "🚀 Starting git range mode: $GIT_RANGE"
+  
+  # Parse git range (e.g., @..@~3, @^..@~5, abc123..def456)
+  START_REF="${GIT_RANGE%%..*}"
+  END_REF="${GIT_RANGE##*..}"
+  
+  COMMITS=()
+  PIDS=()
+  PORTS=()
+  WORKTREES=()
+  
+  # Get commits in range using git rev-list (reverse chronological order)
+  log_info "📋 Generating commit range: $START_REF..$END_REF"
+  
+  # Use git rev-list to get commits in range (newest first)
+  COMMIT_LIST=$(git rev-list --reverse "$END_REF..$START_REF" 2>/dev/null)
+  if [ $? -ne 0 ]; then
+    log_error "❌ Invalid git range: $GIT_RANGE"
+    exit 1
+  fi
+  
+  # Convert to array and reverse to get newest first
+  while IFS= read -r commit; do
+    COMMITS+=("$commit")
+  done <<< "$COMMIT_LIST"
+  
+  # Reverse array to get newest first for tabs
+  REVERSED_COMMITS=()
+  for ((i=${#COMMITS[@]}-1; i>=0; i--)); do
+    REVERSED_COMMITS+=("${COMMITS[i]}")
+  done
+  COMMITS=("${REVERSED_COMMITS[@]}")
+  
+  RANGE_COUNT=${#COMMITS[@]}
+  
+  if [ $RANGE_COUNT -eq 0 ]; then
+    log_error "❌ No commits found in range: $GIT_RANGE"
+    exit 1
+  fi
+  
+  # Display commits
+  for ((i=0; i<RANGE_COUNT; i++)); do
+    COMMIT=${COMMITS[$i]}
+    MSG=$(git log -1 --pretty=%s "$COMMIT")
+    echo "  $((i+1)). ${COMMIT:0:8} - $MSG"
+  done
+  
+  # Cleanup existing range worktrees
+  for ((i=1; i<=10; i++)); do
+    git worktree remove ../mol-range-$i 2>/dev/null || true
+  done
+  
+  # Create worktrees and start servers
+  BASE_PORT=3000
+  for ((i=0; i<RANGE_COUNT; i++)); do
+    WORKTREE="../mol-range-$((i+1))"
+    PORT=$((BASE_PORT + i*10))
+    COMMIT=${COMMITS[$i]}
+    
+    git worktree add "$WORKTREE" "$COMMIT" --quiet
+    WORKTREES+=("$WORKTREE")
+    PORTS+=("$PORT")
+    
+    cd "$WORKTREE"
+    PORT=$PORT NODE_ENV=development node backend/api/server.js &
+    PIDS+=($!)
+    cd - > /dev/null
+    
+    log_info "  Version $((i+1)) (${COMMIT:0:8}): http://localhost:$PORT"
+  done
+  
+  cd "$PROJECT_ROOT"
+  
+  # Wait and open browser tabs
+  sleep 2
+  for ((i=0; i<RANGE_COUNT; i++)); do
+    PORT=${PORTS[$i]}
+    URL="http://localhost:$PORT"
+    
+    if [ $i -eq 0 ]; then
+      open "$URL" 2>/dev/null || xdg-open "$URL" 2>/dev/null || echo "Manual: $URL"
+    else
+      sleep 0.5
+      open -g "$URL" 2>/dev/null || xdg-open "$URL" 2>/dev/null || echo "Manual: $URL"
+    fi
+  done
+  
+  log_success "✅ $RANGE_COUNT versions running in browser tabs (newest first)"
+  
+  # Range mode cleanup trap
+  trap 'echo ""; echo "🧹 Stopping range servers..."; for pid in "${PIDS[@]}"; do kill $pid 2>/dev/null || true; done; echo "🗑️ Removing worktrees..."; for worktree in "${WORKTREES[@]}"; do git worktree remove "$worktree" --force 2>/dev/null || true; done; echo "✅ Range cleanup complete"; exit 0' INT TERM
+  
+  # Wait for all processes in range mode
+  wait "${PIDS[@]}"
+  exit 0
+fi
+
+# Handle single git reference using worktree if specified
+if [[ -n "$GIT_REF" ]]; then
+  RESOLVED_COMMIT=$(git rev-parse "$GIT_REF" 2>/dev/null)
+  
+  if [[ $? -eq 0 ]]; then
+    log_info "🔄 Creating worktree for $GIT_REF (${RESOLVED_COMMIT:0:8})..."
+    
+    git worktree remove ../mol-dev 2>/dev/null || true
+    git worktree add ../mol-dev "$GIT_REF" --quiet
+    
+    cd ../mol-dev
+    log_info "📁 Running from worktree: $(pwd)"
+    
+    # Update trap to cleanup worktree
+    trap 'commit_and_push; cd ../mol; git worktree remove ../mol-dev --force 2>/dev/null || true; kill $BACKEND_PID 2>/dev/null || true; kill $FRONTEND_PID 2>/dev/null || true; kill $DEV_BROWSER_PID 2>/dev/null || true; kill $TEST_WATCHER_PID 2>/dev/null || true; kill $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
+  else
+    log_error "❌ Invalid git reference: $GIT_REF"
+    exit 1
+  fi
 fi
 
 # Start the Node.js backend server with debugger

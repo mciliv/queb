@@ -1,0 +1,123 @@
+#!/bin/bash
+
+# Compare any two git references side-by-side
+# Usage: ./compare-commits <git-ref1> <git-ref2>
+# Examples: ./compare-commits @ @^, ./compare-commits @^ @^2
+
+if [ $# -lt 2 ]; then
+    echo "Usage: ./compare-commits <git-ref1> <git-ref2>"
+    echo ""
+    echo "Examples:"
+    echo "  ./compare-commits @ @^      # Current vs previous"
+    echo "  ./compare-commits @^ @^2    # Previous vs 2 commits ago"
+    echo "  ./compare-commits @ abc1234 # Current vs specific commit"
+    echo ""
+    exit 1
+fi
+
+REF1="$1"
+REF2="$2"
+
+echo "🔬 Comparing: $REF1 vs $REF2"
+
+# Resolve references
+COMMIT1=$(git rev-parse "$REF1" 2>/dev/null)
+COMMIT2=$(git rev-parse "$REF2" 2>/dev/null)
+
+if [ $? -ne 0 ]; then
+    echo "❌ Invalid git reference"
+    exit 1
+fi
+
+SHORT1=${COMMIT1:0:8}
+SHORT2=${COMMIT2:0:8}
+MSG1=$(git log -1 --pretty=%s "$COMMIT1")
+MSG2=$(git log -1 --pretty=%s "$COMMIT2")
+
+echo "📋 $REF1 → $SHORT1: $MSG1"
+echo "📋 $REF2 → $SHORT2: $MSG2"
+echo ""
+
+# Find two available ports
+PORT1=$(node -e "
+const net = require('net');
+async function findPort(start) {
+    for (let port = start; port < start + 100; port += 10) {
+        try {
+            const server = net.createServer();
+            await new Promise((resolve, reject) => {
+                server.listen(port, () => { server.close(); resolve(); });
+                server.on('error', reject);
+            });
+            console.log(port);
+            return;
+        } catch (e) { continue; }
+    }
+}
+findPort(3000);
+")
+
+PORT2=$(node -e "
+const net = require('net');
+async function findPort(start) {
+    for (let port = start; port < start + 100; port += 10) {
+        try {
+            const server = net.createServer();
+            await new Promise((resolve, reject) => {
+                server.listen(port, () => { server.close(); resolve(); });
+                server.on('error', reject);
+            });
+            console.log(port);
+            return;
+        } catch (e) { continue; }
+    }
+}
+findPort(3010);
+")
+
+echo "🚀 Starting both versions:"
+echo "  $REF1 ($SHORT1) → http://localhost:$PORT1"
+echo "  $REF2 ($SHORT2) → http://localhost:$PORT2"
+echo ""
+echo "💡 Press Ctrl+C to stop both servers"
+
+# Store current commit
+CURRENT_COMMIT=$(git rev-parse HEAD)
+
+# Cleanup function
+cleanup() {
+    echo ""
+    echo "🧹 Cleaning up..."
+    pkill -f "node.*backend/api/server.js" 2>/dev/null || true
+    echo "🔄 Returning to original commit..."
+    git checkout "$CURRENT_COMMIT" --quiet
+    echo "✅ Back to current state"
+    exit 0
+}
+
+trap cleanup INT TERM
+
+# Start first version in background
+echo "🔄 Starting $REF1 ($SHORT1)..."
+git checkout "$COMMIT1" --quiet
+PORT=$PORT1 NODE_ENV=development node backend/api/server.js &
+PID1=$!
+
+# Start second version in background  
+echo "🔄 Starting $REF2 ($SHORT2)..."
+git checkout "$COMMIT2" --quiet
+PORT=$PORT2 NODE_ENV=development node backend/api/server.js &
+PID2=$!
+
+# Return to current commit for display
+git checkout "$CURRENT_COMMIT" --quiet
+
+echo ""
+echo "✅ Both versions running!"
+echo "🌐 Open in browser:"
+echo "  $REF1: http://localhost:$PORT1"
+echo "  $REF2: http://localhost:$PORT2"
+echo ""
+
+# Wait for processes
+wait $PID1 $PID2

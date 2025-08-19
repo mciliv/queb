@@ -10,7 +10,7 @@ class ScreenshotService {
   constructor() {
     this.browser = null;
     this.page = null;
-    this.screenshotDir = path.join(__dirname, '../../screenshots');
+    this.screenshotDir = path.join(__dirname, '../..');
     this.isInitialized = false;
   }
 
@@ -43,7 +43,7 @@ class ScreenshotService {
       await fs.access(this.screenshotDir);
     } catch {
       await fs.mkdir(this.screenshotDir, { recursive: true });
-      console.log(`📁 Created screenshots directory: ${this.screenshotDir}`);
+      console.log(`📁 Using project directory for screenshots: ${this.screenshotDir}`);
     }
   }
 

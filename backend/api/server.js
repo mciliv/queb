@@ -518,7 +518,7 @@ app.use("/sdf_files", express.static(path.join(__dirname, "..", "..", "data", "s
 const screenshotService = new ScreenshotService();
 
 // Serve screenshot files for LLM access
-app.use("/api/screenshot", express.static(path.join(__dirname, "..", "..", "screenshots")));
+app.use("/api/screenshot", express.static(path.join(__dirname, "..", "..")));
 
 // Capture current app state
 app.post("/api/capture-screenshot", async (req, res) => {

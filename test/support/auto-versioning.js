@@ -217,7 +217,8 @@ class AutoVersioning {
   // Generate version name suggestions
   suggestVersionNames(commitHash = 'HEAD') {
     const commit = commitHash === 'HEAD' ? 
-      execSync('git rev-parse HEAD').toString().trim() : commitHash;
+      execSync('git rev-parse HEAD').toString().trim() : 
+      execSync(`git rev-parse ${commitHash}`).toString().trim();
     const message = execSync(`git log -1 --pretty=%B ${commit}`).toString().trim();
     
     return {
@@ -228,6 +229,59 @@ class AutoVersioning {
       descriptive: this.generateDescriptiveName(message),
       timestamp: `v${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`
     };
+  }
+
+  // Add version from git reference (supports @, @^, @^2, etc.)
+  addVersionFromRef(gitRef, options = {}) {
+    try {
+      const commit = execSync(`git rev-parse ${gitRef}`).toString().trim();
+      const message = execSync(`git log -1 --pretty=%B ${gitRef}`).toString().trim();
+      
+      // Generate version name based on git ref
+      let versionName;
+      if (gitRef === '@' || gitRef === 'HEAD') {
+        versionName = options.useCommitNumber ? 
+          this.getCommitVersion(commit) : 
+          `current-${commit.substring(0, 8)}`;
+      } else if (gitRef.startsWith('@^')) {
+        const parentLevel = gitRef === '@^' ? 1 : parseInt(gitRef.replace('@^', '')) || 1;
+        versionName = options.useCommitNumber ?
+          this.getCommitVersion(commit) :
+          `prev${parentLevel}-${commit.substring(0, 8)}`;
+      } else {
+        versionName = options.useCommitNumber ?
+          this.getCommitVersion(commit) :
+          `${gitRef}-${commit.substring(0, 8)}`;
+      }
+      
+      return this.registry.addVersion(versionName, {
+        description: message,
+        gitRef: gitRef,
+        resolvedCommit: commit,
+        auto: true,
+        ...options
+      });
+      
+    } catch (error) {
+      throw new Error(`Failed to add version from ${gitRef}: ${error.message}`);
+    }
+  }
+
+  // Add multiple versions from git references
+  addVersionsFromRefs(gitRefs, options = {}) {
+    const versions = [];
+    
+    gitRefs.forEach(ref => {
+      try {
+        const version = this.addVersionFromRef(ref, options);
+        versions.push(version);
+        console.log(`✅ Added ${ref} → ${version.name}`);
+      } catch (error) {
+        console.log(`⚠️ Skipped ${ref}: ${error.message}`);
+      }
+    });
+    
+    return versions;
   }
 
   generateDescriptiveName(commitMessage) {
