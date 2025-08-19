@@ -108,13 +108,13 @@ log_info "🚀 Starting development server..."
 
 # Start frontend watch build
 log_info "📦 Starting frontend watcher..."
-NODE_OPTIONS="" node scripts/build-frontend.js --watch &
+NODE_OPTIONS="" node frontend/build-frontend.js --watch &
 FRONTEND_PID=$!
 
 if [[ "$SKIP_DEV_BROWSER" != true ]]; then
   # Start dev browser manager (auto-close on changes, reopen on build complete)
   log_info "🌐 Starting dev browser manager..."
-  NODE_OPTIONS="" node scripts/dev-browser.js &
+  NODE_OPTIONS="" node frontend/dev-browser.js &
   DEV_BROWSER_PID=$!
 fi
 
