@@ -44,7 +44,7 @@ describe("Smoke Tests", () => {
       expect(mainResponse.status).toBe(200);
 
       // Test SDF files directory (should exist even if empty)
-      const sdfDir = path.join(__dirname, "../sdf_files");
+      const sdfDir = path.join(__dirname, "../../sdf_files");
       if (fs.existsSync(sdfDir)) {
         const sdfResponse = await request(app).get("/sdf_files/");
         expect([200, 404]).toContain(sdfResponse.status); // 404 is okay if directory is empty

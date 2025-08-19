@@ -510,7 +510,7 @@ app.use(express.static(path.join(__dirname, "..", "..", "frontend")));
 app.use("/dist", express.static(path.join(__dirname, "..", "..", "frontend", "dist")));
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));
 app.use("/components", express.static(path.join(__dirname, "..", "..", "frontend", "components")));
-app.use("/sdf_files", express.static(path.join(__dirname, "..", "..", "data", "sdf_files")));
+app.use("/sdf_files", express.static(path.join(__dirname, "..", "..", "test", "sdf_files")));
 
 // ==================== SCREENSHOT ROUTES ====================
 

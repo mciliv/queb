@@ -12,7 +12,7 @@ const TEST_CONFIG = {
 
   // Test data directories
   directories: {
-    sdf: path.join(__dirname, "../test_sdf_files"),
+    sdf: path.join(__dirname, "../sdf_files"),
     fixtures: path.join(__dirname, "fixtures"),
     snapshots: path.join(__dirname, "snapshots"),
     temp: path.join(__dirname, "temp"),

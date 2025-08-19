@@ -13,7 +13,7 @@ fetchMock.enableMocks();
 const appModule = require("../../backend/api/server");
 
 describe("POST /generate-sdfs", () => {
-  const SDF_DIR = path.join(__dirname, "sdf_files");
+  const SDF_DIR = path.join(__dirname, "../../sdf_files");
 
   beforeEach(() => {
     fs.existsSync.mockClear();

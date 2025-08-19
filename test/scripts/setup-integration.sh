@@ -25,7 +25,7 @@ fi
 
 # Ensure test directories exist
 mkdir -p test/results
-mkdir -p data/sdf_files
+mkdir -p test/sdf_files
 mkdir -p logs
 
 # Kill any existing processes on test ports

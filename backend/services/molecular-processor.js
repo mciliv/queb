@@ -6,7 +6,7 @@ const fsPromises = require("fs").promises;
 const { resolveName, downloadSDFByCID, downloadSDFBySmiles } = require("./name-resolver");
 
 class MolecularProcessor {
-  constructor(sdfDir = "data/sdf_files") {
+  constructor(sdfDir = "test/sdf_files") {
     this.sdfDir = path.join(__dirname, "..", "..", sdfDir);
     this.ensureSdfDirectory();
   }
@@ -164,7 +164,7 @@ class MolecularProcessor {
 
   copyFallbackSdf(smiles) {
     try {
-      const fallbackDir = path.join(__dirname, "..", "..", "test_sdf_output");
+      const fallbackDir = path.join(__dirname, "..", "..", "test", "sdf_files");
       const filenames = [
         `${smiles}.sdf`,
         `${smiles.replace(/[^a-zA-Z0-9]/g, ch => ch === "=" ? "__" : "_")}.sdf`,

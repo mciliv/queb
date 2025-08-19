@@ -51,7 +51,7 @@ async function testSDFPipeline() {
 
     // Test 3: File System Check
     console.log('\n3. Testing File System');
-    const sdfDir = path.join(__dirname, 'data', 'sdf_files');
+    const sdfDir = path.join(__dirname, 'test', 'sdf_files');
     if (fs.existsSync(sdfDir)) {
         const files = fs.readdirSync(sdfDir).filter(f => f.endsWith('.sdf'));
         console.log(`  ✓ SDF directory exists with ${files.length} files`);

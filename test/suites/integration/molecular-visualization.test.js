@@ -107,7 +107,7 @@ describe('Molecular Visualization Integration Tests', () => {
         // Step 3: Verify SDF files are accessible
         for (const sdfPath of sdfResponse.body.sdfPaths) {
           const fileName = sdfPath.replace('/sdf_files/', '');
-          const fullPath = path.join(__dirname, '../../data/sdf_files', fileName);
+          const fullPath = path.join(__dirname, '../../../test/sdf_files', fileName);
           
           // Check if file exists
           expect(fs.existsSync(fullPath)).toBe(true);

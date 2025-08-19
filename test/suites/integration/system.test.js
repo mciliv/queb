@@ -89,7 +89,7 @@ describe("System Tests", () => {
 
   afterEach(() => {
     // Clean up test files
-    const sdfDir = path.join(__dirname, "../sdf_files");
+    const sdfDir = path.join(__dirname, "../../sdf_files");
     if (fs.existsSync(sdfDir)) {
       const files = fs.readdirSync(sdfDir);
       files.forEach((file) => {
