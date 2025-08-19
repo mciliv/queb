@@ -89,6 +89,26 @@ case "$1" in
     ./infrastructure/scripts/trust-cert.sh
     ;;
   
+  # Frontend utilities  
+  "build")
+    echo "🏗️ Building frontend..."
+    node frontend/build-frontend.js
+    ;;
+  "browser")
+    echo "🌐 Opening development browser..."
+    node frontend/dev-browser.js
+    ;;
+  
+  # Script runner - find and run scripts in their directories
+  "run")
+    if [ -z "$2" ]; then
+      echo "Usage: ./run run <script-name> [args...]"
+      exit 1
+    fi
+    shift # Remove 'run' command
+    ./scripts/run "$@"
+    ;;
+  
   # Help
   "help"|"--help"|"-h"|"")
     echo "🔧 Available commands:"
@@ -108,12 +128,17 @@ case "$1" in
     echo "  test:accuracy - Run molecular accuracy tests"
     echo "  test:all      - Run complete test suite"
     echo ""
+    echo "Frontend:"
+    echo "  build         - Build frontend bundle"
+    echo "  browser       - Open development browser"
+    echo ""
     echo "Utilities:"
     echo "  format        - Format code with prettier"
     echo "  clean         - Clean up processes"
     echo "  deploy        - Deploy to production"
     echo "  setup         - Setup database"
     echo "  cert          - Generate certificates"
+    echo "  run <script>  - Run script from its directory"
     echo "  help          - Show this help"
     echo ""
     echo "Examples:"

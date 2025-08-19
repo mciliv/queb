@@ -62,6 +62,11 @@ class ScreenshotService {
 
       // Wait for React app to load
       await this.page.waitForSelector('#root', { timeout: 10000 });
+      
+      // Give React time to render, even if there are errors
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      console.log('📸 Taking screenshot of current page state...');
 
       // Generate filename if not provided
       if (!filename) {
