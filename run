@@ -1,18 +1,12 @@
 #!/bin/bash
 
+# Legacy run script - now uses .molrc system
+# For new usage, use: ./molrc <command> or mol <command>
+
 case "$1" in
   # Development
   "dev"|"start")
-    echo "🧹 Cleaning up any existing development processes..."
-    # Kill any existing node processes running our server
-    pkill -f "node.*backend/api/server.js" 2>/dev/null || true
-    pkill -f "nodemon" 2>/dev/null || true
-    
-    # Wait a moment for cleanup
-    sleep 1
-    
-    echo "🚀 Starting development server..."
-    npx jest --testPathPattern=unit.test.js --verbose --silent && nodemon backend/api/server.js
+    ./molrc dev
     ;;
   "server")
     echo "🧹 Cleaning up any existing server processes..."
