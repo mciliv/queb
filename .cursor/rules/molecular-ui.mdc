@@ -1,0 +1,9 @@
+---
+globs: frontend/**/*.jsx,frontend/**/*.css
+---
+
+# Molecular UI Rules
+- ONLY sphere representation with van der Waals radii at 0.8 scale
+- NO ball-and-stick models
+- Stupid simple UI with no extraneous lines
+- Display molecules in columns with close buttons
