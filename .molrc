@@ -1,0 +1,61 @@
+# Molecular Project Configuration
+# This is the definitive registry of all scripts in the project
+
+[project]
+name = "molecular-space-analyzer"
+version = "1.0.0"
+
+[scripts]
+# Development
+dev = "npx jest --testPathPattern=unit.test.js --verbose --silent && nodemon backend/api/server.js"
+server = "node backend/api/server.js"
+debug = "node --inspect backend/api/server.js"
+unsafe = "nodemon backend/api/server.js"
+
+# Frontend
+build = "node frontend/build-frontend.js"
+browser = "node frontend/dev-browser.js"
+
+# Testing
+test = "npx jest --testPathPattern=unit.test.js --verbose --silent && npx jest --testPathPattern=integration.test.js --verbose && npx jest --testPathPattern=system.test.js --verbose --detectOpenHandles"
+test:unit = "npx jest --testPathPattern=unit.test.js --verbose --silent"
+test:integration = "npx jest --testPathPattern=integration.test.js --verbose"
+test:system = "npx jest --testPathPattern=system.test.js --verbose --detectOpenHandles"
+test:python = "cd test/unit && python -m pytest test_*.py -v"
+test:accuracy = "node test/run-accuracy-tests.js"
+test:all = "npm run test && npm run test:python && npm run test:accuracy"
+
+# Utilities
+format = "npx prettier --write ."
+clean = "pkill -f 'node.*backend/api/server.js' 2>/dev/null || true"
+deploy = "./ship"
+setup = "./infrastructure/scripts/setup-database.sh"
+cert = "./infrastructure/scripts/trust-cert.sh"
+
+# Project-specific scripts
+generate-commit = "node generate-commit-message.js"
+sdf-test = "node test/test-sdf-pipeline.js"
+api-test = "node test/test-api-endpoint.js"
+
+[paths]
+# Define where different types of files live
+frontend = "frontend/"
+backend = "backend/"
+tests = "test/"
+scripts = "scripts/"
+sdf_files = "test/sdf_files/"
+screenshots = "test/screenshots/"
+
+[environment]
+NODE_ENV = "development"
+DEBUG_PORT = "9229"
+SERVER_PORT = "3000"
+
+[rules]
+# Project organization rules
+- All test files must be under test/
+- All SDF files must be under test/sdf_files/
+- Scripts are defined in this file only
+- No package.json scripts (use this file instead)
+- Frontend scripts live in frontend/
+- Backend services live in backend/services/
