@@ -7,7 +7,7 @@ version = "1.0.0"
 
 [scripts]
 # Development
-dev = "echo '🔧 Setting up development environment...' && ./setup-molrc.sh && echo '🧹 Cleaning up existing processes...' && pkill -f 'node.*backend/api/server.js' 2>/dev/null || true && pkill -f 'nodemon' 2>/dev/null || true && sleep 1 && echo '🐍 Setting up Python environment...' && python3 -c 'import sys; print(f\"Python {sys.version}\")' && echo '📦 Installing dependencies...' && npm install --silent && echo '🏗️ Building frontend...' && node frontend/build-frontend.js && echo '🧪 Running tests...' && npx jest --testPathPattern=unit.test.js --verbose --silent && echo '🌐 Opening browser...' && node frontend/dev-browser.js & echo '🚀 Starting development server...' && nodemon backend/api/server.js"
+dev = "echo '🔧 Setting up development environment...' && echo '🧹 Cleaning up existing processes...' && pkill -f 'node.*backend/api/server.js' 2>/dev/null || true && pkill -f 'nodemon' 2>/dev/null || true && sleep 1 && echo '🐍 Setting up Python environment...' && python3 -c 'import sys; print(f\"Python {sys.version}\")' && echo '📦 Installing dependencies...' && npm install --silent && echo '🏗️ Building frontend...' && node frontend/build-frontend.js && echo '🧪 Running tests...' && npx jest --testPathPattern=unit.test.js --verbose --silent && echo '🌐 Opening browser...' && node frontend/dev-browser.js & echo '🚀 Starting development server...' && nodemon backend/api/server.js"
 server = "node backend/api/server.js"
 debug = "node --inspect backend/api/server.js"
 unsafe = "nodemon backend/api/server.js"
