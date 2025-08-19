@@ -1,9 +1,0 @@
----
-alwaysApply: true
----
-
-# File Organization
-- All test files: [test/](mdc:test/)
-- All SDF files: [test/sdf_files/](mdc:test/sdf_files/)  
-- Scripts defined in: [.molrc](mdc:.molrc)
-- Frontend scripts: [frontend/](mdc:frontend/)

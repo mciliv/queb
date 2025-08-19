@@ -1,6 +1,0 @@
----
-alwaysApply: true
----
-
-# Development Command
-Use only `dev` script for all development operations - it does everything: setup, build, test, browser, server.

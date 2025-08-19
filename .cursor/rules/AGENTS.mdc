@@ -23,3 +23,12 @@ git push origin main
 
 # Conventions
 Name files, variables, functions, classes specifically
+
+# Development Command
+Use only `dev` script for all development operations - it does everything: setup, build, test, browser, server.
+
+# File Organization
+- All test files: [test/](mdc:test/)
+- All SDF files: [test/sdf_files/](mdc:test/sdf_files/)  
+- Scripts defined in: [.molrc](mdc:.molrc)
+- Frontend scripts: [frontend/](mdc:frontend/)
