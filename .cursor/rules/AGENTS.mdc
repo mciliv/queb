@@ -12,6 +12,7 @@ If anything can be seen as a principle, put here
 No logging
 Show existing code chunks wherever possible instead of descriptions
 Don't create extraneous files; no markdown, if anything, simplify the code & tell me why to look at it
+create least files/codelines possible under contraint of a file providing our clearest thinkinkable abstraction
 cleanup after creating anything new
 
 run `dev` at end of every ∆
@@ -23,12 +24,3 @@ git push origin main
 
 # Conventions
 Name files, variables, functions, classes specifically
-
-# Development Command
-Use only `dev` script for all development operations - it does everything: setup, build, test, browser, server.
-
-# File Organization
-- All test files: [test/](mdc:test/)
-- All SDF files: [test/sdf_files/](mdc:test/sdf_files/)  
-- Scripts defined in: [.molrc](mdc:.molrc)
-- Frontend scripts: [frontend/](mdc:frontend/)

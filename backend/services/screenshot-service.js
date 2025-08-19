@@ -54,6 +54,9 @@ class ScreenshotService {
     await this.initialize();
 
     try {
+      // Auto-delete existing screenshots before taking new ones
+      await this.cleanupOldScreenshots(0);
+      
       // Navigate to the app
       await this.page.goto('http://localhost:3000', { 
         waitUntil: 'networkidle0',
@@ -110,6 +113,8 @@ class ScreenshotService {
     await this.initialize();
 
     try {
+      // Auto-delete existing screenshots before taking new ones
+      await this.cleanupOldScreenshots(0);
       // Navigate to app
       await this.page.goto('http://localhost:3000', { 
         waitUntil: 'networkidle0',
@@ -174,6 +179,8 @@ class ScreenshotService {
     await this.initialize();
 
     try {
+      // Auto-delete existing screenshots before taking new ones
+      await this.cleanupOldScreenshots(0);
       // Navigate and input text
       await this.page.goto('http://localhost:3000', { 
         waitUntil: 'networkidle0',
