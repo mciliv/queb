@@ -5,6 +5,36 @@
 
 echo "🧬 Setting up Molecular Project Configuration System..."
 
+# Check Python environment
+echo "🐍 Checking Python environment..."
+if command -v python3 >/dev/null 2>&1; then
+    PYTHON_VERSION=$(python3 --version 2>&1)
+    echo "✅ Found: $PYTHON_VERSION"
+    
+    # Check for required Python packages
+    echo "📦 Checking Python packages..."
+    python3 -c "import rdkit; print('✅ RDKit available')" 2>/dev/null || echo "⚠️  RDKit not found - chemistry tests may fail"
+    python3 -c "import pytest; print('✅ pytest available')" 2>/dev/null || echo "⚠️  pytest not found - Python tests may fail"
+else
+    echo "⚠️  Python3 not found - Python functionality will not work"
+fi
+
+# Check Node environment
+echo "📦 Checking Node.js environment..."
+if command -v node >/dev/null 2>&1; then
+    NODE_VERSION=$(node --version)
+    echo "✅ Found Node.js: $NODE_VERSION"
+    
+    if command -v npm >/dev/null 2>&1; then
+        NPM_VERSION=$(npm --version)
+        echo "✅ Found npm: $NPM_VERSION"
+    else
+        echo "⚠️  npm not found"
+    fi
+else
+    echo "❌ Node.js not found - project will not work"
+fi
+
 # Create alias in shell profile
 SHELL_PROFILE=""
 if [ -f ~/.zshrc ]; then
