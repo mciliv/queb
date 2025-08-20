@@ -134,7 +134,7 @@ class ScreenshotService {
       }
 
       // Wait a moment for any UI updates
-      await this.page.waitForTimeout(1000);
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Generate filename if not provided
       if (!filename) {
@@ -203,7 +203,7 @@ class ScreenshotService {
         console.log(`🔬 Triggered analysis for: "${inputText}"`);
         
         // Wait for analysis to complete (adjust timeout as needed)
-        await this.page.waitForTimeout(5000);
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
 
       // Generate filename

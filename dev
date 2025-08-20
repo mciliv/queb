@@ -108,7 +108,7 @@ else
 fi
 
 # Trap to handle Ctrl+C and commit before exit
-trap 'commit_and_push; kill $BACKEND_PID 2>/dev/null || true; kill $FRONTEND_PID 2>/dev/null || true; kill $DEV_BROWSER_PID 2>/dev/null || true; kill $TEST_WATCHER_PID 2>/dev/null || true; kill $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
+trap 'echo "🛑 Stopping..."; commit_and_push; kill -9 $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
 
 log_info "🚀 Starting development server..."
 
@@ -192,8 +192,8 @@ if [[ -n "$GIT_RANGE" ]]; then
     cd "$WORKTREE"
     
     # Setup environment in worktree
-    log_info "📦 Setting up environment in worktree..."
     npm install --silent 2>/dev/null || true
+    node frontend/build-frontend.js 2>/dev/null || true
     
     PORT=$PORT NODE_ENV=development node backend/api/server.js &
     PIDS+=($!)
@@ -249,11 +249,11 @@ if [[ -n "$GIT_REF" ]]; then
     log_info "📁 Running from worktree: $(pwd)"
     
     # Setup environment in worktree
-    log_info "📦 Setting up environment in worktree..."
     npm install --silent 2>/dev/null || true
+    node frontend/build-frontend.js 2>/dev/null || true
     
     # Update trap to cleanup worktree
-    trap 'commit_and_push; cd ../mol; git worktree remove ../mol-dev --force 2>/dev/null || true; kill $BACKEND_PID 2>/dev/null || true; kill $FRONTEND_PID 2>/dev/null || true; kill $DEV_BROWSER_PID 2>/dev/null || true; kill $TEST_WATCHER_PID 2>/dev/null || true; kill $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
+    trap 'echo "🛑 Stopping worktree..."; commit_and_push; cd ../mol; git worktree remove ../mol-dev --force 2>/dev/null || true; kill -9 $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
   else
     log_error "❌ Invalid git reference: $GIT_REF"
     exit 1
