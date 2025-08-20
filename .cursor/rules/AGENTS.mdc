@@ -15,12 +15,5 @@ Don't create extraneous files; no markdown, if anything, simplify the code & tel
 create least files/codelines possible under contraint of a file providing our clearest thinkinkable abstraction
 cleanup after creating anything new
 
-run `dev` at end of every ∆
-If all tests pass,
-```sh
-git commit -am "Brief description"
-git push origin main
-```
-
 # Conventions
 Name files, variables, functions, classes specifically

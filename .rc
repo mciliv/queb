@@ -50,12 +50,3 @@ screenshots = "test/screenshots/"
 NODE_ENV = "development"
 DEBUG_PORT = "9229"
 SERVER_PORT = "3000"
-
-[rules]
-# Project organization rules
-- All test files must be under test/
-- All SDF files must be under test/sdf_files/
-- Scripts are defined in this file only
-- No package.json scripts (use this file instead)
-- Frontend scripts live in frontend/
-- Backend services live in backend/services/

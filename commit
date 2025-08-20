@@ -1,4 +1,5 @@
 #!/bin/bash
+# Usage: ./commit [message]
 
 set -e
 
@@ -19,9 +20,14 @@ fi
 log_info "Adding all changes..."
 git add .
 
-# Generate commit message
-log_info "🤖 Generating commit message..."
-COMMIT_MSG=$(node scripts/generate-commit-message.js 2>/dev/null || echo "chore: update files")
+# Use provided message or generate one
+if [ -n "$1" ]; then
+    COMMIT_MSG="$*"
+    log_info "Using provided message: $COMMIT_MSG"
+else
+    log_info "🤖 Generating commit message..."
+    COMMIT_MSG=$(node generate-commit-message.js 2>/dev/null || echo "chore: update files")
+fi
 
 # Show what will be committed
 log_info "Changes to be committed:"
