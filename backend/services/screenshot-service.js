@@ -74,7 +74,8 @@ class ScreenshotService {
       // Generate filename if not provided
       if (!filename) {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        filename = `app-${timestamp}.png`;
+        const gitHash = require('child_process').execSync('git rev-parse --short HEAD', {encoding: 'utf8'}).trim();
+        filename = `app-${gitHash}-${timestamp}.png`;
       }
 
       const screenshotPath = path.join(this.screenshotDir, filename);
@@ -138,8 +139,9 @@ class ScreenshotService {
       // Generate filename if not provided
       if (!filename) {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const gitHash = require('child_process').execSync('git rev-parse --short HEAD', {encoding: 'utf8'}).trim();
         const sanitizedInput = inputText.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
-        filename = `input-${sanitizedInput}-${timestamp}.png`;
+        filename = `input-${gitHash}-${sanitizedInput}-${timestamp}.png`;
       }
 
       const screenshotPath = path.join(this.screenshotDir, filename);
@@ -208,7 +210,8 @@ class ScreenshotService {
       if (!filename) {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const sanitizedInput = inputText.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
-        filename = `analysis-${sanitizedInput}-${timestamp}.png`;
+        const gitHash = require('child_process').execSync('git rev-parse --short HEAD', {encoding: 'utf8'}).trim();
+        filename = `analysis-${gitHash}-${sanitizedInput}-${timestamp}.png`;
       }
 
       const screenshotPath = path.join(this.screenshotDir, filename);

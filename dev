@@ -199,7 +199,7 @@ if [[ -n "$GIT_RANGE" ]]; then
     PIDS+=($!)
     cd - > /dev/null
     
-    log_info "  Version $((i+1)) (${COMMIT:0:8}): http://localhost:$PORT"
+    echo "  Version $((i+1)) (${COMMIT:0:8}): http://localhost:$PORT"
   done
   
   cd "$PROJECT_ROOT"
@@ -218,7 +218,14 @@ if [[ -n "$GIT_RANGE" ]]; then
     fi
   done
   
-  log_success "✅ $RANGE_COUNT versions running in browser tabs (newest first)"
+  echo ""
+  echo "✅ $RANGE_COUNT versions running:"
+  for ((i=0; i<RANGE_COUNT; i++)); do
+    COMMIT=${COMMITS[$i]}
+    PORT=${PORTS[$i]}
+    MSG=$(git log -1 --pretty=%s "$COMMIT")
+    echo "  $((i+1)). ${COMMIT:0:8} → http://localhost:$PORT - $MSG"
+  done
   
   # Range mode cleanup trap
   trap 'echo ""; echo "🧹 Stopping range servers..."; for pid in "${PIDS[@]}"; do kill $pid 2>/dev/null || true; done; echo "🗑️ Removing worktrees..."; for worktree in "${WORKTREES[@]}"; do git worktree remove "$worktree" --force 2>/dev/null || true; done; echo "✅ Range cleanup complete"; exit 0' INT TERM
@@ -258,8 +265,16 @@ log_info "⚙️  Starting backend server with debugger..."
 NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon --quiet --exec "node --inspect=9229" backend/api/server.js &
 BACKEND_PID=$!
 
-# Wait for backend to start
-sleep 3
+# Wait for backend to be ready
+for i in {1..30}; do
+  if curl -s http://localhost:3000 >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+  if [ $i -eq 30 ]; then
+    log_error "❌ Backend failed to start after 30 seconds"
+  fi
+done
 
 # Check if backend is running
 if kill -0 $BACKEND_PID 2>/dev/null; then
