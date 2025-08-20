@@ -13,7 +13,13 @@ source infrastructure/scripts/colors.sh
 
 # Function to handle commit and push
 commit_and_push() {
-    ./commit
+    # Only commit if there are meaningful changes (not just dev script changes)
+    CHANGES=$(git status --porcelain | grep -v "^M  dev$" | grep -v "^M  commit$")
+    if [ -n "$CHANGES" ]; then
+        ./commit
+    else
+        log_info "No meaningful changes to commit"
+    fi
 }
 
 # Always clean up any existing processes first
@@ -184,6 +190,11 @@ if [[ -n "$GIT_RANGE" ]]; then
     PORTS+=("$PORT")
     
     cd "$WORKTREE"
+    
+    # Setup environment in worktree
+    log_info "📦 Setting up environment in worktree..."
+    npm install --silent 2>/dev/null || true
+    
     PORT=$PORT NODE_ENV=development node backend/api/server.js &
     PIDS+=($!)
     cd - > /dev/null
@@ -229,6 +240,10 @@ if [[ -n "$GIT_REF" ]]; then
     
     cd ../mol-dev
     log_info "📁 Running from worktree: $(pwd)"
+    
+    # Setup environment in worktree
+    log_info "📦 Setting up environment in worktree..."
+    npm install --silent 2>/dev/null || true
     
     # Update trap to cleanup worktree
     trap 'commit_and_push; cd ../mol; git worktree remove ../mol-dev --force 2>/dev/null || true; kill $BACKEND_PID 2>/dev/null || true; kill $FRONTEND_PID 2>/dev/null || true; kill $DEV_BROWSER_PID 2>/dev/null || true; kill $TEST_WATCHER_PID 2>/dev/null || true; kill $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
