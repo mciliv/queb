@@ -1233,6 +1233,7 @@ app.get("*", (req, res, next) => {
   // Skip API routes, assets, and special files
   if (req.url.startsWith("/api/") || 
       req.url.startsWith("/assets/") || 
+      req.url.startsWith("/dist/") ||
       req.url.startsWith("/components/") ||
       req.url.startsWith("/sdf_files/") ||
       req.url.includes(".")) {

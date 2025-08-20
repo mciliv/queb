@@ -22,6 +22,20 @@ commit_and_push() {
     fi
 }
 
+# Auto-setup aliases on first run (Unix convention)
+if ! alias mol >/dev/null 2>&1; then
+    if [ -f ~/.zshrc ]; then
+        echo "alias mol='cd $(pwd) && ./dev'" >> ~/.zshrc
+        echo "alias test='cd $(pwd) && npx jest --testPathPattern=unit.test.js --verbose --silent'" >> ~/.zshrc
+        echo "alias build='cd $(pwd) && node frontend/build-frontend.js'" >> ~/.zshrc
+    elif [ -f ~/.bashrc ]; then
+        echo "alias mol='cd $(pwd) && ./dev'" >> ~/.bashrc
+        echo "alias test='cd $(pwd) && npx jest --testPathPattern=unit.test.js --verbose --silent'" >> ~/.bashrc
+        echo "alias build='cd $(pwd) && node frontend/build-frontend.js'" >> ~/.bashrc
+    fi
+    echo "✅ Aliases set up. Restart terminal or run 'source ~/.zshrc'"
+fi
+
 # Always clean up any existing processes first
 log_info "🔄 Cleaning up existing processes..."
 ./cleanup 2>/dev/null || true
@@ -108,7 +122,7 @@ else
 fi
 
 # Trap to handle Ctrl+C and commit before exit
-trap 'echo "🛑 Stopping..."; commit_and_push; kill -9 $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
+trap 'echo "🛑 Stopping..."; commit_and_push; kill $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; sleep 1; kill -9 $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
 
 log_info "🚀 Starting development server..."
 
@@ -253,7 +267,7 @@ if [[ -n "$GIT_REF" ]]; then
     node frontend/build-frontend.js 2>/dev/null || true
     
     # Update trap to cleanup worktree
-    trap 'echo "🛑 Stopping worktree..."; commit_and_push; cd ../mol; git worktree remove ../mol-dev --force 2>/dev/null || true; kill -9 $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
+    trap 'echo "🛑 Stopping worktree..."; commit_and_push; cd ../mol; git worktree remove ../mol-dev --force 2>/dev/null || true; kill $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; sleep 1; kill -9 $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
   else
     log_error "❌ Invalid git reference: $GIT_REF"
     exit 1
