@@ -264,7 +264,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
     }
   };
 
-  const handleCameraClick = async (event) => {
+  const handleCameraClick = async () => {
     if (!hasPermission) {
       await requestCameraAccess();
       return;
@@ -274,20 +274,6 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
     if (checkPaymentRequired()) {
       return;
     }
-
-    // Get click position relative to video element
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    // Store click position for outline box
-    setClickPosition({ x, y });
-    setShowOutline(true);
-    
-    // Hide outline after 2 seconds
-    setTimeout(() => {
-      setShowOutline(false);
-    }, 2000);
 
     setIsProcessing(true);
     setCurrentAnalysisType('camera');
@@ -301,10 +287,10 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       canvas.height = height;
       const ctx = canvas.getContext('2d');
 
-      // If user clicked, draw a centered crop square around click (25% of min dimension)
+      // Always use exact center for crop square (25% of min dimension)
       const cropSide = Math.floor(Math.min(width, height) * 0.25);
-      const cropX = Math.max(0, Math.min(width - cropSide, Math.round((x * (width / rect.width)) - cropSide / 2)));
-      const cropY = Math.max(0, Math.min(height - cropSide, Math.round((y * (height / rect.height)) - cropSide / 2)));
+      const cropX = Math.max(0, Math.floor((width - cropSide) / 2));
+      const cropY = Math.max(0, Math.floor((height - cropSide) / 2));
 
       ctx.drawImage(video, 0, 0);
       const fullImageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
@@ -317,11 +303,9 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       cropCtx.drawImage(canvas, cropX, cropY, cropSide, cropSide, 0, 0, cropSide, cropSide);
       const croppedImageDataUrl = cropCanvas.toDataURL('image/jpeg', 0.8);
       
-      // Pass click coordinates to the API (scaled to video dimensions)
-      const scaleX = video.videoWidth / rect.width;
-      const scaleY = video.videoHeight / rect.height;
-      const centerX = Math.round(x * scaleX);
-      const centerY = Math.round(y * scaleY);
+      // Use center coordinates for API metadata
+      const centerX = Math.round(width / 2);
+      const centerY = Math.round(height / 2);
       
       const result = await analyzeImage(fullImageDataUrl, 'Camera capture', centerX, centerY, cropX + Math.floor(cropSide/2), cropY + Math.floor(cropSide/2), cropSide);
       
@@ -361,43 +345,16 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
 
   return (
     <div className="camera-box" onClick={handleCameraClick}>
-      <video 
+      {/* Keep video stream active but hidden for frame capture */}
+      <video
         ref={videoRef}
-        autoPlay 
-        playsInline 
-        muted 
-        className="camera-video"
+        autoPlay
+        playsInline
+        muted
+        style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
       />
-      
-      {!hasPermission && (
-        <div className="camera-permission">{permissionMessage}</div>
-      )}
-      
-      {/* Red outline box where user clicked */}
-      {showOutline && clickPosition && (
-        <div className="click-outline" style={{ left: `${clickPosition.x - 30}px`, top: `${clickPosition.y - 30}px` }}></div>
-      )}
-      
-      {showSwitchCamera && (
-        <div className="camera-switch">
-          <button 
-            type="button" 
-            className="btn-ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              switchCamera();
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8"/>
-              <circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
-            </svg>
-            
-          </button>
-        </div>
-      )}
-      
-      
+      {/* EXACT square red box UI */}
+      <div style={{ width: 240, height: 240, border: '3px solid red', margin: '0 auto' }} />
     </div>
   );
 };

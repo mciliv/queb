@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
 const { execSync } = require("child_process");
+// Load env from .env if present
+try { require('dotenv').config(); } catch (_) {}
+// Support alias env var
+if (!process.env.OPENAI_API_KEY && process.env.OPEN_API_KEY) {
+  process.env.OPENAI_API_KEY = process.env.OPEN_API_KEY;
+}
 
 console.log("🚢 Starting complete workflow (ship)...");
 
@@ -26,7 +32,7 @@ function printErrorWithLocation(message) {
     const file = m[1];
     const line = m[2];
     const col = m[3];
-    console.error(`❌ ${file}:${line}:${col} - ${message}`);
+    console.error(`❌ ${message} - ${file}:${line}:${col}`);
   } else {
     console.error(`❌ ${message}`);
     if (stack.length > 1) console.error(stack.slice(1).join('\n'));
