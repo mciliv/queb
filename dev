@@ -37,8 +37,8 @@ if ! alias mol >/dev/null 2>&1; then
 fi
 
 # Always clean up any existing processes first
-log_info "🔄 Cleaning up existing processes..."
-./cleanup 2>/dev/null || true
+log_info "🔄 Cleaning up: backend servers, nodemon, dev browser, file watchers; freeing ports 3000/3001/3002/3004; clearing temp files"
+./clean 2>/dev/null || true
 
 # Wait a moment for cleanup to complete
 sleep 1
@@ -128,14 +128,16 @@ log_info "🚀 Starting development server..."
 
 # Start frontend watch build
 log_info "📦 Starting frontend watcher..."
+DEV_URL="http://localhost:3000"
 NODE_OPTIONS="" node frontend/build-frontend.js --watch &
 FRONTEND_PID=$!
 
 if [[ "$SKIP_DEV_BROWSER" != true ]]; then
   # Start dev browser manager (auto-close on changes, reopen on build complete)
   log_info "🌐 Starting dev browser manager..."
-  NODE_OPTIONS="" node frontend/dev-browser.js &
+  FRONTEND_URL="$DEV_URL" NODE_OPTIONS="" node frontend/dev-browser.js &
   DEV_BROWSER_PID=$!
+  echo $DEV_BROWSER_PID > /tmp/dev_browser_pid
 fi
 
 # Handle git range mode - run multiple versions in browser tabs
@@ -276,27 +278,50 @@ fi
 
 # Start the Node.js backend server with debugger
 log_info "⚙️  Starting backend server with debugger..."
-NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon --quiet --exec "node --inspect=9229" backend/api/server.js &
+NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon \
+  --quiet \
+  --watch backend \
+  --ext js,json \
+  --ignore frontend/** \
+  --ignore frontend/dist/** \
+  --ignore dist/** \
+  --ignore test/** \
+  --exec "node --inspect=9229" backend/api/server.js &
 BACKEND_PID=$!
 
-# Wait for backend to be ready
-for i in {1..30}; do
-  if curl -s http://localhost:3000 >/dev/null 2>&1; then
+# Wait for backend to be ready (up to 60s)
+BACKEND_READY=false
+for i in {1..60}; do
+  if curl -s "$DEV_URL" >/dev/null 2>&1; then
+    BACKEND_READY=true
     break
   fi
   sleep 1
-  if [ $i -eq 30 ]; then
-    log_error "❌ Backend failed to start after 30 seconds"
-  fi
 done
+if [ "$BACKEND_READY" != true ]; then
+  log_error "❌ Backend failed to respond at $DEV_URL after 60 seconds"
+fi
 
 # Check if backend is running
 if kill -0 $BACKEND_PID 2>/dev/null; then
     log_success "✅ Development server ready!"
-    log_success "🌐 Frontend: http://localhost:3000"
+    log_success "🌐 Frontend: $DEV_URL"
     log_success "🐛 Debug: VS Code auto-attach enabled"
     log_success "🔄 Auto-refresh: Save files to trigger rebuilds"
     log_success "⏹️  Stop: Ctrl+C (auto-commits changes)"
+    # Ensure a browser window opens even if Puppeteer fails
+    if [ "$BACKEND_READY" = true ]; then
+      (
+        sleep 1
+        if command -v open >/dev/null 2>&1; then
+          open "$DEV_URL" >/dev/null 2>&1 || true
+        elif command -v xdg-open >/dev/null 2>&1; then
+          xdg-open "$DEV_URL" >/dev/null 2>&1 || true
+        elif command -v start >/dev/null 2>&1; then
+          start "$DEV_URL" >/dev/null 2>&1 || true
+        fi
+      ) &
+    fi
     
     # Store PID for cleanup
     echo $BACKEND_PID > /tmp/dev_backend_pid

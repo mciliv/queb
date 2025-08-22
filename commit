@@ -17,24 +17,17 @@ if [[ -z $(git status --porcelain) ]]; then
 fi
 
 # Add all changes
-log_info "Adding all changes..."
 git add .
 
 # Use provided message or generate one
 if [ -n "$1" ]; then
     COMMIT_MSG="$*"
-    log_info "Using provided message: $COMMIT_MSG"
 else
-    log_info "🤖 Generating commit message..."
     COMMIT_MSG=$(node generate-commit-message.js 2>/dev/null || echo "chore: update files")
 fi
 
-# Show what will be committed
-log_info "Changes to be committed:"
 git status --short
-echo ""
-log_info "Generated commit message: $COMMIT_MSG"
-echo ""
+echo "Message: $COMMIT_MSG"
 
 # Ask for confirmation
 read -p "Proceed with commit and push? (y/n/e to edit message): " -n 1 -r
@@ -42,31 +35,12 @@ echo ""
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     git commit -m "$COMMIT_MSG"
-    log_success "✅ Changes committed!"
-    
-    # Push to remote
-    log_info "🚀 Pushing to remote..."
-    if git push; then
-        log_success "✅ Changes pushed successfully!"
-    else
-        log_error "❌ Push failed. You may need to pull first or resolve conflicts."
-    fi
+    git push
 elif [[ $REPLY =~ ^[Ee]$ ]]; then
-    # Let user edit the message
     read -p "Enter commit message: " CUSTOM_MSG
     git commit -m "$CUSTOM_MSG"
-    log_success "✅ Changes committed with custom message!"
-    
-    # Push to remote
-    log_info "🚀 Pushing to remote..."
-    if git push; then
-        log_success "✅ Changes pushed successfully!"
-    else
-        log_error "❌ Push failed. You may need to pull first or resolve conflicts."
-    fi
+    git push
 else
-    log_info "Commit cancelled"
-    # Reset staged changes
     git reset HEAD
 fi
 

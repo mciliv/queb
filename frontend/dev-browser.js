@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const { exec } = require('child_process');
 const puppeteer = require('puppeteer');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
@@ -28,6 +29,7 @@ let browser = null;
 let page = null;
 let closing = false;
 let debounceTimer = null;
+let usedSystemBrowserFallback = false;
 
 function removeUserDataDir() {
   try {
@@ -77,23 +79,42 @@ async function waitForServer(url, timeoutMs = 20000) {
 
 async function openBrowser() {
   if (browser) return; // Already open
-  await waitForServer(TARGET_URL).catch(() => {});
-  browser = await puppeteer.launch({
-    headless: false,
-    defaultViewport: { width: 1600, height: 1000 },
-    userDataDir: USER_DATA_DIR,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-web-security',
-      '--no-first-run',
-      '--disable-default-apps',
-      '--disable-infobars',
-      '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-renderer-backgrounding'
-    ]
-  });
+  try {
+    await waitForServer(TARGET_URL, 60000);
+  } catch (_) {
+    log('⏳ Server not ready, postponing browser launch');
+    return;
+  }
+  try {
+    browser = await puppeteer.launch({
+      headless: false,
+      defaultViewport: { width: 1600, height: 1000 },
+      userDataDir: USER_DATA_DIR,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-web-security',
+        '--no-first-run',
+        '--disable-default-apps',
+        '--disable-infobars',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
+      ]
+    });
+  } catch (err) {
+    if (!usedSystemBrowserFallback) {
+      const opener = process.platform === 'darwin' ? 'open' : (process.platform === 'win32' ? 'start' : 'xdg-open');
+      try {
+        exec(`${opener} "${TARGET_URL}"`, { stdio: 'ignore' });
+        usedSystemBrowserFallback = true;
+        log('🌐 Dev browser opened (system)');
+      } catch (_) {
+        log(`⚠️ Failed to launch Puppeteer and system browser`);
+      }
+    }
+    return;
+  }
   const pages = await browser.pages();
   page = pages && pages.length > 0 ? pages[0] : await browser.newPage();
   // Close any extra initial tabs (often about:blank)
@@ -128,18 +149,11 @@ function debounce(fn, delay) {
 
 function watchSources() {
   try {
+    // Ignore source changes to avoid double-reload; rely on build artifact watcher
     fs.watch(FRONTEND_SRC_DIR, { recursive: true }, debounce(async () => {
-      if (STICKY && browser && page) {
-        try {
-          await page.reload({ waitUntil: 'networkidle0' });
-          await page.bringToFront().catch(() => {});
-          log('🔁 Dev browser reloaded (sticky)');
-        } catch (_) {}
-      } else {
-        await closeBrowser();
-      }
-    }, 150));
-    log('👀 Watching frontend sources for changes');
+      // No action; build watcher will handle reload
+    }, 500));
+    log('👀 Ignoring source changes (build watcher will trigger reload)');
   } catch (err) {
     log(`⚠️ Recursive watch not supported: ${err.message}`);
     // Fallback: watch key subdirectories individually
@@ -148,16 +162,8 @@ function watchSources() {
       const dir = path.join(FRONTEND_SRC_DIR, d);
       if (fs.existsSync(dir)) {
         fs.watch(dir, { recursive: true }, debounce(async () => {
-          if (STICKY && browser && page) {
-            try {
-              await page.reload({ waitUntil: 'networkidle0' });
-              await page.bringToFront().catch(() => {});
-              log('🔁 Dev browser reloaded (sticky)');
-            } catch (_) {}
-          } else {
-            await closeBrowser();
-          }
-        }, 150));
+          // No action; build watcher will handle reload
+        }, 500));
       }
     });
   }
@@ -168,7 +174,7 @@ function watchBuildArtifact() {
     try { fs.mkdirSync(path.dirname(FRONTEND_DIST_FILE), { recursive: true }); } catch (_) {}
     fs.writeFileSync(FRONTEND_DIST_FILE, '');
   }
-  fs.watchFile(FRONTEND_DIST_FILE, { interval: 200 }, debounce(async () => {
+  fs.watchFile(FRONTEND_DIST_FILE, { interval: 250 }, debounce(async () => {
     if (STICKY && browser && page) {
       try {
         await page.reload({ waitUntil: 'networkidle0' });
@@ -181,7 +187,7 @@ function watchBuildArtifact() {
         await openBrowser();
       }
     }
-  }, 100));
+  }, 400));
   log('🔄 Watching build output for completion');
 }
 

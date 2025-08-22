@@ -265,20 +265,20 @@ app.get('/api/config', (req, res) => {
 
 // ==================== ERROR LOGGING ENDPOINT ====================
 app.post('/api/log-error', (req, res) => {
-  const error = req.body;
-  
-  // Log to console for AI reading - STRUCTURED FORMAT
-  console.error('🚨 FRONTEND ERROR:', JSON.stringify({
-    timestamp: error.timestamp,
-    type: error.type,
-    message: error.message,
-    source: error.source,
+  const payload = req.body || {};
+  const type = (payload.type || 'log').toLowerCase();
+  const label = type === 'error' ? '❌ FRONTEND ERROR' : type === 'warn' ? '⚠️ FRONTEND WARN' : 'ℹ️ FRONTEND LOG';
+  const logger = type === 'error' ? console.error : type === 'warn' ? console.warn : console.log;
+
+  logger(label + ': ' + JSON.stringify({
+    timestamp: payload.timestamp,
+    type: payload.type,
+    message: payload.message,
+    source: payload.source,
     userAgent: req.get('User-Agent'),
     ip: req.ip || req.connection.remoteAddress
   }, null, 2));
-  
-  // Optionally log to file or database here
-  
+
   res.status(200).json({ status: 'logged' });
 });
 

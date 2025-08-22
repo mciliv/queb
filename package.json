@@ -19,7 +19,7 @@
     "sync:versions": "./sync-versions",
     "compare:versions": "./compare-versions",
     "list:versions": "./list-versions",
-    "clean": "./cleanup",
+    "clean": "./clean",
     "format": "prettier --write ."
   },
   "dependencies": {

@@ -596,6 +596,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
 // Results Display Components (Bottom Content)
  const MoleculeViewer = ({ molecularData }) => {
   const ref = useRef(null);
+  const mountRef = useRef(null); // Dedicated imperative mount to avoid React DOM conflicts
   const [status, setStatus] = useState('loading');
 
   useEffect(() => {
@@ -608,9 +609,18 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
           if (cancelled) return;
         }
         if (!ref.current) return;
+        // Ensure we have a stable child container React does not manage
+        if (!mountRef.current) {
+          const container = document.createElement('div');
+          container.style.width = '100%';
+          container.style.height = '100%';
+          ref.current.appendChild(container);
+          mountRef.current = container;
+        }
+        const host = mountRef.current;
 
         // Keep existing viewer visible until new SDF is ready to avoid flash
-        const hadViewer = ref.current.childNodes && ref.current.childNodes.length > 0;
+        const hadViewer = host.childNodes && host.childNodes.length > 0;
         let sdfContent = null;
         if (molecularData.sdfData && molecularData.sdfData.startsWith('file://')) {
           const rawPath = molecularData.sdfData.replace('file://', '');
@@ -628,9 +638,9 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
 
         if (sdfContent) {
           // Now replace the canvas with a fresh viewer
-          if (!ref.current) return;
-          ref.current.innerHTML = '';
-          const viewer = window.$3Dmol.createViewer(ref.current, {
+          if (!host) return;
+          host.innerHTML = '';
+          const viewer = window.$3Dmol.createViewer(host, {
             backgroundColor: '#000000',
             antialias: true,
             defaultcolors: window.$3Dmol.rasmolElementColors
@@ -674,12 +684,9 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
     initialize();
     return () => {
       cancelled = true;
-      if (ref.current) {
-        try {
-          ref.current.innerHTML = '';
-        } catch (e) {
-          // Ignore cleanup errors
-        }
+      // Only clear our dedicated mount; avoid touching React-managed nodes
+      if (mountRef.current) {
+        try { mountRef.current.innerHTML = ''; } catch (_) {}
       }
     };
   }, [molecularData.sdfData, molecularData.name, molecularData.smiles]);
