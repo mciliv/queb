@@ -405,6 +405,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
 const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, onAnalysisComplete }) => {
   const fileInputRef = useRef(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
   const { checkPaymentRequired } = usePayment();
   const { analyzeImage } = useApi();
   const isMobile = isMobileDevice();
@@ -419,6 +420,11 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
 
     setIsProcessing(true);
     setCurrentAnalysisType('photo');
+    // Show immediate preview of selected image
+    try {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } catch (_) {}
     
     try {
       const reader = new FileReader();
@@ -512,7 +518,17 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
           <circle cx="9" cy="9" r="2"/>
           <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
         </svg>
-        
+        {previewUrl && (
+          <img
+            src={previewUrl}
+            alt="Selected"
+            style={{ display: 'block', maxWidth: '100%', maxHeight: 180, marginTop: 12, borderRadius: 4 }}
+            onLoad={() => {
+              // Revoke to release memory after first paint
+              try { URL.revokeObjectURL(previewUrl); } catch (_) {}
+            }}
+          />
+        )}
       </div>
     </div>
   );

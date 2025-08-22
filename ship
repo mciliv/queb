@@ -14,9 +14,28 @@ const config = {
   entryPoint: "molecularAnalysis",
 };
 
+// Pretty error with clickable source location
+function printErrorWithLocation(message) {
+  const err = new Error(message);
+  const stack = (err.stack || '').split('\n').map(s => s.trim());
+  // Second line usually contains the caller location
+  const top = stack[1] || '';
+  // Try to extract file:line:column
+  const m = top.match(/\((.*):(\d+):(\d+)\)/) || top.match(/at (.*):(\d+):(\d+)/);
+  if (m) {
+    const file = m[1];
+    const line = m[2];
+    const col = m[3];
+    console.error(`❌ ${file}:${line}:${col} - ${message}`);
+  } else {
+    console.error(`❌ ${message}`);
+    if (stack.length > 1) console.error(stack.slice(1).join('\n'));
+  }
+}
+
 // Check for required environment variable
 if (!process.env.OPENAI_API_KEY) {
-  console.error("❌ OPENAI_API_KEY environment variable is required");
+  printErrorWithLocation("OPENAI_API_KEY environment variable is required");
   process.exit(1);
 }
 
@@ -64,6 +83,12 @@ try {
   console.log("🌐 Function deployed to Google Cloud Functions");
 
 } catch (error) {
-  console.error("❌ Workflow failed:", error.message);
+  const stack = error && error.stack ? error.stack : '';
+  if (stack) {
+    // Print stack so terminals show a clickable link to the failing location
+    console.error(stack);
+  } else {
+    console.error("❌ Workflow failed:", error.message);
+  }
   process.exit(1);
 }

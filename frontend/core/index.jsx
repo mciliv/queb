@@ -1,36 +1,67 @@
-// Forward browser console logs to backend so they appear in Cursor terminal
+// Forward browser console logs (with stack/location) to backend in dev
 if (process.env.NODE_ENV !== 'production') {
-  const forward = (type, args) => {
+  const parseStackTop = (stack) => {
+    if (!stack || typeof stack !== 'string') return null;
+    const lines = stack.split('\n').map(s => s.trim());
+    // Skip the first line ("Error") and our own wrapper frames
+    for (let i = 1; i < lines.length; i++) {
+      const ln = lines[i];
+      const m = ln.match(/\((.*):(\d+):(\d+)\)$/) || ln.match(/at (.*):(\d+):(\d+)/);
+      if (m) {
+        return { file: m[1], line: Number(m[2]), column: Number(m[3]) };
+      }
+    }
+    return null;
+  };
+
+  const toMessage = (args) => args.map(a => {
+    if (a instanceof Error) return a.message;
+    if (typeof a === 'string') return a;
+    try { return JSON.stringify(a); } catch (_) { return String(a); }
+  }).join(' ');
+
+  const capture = (type, args) => {
     try {
+      let stack = '';
+      // Prefer explicit Error arg stack
+      const errArg = args.find(a => a instanceof Error);
+      if (errArg && errArg.stack) {
+        stack = errArg.stack;
+      } else {
+        try { throw new Error(); } catch (e) { stack = e.stack || ''; }
+      }
+      const loc = parseStackTop(stack);
       fetch('/api/log-error', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type,
-          message: args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' '),
+          message: toMessage(args),
           timestamp: new Date().toISOString(),
-          source: 'frontend'
+          source: 'frontend',
+          stack,
+          location: loc,
+          url: (typeof window !== 'undefined' && window.location && window.location.href) ? window.location.href : ''
         })
       });
-    } catch (e) {}
+    } catch (_) {}
   };
 
   const originalLog = console.log;
   const originalWarn = console.warn;
   const originalError = console.error;
 
-  console.log = (...args) => {
-    forward('log', args);
-    originalLog(...args);
-  };
-  console.warn = (...args) => {
-    forward('warn', args);
-    originalWarn(...args);
-  };
-  console.error = (...args) => {
-    forward('error', args);
-    originalError(...args);
-  };
+  console.log = (...args) => { capture('log', args); originalLog(...args); };
+  console.warn = (...args) => { capture('warn', args); originalWarn(...args); };
+  console.error = (...args) => { capture('error', args); originalError(...args); };
+
+  // Also forward global errors/rejections
+  window.addEventListener('error', (e) => {
+    capture('error', [e.message, e.error || '']);
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    capture('error', ['UnhandledRejection', e.reason || '']);
+  });
 }
 
 import React from 'react';
