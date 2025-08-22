@@ -278,7 +278,9 @@ fi
 
 # Start the Node.js backend server with debugger
 log_info "⚙️  Starting backend server with debugger..."
-NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon \
+DEV_BACKEND_LOG="/tmp/dev_backend.log"
+rm -f "$DEV_BACKEND_LOG" 2>/dev/null || true
+( NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon \
   --quiet \
   --watch backend \
   --ext js,json \
@@ -286,7 +288,7 @@ NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon \
   --ignore frontend/dist/** \
   --ignore dist/** \
   --ignore test/** \
-  --exec "node --inspect=9229" backend/api/server.js &
+  --exec "node --inspect=9229" backend/api/server.js 2>&1 | tee -a "$DEV_BACKEND_LOG" ) &
 BACKEND_PID=$!
 
 # Wait for backend to be ready (up to 60s)
@@ -300,6 +302,11 @@ for i in {1..60}; do
 done
 if [ "$BACKEND_READY" != true ]; then
   log_error "❌ Backend failed to respond at $DEV_URL after 60 seconds"
+  if [ -f "$DEV_BACKEND_LOG" ]; then
+    echo "—— Backend startup logs (last 80 lines) ——"
+    tail -n 80 "$DEV_BACKEND_LOG" || true
+    echo "—— End logs ——"
+  fi
 fi
 
 # Check if backend is running
