@@ -278,7 +278,10 @@ fi
 
 # Start the Node.js backend server with debugger
 log_info "⚙️  Starting backend server with debugger..."
-DEV_BACKEND_LOG="/tmp/dev_backend.log"
+# Ensure top-level logs directory exists and use it for backend logs
+LOG_DIR="$PROJECT_ROOT/logs"
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+DEV_BACKEND_LOG="$LOG_DIR/backend-dev.log"
 rm -f "$DEV_BACKEND_LOG" 2>/dev/null || true
 ( NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon \
   --quiet \

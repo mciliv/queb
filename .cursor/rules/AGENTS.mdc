@@ -12,7 +12,9 @@ If anything can be seen as a principle, put here
 No logging
 Show existing code chunks wherever possible instead of descriptions
 Don't create extraneous files; no markdown, if anything, simplify the code & tell me why to look at it
-create least files/codelines possible under contraint of a file providing our clearest thinkinkable abstraction
+create least files/codelines possible under contraint of a file providing our clearest
+delete unnecessities
+thinkinkable abstraction
 cleanup after creating anything new
 
 # Conventions

@@ -3,24 +3,13 @@
 # Exit on any error
 set -e
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Function to print colored output
-print_status() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
+# Shared colors and logging
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ -f "$PROJECT_ROOT/infrastructure/scripts/colors.sh" ]; then
+    source "$PROJECT_ROOT/infrastructure/scripts/colors.sh"
+else
+    echo "colors.sh not found at $PROJECT_ROOT/infrastructure/scripts/colors.sh" >&2
+fi
 
 # Get script directory and project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -30,7 +19,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 setup_mol_aliases() {
     # Validate project root
     if [[ ! -d "$PROJECT_ROOT" ]]; then
-        print_error "Project root not found at: $PROJECT_ROOT"
+        log_error "Project root not found at: $PROJECT_ROOT"
         return 1
     fi
 
@@ -38,7 +27,7 @@ setup_mol_aliases() {
     local scripts=("dev" "tests" "ship" "server" "debug" "cleanup")
     for script in "${scripts[@]}"; do
         if [[ ! -f "$PROJECT_ROOT/$script" ]]; then
-            print_warning "Script not found: $PROJECT_ROOT/$script"
+            log_warning "Script not found: $PROJECT_ROOT/$script"
         fi
     done
 
@@ -46,18 +35,18 @@ setup_mol_aliases() {
     RC_FILE=~/.zshrc
     if [[ -f ~/.bashrc ]] && [[ ! -f ~/.zshrc ]]; then
         RC_FILE=~/.bashrc
-        print_warning "Using ~/.bashrc instead of ~/.zshrc"
+        log_warning "Using ~/.bashrc instead of ~/.zshrc"
     fi
 
     # Create backup
     BACKUP_FILE="${RC_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
     cp "$RC_FILE" "$BACKUP_FILE"
-    print_status "Created backup: $BACKUP_FILE"
+    log_success "Created backup: $BACKUP_FILE"
 
     # Remove existing mol aliases section
     if grep -q "# mol aliases" "$RC_FILE"; then
         sed -i.bak '/# mol aliases/,/# end mol aliases/d' "$RC_FILE"
-        print_status "Removed existing mol aliases"
+        log_info "Removed existing mol aliases"
     fi
 
     # Add new aliases for direct scripts
@@ -80,10 +69,10 @@ alias pytest="\$MOL_ROOT/tests pytest"
 # end mol aliases
 EOF
 
-    print_status "Aliases added to $RC_FILE"
-    print_status "Project root: $PROJECT_ROOT"
-    print_status "Available aliases: dev, test, tests, ship, server, debug, cleanup, unit, integration, system, watch, pytest"
-    print_status "Run 'source $RC_FILE' to reload aliases"
+    log_success "Aliases added to $RC_FILE"
+    log_info "Project root: $PROJECT_ROOT"
+    log_info "Available aliases: dev, test, tests, ship, server, debug, cleanup, unit, integration, system, watch, pytest"
+    log_info "Run 'source $RC_FILE' to reload aliases"
 }
 
 # Only run setup if script is executed directly (not sourced)

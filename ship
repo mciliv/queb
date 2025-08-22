@@ -1,16 +1,11 @@
 #!/usr/bin/env node
 
 const { execSync } = require("child_process");
-// Load env from .env if present
-try { require('dotenv').config(); } catch (_) {}
-// Support alias env var
+try { require("dotenv").config(); } catch (_) {}
 if (!process.env.OPENAI_API_KEY && process.env.OPEN_API_KEY) {
   process.env.OPENAI_API_KEY = process.env.OPEN_API_KEY;
 }
 
-console.log("🚢 Starting complete workflow (ship)...");
-
-// Configuration
 const config = {
   functionName: "molecular-analysis",
   runtime: "nodejs20",
@@ -20,49 +15,24 @@ const config = {
   entryPoint: "molecularAnalysis",
 };
 
-// Pretty error with clickable source location
-function printErrorWithLocation(message) {
-  const err = new Error(message);
-  const stack = (err.stack || '').split('\n').map(s => s.trim());
-  // Second line usually contains the caller location
-  const top = stack[1] || '';
-  // Try to extract file:line:column
-  const m = top.match(/\((.*):(\d+):(\d+)\)/) || top.match(/at (.*):(\d+):(\d+)/);
-  if (m) {
-    const file = m[1];
-    const line = m[2];
-    const col = m[3];
-    console.error(`❌ ${message} - ${file}:${line}:${col}`);
-  } else {
-    console.error(`❌ ${message}`);
-    if (stack.length > 1) console.error(stack.slice(1).join('\n'));
-  }
-}
-
-// Check for required environment variable
 if (!process.env.OPENAI_API_KEY) {
-  printErrorWithLocation("OPENAI_API_KEY environment variable is required");
+  console.error("OPENAI_API_KEY required");
   process.exit(1);
 }
 
 try {
-  // Step 1: Stage all changes
-  console.log("📝 Staging all changes...");
-  execSync("git add .", { stdio: "inherit" });
+  try { execSync("gcloud --version", { stdio: "ignore" }); } catch (_) {
+    console.error("gcloud not installed");
+    process.exit(1);
+  }
+  const active = execSync("gcloud auth list --filter=status:ACTIVE --format=\"value(account)\"", { encoding: "utf8" }).trim();
+  if (!active) {
+    console.error("gcloud not authenticated");
+    process.exit(1);
+  }
 
-  // Step 2: Commit with timestamp
-  const timestamp = new Date().toLocaleString();
-  const commitMessage = `Auto-commit before production deployment - ${timestamp}`;
-  console.log("💾 Committing changes...");
-  execSync(`git commit -m "${commitMessage}"`, { stdio: "inherit" });
+  execSync("./test/test-run", { stdio: "inherit" });
 
-  // Step 3: Run pre-deployment tests
-  console.log("🧪 Running pre-deployment tests...");
-  execSync("npm run test:pre-deploy", { stdio: "inherit" });
-
-  // Step 4: Deploy to Google Cloud Functions
-  console.log("☁️  Deploying to Google Cloud Functions...");
-  
   const deployCommand = [
     "gcloud functions deploy",
     config.functionName,
@@ -75,26 +45,11 @@ try {
     `--region ${config.region}`,
     `--entry-point ${config.entryPoint}`,
     "--source .",
-    `--set-env-vars OPENAI_API_KEY=${process.env.OPENAI_API_KEY}`,
-    "--quiet"
+    `--set-env-vars OPENAI_API_KEY=${process.env.OPENAI_API_KEY},NODE_ENV=production`,
+    "--quiet",
   ].join(" ");
-
   execSync(deployCommand, { stdio: "inherit" });
-
-  // Step 5: Push to git repository
-  console.log("📤 Pushing to git repository...");
-  execSync("git push", { stdio: "inherit" });
-
-  console.log("✅ Complete workflow successful!");
-  console.log("🌐 Function deployed to Google Cloud Functions");
-
 } catch (error) {
-  const stack = error && error.stack ? error.stack : '';
-  if (stack) {
-    // Print stack so terminals show a clickable link to the failing location
-    console.error(stack);
-  } else {
-    console.error("❌ Workflow failed:", error.message);
-  }
+  console.error(error && error.stack ? error.stack : String(error));
   process.exit(1);
 }

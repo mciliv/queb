@@ -4,19 +4,26 @@
 # ===================
 # Automatically sets up the mol-toolkit as a git submodule
 
+# Try shared colors/logging first
+if [ -f "$(dirname "$0")/colors.sh" ]; then
+    source "$(dirname "$0")/colors.sh"
+fi
+
 # Load toolkit utilities (if they exist)
 TOOLKIT_DIR="$(dirname "$0")/../.mol-toolkit"
 if [ -d "$TOOLKIT_DIR" ]; then
     source "${TOOLKIT_DIR}/core/logging-utils.sh"
     set_error_handling "$(basename "$0")"
 else
-    # Fallback logging if toolkit doesn't exist yet
-    log() {
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
-    }
-    log_info() { log "INFO: $1"; }
-    log_error() { log "ERROR: $1"; }
-    log_warn() { log "WARN: $1"; }
+    # Fallback logging if toolkit doesn't exist yet and shared log not sourced
+    if ! declare -f log_info >/dev/null 2>&1; then
+        log() {
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+        }
+        log_info() { log "INFO: $1"; }
+        log_error() { log "ERROR: $1"; }
+        log_warn() { log "WARN: $1"; }
+    fi
 fi
 
 # Configuration
