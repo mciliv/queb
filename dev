@@ -1,367 +1,43 @@
 #!/bin/bash
-
-# dev - Development server with auto-cleanup, restart, and auto-commit on exit
-
 set -e
 
-# Get project root
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$PROJECT_ROOT"
+cmd="${1:-serve}"; shift || true
 
-# Colors for output
-source infrastructure/scripts/colors.sh
+serve() {
+  NODE_ENV=development node frontend/build-frontend.js --watch &
+  FE=$!
 
-# Function to handle commit and push
-commit_and_push() {
-    # Only commit if there are meaningful changes (not just dev script changes)
-    CHANGES=$(git status --porcelain | grep -v "^M  dev$" | grep -v "^M  commit$")
-    if [ -n "$CHANGES" ]; then
-        ./commit
-    else
-        log_info "No meaningful changes to commit"
-    fi
+  if node -e 'require.resolve("nodemon")' >/dev/null 2>&1; then
+    node scripts/start-backend.js &
+    BE=$!
+  else
+    PORT=3000 NODE_ENV=development bash scripts/start-backend.sh &
+    BE=$!
+  fi
+
+  if [ "$1" != "-B" ] && [ "$1" != "--no-browser" ]; then
+    FRONTEND_URL=http://localhost:3000 node frontend/dev-browser.js &
+    DB=$!
+  fi
+
+  trap 'kill $FE $BE $DB 2>/dev/null || true' INT TERM
+  wait $BE
 }
 
-# Auto-setup aliases on first run (Unix convention)
-if ! alias mol >/dev/null 2>&1; then
-    if [ -f ~/.zshrc ]; then
-        echo "alias mol='cd $(pwd) && ./dev'" >> ~/.zshrc
-        echo "alias test='cd $(pwd) && npx jest --testPathPattern=unit.test.js --verbose --silent'" >> ~/.zshrc
-        echo "alias build='cd $(pwd) && node frontend/build-frontend.js'" >> ~/.zshrc
-    elif [ -f ~/.bashrc ]; then
-        echo "alias mol='cd $(pwd) && ./dev'" >> ~/.bashrc
-        echo "alias test='cd $(pwd) && npx jest --testPathPattern=unit.test.js --verbose --silent'" >> ~/.bashrc
-        echo "alias build='cd $(pwd) && node frontend/build-frontend.js'" >> ~/.bashrc
-    fi
-    echo "✅ Aliases set up. Restart terminal or run 'source ~/.zshrc'"
-fi
+build()  { node frontend/build-frontend.js "$@"; }
+ship()   { node ship "$@"; }
+commit() { ./commit "$@"; }
+alias()  { echo "alias d='dev'" >> "${ZDOTDIR:-$HOME}/.zshrc"; echo "source ~/.zshrc"; }
 
-# Always clean up any existing processes first
-log_info "🔄 Cleaning up: backend servers, nodemon, dev browser, file watchers; freeing ports 3000/3001/3002/3004; clearing temp files"
-./clean 2>/dev/null || true
+case "$cmd" in
+  serve) serve "$@" ;;
+  build) build "$@" ;;
+  ship)  ship  "$@" ;;
+  commit) commit "$@" ;;
+  alias) alias ;;
+  -h|--help|help)
+    echo "dev serve [--no-browser|-B]"; echo "dev build [--watch]"; echo "dev ship [args...]"; echo "dev commit [args...]"; echo "dev alias" ;;
+  *) serve "$cmd" "$@" ;;
+esac
 
-# Wait a moment for cleanup to complete
-sleep 1
 
-# Parse flags
-SKIP_DEV_BROWSER=${SKIP_DEV_BROWSER:-false}
-GIT_REF=""  # Git reference to run (e.g., @, @^, @^2, commit hash)
-GIT_RANGE=""  # Git range to run (e.g., @..@~3, @^..@~5)
-
-# Test/visual modes
-TEST_MODE=${DEV_TESTS:-watch}   # watch|startup|off
-VISUAL_MODE=${DEV_VISUAL:-off}  # on|off
-TEST_MODE_SET=false
-QUICK_MODE=false
-
-for arg in "$@"; do
-  if [[ "$arg" == "--quick" || "$arg" == "-q" ]]; then
-    QUICK_MODE=true
-    log_info "⚡ Quick mode"
-  fi
-  if [[ "$arg" == "--no-browser" || "$arg" == "-B" ]]; then
-    SKIP_DEV_BROWSER=true
-    log_info "🧩 Using built-in browser: not launching external dev browser"
-  fi
-  if [[ "$arg" == --tests=* ]]; then
-    TEST_MODE="${arg#--tests=}"
-    TEST_MODE_SET=true
-  fi
-  if [[ "$arg" == "--tests-startup" ]]; then
-    TEST_MODE=startup
-    TEST_MODE_SET=true
-  fi
-  if [[ "$arg" == "--tests-watch" ]]; then
-    TEST_MODE=watch
-    TEST_MODE_SET=true
-  fi
-  if [[ "$arg" == "--tests-off" || "$arg" == "--no-tests" ]]; then
-    TEST_MODE=off
-    TEST_MODE_SET=true
-  fi
-  if [[ "$arg" == "--visual" ]]; then
-    VISUAL_MODE=on
-  fi
-  if [[ "$arg" == --commit=* ]]; then
-    GIT_REF="${arg#--commit=}"
-    log_info "🎯 Running commit: $GIT_REF"
-  fi
-  # Support git range syntax (e.g., @..@~3, @^..@~5, abc123..def456)
-  if [[ "$arg" =~ ^[^-].*\.\.[^-].*$ ]]; then
-    GIT_RANGE="$arg"
-    log_info "🎯 Running git range: $GIT_RANGE"
-  fi
-  # Support direct git references (single commits)
-  if [[ "$arg" =~ ^(@|\^|[a-f0-9]{6,}).*$ ]] && [[ ! "$arg" =~ \.\. ]]; then
-    GIT_REF="$arg"
-    log_info "🎯 Running git ref: $GIT_REF"
-  fi
-done
-
-# If quick mode but no explicit tests preference, turn tests off
-if [[ "$QUICK_MODE" == true && "$TEST_MODE_SET" == false ]]; then
-  TEST_MODE=off
-fi
-
-# Tests handling (dev-only). Default: watch in background without blocking server
-if [ "$TEST_MODE" = "off" ]; then
-    log_info "⏭️  Tests: off"
-elif [ "$TEST_MODE" = "startup" ]; then
-    log_info "🧪 Running tests (startup mode)..."
-    if ! NODE_OPTIONS="" node test/scripts/unified-test-runner.js; then
-        log_error "❌ Tests failed!"
-        exit 1
-    fi
-    log_success "✅ Tests passed"
-else
-    # watch mode
-    log_info "👀 Tests: watch mode (non-blocking)"
-    NODE_OPTIONS="" node test/watch/file-watcher.js &
-    TEST_WATCHER_PID=$!
-    echo $TEST_WATCHER_PID > /tmp/dev_watcher_pid
-fi
-
-# Trap to handle Ctrl+C and commit before exit
-trap 'echo "🛑 Stopping..."; commit_and_push; kill $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; sleep 1; kill -9 $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
-
-log_info "🚀 Starting development server..."
-
-# Start frontend watch build
-log_info "📦 Starting frontend watcher..."
-DEV_URL="http://localhost:3000"
-NODE_OPTIONS="" node frontend/build-frontend.js --watch &
-FRONTEND_PID=$!
-
-if [[ "$SKIP_DEV_BROWSER" != true ]]; then
-  # Start dev browser manager (auto-close on changes, reopen on build complete)
-  log_info "🌐 Starting dev browser manager..."
-  FRONTEND_URL="$DEV_URL" NODE_OPTIONS="" node frontend/dev-browser.js &
-  DEV_BROWSER_PID=$!
-  echo $DEV_BROWSER_PID > /tmp/dev_browser_pid
-fi
-
-# Handle git range mode - run multiple versions in browser tabs
-if [[ -n "$GIT_RANGE" ]]; then
-  log_info "🚀 Starting git range mode: $GIT_RANGE"
-  
-  # Parse git range (e.g., @..@~3, @^..@~5, abc123..def456)
-  START_REF="${GIT_RANGE%%..*}"
-  END_REF="${GIT_RANGE##*..}"
-  
-  COMMITS=()
-  PIDS=()
-  PORTS=()
-  WORKTREES=()
-  
-  # Get commits in range using git rev-list (reverse chronological order)
-  log_info "📋 Generating commit range: $START_REF..$END_REF"
-  
-  # Use git rev-list to get commits in range (newest first)
-  COMMIT_LIST=$(git rev-list --reverse "$END_REF..$START_REF" 2>/dev/null)
-  if [ $? -ne 0 ]; then
-    log_error "❌ Invalid git range: $GIT_RANGE"
-    exit 1
-  fi
-  
-  # Convert to array and reverse to get newest first
-  while IFS= read -r commit; do
-    COMMITS+=("$commit")
-  done <<< "$COMMIT_LIST"
-  
-  # Reverse array to get newest first for tabs
-  REVERSED_COMMITS=()
-  for ((i=${#COMMITS[@]}-1; i>=0; i--)); do
-    REVERSED_COMMITS+=("${COMMITS[i]}")
-  done
-  COMMITS=("${REVERSED_COMMITS[@]}")
-  
-  RANGE_COUNT=${#COMMITS[@]}
-  
-  if [ $RANGE_COUNT -eq 0 ]; then
-    log_error "❌ No commits found in range: $GIT_RANGE"
-    exit 1
-  fi
-  
-  # Display commits
-  for ((i=0; i<RANGE_COUNT; i++)); do
-    COMMIT=${COMMITS[$i]}
-    MSG=$(git log -1 --pretty=%s "$COMMIT")
-    echo "  $((i+1)). ${COMMIT:0:8} - $MSG"
-  done
-  
-  # Cleanup existing range worktrees
-  for ((i=1; i<=10; i++)); do
-    git worktree remove ../mol-range-$i 2>/dev/null || true
-  done
-  
-  # Create worktrees and start servers
-  BASE_PORT=3000
-  for ((i=0; i<RANGE_COUNT; i++)); do
-    WORKTREE="../mol-range-$((i+1))"
-    PORT=$((BASE_PORT + i*10))
-    COMMIT=${COMMITS[$i]}
-    
-    git worktree add "$WORKTREE" "$COMMIT" --quiet
-    WORKTREES+=("$WORKTREE")
-    PORTS+=("$PORT")
-    
-    cd "$WORKTREE"
-    
-    # Setup environment in worktree
-    npm install --silent 2>/dev/null || true
-    node frontend/build-frontend.js 2>/dev/null || true
-    
-    PORT=$PORT NODE_ENV=development node backend/api/server.js &
-    PIDS+=($!)
-    cd - > /dev/null
-    
-    echo "  Version $((i+1)) (${COMMIT:0:8}): http://localhost:$PORT"
-  done
-  
-  cd "$PROJECT_ROOT"
-  
-  # Wait and open browser tabs
-  sleep 2
-  for ((i=0; i<RANGE_COUNT; i++)); do
-    PORT=${PORTS[$i]}
-    URL="http://localhost:$PORT"
-    
-    if [ $i -eq 0 ]; then
-      open "$URL" 2>/dev/null || xdg-open "$URL" 2>/dev/null || echo "Manual: $URL"
-    else
-      sleep 0.5
-      open -g "$URL" 2>/dev/null || xdg-open "$URL" 2>/dev/null || echo "Manual: $URL"
-    fi
-  done
-  
-  echo ""
-  echo "✅ $RANGE_COUNT versions running:"
-  for ((i=0; i<RANGE_COUNT; i++)); do
-    COMMIT=${COMMITS[$i]}
-    PORT=${PORTS[$i]}
-    MSG=$(git log -1 --pretty=%s "$COMMIT")
-    echo "  $((i+1)). ${COMMIT:0:8} → http://localhost:$PORT - $MSG"
-  done
-  
-  # Range mode cleanup trap
-  trap 'echo ""; echo "🧹 Stopping range servers..."; for pid in "${PIDS[@]}"; do kill $pid 2>/dev/null || true; done; echo "🗑️ Removing worktrees..."; for worktree in "${WORKTREES[@]}"; do git worktree remove "$worktree" --force 2>/dev/null || true; done; echo "✅ Range cleanup complete"; exit 0' INT TERM
-  
-  # Wait for all processes in range mode
-  wait "${PIDS[@]}"
-  exit 0
-fi
-
-# Handle single git reference using worktree if specified
-if [[ -n "$GIT_REF" ]]; then
-  RESOLVED_COMMIT=$(git rev-parse "$GIT_REF" 2>/dev/null)
-  
-  if [[ $? -eq 0 ]]; then
-    log_info "🔄 Creating worktree for $GIT_REF (${RESOLVED_COMMIT:0:8})..."
-    
-    git worktree remove ../mol-dev 2>/dev/null || true
-    git worktree add ../mol-dev "$GIT_REF" --quiet
-    
-    cd ../mol-dev
-    log_info "📁 Running from worktree: $(pwd)"
-    
-    # Setup environment in worktree
-    npm install --silent 2>/dev/null || true
-    node frontend/build-frontend.js 2>/dev/null || true
-    
-    # Update trap to cleanup worktree
-    trap 'echo "🛑 Stopping worktree..."; commit_and_push; cd ../mol; git worktree remove ../mol-dev --force 2>/dev/null || true; kill $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; sleep 1; kill -9 $BACKEND_PID $FRONTEND_PID $DEV_BROWSER_PID $TEST_WATCHER_PID $VISUAL_WATCH_PID 2>/dev/null || true; exit 0' INT TERM
-  else
-    log_error "❌ Invalid git reference: $GIT_REF"
-    exit 1
-  fi
-fi
-
-# Start the Node.js backend server with debugger
-log_info "⚙️  Starting backend server with debugger..."
-# Ensure top-level logs directory exists and use it for backend logs
-LOG_DIR="$PROJECT_ROOT/logs"
-mkdir -p "$LOG_DIR" 2>/dev/null || true
-DEV_BACKEND_LOG="$LOG_DIR/backend-dev.log"
-rm -f "$DEV_BACKEND_LOG" 2>/dev/null || true
-( NODE_OPTIONS="" PORT=3000 NODE_ENV=development npx nodemon \
-  --quiet \
-  --watch backend \
-  --ext js,json \
-  --ignore frontend/** \
-  --ignore frontend/dist/** \
-  --ignore dist/** \
-  --ignore test/** \
-  --exec "node --inspect=9229" backend/api/server.js 2>&1 | tee -a "$DEV_BACKEND_LOG" ) &
-BACKEND_PID=$!
-
-# Wait for backend to be ready (up to 60s)
-BACKEND_READY=false
-for i in {1..60}; do
-  if curl -s "$DEV_URL" >/dev/null 2>&1; then
-    BACKEND_READY=true
-    break
-  fi
-  sleep 1
-done
-if [ "$BACKEND_READY" != true ]; then
-  log_error "❌ Backend failed to respond at $DEV_URL after 60 seconds"
-  if [ -f "$DEV_BACKEND_LOG" ]; then
-    echo "—— Backend startup logs (last 80 lines) ——"
-    tail -n 80 "$DEV_BACKEND_LOG" || true
-    echo "—— End logs ——"
-  fi
-fi
-
-# Check if backend is running
-if kill -0 $BACKEND_PID 2>/dev/null; then
-    log_success "✅ Development server ready!"
-    log_success "🌐 Frontend: $DEV_URL"
-    log_success "🐛 Debug: VS Code auto-attach enabled"
-    log_success "🔄 Auto-refresh: Save files to trigger rebuilds"
-    log_success "⏹️  Stop: Ctrl+C (auto-commits changes)"
-    # Ensure a browser window opens even if Puppeteer fails
-    if [ "$BACKEND_READY" = true ]; then
-      (
-        sleep 1
-        if command -v open >/dev/null 2>&1; then
-          open "$DEV_URL" >/dev/null 2>&1 || true
-        elif command -v xdg-open >/dev/null 2>&1; then
-          xdg-open "$DEV_URL" >/dev/null 2>&1 || true
-        elif command -v start >/dev/null 2>&1; then
-          start "$DEV_URL" >/dev/null 2>&1 || true
-        fi
-      ) &
-    fi
-    
-    # Store PID for cleanup
-    echo $BACKEND_PID > /tmp/dev_backend_pid
-    
-    # Optionally autorun visual tests once server is ready
-    if [[ "$VISUAL_MODE" == on ]]; then
-      log_info "🖼️  Running visual tests..."
-      # Default to dev HTTP port 3000 if not provided
-      if [[ -z "$FRONTEND_URL" ]]; then
-        export FRONTEND_URL="http://localhost:3000"
-      fi
-      NODE_OPTIONS="" FRONTEND_URL="$FRONTEND_URL" node test/scripts/test-visual-demo.js || true
-      log_success "✅ Visual tests triggered"
-
-      # Start visual tests watch mode (non-blocking)
-      log_info "👀 Visual tests: watch mode (non-blocking)"
-      NODE_OPTIONS="" FRONTEND_URL="$FRONTEND_URL" npx nodemon \
-        --quiet \
-        --watch frontend \
-        --watch backend \
-        --watch test/scripts \
-        --ext js,jsx,css,html \
-        --exec "node test/scripts/test-visual-demo.js" &
-      VISUAL_WATCH_PID=$!
-    fi
-
-    # Wait for process to exit
-    wait $BACKEND_PID
-    
-else
-    log_error "❌ Backend server failed to start"
-    exit 1
-fi
