@@ -17,3 +17,16 @@ updates:
           - "*"
         update-types:
           - "security"
+
+  # Monitor nested npm workspace/package for infra config
+  - package-ecosystem: "npm"
+    directory: "/infrastructure/config"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

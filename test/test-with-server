@@ -8,13 +8,14 @@ set -e
 echo "🚀 Starting Test with Server Procedure..."
 echo "========================================="
 
-# Shared colors and logging
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$PROJECT_ROOT/infrastructure/scripts/colors.sh" ]; then
-    source "$PROJECT_ROOT/infrastructure/scripts/colors.sh"
-fi
-
+# Colors and tiny log helpers
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
 log_step() { echo -e "${BLUE}🔄 $1${NC}"; }
+log_success() { echo -e "${GREEN}✅ $1${NC}"; }
+log_info() { echo -e "${YELLOW}ℹ️  $1${NC}"; }
 
 # Clean up any existing processes
 log_step "Cleaning up existing processes..."

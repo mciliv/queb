@@ -16,6 +16,7 @@ create least files/codelines possible under contraint of a file providing our cl
 delete unnecessities
 thinkinkable abstraction
 cleanup after creating anything new
+Let's do command line based vs web-based executions, so we can both check
 
 # Conventions
-Name files, variables, functions, classes specifically
+Name files, variables, functions, classes hyper-specifically
