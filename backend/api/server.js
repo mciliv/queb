@@ -1458,12 +1458,13 @@ if (!isServerless && !isTestMode) {
 }
 
 // Global error handlers
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("❌ Unhandled Rejection:", reason);
+const ErrorStackLogger = require("../services/ErrorStackLogger");
+process.on("unhandledRejection", (reason) => {
+  ErrorStackLogger.log(reason, "Unhandled Rejection");
 });
 
 process.on("uncaughtException", (error) => {
-  console.error("❌ Uncaught Exception:", error.message);
+  ErrorStackLogger.log(error, "Uncaught Exception");
   process.exit(1);
 });
 
