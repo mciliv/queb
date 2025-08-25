@@ -52,7 +52,8 @@ class UnifiedTestRunner {
   async runUnitTests() {
     try {
       const success = await this.runCommand('npx', [
-        'jest', 
+        'jest',
+        '--config', 'test/jest.config.js',
         '--testPathPattern=unit.test.js',
         '--silent',
         '--reporters=default'
@@ -78,6 +79,7 @@ class UnifiedTestRunner {
       
       const success = await this.runCommand('npx', [
         'jest',
+        '--config', 'test/jest.config.js',
         'test/suites/integration/visual-interface.test.js',
         '--testTimeout=30000',
         '--silent'
@@ -126,6 +128,7 @@ class UnifiedTestRunner {
 
       const success = await this.runCommand('npx', [
         'jest',
+        '--config', 'test/jest.config.js',
         'test/suites/integration/full-pipeline-visualization.test.js',
         '--testTimeout=60000',
         '--silent'
@@ -149,6 +152,7 @@ class UnifiedTestRunner {
       }
       const success = await this.runCommand('npx', [
         'jest',
+        '--config', 'test/jest.config.js',
         'test/suites/integration/persistent-tab-tests.test.js',
         '--testTimeout=30000',
         '--silent'
@@ -173,6 +177,7 @@ class UnifiedTestRunner {
 
       const success = await this.runCommand('npx', [
         'jest',
+        '--config', 'test/jest.config.js',
         'test/suites/integration/molecular-accuracy.test.js',
         '--testTimeout=60000',
         '--silent'
@@ -227,6 +232,7 @@ class UnifiedTestRunner {
     try {
       const success = await this.runCommand('npx', [
         'jest',
+        '--config', 'test/jest.config.js',
         'test/suites/integration/auto-inject-tests.test.js',
         '--testTimeout=60000',
         '--silent'

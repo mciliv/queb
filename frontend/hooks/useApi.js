@@ -71,6 +71,38 @@ export const useApi = () => {
         return apiCall(endpoint, options, retryCount + 1);
       }
 
+      // Report image structuralization failures to backend logger (fire-and-forget)
+      try {
+        const isImageStructuralization = typeof endpoint === 'string' && (
+          endpoint.includes('structuralize-image') ||
+          endpoint.includes('image-molecules') ||
+          endpoint.includes('estimate-image')
+        );
+        if (isImageStructuralization) {
+          const payload = {
+            timestamp: new Date().toISOString(),
+            type: 'error',
+            source: 'frontend',
+            message: `AI failed to analyze image: ${errorMessage}`,
+            endpoint,
+          };
+          if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+            navigator.sendBeacon('/api/log-error', blob);
+          } else {
+            // Best-effort logging without blocking UI
+            fetch('/api/log-error', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+              keepalive: true,
+            }).catch(() => {});
+          }
+        }
+      } catch (_) {
+        // ignore reporter failures
+      }
+
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -78,12 +110,12 @@ export const useApi = () => {
     }
   }, []);
 
-  const structuresFromText = useCallback(async (text) => {
+  const structuralizeText = useCallback(async (text) => {
     if (!text || !text.trim()) {
       throw new Error('Text input is required');
     }
 
-    return apiCall('/structures-from-text', {
+    return apiCall('/structuralize', {
       method: 'POST',
       body: JSON.stringify({ object: text }),
       maxRetries: 2,
@@ -93,7 +125,6 @@ export const useApi = () => {
 
   const structuralizeImage = useCallback(async (
     imageData,
-    _label,
     x,
     y,
     cropMiddleX,
@@ -109,14 +140,15 @@ export const useApi = () => {
       ? imageData.split(',')[1]
       : imageData;
 
+    const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
     const payload = { imageBase64: base64 };
-    if (typeof x === 'number') payload.x = x;
-    if (typeof y === 'number') payload.y = y;
-    if (typeof cropMiddleX === 'number') payload.cropMiddleX = cropMiddleX;
-    if (typeof cropMiddleY === 'number') payload.cropMiddleY = cropMiddleY;
-    if (typeof cropSize === 'number') payload.cropSize = cropSize;
+    if (typeof x === 'number') payload.x = clamp(Math.round(x), 0, 1000);
+    if (typeof y === 'number') payload.y = clamp(Math.round(y), 0, 1000);
+    if (typeof cropMiddleX === 'number') payload.cropMiddleX = clamp(Math.round(cropMiddleX), 0, 1000);
+    if (typeof cropMiddleY === 'number') payload.cropMiddleY = clamp(Math.round(cropMiddleY), 0, 1000);
+    if (typeof cropSize === 'number') payload.cropSize = clamp(Math.round(cropSize), 10, 500);
 
-    return apiCall('/structuralize-image', {
+    return apiCall('/structuralize', {
       method: 'POST',
       body: JSON.stringify(payload),
       maxRetries: 1,
@@ -174,8 +206,8 @@ export const useApi = () => {
     loading,
     error,
     apiCall,
-    analyzeText: structuresFromText,
-    structuresFromText,
+    analyzeText: structuralizeText,
+    structuresFromText: structuralizeText,
     analyzeImage: structuralizeImage,
     generateSDFs,
     twoNamesToSdf,

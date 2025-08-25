@@ -313,7 +313,7 @@ app.post("/image-molecules", async (req, res) => {
       return res.status(400).json({ error: "No image data provided" });
     }
 
-    const result = await structuralizer.analyzeImage(
+    const result = await structuralizer.structuralizeImage(
       imageBase64,
       croppedImageBase64,
       x,
@@ -328,7 +328,7 @@ app.post("/image-molecules", async (req, res) => {
   }
 });
 
-// Text analysis route
+// Deprecated aliases (kept for compatibility): prefer /structuralize-*
 app.post("/object-molecules", async (req, res) => {
   try {
     // Validate input schema
@@ -346,7 +346,7 @@ app.post("/object-molecules", async (req, res) => {
       return res.status(400).json({ error: "No object description provided" });
     }
 
-    const result = await structuralizer.analyzeText(object);
+    const result = await structuralizer.structuralizeText(object);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1006,7 +1006,7 @@ app.post("/analyze-text", async (req, res) => {
       return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
     }
 
-    const result = await structuralizer.analyzeText(object || "");
+    const result = await structuralizer.structuralizeText(object || "");
     res.json(result);
   } catch (error) {
     console.error("Text analysis error:", error);
@@ -1023,7 +1023,7 @@ app.post("/structures-from-text", async (req, res) => {
     if (!object || typeof object !== "string" || object.trim().length === 0) {
       return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
     }
-    const result = await structuralizer.analyzeText(object || "");
+    const result = await structuralizer.structuralizeText(object || "");
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: `Analysis failed: ${error.message}` });
@@ -1051,7 +1051,7 @@ app.post("/estimate-image", async (req, res) => {
       return res.status(400).json({ error: "No image data provided" });
     }
     // Reuse analysis pipeline for estimation wording
-    const result = await structuralizer.analyzeImage(imageBase64);
+    const result = await structuralizer.structuralizeImage(imageBase64);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1065,7 +1065,7 @@ app.post("/structuralize-text", async (req, res) => {
     if (!object || typeof object !== "string" || object.trim().length === 0) {
       return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
     }
-    const result = await structuralizer.analyzeText(object || "");
+    const result = await structuralizer.structuralizeText(object || "");
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: `Structuralization failed: ${error.message}` });
@@ -1074,11 +1074,19 @@ app.post("/structuralize-text", async (req, res) => {
 
 app.post("/structuralize-image", async (req, res) => {
   try {
-    const { imageBase64 } = req.body;
+    const { imageBase64, croppedImageBase64, x, y, cropMiddleX, cropMiddleY, cropSize } = req.body;
     if (!imageBase64) {
       return res.status(400).json({ error: "No image data provided" });
     }
-    const result = await structuralizer.analyzeImage(imageBase64);
+    const result = await structuralizer.structuralizeImage(
+      imageBase64,
+      croppedImageBase64,
+      typeof x === 'number' ? x : null,
+      typeof y === 'number' ? y : null,
+      typeof cropMiddleX === 'number' ? cropMiddleX : null,
+      typeof cropMiddleY === 'number' ? cropMiddleY : null,
+      typeof cropSize === 'number' ? cropSize : null
+    );
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1091,7 +1099,7 @@ app.post("/structuralize", async (req, res) => {
     if (!req.body || (typeof req.body !== 'object')) {
       return res.status(400).json({ error: "Invalid payload" });
     }
-    const out = await structuralizer.analyze(req.body);
+    const out = await structuralizer. structuralize(req.body);
     res.json(out);
   } catch (error) {
     res.status(500).json({ error: `Structuralization failed: ${error.message}` });
@@ -1115,7 +1123,7 @@ app.post("/object-molecules", async (req, res) => {
       return res.status(400).json({ error: "No object description provided" });
     }
 
-    const result = await structuralizer.analyzeText(object);
+    const result = await structuralizer.structuralizeText(object);
     res.json(result);
   } catch (error) {
     console.error("Text analysis error:", error);

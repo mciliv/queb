@@ -1,83 +1,47 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Exit on any error
-set -e
+project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-log_warning() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-
-# Get script directory and project root
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-# Function to setup aliases
-setup_mol_aliases() {
-    # Validate project root
-    if [[ ! -d "$PROJECT_ROOT" ]]; then
-        log_error "Project root not found at: $PROJECT_ROOT"
-        return 1
-    fi
-
-    # Check if scripts exist
-    local scripts=("dev" "tests" "ship" "server" "debug" "cleanup")
-    for script in "${scripts[@]}"; do
-        if [[ ! -f "$PROJECT_ROOT/$script" ]]; then
-            log_warning "Script not found: $PROJECT_ROOT/$script"
-        fi
-    done
-
-    # Determine RC file
-    RC_FILE=~/.zshrc
-    if [[ -f ~/.bashrc ]] && [[ ! -f ~/.zshrc ]]; then
-        RC_FILE=~/.bashrc
-        log_warning "Using ~/.bashrc instead of ~/.zshrc"
-    fi
-
-    # Create backup
-    BACKUP_FILE="${RC_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
-    cp "$RC_FILE" "$BACKUP_FILE"
-    log_success "Created backup: $BACKUP_FILE"
-
-    # Remove existing mol aliases section
-    if grep -q "# mol aliases" "$RC_FILE"; then
-        sed -i.bak '/# mol aliases/,/# end mol aliases/d' "$RC_FILE"
-        log_info "Removed existing mol aliases"
-    fi
-
-    # Add new aliases for direct scripts
-    cat >> "$RC_FILE" << EOF
-
-# mol aliases - Direct script aliases
-MOL_ROOT="$PROJECT_ROOT"
-alias dev="\$MOL_ROOT/dev"
-alias test="\$MOL_ROOT/tests"
-alias tests="\$MOL_ROOT/tests"
-alias ship="\$MOL_ROOT/ship" 
-alias server="\$MOL_ROOT/server"
-alias debug="\$MOL_ROOT/debug"
-alias cleanup="\$MOL_ROOT/cleanup"
-alias unit="\$MOL_ROOT/tests unit"
-alias integration="\$MOL_ROOT/tests integration"
-alias system="\$MOL_ROOT/tests system"
-alias watch="\$MOL_ROOT/tests watch"
-alias pytest="\$MOL_ROOT/tests pytest"
-# end mol aliases
-EOF
-
-    log_success "Aliases added to $RC_FILE"
-    log_info "Project root: $PROJECT_ROOT"
-    log_info "Available aliases: dev, test, tests, ship, server, debug, cleanup, unit, integration, system, watch, pytest"
-    log_info "Run 'source $RC_FILE' to reload aliases"
+detect_rc_file() {
+  shell_path="${SHELL:-}"
+  if [ -n "${ZDOTDIR:-}" ] && [ -f "${ZDOTDIR}/.zshrc" ]; then
+    echo "${ZDOTDIR}/.zshrc"; return
+  fi
+  if [ "${shell_path##*/}" = "zsh" ]; then
+    echo "${HOME}/.zshrc"; return
+  fi
+  if [ -f "${HOME}/.bashrc" ]; then
+    echo "${HOME}/.bashrc"; return
+  fi
+  echo "${HOME}/.bash_profile"
 }
 
-# Only run setup if script is executed directly (not sourced)
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    setup_mol_aliases
-fi 
+rc_file="$(detect_rc_file)"
+touch "$rc_file"
+backup="${rc_file}.bak.$(date +%Y%m%d_%H%M%S)"
+cp "$rc_file" "$backup"
+
+tmp_file="$(mktemp)"
+awk 'BEGIN{skip=0} /# mol aliases start/{skip=1; next} /# mol aliases end/{skip=0; next} skip==0{print}' "$rc_file" > "$tmp_file"
+mv "$tmp_file" "$rc_file"
+
+{
+  echo
+  echo "# mol aliases start"
+  echo "MOL_ROOT=\"$project_root\""
+  echo "mol_is_in_mol_dir() { case \"\$PWD/\" in \"$project_root/*\") return 0;; \*) return 1;; esac }"
+  echo "mol_activate() { case :\"\$PATH\": in *:\"$project_root/scripts\":*) ;; *) export PATH=\"$project_root/scripts:\$PATH\" ;; esac; unalias dev 2>/dev/null || true; alias d=\"dev\" 2>/dev/null || true; hash -r 2>/dev/null || true; rehash 2>/dev/null || true; }"
+  echo "mol_deactivate() { local p=:\"\$PATH\":; p=\"\${p//:$project_root\\/scripts:/:}\"; p=\"\${p#:}\"; p=\"\${p%:}\"; export PATH=\"\$p\"; unalias d 2>/dev/null || true; }"
+  echo "mol_chpwd() { if mol_is_in_mol_dir; then mol_activate; else mol_deactivate; fi }"
+  echo "# zsh hook"
+  echo "if [ -n \"\$ZSH_VERSION\" ]; then autoload -U add-zsh-hook 2>/dev/null || true; add-zsh-hook chpwd mol_chpwd 2>/dev/null || true; fi"
+  echo "# bash fallback"
+  echo "if [ -n \"\$BASH_VERSION\" ]; then case \"\$PROMPT_COMMAND\" in *mol_chpwd*) ;; *) PROMPT_COMMAND=\"mol_chpwd;\$PROMPT_COMMAND\" ;; esac; fi"
+  echo "# run once for current shell"
+  echo "mol_chpwd"
+  echo "# mol aliases end"
+} >> "$rc_file"
+
+echo "Aliases installed to $rc_file"
+echo "Reload with: source \"$rc_file\""

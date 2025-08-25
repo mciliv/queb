@@ -15,7 +15,7 @@ async function build() {
   if (watch) {
     const ctx = await esbuild.context({
       entryPoints: [entry],
-      outfile: path.join(outdir, 'bundle.js'),
+      outfile: path.  join(outdir, 'bundle.js'),
       bundle: true,
       sourcemap: true,
       minify: false,
@@ -43,5 +43,3 @@ build().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-
-

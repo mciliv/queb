@@ -82,6 +82,7 @@ async function runTests() {
     console.log(`\n📋 Running ${testFile}...`);
     
     const jestArgs = [
+      '--config', 'test/jest.config.js',
       testFile,
       '--verbose',
       '--colors',

@@ -4,4 +4,8 @@ set -e
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../.. && pwd)"
 cd "$ROOT_DIR"
 
-exec ./ship "$@"
+if [ -x scripts/ship ]; then
+  exec scripts/ship "$@"
+else
+  exec ./ship "$@"
+fi

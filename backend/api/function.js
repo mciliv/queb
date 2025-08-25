@@ -5,7 +5,7 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-const Structuralizer = require("../services/StructurePredictor");
+const Structuralizer = require("../services/Structuralizer");
 const MolecularProcessor = require("../services/molecular-processor");
 const {
   ImageMoleculeSchema,
@@ -40,7 +40,7 @@ const handleTextAnalysis = async (req, res) => {
     if (!object || typeof object !== 'string' || object.trim().length === 0) {
       return res.status(400).json({ error: "No object description provided" });
     }
-    const result = await structuralizer.analyzeText(object.trim());
+    const result = await structuralizer.structuralizeText(object.trim());
     res.json({ output: result });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -78,7 +78,7 @@ app.post("/image-molecules", async (req, res) => {
       return res.status(400).json({ error: "No image data provided" });
     }
 
-    const result = await structuralizer.analyzeImage(
+    const result = await structuralizer.structuralizeImage(
       imageBase64,
       croppedImageBase64,
       x,

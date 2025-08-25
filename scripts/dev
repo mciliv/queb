@@ -1,0 +1,85 @@
+#!/bin/bash
+set -e
+
+# Ensure aliases are installed once via the consolidated installer
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+detect_rc_file() {
+  if [ -n "${ZDOTDIR:-}" ] && [ -f "${ZDOTDIR}/.zshrc" ]; then echo "${ZDOTDIR}/.zshrc"; return; fi
+  if [ "${SHELL##*/}" = "zsh" ]; then echo "${HOME}/.zshrc"; return; fi
+  [ -f "${HOME}/.bashrc" ] && { echo "${HOME}/.bashrc"; return; }
+  echo "${HOME}/.bash_profile"
+}
+RC_FILE="$(detect_rc_file)"
+if ! grep -q "# mol aliases start" "$RC_FILE" 2>/dev/null; then
+  bash "$PROJECT_ROOT/infrastructure/setup-aliases.sh" >/dev/null 2>&1 || true
+fi
+
+cmd="${1:-serve}"; shift || true
+RESTART=0
+
+serve() {
+  local debug=0
+  local nobrowser=0
+  local args=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -d|--debug) debug=1; shift ;;
+      -B|--no-browser) nobrowser=1; shift ;;
+      *) args+=("$1"); shift ;;
+    esac
+  done
+
+  if [ $debug -eq 1 ]; then
+    NODE_ENV=development node --inspect=9230 "$PROJECT_ROOT/frontend/build-frontend.js" --watch &
+  else
+    NODE_ENV=development node "$PROJECT_ROOT/frontend/build-frontend.js" --watch &
+  fi
+  FE=$!
+
+  if [ -x "$PROJECT_ROOT/node_modules/.bin/nodemon" ]; then
+    node "$PROJECT_ROOT/scripts/start-backend.js" &
+    BE=$!
+  else
+    PORT=3000 NODE_ENV=development bash "$PROJECT_ROOT/scripts/start-backend.sh" &
+    BE=$!
+  fi
+
+  if [ $nobrowser -eq 0 ]; then
+    if [ $debug -eq 1 ]; then
+      FRONTEND_URL=http://localhost:3000 node --inspect=9231 "$PROJECT_ROOT/frontend/dev-browser.js" &
+    else
+      FRONTEND_URL=http://localhost:3000 node "$PROJECT_ROOT/frontend/dev-browser.js" &
+    fi
+    DB=$!
+  fi
+
+  # On HUP, mark restart and terminate children
+  trap 'RESTART=1; kill $FE $BE ${DB:-} 2>/dev/null || true' HUP
+  trap 'kill $FE $BE ${DB:-} 2>/dev/null || true' INT TERM
+  wait $BE
+  if [ "$RESTART" = "1" ]; then
+    RESTART=0
+    exec "$0" serve ${args[@]}
+  fi
+}
+
+build()  { node "$PROJECT_ROOT/frontend/build-frontend.js" "$@"; }
+ship()   {
+  if [ -x "$PROJECT_ROOT/scripts/ship" ]; then "$PROJECT_ROOT/scripts/ship" "$@"; elif [ -f "$PROJECT_ROOT/ship" ]; then node "$PROJECT_ROOT/ship" "$@"; fi
+}
+commit() { [ -x "$PROJECT_ROOT/scripts/commit" ] && "$PROJECT_ROOT/scripts/commit" "$@" || true; }
+alias()  { echo "alias d='dev'" >> "${ZDOTDIR:-$HOME}/.zshrc"; echo "source ~/.zshrc"; }
+
+case "$cmd" in
+  serve) serve "$@" ;;
+  build) build "$@" ;;
+  ship)  ship  "$@" ;;
+  commit) commit "$@" ;;
+  alias) alias ;;
+  -h|--help|help)
+    echo "dev serve [-d|--debug] [--no-browser|-B]"; echo "dev build [--watch]"; echo "dev ship [args...]"; echo "dev commit [args...]"; echo "dev alias" ;;
+  *) serve "$cmd" "$@" ;;
+esac
+
+
+

@@ -17,6 +17,7 @@ delete unnecessities
 thinkinkable abstraction
 cleanup after creating anything new
 Let's do command line based vs web-based executions, so we can both check
+run yourself unless dangerous
 
 # Conventions
 Name files, variables, functions, classes hyper-specifically

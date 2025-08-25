@@ -1,19 +1,20 @@
 module.exports = {
+  rootDir: __dirname,
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/test/support/fixtures/setup.js'],
-  globalTeardown: '<rootDir>/test/support/fixtures/global-teardown.js',
+  setupFilesAfterEnv: ['<rootDir>/support/fixtures/setup.js'],
+  globalTeardown: '<rootDir>/support/fixtures/global-teardown.js',
   testMatch: [
-    '<rootDir>/test/**/*.test.js'
+    '<rootDir>/**/*.test.js'
   ],
   testPathIgnorePatterns: [
-    '<rootDir>/dist/',
-    '<rootDir>/node_modules/'
+    '<rootDir>/../dist/',
+    '<rootDir>/../node_modules/'
   ],
   collectCoverageFrom: [
-    'backend/**/*.js',
-    'frontend/**/*.js',
-    '!**/node_modules/**',
-    '!**/dist/**'
+    '<rootDir>/../backend/**/*.js',
+    '<rootDir>/../frontend/**/*.js',
+    '!<rootDir>/../**/node_modules/**',
+    '!<rootDir>/../**/dist/**'
   ],
   transform: {
     '^.+\\.(js|jsx)$': ['babel-jest']
@@ -33,14 +34,14 @@ module.exports = {
     TextDecoder: TextDecoder
   },
   moduleNameMapper: {
-    '^mol$': '<rootDir>/package.json'
+    '^mol$': '<rootDir>/../package.json'
   },
   projects: [
     {
       displayName: 'unit-frontend',
-      testMatch: ['**/test/suites/unit/camera*.test.js', '**/test/suites/unit/manual.test.js', '**/test/suites/unit/front-end*.test.js'],
+      testMatch: ['**/suites/unit/camera*.test.js', '**/suites/unit/manual.test.js', '**/suites/unit/front-end*.test.js'],
       testEnvironment: 'jsdom',
-      setupFilesAfterEnv: ['<rootDir>/test/support/fixtures/setup.js'],
+      setupFilesAfterEnv: ['<rootDir>/support/fixtures/setup.js'],
       globals: {
         TextEncoder: TextEncoder,
         TextDecoder: TextDecoder
@@ -48,8 +49,8 @@ module.exports = {
       detectOpenHandles: true
     },
     {
-      displayName: 'unit-backend', 
-      testMatch: ['**/test/suites/unit/unit.test.js'],
+      displayName: 'unit-backend',
+      testMatch: ['**/suites/unit/unit.test.js'],
       testEnvironment: 'node',
       globals: {
         TextEncoder: TextEncoder,
@@ -59,7 +60,7 @@ module.exports = {
     },
     {
       displayName: 'integration',
-      testMatch: ['**/test/suites/integration/*.test.js'],
+      testMatch: ['**/suites/integration/*.test.js'],
       testEnvironment: 'node',
       globals: {
         TextEncoder: TextEncoder,
@@ -69,7 +70,7 @@ module.exports = {
     },
     {
       displayName: 'smoke',
-      testMatch: ['**/test/smoke.test.js'],
+      testMatch: ['**/smoke.test.js'],
       testEnvironment: 'node',
       detectOpenHandles: true
     }
@@ -78,4 +79,6 @@ module.exports = {
   detectOpenHandles: true,
   testTimeout: 30000,
   verbose: false
-}; 
+};
+
+

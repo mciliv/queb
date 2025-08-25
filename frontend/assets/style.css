@@ -302,10 +302,8 @@ canvas[class*="threeDmol"] {
 }
 
 .kbd-hint {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;
+  margin-left: auto;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
@@ -546,11 +544,11 @@ canvas[class*="threeDmol"] {
   position: fixed;
   top: 20px;
   right: 20px;
-  width: 44px;
-  height: 44px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  border: none;
   color: #ffffff;
   cursor: pointer;
   display: flex;
@@ -558,7 +556,7 @@ canvas[class*="threeDmol"] {
   justify-content: center;
   font-size: 18px;
   z-index: 9999;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
 }
 
 .settings-modal {

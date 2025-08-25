@@ -88,7 +88,8 @@ async function openBrowser() {
   try {
     browser = await puppeteer.launch({
       headless: false,
-      defaultViewport: { width: 1600, height: 1000 },
+      // Use full screen window size
+      defaultViewport: null,
       userDataDir: USER_DATA_DIR,
       args: [
         '--no-sandbox',
@@ -99,14 +100,23 @@ async function openBrowser() {
         '--disable-infobars',
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
+        '--disable-renderer-backgrounding',
+        '--start-fullscreen',
+        '--start-maximized',
+        '--kiosk'
       ]
     });
   } catch (err) {
     if (!usedSystemBrowserFallback) {
-      const opener = process.platform === 'darwin' ? 'open' : (process.platform === 'win32' ? 'start' : 'xdg-open');
       try {
-        exec(`${opener} "${TARGET_URL}"`, { stdio: 'ignore' });
+        if (process.platform === 'darwin') {
+          // Try to open Google Chrome in fullscreen/kiosk mode
+          exec(`open -a "Google Chrome" --args --kiosk --start-fullscreen --start-maximized "${TARGET_URL}"`, { stdio: 'ignore' });
+        } else if (process.platform === 'win32') {
+          exec(`start chrome --kiosk --start-fullscreen --start-maximized "${TARGET_URL}"`, { shell: true, stdio: 'ignore' });
+        } else {
+          exec(`xdg-open "${TARGET_URL}"`, { stdio: 'ignore' });
+        }
         usedSystemBrowserFallback = true;
         log('🌐 Dev browser opened (system)');
       } catch (_) {
@@ -125,6 +135,19 @@ async function openBrowser() {
   }
   await page.bringToFront().catch(() => {});
   await page.goto(TARGET_URL, { waitUntil: 'networkidle0' }).catch(() => {});
+  // Best-effort: request DOM fullscreen after navigation
+  try {
+    await page.evaluate(() => {
+      const el = document.documentElement;
+      if (el && el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+      }
+    });
+  } catch (_) {}
+  // Ensure body/root consume full viewport
+  try {
+    await page.addStyleTag({ content: 'html,body,#root{height:100vh;width:100vw;margin:0;padding:0;overflow:hidden;}' });
+  } catch (_) {}
   log('🌐 Dev browser opened');
 }
 
@@ -221,8 +244,4 @@ main().catch((err) => {
   log(`❌ Dev browser manager error: ${err.message}`);
   process.exit(1);
 });
-
-
-
-
 

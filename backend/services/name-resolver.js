@@ -1,5 +1,15 @@
 const PUBCHEM_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
 
+// Minimal in-memory caches to avoid hammering upstream on repeats
+const nameToCIDCache = new Map(); // key: lowercased name -> cid|null
+const cidPropsCache = new Map(); // key: cid -> { smiles, iupac, title }
+const namePropsCache = new Map(); // key: lowercased name -> { cid, smiles, title, iupac }
+
+// Simple retry/backoff for transient errors (e.g., 503)
+const MAX_RETRIES = 2;
+const BASE_DELAY_MS = 400;
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 let cachedFetch = null;
 async function getFetch() {
   if (cachedFetch) return cachedFetch;
@@ -12,39 +22,73 @@ async function getFetch() {
   return cachedFetch;
 }
 
-async function fetchJson(url) {
+async function fetchJson(url, attempt = 0) {
   const f = await getFetch();
-  const resp = await f(url);
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  return resp.json();
+  try {
+    const resp = await f(url);
+    if (!resp.ok) {
+      const status = resp.status;
+      // Retry for transient upstream failures
+      if ((status === 429 || status === 500 || status === 502 || status === 503 || status === 504) && attempt < MAX_RETRIES) {
+        await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
+        return fetchJson(url, attempt + 1);
+      }
+      throw new Error(`HTTP ${status}`);
+    }
+    return resp.json();
+  } catch (err) {
+    // Retry on network errors
+    if (attempt < MAX_RETRIES && (err.name === 'FetchError' || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT')) {
+      await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
+      return fetchJson(url, attempt + 1);
+    }
+    throw err;
+  }
 }
 
 async function resolveNameToCID(name) {
   const encoded = encodeURIComponent(name);
   const url = `${PUBCHEM_BASE}/compound/name/${encoded}/cids/JSON`;
+  const key = String(name || '').toLowerCase();
+  if (nameToCIDCache.has(key)) return nameToCIDCache.get(key);
   const data = await fetchJson(url);
   const cids = data?.IdentifierList?.CID || [];
-  return cids.length > 0 ? cids[0] : null;
+  const cid = cids.length > 0 ? cids[0] : null;
+  nameToCIDCache.set(key, cid);
+  return cid;
 }
 
 async function getPropertiesByCID(cid) {
   const url = `${PUBCHEM_BASE}/compound/cid/${cid}/property/IsomericSMILES,IUPACName,Title/JSON`;
+  if (cidPropsCache.has(cid)) return cidPropsCache.get(cid);
   const data = await fetchJson(url);
   const props = data?.PropertyTable?.Properties?.[0] || {};
-  return { 
+  const out = {
     smiles: props.IsomericSMILES || null,
     iupac: props.IUPACName || null,
     title: props.Title || null
   };
+  cidPropsCache.set(cid, out);
+  return out;
 }
 
 async function downloadSDFByCID(cid) {
   const url = `${PUBCHEM_BASE}/compound/CID/${cid}/SDF`;
   const f = await getFetch();
-  const resp = await f(url);
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  const text = await resp.text();
-  return text; // caller writes to file
+  let attempt = 0;
+  while (true) {
+    const resp = await f(url);
+    if (resp.ok) {
+      const text = await resp.text();
+      return text;
+    }
+    const status = resp.status;
+    if (attempt < MAX_RETRIES && (status === 429 || status === 500 || status === 502 || status === 503 || status === 504)) {
+      await sleep(BASE_DELAY_MS * Math.pow(2, attempt++));
+      continue;
+    }
+    throw new Error(`HTTP ${status}`);
+  }
 }
 
 async function downloadSDFBySmiles(smiles) {
@@ -90,12 +134,12 @@ async function resolveName(name) {
   let title = null;
   let iupac = null;
   let smiles = null;
+  const cacheKey = name.toLowerCase();
+  if (namePropsCache.has(cacheKey)) return namePropsCache.get(cacheKey);
   
   try {
     cid = await resolveNameToCID(name);
-  } catch (error) {
-    console.log(`CID lookup failed for ${name}: ${error.message}`);
-  }
+  } catch (_) {}
 
   if (cid) {
     try {
@@ -103,9 +147,7 @@ async function resolveName(name) {
       smiles = p.smiles || null;
       title = p.title || null;
       iupac = p.iupac || null;
-    } catch (error) {
-      console.log(`Properties lookup failed for CID ${cid}: ${error.message}`);
-    }
+    } catch (_) {}
   } else {
     // Try direct properties by name
     try {
@@ -117,12 +159,12 @@ async function resolveName(name) {
       smiles = props.IsomericSMILES || null;
       title = props.Title || null;
       iupac = props.IUPACName || null;
-    } catch (error) {
-      console.log(`Direct name lookup failed for ${name}: ${error.message}`);
-    }
+    } catch (_) {}
   }
 
-  return { cid, smiles, title, iupac };
+  const result = { cid, smiles, title, iupac };
+  namePropsCache.set(cacheKey, result);
+  return result;
 }
 
 module.exports = {

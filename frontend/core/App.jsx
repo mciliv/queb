@@ -228,6 +228,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
   const [stream, setStream] = useState(null);
   const [clickPosition, setClickPosition] = useState(null);
   const [showOutline, setShowOutline] = useState(false);
+  const outlineTimeoutRef = useRef(null);
   const { checkPaymentRequired } = usePayment();
   const { analyzeImage } = useApi();
 
@@ -236,6 +237,9 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
+      }
+      if (outlineTimeoutRef.current) {
+        try { clearTimeout(outlineTimeoutRef.current); } catch (_) {}
       }
     };
   }, []);
@@ -264,7 +268,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
     }
   };
 
-  const handleCameraClick = async () => {
+  const handleCameraClick = async (e) => {
     if (!hasPermission) {
       await requestCameraAccess();
       return;
@@ -287,10 +291,41 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       canvas.height = height;
       const ctx = canvas.getContext('2d');
 
-      // Always use exact center for crop square (25% of min dimension)
+      // Determine click position relative to video frame (accounting for object-fit: cover)
+      const container = e.currentTarget;
+      const rect = container.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      const videoAspect = width / height;
+      const containerAspect = rect.width / rect.height;
+      let scale = 1;
+      let offsetX = 0;
+      let offsetY = 0;
+      if (containerAspect > videoAspect) {
+        // Container is wider; height overflows
+        scale = rect.width / width;
+        const scaledHeight = rect.width / videoAspect;
+        offsetY = (rect.height - scaledHeight) / 2;
+      } else {
+        // Container is taller; width overflows
+        scale = rect.height / height;
+        const scaledWidth = rect.height * videoAspect;
+        offsetX = (rect.width - scaledWidth) / 2;
+      }
+
+      // Map click to video coordinates
+      const videoClickX = (clickX - offsetX) / scale;
+      const videoClickY = (clickY - offsetY) / scale;
+
+      // Crop square side (25% of min dimension)
       const cropSide = Math.floor(Math.min(width, height) * 0.25);
-      const cropX = Math.max(0, Math.floor((width - cropSide) / 2));
-      const cropY = Math.max(0, Math.floor((height - cropSide) / 2));
+      const half = Math.floor(cropSide / 2);
+      // Clamp center so crop stays within frame
+      const centerX = Math.min(Math.max(videoClickX, half), width - half);
+      const centerY = Math.min(Math.max(videoClickY, half), height - half);
+      const cropX = Math.max(0, Math.floor(centerX - half));
+      const cropY = Math.max(0, Math.floor(centerY - half));
 
       ctx.drawImage(video, 0, 0);
       const fullImageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
@@ -303,14 +338,49 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       cropCtx.drawImage(canvas, cropX, cropY, cropSide, cropSide, 0, 0, cropSide, cropSide);
       const croppedImageDataUrl = cropCanvas.toDataURL('image/jpeg', 0.8);
       
-      // Use center coordinates for API metadata
-      const centerX = Math.round(width / 2);
-      const centerY = Math.round(height / 2);
-      
-      const result = await analyzeImage(fullImageDataUrl, 'Camera capture', centerX, centerY, cropX + Math.floor(cropSide/2), cropY + Math.floor(cropSide/2), cropSide);
-      
+      // Show transient outline at the clicked crop region (in container coords)
+      try {
+        const outlineSize = cropSide * scale;
+        const displayCenterX = offsetX + centerX * scale;
+        const displayCenterY = offsetY + centerY * scale;
+        setClickPosition({
+          x: Math.round(displayCenterX - outlineSize / 2),
+          y: Math.round(displayCenterY - outlineSize / 2),
+          size: Math.round(outlineSize)
+        });
+        setShowOutline(true);
+        if (outlineTimeoutRef.current) {
+          try { clearTimeout(outlineTimeoutRef.current); } catch (_) {}
+        }
+        outlineTimeoutRef.current = setTimeout(() => setShowOutline(false), 1000);
+      } catch (_) {}
+
+      // AB test: 'coords' uses full image + coordinates; 'crop' uses cropped region
+      const abVariant = Math.random() < 0.5 ? 'coords' : 'crop';
+      let result;
+      if (abVariant === 'coords') {
+        result = await analyzeImage(
+          fullImageDataUrl,
+          Math.round(centerX),
+          Math.round(centerY),
+          cropX + Math.floor(cropSide / 2),
+          cropY + Math.floor(cropSide / 2),
+          cropSide
+        );
+      } else {
+        // For cropped case, provide center relative to the crop
+        const mid = Math.floor(cropSide / 2);
+        result = await analyzeImage(
+          croppedImageDataUrl,
+          mid,
+          mid,
+          mid,
+          mid,
+          cropSide
+        );
+      }
       if (onAnalysisComplete) {
-        onAnalysisComplete(result);
+        onAnalysisComplete({ ...result, abVariant });
       }
       } catch (error) {
         console.error('Camera structuralization failed:', error);
@@ -344,17 +414,34 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
   };
 
   return (
-    <div className="camera-box" onClick={handleCameraClick}>
-      {/* Keep video stream active but hidden for frame capture */}
+    <div
+      className="camera-box"
+      onClick={handleCameraClick}
+    >
+      {/* Visible camera preview */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+        className="camera-video"
       />
-      {/* EXACT square red box UI */}
-      <div style={{ width: 240, height: 240, border: '3px solid red', margin: '0 auto' }} />
+      {showOutline && clickPosition && (
+        <div
+          className="click-outline"
+          style={{
+            left: clickPosition.x,
+            top: clickPosition.y,
+            width: clickPosition.size,
+            height: clickPosition.size,
+            border: '2px solid #ffffff',
+            background: 'transparent',
+            boxShadow: 'none',
+            borderRadius: 0,
+            animation: 'none'
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -387,13 +474,47 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
-          const result = await analyzeImage(e.target.result, file.name);
-          if (onAnalysisComplete) {
-            onAnalysisComplete(result);
-          }
-      } catch (error) {
-        console.error('Photo structuralization failed:', error);
-        } finally {
+          const dataUrl = e.target.result;
+          // Build cropped header preview (center square, 25% of min dim)
+          const img = new Image();
+          img.onload = async () => {
+            try {
+              const w = img.naturalWidth || img.width;
+              const h = img.naturalHeight || img.height;
+              const cropSide = Math.floor(Math.min(w, h) * 0.25);
+              const cropX = Math.max(0, Math.floor((w - cropSide) / 2));
+              const cropY = Math.max(0, Math.floor((h - cropSide) / 2));
+              const canvas = document.createElement('canvas');
+              canvas.width = cropSide;
+              canvas.height = cropSide;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, cropX, cropY, cropSide, cropSide, 0, 0, cropSide, cropSide);
+              const croppedHeaderImage = canvas.toDataURL('image/jpeg', 0.8);
+
+              const result = await analyzeImage(dataUrl);
+              if (onAnalysisComplete) {
+                onAnalysisComplete(result);
+              }
+            } catch (innerErr) {
+              console.error('Photo header crop failed:', innerErr);
+            } finally {
+              setIsProcessing(false);
+            }
+          };
+          img.onerror = () => {
+            // Fallback: pass original if crop fails to load
+            analyzeImage(dataUrl)
+              .then((result) => {
+                if (onAnalysisComplete) {
+                  onAnalysisComplete(result);
+                }
+              })
+              .catch((err) => console.error('Photo structuralization failed:', err))
+              .finally(() => setIsProcessing(false));
+          };
+          img.src = dataUrl;
+        } catch (error) {
+          console.error('File reading or processing failed:', error);
           setIsProcessing(false);
         }
       };
@@ -523,7 +644,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
     setUrlError('');
     
     try {
-      const result = await analyzeImage(imageUrl, 'Image from URL');
+      const result = await analyzeImage(imageUrl);
       if (onAnalysisComplete) {
         onAnalysisComplete(result);
       }
@@ -676,13 +797,13 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
             {molecularData.name}
           </a>
         )}
-        {status === 'loading' && ' ⏳'} {status === 'failed' && ' ❌'}
+        {status === 'failed' && ' ❌'}
       </div>
       <div 
         ref={ref}
         className="viewer"
       >
-        {status === 'loading' && '⏳'}
+        
         {status === 'failed' && '❌'}
       </div>
     </div>
@@ -697,9 +818,8 @@ const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
       {/* GUARANTEED VISIBLE HEADER */}
       <div className="column-header">
         <div className="column-meta">
-          <div aria-hidden role="img" className="column-icon">🧪</div>
           <div className="column-title">
-            {column.query} {column.loading && '⏳'}
+            {column.query}
           </div>
         </div>
         {showRemove && (
@@ -719,7 +839,7 @@ const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
         </div>
       )}
 
-      {column.loading && column.viewers.length === 0 && (
+      {false && column.loading && column.viewers.length === 0 && (
         <div className="analyzing">
           Analyzing molecules...
         </div>

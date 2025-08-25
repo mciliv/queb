@@ -5,21 +5,21 @@ source infrastructure/scripts/colors.sh
 
 case "$1" in
   "unit")
-    npx jest --testPathPattern=unit.test.js --verbose --silent
+    npx jest --config test/jest.config.js --testPathPattern=unit.test.js --verbose --silent
     ;;
   "integration")
-    npx jest --testPathPattern=integration.test.js --verbose
+    npx jest --config test/jest.config.js --testPathPattern=integration.test.js --verbose
     ;;
   "system")
-    npx jest --testPathPattern=system.test.js --verbose --detectOpenHandles
+    npx jest --config test/jest.config.js --testPathPattern=system.test.js --verbose --detectOpenHandles
     ;;
   "watch")
-    npx jest --watch
+    npx jest --config test/jest.config.js --watch
     ;;
   "pytest")
     python -m pytest testing/ -v
     ;;
   *)
-    npx jest --testPathPattern=unit.test.js --verbose --silent && npx jest --testPathPattern=integration.test.js --verbose && npx jest --testPathPattern=system.test.js --verbose --detectOpenHandles
+    npx jest --config test/jest.config.js --testPathPattern=unit.test.js --verbose --silent && npx jest --config test/jest.config.js --testPathPattern=integration.test.js --verbose && npx jest --config test/jest.config.js --testPathPattern=system.test.js --verbose --detectOpenHandles
     ;;
 esac 

@@ -1,4 +1,0 @@
-#!/bin/bash
-# restart - Quick development server restart
-echo "🔄 Restarting dev server..."
-./dev

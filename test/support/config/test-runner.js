@@ -119,7 +119,7 @@ class TestRunner {
       }
 
       const jestArgs = [
-        '--config', 'jest.config.js',
+        '--config', 'test/jest.config.js',
         '--testPathPattern', `"(${existingTests.join('|')})"`,
         '--runInBand', // Run tests serially for integration tests
       ];
