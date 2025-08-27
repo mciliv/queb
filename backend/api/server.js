@@ -270,11 +270,11 @@ app.post('/api/log-error', (req, res) => {
   const label = type === 'error' ? '❌ FRONTEND ERROR' : type === 'warn' ? '⚠️ FRONTEND WARN' : 'ℹ️ FRONTEND LOG';
   const logger = type === 'error' ? console.error : type === 'warn' ? console.warn : console.log;
 
-  logger(`${label}: "${payload.message}"`);
-  console.log(`  Timestamp: ${payload.timestamp}`);
-  console.log(`  Source: ${payload.source}`);
-  console.log(`  User Agent: ${req.get('User-Agent')}`);
-  console.log(`  IP: ${req.ip || req.connection.remoteAddress}`);
+  const timestamp = payload.timestamp || new Date().toISOString();
+  const source = payload.source || '-';
+  const userAgent = req.get('User-Agent') || '-';
+  const ip = req.ip || req.connection.remoteAddress || '-';
+  logger(`${label}: "${payload.message}" ts=${timestamp} src=${source} ua=${userAgent} ip=${ip}`);
 
   res.status(200).json({ status: 'logged' });
 });
@@ -1038,34 +1038,6 @@ app.post("/structures-from-text", async (req, res) => {
   }
 });
 
-// Estimation alias routes (preferred wording)
-app.post("/estimate-text", async (req, res) => {
-  try {
-    const { object } = req.body;
-    if (!object || typeof object !== "string" || object.trim().length === 0) {
-      return res.status(400).json({ error: "Invalid object name: must be a non-empty string" });
-    }
-    const result = await structuralizer.analyzeText(object || "");
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: `Estimation failed: ${error.message}` });
-  }
-});
-
-app.post("/estimate-image", async (req, res) => {
-  try {
-    const { imageBase64 } = req.body;
-    if (!imageBase64) {
-      return res.status(400).json({ error: "No image data provided" });
-    }
-    // Reuse analysis pipeline for estimation wording
-    const result = await structuralizer.structuralizeImage(imageBase64);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Structuralize alias routes (preferred naming)
 app.post("/structuralize-text", async (req, res) => {
   try {
@@ -1484,3 +1456,5 @@ process.on("uncaughtException", (error) => {
 
 // Always export the app for Cloud Functions
 module.exports = app;
+// Also provide a named export for platforms expecting a handler name
+module.exports.main = app;
