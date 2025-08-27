@@ -1,6 +1,5 @@
 // test/integration/smiles-accuracy.test.js - Real-world SMILES accuracy testing
 
-const AtomPredictor = require("../../backend/services/AtomPredictor");
 const MolecularProcessor = require("../../backend/services/molecular-processor");
 
 // Known accurate SMILES from chemical databases

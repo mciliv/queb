@@ -524,21 +524,6 @@ canvas[class*="threeDmol"] {
   color: rgba(255, 193, 7, 0.9);
 }
 
-.analyzing {
-  padding: 20px;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 13px;
-  user-select: text;
-}
-
-.input-section {
-  margin-bottom: 30px;
-  max-width: 600px;
-}
-
-.mb-15 { margin-bottom: 15px; }
-
 /* Settings */
 .settings-btn {
   position: fixed;

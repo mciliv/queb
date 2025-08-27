@@ -88,6 +88,8 @@ async function openBrowser() {
   try {
     browser = await puppeteer.launch({
       headless: false,
+      // Open DevTools automatically
+      devtools: true,
       // Use full screen window size
       defaultViewport: null,
       userDataDir: USER_DATA_DIR,
@@ -103,18 +105,27 @@ async function openBrowser() {
         '--disable-renderer-backgrounding',
         '--start-fullscreen',
         '--start-maximized',
-        '--kiosk'
+        '--kiosk',
+        // Auto-open DevTools for tabs
+        '--auto-open-devtools-for-tabs'
       ]
     });
   } catch (err) {
     if (!usedSystemBrowserFallback) {
       try {
         if (process.platform === 'darwin') {
-          // Try to open Google Chrome in fullscreen/kiosk mode
-          exec(`open -a "Google Chrome" --args --kiosk --start-fullscreen --start-maximized "${TARGET_URL}"`, { stdio: 'ignore' });
+          // Try to open Google Chrome in fullscreen/kiosk mode with DevTools
+          exec(
+            `open -a "Google Chrome" --args --kiosk --start-fullscreen --start-maximized --auto-open-devtools-for-tabs "${TARGET_URL}"`,
+            { stdio: 'ignore' }
+          );
         } else if (process.platform === 'win32') {
-          exec(`start chrome --kiosk --start-fullscreen --start-maximized "${TARGET_URL}"`, { shell: true, stdio: 'ignore' });
+          exec(
+            `start chrome --kiosk --start-fullscreen --start-maximized --auto-open-devtools-for-tabs "${TARGET_URL}"`,
+            { shell: true, stdio: 'ignore' }
+          );
         } else {
+          // Fallback: open default browser
           exec(`xdg-open "${TARGET_URL}"`, { stdio: 'ignore' });
         }
         usedSystemBrowserFallback = true;
@@ -244,4 +255,3 @@ main().catch((err) => {
   log(`❌ Dev browser manager error: ${err.message}`);
   process.exit(1);
 });
-

@@ -6,7 +6,12 @@ const fsPromises = require("fs").promises;
 const { resolveName, downloadSDFByCID, downloadSDFBySmiles } = require("./name-resolver");
 
 class MolecularProcessor {
-  constructor(sdfDir = "test/sdf_files") {
+  constructor(sdfDir) {
+    if (!sdfDir) {
+      sdfDir = process.env.NODE_ENV === 'test'
+        ? 'test/sdf_files'
+        : 'sdf_files';
+    }
     this.sdfDir = path.join(__dirname, "..", "..", sdfDir);
     this.ensureSdfDirectory();
   }

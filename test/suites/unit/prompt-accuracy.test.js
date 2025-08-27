@@ -1,7 +1,7 @@
 // test/unit/prompt-accuracy.test.js - Validate AtomPredictor accuracy against known chemical compositions
 // Tests our prompt engineering improvements against real-world chemical knowledge
 
-const AtomPredictor = require("../../backend/services/AtomPredictor");
+const Structuralizer = require("../../backend/services/Structuralizer");
 
 // Known chemical compositions for validation
 const KNOWN_COMPOSITIONS = {
@@ -475,14 +475,14 @@ describe("AtomPredictor Prompt Accuracy Tests", () => {
   let atomPredictor;
 
   beforeEach(() => {
-    atomPredictor = new AtomPredictor("test-api-key");
+    atomPredictor = new Structuralizer("test-api-key");
   });
 
   describe("Simple Compounds - Must be 100% accurate", () => {
     test.each(Object.entries(KNOWN_COMPOSITIONS.simple))(
       "should accurately analyze %s",
       async (material, expected) => {
-        const result = await atomPredictor.analyzeText(material);
+        const result = await atomPredictor.structuralizeText(material);
         
         // First check requirements (must pass)
         const requirements = RequirementsValidator.validateRequirements(result, expected);
@@ -510,7 +510,7 @@ describe("AtomPredictor Prompt Accuracy Tests", () => {
     test.each(Object.entries(KNOWN_COMPOSITIONS.beverages))(
       "should provide realistic composition for %s",
       async (beverage, expected) => {
-        const result = await atomPredictor.analyzeText(beverage);
+        const result = await atomPredictor.structuralizeText(beverage);
         
         // Check requirements
         const requirements = RequirementsValidator.validateRequirements(result, expected);
@@ -527,7 +527,7 @@ describe("AtomPredictor Prompt Accuracy Tests", () => {
     test.each(Object.entries(KNOWN_COMPOSITIONS.materials))(
       "should handle complex material %s",
       async (material, expected) => {
-        const result = await atomPredictor.analyzeText(material);
+        const result = await atomPredictor.structuralizeText(material);
         
         // Check requirements
         const requirements = RequirementsValidator.validateRequirements(result, expected);
@@ -544,7 +544,7 @@ describe("AtomPredictor Prompt Accuracy Tests", () => {
     test.each(Object.entries(KNOWN_COMPOSITIONS.biological))(
       "should provide realistic biological composition for %s",
       async (biological, expected) => {
-        const result = await atomPredictor.analyzeText(biological);
+        const result = await atomPredictor.structuralizeText(biological);
         
         // Check requirements
         const requirements = RequirementsValidator.validateRequirements(result, expected);
@@ -572,7 +572,7 @@ describe("AtomPredictor Prompt Accuracy Tests", () => {
       const testMaterials = ["water", "ethanol", "salt", "glucose"];
       
       for (const material of testMaterials) {
-        const result = await atomPredictor.analyzeText(material);
+        const result = await atomPredictor.structuralizeText(material);
         
         // Check each SMILES string
         result.chemicals.forEach(chemical => {
@@ -588,7 +588,7 @@ describe("AtomPredictor Prompt Accuracy Tests", () => {
     });
 
     test("should generate appropriate SMILES lengths", async () => {
-      const result = await atomPredictor.analyzeText("plastic bottle");
+      const result = await atomPredictor.structuralizeText("plastic bottle");
       
       result.chemicals.forEach(chemical => {
         // Should not be too long (from our constraints)
@@ -616,16 +616,6 @@ describe("AtomPredictor Prompt Accuracy Tests", () => {
   });
 
   describe("Prompt Engineering Validation", () => {
-    test("should use improved instructions from git history", () => {
-      const instructions = atomPredictor.buildChemicalInstructions();
-      
-      // Should contain key improvements from our analysis
-      expect(instructions).toContain("valid, verified SMILES");
-      expect(instructions).toContain("EXAMPLES");
-      expect(instructions).toContain("RULES"); // Changed from "constraints" to "RULES"
-      expect(instructions.length).toBeGreaterThan(1000); // Should be comprehensive
-    });
-
     test("should detect object types for context-aware examples", () => {
       // Test the detectObjectType method we added
       expect(atomPredictor.detectObjectType("wine")).toBe("beverage");

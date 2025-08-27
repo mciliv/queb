@@ -34,7 +34,7 @@ const TEST_LAYERS = {
  */
 const FILE_TEST_MAPPING = {
   // Backend Services
-  'backend/services/AtomPredictor.js': {
+  'backend/services/Structuralizer.js': {
     direct: ['test/unit/unit.test.js'],
     layers: [TEST_LAYERS.UNIT, TEST_LAYERS.API, TEST_LAYERS.INTEGRATION],
     related: [

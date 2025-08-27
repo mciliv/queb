@@ -15,7 +15,7 @@ class Structuralizer {
     this.isOpenAIAvailable = (!!this.client && !!(apiKey || process.env.OPENAI_API_KEY)) || this.isTestMode;
     const requestedModel = process.env.OPENAI_MODEL || process.env.OPENAI_DEFAULT_MODEL || 'auto';
     if (/^(latest|auto)$/i.test(requestedModel)) {
-      this.modelCandidates = ['gpt-5', 'gpt-4o'];
+      this.modelCandidates = ['gpt-5',  'gpt-4o', 'gpt-4-turbo'];
     } else {
       this.modelCandidates = [requestedModel];
     }

@@ -7,8 +7,8 @@ const net = require("net");
 
 // Simple logging utility for consistency
 const log = {
-  success: (msg) => {},  // Silenced
-  warning: (msg) => {},  // Silenced
+  success: (msg) => console.log(msg),
+  warning: (msg) => console.warn(msg),
   error: (msg) => console.error(msg)
 };
 
@@ -116,7 +116,10 @@ class HttpsServer {
       
       return new Promise((resolve, reject) => {
         server.listen(this.actualPort, "0.0.0.0", () => {
-          // HTTPS server running silently
+          console.log(`https://localhost:${this.actualPort}`);
+          if (this.localIP && this.localIP !== "127.0.0.1") {
+            console.log(`https://${this.localIP}:${this.actualPort}`);
+          }
           resolve(server);
         });
 

@@ -24,7 +24,7 @@ describe("Smoke Tests", () => {
       const requiredFiles = [
         "server.js",
         "schemas.js",
-        "AtomPredictor.js",
+        "Structuralizer.js",
         "molecular-processor.js",
         "package.json",
       ];
@@ -146,7 +146,7 @@ describe("Smoke Tests", () => {
     test("should have valid JavaScript files", () => {
       const jsFiles = [
         "server.js",
-        "AtomPredictor.js",
+        "Structuralizer.js",
         "molecular-processor.js",
       ];
 

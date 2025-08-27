@@ -2,7 +2,7 @@
 // Tests actual AtomPredictor responses against known chemical compositions
 // Run with: npm test -- test/integration/molecular-accuracy.test.js
 
-const AtomPredictor = require("../../../backend/services/AtomPredictor");
+const Structuralizer = require("../../../backend/services/Structuralizer");
 
 // Known molecular compositions for testing prompt accuracy
 const REFERENCE_MATERIALS = {
@@ -222,7 +222,7 @@ describe("Molecular Accuracy Integration Tests", () => {
   
   beforeAll(() => {
     if (skipIfNoApiKey()) return;
-    atomPredictor = new AtomPredictor(process.env.OPENAI_API_KEY);
+    atomPredictor = new Structuralizer(process.env.OPENAI_API_KEY);
   });
 
   describe("Basic Chemical Accuracy", () => {
@@ -234,7 +234,7 @@ describe("Molecular Accuracy Integration Tests", () => {
     test.each(Object.entries(REFERENCE_MATERIALS.basics))(
       "should accurately analyze %s",
       async (material, reference) => {
-        const result = await atomPredictor.analyzeText(material);
+        const result = await atomPredictor.structuralizeText(material);
         const analysis = MolecularValidator.analyzeMolecularAccuracy(result, reference);
         
         console.log(`\n=== ${material.toUpperCase()} ===`);
@@ -261,7 +261,7 @@ describe("Molecular Accuracy Integration Tests", () => {
     test.each(Object.entries(REFERENCE_MATERIALS.beverages))(
       "should provide realistic composition for %s",
       async (beverage, reference) => {
-        const result = await atomPredictor.analyzeText(beverage);
+        const result = await atomPredictor.structuralizeText(beverage);
         const analysis = MolecularValidator.analyzeMolecularAccuracy(result, reference);
         
         console.log(`\n=== ${beverage.toUpperCase()} ===`);
@@ -285,7 +285,7 @@ describe("Molecular Accuracy Integration Tests", () => {
     test.each(Object.entries(REFERENCE_MATERIALS.materials))(
       "should handle complex material %s",
       async (material, reference) => {
-        const result = await atomPredictor.analyzeText(material);
+        const result = await atomPredictor.structuralizeText(material);
         const analysis = MolecularValidator.analyzeMolecularAccuracy(result, reference);
         
         console.log(`\n=== ${material.toUpperCase()} ===`);
@@ -314,7 +314,7 @@ describe("Molecular Accuracy Integration Tests", () => {
     test.each(Object.entries(REFERENCE_MATERIALS.biological))(
       "should provide realistic biological composition for %s",
       async (biological, reference) => {
-        const result = await atomPredictor.analyzeText(biological);
+        const result = await atomPredictor.structuralizeText(biological);
         const analysis = MolecularValidator.analyzeMolecularAccuracy(result, reference);
         
         console.log(`\n=== ${biological.toUpperCase()} ===`);
@@ -361,7 +361,7 @@ describe("Molecular Accuracy Integration Tests", () => {
     }, 60000);
 
     test("should not generate chemical formulas instead of SMILES", async () => {
-      const result = await atomPredictor.analyzeText("water and ethanol mixture");
+      const result = await atomPredictor.structuralizeText("water and ethanol mixture");
       
       const forbiddenFormulas = ["H2O", "C2H6O", "C2H5OH"];
       const foundForbidden = result.chemicals.filter(chemical =>
@@ -387,7 +387,7 @@ describe("Molecular Accuracy Integration Tests", () => {
       const results = [];
       
       for (const [material, reference] of testSuite) {
-        const result = await atomPredictor.analyzeText(material);
+        const result = await atomPredictor.structuralizeText(material);
         const analysis = MolecularValidator.analyzeMolecularAccuracy(result, reference);
         
         results.push({

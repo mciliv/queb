@@ -191,7 +191,7 @@ Options:
 Examples:
   node test/watch/file-watcher.js
   node test/watch/file-watcher.js --patterns "backend/**/*.js,frontend/**/*.js"
-  node test/watch/file-watcher.js --test-files backend/services/AtomPredictor.js
+  node test/watch/file-watcher.js --test-files backend/services/Structuralizer.js
     `);
     return;
   }

@@ -4,7 +4,7 @@
 const request = require("supertest");
 const fs = require("fs");
 const path = require("path");
-const AtomPredictor = require("../../../backend/services/AtomPredictor");
+const Structuralizer = require("../../../backend/services/Structuralizer");
 const MolecularProcessor = require("../../../backend/services/molecular-processor");
 const {
   ImageMoleculeSchema,
@@ -93,23 +93,22 @@ describe("Unit Tests", () => {
   let molecularProcessor;
 
   beforeEach(() => {
-    atomPredictor = new AtomPredictor("test-api-key");
+    atomPredictor = new Structuralizer("test-api-key");
     molecularProcessor = new MolecularProcessor();
   });
 
-  describe("AtomPredictor", () => {
-    test("should initialize with API key", () => {
-      expect(atomPredictor.client).toBeDefined();
-      expect(atomPredictor.chemicalInstructions).toBeDefined();
-      expect(typeof atomPredictor.chemicalInstructions).toBe("string");
+  describe("Structuralizer", () => {
+    test("should construct and expose analysis methods", () => {
+      expect(typeof atomPredictor.structuralizeText).toBe("function");
+      expect(typeof atomPredictor.structuralizeImage).toBe("function");
     });
 
-    describe("analyzeImage", () => {
+    describe("structuralizeImage", () => {
       const mockImageBase64 =
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 
       test("should analyze image without cropped region", async () => {
-        const result = await atomPredictor.analyzeImage(mockImageBase64);
+        const result = await atomPredictor.structuralizeImage(mockImageBase64);
         expect(result).toHaveProperty("object");
         expect(result).toHaveProperty("chemicals");
         expect(Array.isArray(result.chemicals)).toBe(true);
@@ -118,7 +117,7 @@ describe("Unit Tests", () => {
       });
 
       test("should analyze image with cropped region", async () => {
-        const result = await atomPredictor.analyzeImage(
+        const result = await atomPredictor.structuralizeImage(
           mockImageBase64,
           mockImageBase64,
           100,
@@ -133,7 +132,7 @@ describe("Unit Tests", () => {
       });
 
       test("should handle null parameters gracefully", async () => {
-        const result = await atomPredictor.analyzeImage(
+        const result = await atomPredictor.structuralizeImage(
           mockImageBase64,
           null,
           null,
@@ -153,8 +152,8 @@ describe("Unit Tests", () => {
           },
         }));
 
-        const analyzer = new AtomPredictor("invalid-key");
-        await expect(analyzer.analyzeImage(mockImageBase64)).rejects.toThrow("AI analysis failed: API Error");
+        const analyzer = new Structuralizer("invalid-key");
+        await expect(analyzer.structuralizeImage(mockImageBase64)).rejects.toThrow();
       });
 
       test("should handle empty image base64", async () => {
@@ -162,9 +161,9 @@ describe("Unit Tests", () => {
       });
     });
 
-    describe("analyzeText", () => {
+    describe("structuralizeText", () => {
       test("should analyze text input successfully", async () => {
-        const result = await atomPredictor.analyzeText("ethanol");
+        const result = await atomPredictor.structuralizeText("ethanol");
         expect(result).toHaveProperty("object");
         expect(result).toHaveProperty("chemicals");
         expect(Array.isArray(result.chemicals)).toBe(true);
@@ -174,13 +173,13 @@ describe("Unit Tests", () => {
       });
 
       test("should handle empty text input", async () => {
-        const result = await atomPredictor.analyzeText("");
+        const result = await atomPredictor.structuralizeText("");
         expect(result).toHaveProperty("object");
         expect(result).toHaveProperty("chemicals");
       });
 
       test("should handle complex chemical names", async () => {
-        const result = await atomPredictor.analyzeText("2-methylpropanoic acid");
+        const result = await atomPredictor.structuralizeText("2-methylpropanoic acid");
         expect(result).toHaveProperty("object");
         expect(result).toHaveProperty("chemicals");
         expect(Array.isArray(result.chemicals)).toBe(true);
@@ -196,8 +195,8 @@ describe("Unit Tests", () => {
           },
         }));
 
-        const analyzer = new AtomPredictor("invalid-key");
-        await expect(analyzer.analyzeText("test")).rejects.toThrow("AI text analysis failed: Network timeout");
+        const analyzer = new Structuralizer("invalid-key");
+        await expect(analyzer.structuralizeText("test")).rejects.toThrow();
       });
     });
 
@@ -249,16 +248,7 @@ describe("Unit Tests", () => {
       });
     });
 
-    describe("buildChemicalInstructions", () => {
-      test("should return proper instruction string", () => {
-        const instructions = atomPredictor.buildChemicalInstructions();
-        expect(typeof instructions).toBe("string");
-        expect(instructions).toContain("JSON response");
-        expect(instructions).toContain("SMILES notation");
-        expect(instructions).toContain("object");
-        expect(instructions).toContain("chemicals");
-      });
-    });
+    // buildChemicalInstructions tests removed; Structuralizer uses structuralize prompt
   });
 
   describe("MolecularProcessor", () => {

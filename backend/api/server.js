@@ -270,14 +270,11 @@ app.post('/api/log-error', (req, res) => {
   const label = type === 'error' ? '❌ FRONTEND ERROR' : type === 'warn' ? '⚠️ FRONTEND WARN' : 'ℹ️ FRONTEND LOG';
   const logger = type === 'error' ? console.error : type === 'warn' ? console.warn : console.log;
 
-  logger(label + ': ' + JSON.stringify({
-    timestamp: payload.timestamp,
-    type: payload.type,
-    message: payload.message,
-    source: payload.source,
-    userAgent: req.get('User-Agent'),
-    ip: req.ip || req.connection.remoteAddress
-  }, null, 2));
+  logger(`${label}: "${payload.message}"`);
+  console.log(`  Timestamp: ${payload.timestamp}`);
+  console.log(`  Source: ${payload.source}`);
+  console.log(`  User Agent: ${req.get('User-Agent')}`);
+  console.log(`  IP: ${req.ip || req.connection.remoteAddress}`);
 
   res.status(200).json({ status: 'logged' });
 });
@@ -510,7 +507,18 @@ app.use(express.static(path.join(__dirname, "..", "..", "frontend")));
 app.use("/dist", express.static(path.join(__dirname, "..", "..", "frontend", "dist")));
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));
 app.use("/components", express.static(path.join(__dirname, "..", "..", "frontend", "components")));
-app.use("/sdf_files", express.static(path.join(__dirname, "..", "..", "test", "sdf_files")));
+// Serve SDF files directory (uses test folder in test env, otherwise production folder)
+app.use(
+  "/sdf_files",
+  express.static(
+    path.join(
+      __dirname,
+      "..",
+      "..",
+      process.env.NODE_ENV === "test" ? "test/sdf_files" : "sdf_files"
+    )
+  )
+);
 
 // ==================== SCREENSHOT ROUTES ====================
 
@@ -1381,8 +1389,7 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
     });
 
   // Start HTTPS server with mkcert certificates
-  if (process.env.NODE_ENV !== "production") {
-    const startHttpsServer = async () => {
+  const startHttpsServer = async () => {
       try {
         const httpsServer = new HttpsServer(app, HTTPS_PORT);
         httpsServerInstance = await httpsServer.start();
@@ -1414,7 +1421,6 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
 
     // Start HTTPS server immediately
     startHttpsServer();
-  }
 } else {
   // Serverless mode
   if (isCloudFunction) {
