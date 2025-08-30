@@ -29,6 +29,23 @@ serve() {
     esac
   done
 
+  # Clean up any existing processes using our ports
+  cleanup_ports() {
+    local ports=(3000 3001 9229 9230 9231)
+    for port in "${ports[@]}"; do
+      if command -v lsof >/dev/null 2>&1; then
+        local pids=$(lsof -ti :$port 2>/dev/null || true)
+        if [ -n "$pids" ]; then
+          echo "🧹 Cleaning up processes on port $port..."
+          echo "$pids" | xargs kill -9 2>/dev/null || true
+        fi
+      fi
+    done
+    sleep 1
+  }
+
+  cleanup_ports
+
   if [ $debug -eq 1 ]; then
     NODE_ENV=development node --inspect=9230 "$PROJECT_ROOT/frontend/build-frontend.js" --watch &
   else
@@ -53,9 +70,20 @@ serve() {
     DB=$!
   fi
 
+  # Enhanced cleanup function
+  cleanup() {
+    echo "🧹 Cleaning up processes..."
+    kill $FE $BE ${DB:-} 2>/dev/null || true
+    # Give processes time to exit gracefully
+    sleep 2
+    # Force kill any remaining processes
+    kill -9 $FE $BE ${DB:-} 2>/dev/null || true
+    cleanup_ports
+  }
+
   # On HUP, mark restart and terminate children
-  trap 'RESTART=1; kill $FE $BE ${DB:-} 2>/dev/null || true' HUP
-  trap 'kill $FE $BE ${DB:-} 2>/dev/null || true' INT TERM
+  trap 'RESTART=1; cleanup' HUP
+  trap 'cleanup' INT TERM EXIT
   wait $BE
   if [ "$RESTART" = "1" ]; then
     RESTART=0

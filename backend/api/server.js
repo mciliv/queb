@@ -515,7 +515,7 @@ app.use(
       __dirname,
       "..",
       "..",
-      process.env.NODE_ENV === "test" ? "test/sdf_files" : "sdf_files"
+      process.env.NODE_ENV === "test" ? "test/sdf_files" : "backend/sdf_files"
     )
   )
 );
@@ -1458,3 +1458,4 @@ process.on("uncaughtException", (error) => {
 module.exports = app;
 // Also provide a named export for platforms expecting a handler name
 module.exports.main = app;
+module.exports.molecularAnalysis = app;

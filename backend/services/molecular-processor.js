@@ -10,7 +10,7 @@ class MolecularProcessor {
     if (!sdfDir) {
       sdfDir = process.env.NODE_ENV === 'test'
         ? 'test/sdf_files'
-        : 'sdf_files';
+        : 'backend/sdf_files';
     }
     this.sdfDir = path.join(__dirname, "..", "..", sdfDir);
     this.ensureSdfDirectory();

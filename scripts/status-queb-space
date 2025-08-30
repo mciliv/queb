@@ -188,10 +188,3 @@ else
     log_warning "Production needs setup"
     echo "   Setup: ./setup-queb-space.sh (option 2 or 3)"
 fi
-
-echo ""
-echo "🔧 Quick Commands:"
-echo "   Setup: ./setup-queb-space.sh"
-echo "   Local: ./dev-queb-space"
-echo "   Deploy: ./deploy-queb-space"
-echo "   Status: ./status-queb-space" 

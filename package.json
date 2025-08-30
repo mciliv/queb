@@ -2,7 +2,7 @@
   "name": "molecular-space-analyzer",
   "version": "1.0.0",
   "description": "Molecular analysis app - maximally simplified",
-  "main": "backend/api/server.js",
+  "main": "functions.js",
   "scripts": {
     "start": "node backend/api/server.js",
     "dev": "scripts/dev",

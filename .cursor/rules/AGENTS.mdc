@@ -11,10 +11,7 @@ Use code instead of anything meta wherever possible
 If anything can be seen as a principle, put here
 No logging
 Show existing code chunks wherever possible instead of descriptions
-Don't create extraneous files; no markdown, if anything, simplify the code & tell me why to look at it
-create least files/codelines possible under contraint of a file providing our clearest
-delete unnecessities
-thinkinkable abstraction
+delete & don't create unnecessities
 cleanup after creating anything new
 Let's do command line based vs web-based executions, so we can both check
 run yourself unless dangerous

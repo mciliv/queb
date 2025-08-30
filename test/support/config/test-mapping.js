@@ -39,8 +39,22 @@ const FILE_TEST_MAPPING = {
     layers: [TEST_LAYERS.UNIT, TEST_LAYERS.API, TEST_LAYERS.INTEGRATION],
     related: [
       'test/unit/prompt-accuracy.test.js',
-      'test/integration/molecular-accuracy.test.js'
+      'test/integration/molecular-accuracy.test.js',
+      'backend/test-structuralizer.js'
     ]
+  },
+
+  // Test Configuration
+  'backend/test-config-example.js': {
+    direct: ['backend/test-structuralizer.js', 'test/unit/unit.test.js'],
+    layers: [TEST_LAYERS.UNIT],
+    related: []
+  },
+
+  'backend/test-structuralizer.js': {
+    direct: ['test/unit/unit.test.js'],
+    layers: [TEST_LAYERS.UNIT],
+    related: ['backend/test-config-example.js']
   },
 
   'backend/services/molecular-processor.js': {
@@ -144,6 +158,16 @@ const FILE_TEST_MAPPING = {
 
   // Chemistry Processors (Python removed)
 
+  // Visual/E2E Tests
+  'test/suites/e2e/automated-visual-tests.test.js': {
+    direct: [],
+    layers: [TEST_LAYERS.E2E],
+    related: [
+      'backend/test-config-example.js',
+      'test/integration/smoke.test.js'
+    ]
+  },
+
   // Infrastructure
   'package.json': {
     direct: [],
@@ -183,6 +207,7 @@ const LAYER_TEST_SUITES = {
   ],
 
   [TEST_LAYERS.E2E]: [
+    'test/suites/e2e/automated-visual-tests.test.js',
     'test/integration/deployment.test.js'
   ]
 };

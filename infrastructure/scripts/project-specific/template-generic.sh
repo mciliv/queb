@@ -1,67 +1,72 @@
 #!/bin/bash
 
-# Generic Script Template
-# ======================
-# This template shows how to create reusable scripts that work across projects
+# Molecular Analysis Deployment Script
+# ====================================
+# Deploys the molecular analysis application to Google Cloud Functions
 
 # Load configuration (required for all scripts)
 source "$(dirname "$0")/config.sh"
 
+# Load GCloud utilities from util directory
+UTIL_DIR="/Users/m/util"
+source "$UTIL_DIR/gcloud-func/utils.sh"
+
 # Script-specific configuration
-# Override defaults if needed for this specific script
 SCRIPT_NAME="$(basename "$0")"
 LOG_FILE="${PROJECT_ROOT}/logs/${SCRIPT_NAME%.*}.log"
 
 # Ensure log directory exists
 mkdir -p "$(dirname "$LOG_FILE")"
 
-# Logging function
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
-}
-
 # Error handling
 set -e
-trap 'log "ERROR: Script failed at line $LINENO"' ERR
+trap 'log_error "ERROR: Script failed at line $LINENO"' ERR
 
-# Main script logic
-log "Starting $SCRIPT_NAME for project: $DOMAIN_NAME"
-log "Working directory: $PROJECT_ROOT"
+# Main deployment logic
+log_info "Starting deployment of $PROJECT_NAME to $DOMAIN_NAME"
+log_info "Working directory: $PROJECT_ROOT"
 
-# Example: Generic domain check function
-check_domain() {
-    local domain="$1"
-    log "Checking domain: $domain"
-    
-    if dig "$domain" A +short 2>/dev/null | grep -q .; then
-        log "✅ Domain $domain is resolving"
-        return 0
-    else
-        log "❌ Domain $domain is not resolving"
-        return 1
-    fi
+# Check authentication
+log_info "Checking Google Cloud authentication..."
+check_auth || {
+    log_error "Please authenticate with Google Cloud: gcloud auth login"
+    exit 1
 }
 
-# Example: Generic Google Cloud function check
-check_function() {
-    local function_name="$1"
-    local region="$2"
-    
-    log "Checking function: $function_name in region: $region"
-    
-    if gcloud functions describe "$function_name" --region="$region" --format="value(status)" 2>/dev/null | grep -q "ACTIVE"; then
-        log "✅ Function $function_name is active"
-        return 0
-    else
-        log "❌ Function $function_name is not active"
-        return 1
-    fi
-}
-
-# Usage example
-log "Running generic checks..."
+# Check domain resolution
+log_info "Running pre-deployment checks..."
 check_domain "$DOMAIN_NAME"
 check_domain "www.$DOMAIN_NAME"
-check_function "$FUNCTION_NAME" "$REGION"
 
-log "Script completed successfully" 
+# Deploy the function
+log_info "🚀 Starting deployment to Google Cloud Functions..."
+
+# Deploy with functions.js entry point and environment variables
+gcloud functions deploy "$FUNCTION_NAME" \
+    --region="$REGION" \
+    --source="$PROJECT_ROOT" \
+    --runtime="nodejs20" \
+    --memory="1GB" \
+    --timeout="540s" \
+    --trigger-http \
+    --allow-unauthenticated \
+    --entry-point="molecularAnalysis" \
+    --set-env-vars="FUNCTION_NAME=molecular-analysis,FUNCTION_TARGET=molecularAnalysis,NODE_ENV=production"
+
+# Verify deployment
+log_info "Verifying deployment..."
+if check_function "$FUNCTION_NAME" "$REGION"; then
+    local url=$(gcloud functions describe "$FUNCTION_NAME" --region="$REGION" --format="value(httpsTrigger.url)" 2>/dev/null)
+    log_info "✅ Function deployed successfully: $url"
+    
+    # Test the deployed function
+    log_info "Testing deployed function..."
+    test_url "$url"
+    
+    log_info "🎉 Deployment to $DOMAIN_NAME completed successfully!"
+else
+    log_error "❌ Function deployment verification failed"
+    exit 1
+fi
+
+log_info "Deployment completed successfully" 

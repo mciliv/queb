@@ -2,152 +2,61 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "start-dev-server",
-      "type": "shell",
-      "command": "./dev",
+      "label": "Run Current Shell Script",
+      "type": "shell", 
+      "command": "${file}",
+      "args": [],
       "group": "build",
       "presentation": {
         "echo": true,
         "reveal": "always",
-        "focus": true,
-        "panel": "dedicated"
-      },
-      "isBackground": true,
-      "problemMatcher": []
-    },
-    {
-      "label": "check-dependencies", 
-      "type": "shell",
-      "command": "npm",
-      "args": [
-        "run",
-        "dev"
-      ],
-      "isBackground": true,
-      "group": {
-        "kind": "build",
-        "isDefault": true
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
       },
       "options": {
-        "shell": {
-          "executable": "/bin/bash",
-          "args": ["-c"]
-        }
-      }
-    },
-    {
-      "label": "dev-pipeline-cleanup",
-      "type": "shell",
-      "command": "echo", 
-      "args": ["🛑 Development pipeline stopped"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always"
-      }
-    },
-    {
-      "label": "start-livereload-dev",
-      "type": "shell",
-      "command": "./dev",
-      "group": "build", 
-      "isBackground": true,
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": true,
-        "panel": "dedicated"
+        "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": {
-        "pattern": {
-          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "🚀 Starting development server",
-          "endsPattern": "✅ HTTPS server started successfully"
-        }
-      }
-    },
-    {
-      "label": "test-livereload-procedure",
-      "type": "shell",
-      "command": "./scripts/test-livereload",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": true,
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "quick-dev-procedure", 
-      "type": "shell",
-      "command": "./scripts/quick-dev",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": true,
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "debug-pipeline-procedure",
-      "type": "shell", 
-      "command": "./scripts/debug-pipeline",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": true,
-        "panel": "dedicated"
-      }
-    },
-    {
-      "label": "watch-unit-tests",
-      "type": "shell", 
-      "command": "./test-watch",
-      "args": ["unit"],
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always", 
-        "focus": false,
-        "panel": "dedicated"
-      },
-      "isBackground": true,
       "problemMatcher": []
     },
     {
-      "label": "watch-all-tests",
+      "label": "Run Current Node Script",
       "type": "shell",
-      "command": "./test-watch", 
-      "args": ["all"],
-      "group": "test",
+      "command": "node",
+      "args": ["${file}"],
+      "group": "build",
       "presentation": {
         "echo": true,
         "reveal": "always",
         "focus": false,
-        "panel": "dedicated"
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
       },
-<<<<<<< HEAD
-      "problemMatcher": {
-        "pattern": {
-          "regexp": "."
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "\\[nodemon\\]",
-          "endsPattern": "Node server running on"
-        }
-      }
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
     },
+    {
+      "label": "Run Current Python Script",
+      "type": "shell",
+      "command": "python3",
+      "args": ["${file}"],
+      "group": "build", 
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
   ]
 }

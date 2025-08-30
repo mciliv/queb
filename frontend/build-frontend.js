@@ -23,7 +23,7 @@ async function build() {
       define: { 'process.env.NODE_ENV': '"development"' },
     });
     await ctx.watch();
-    console.log('👀 Frontend watch build started (esbuild)');
+    console.log('👀 Fron‘tend watch build started (esbuild)');
   } else {
     await esbuild.build({
       entryPoints: [entry],

@@ -8,16 +8,22 @@ const { resolveName, getPropertiesByCID } = require("./name-resolver");
 
 // Text-first API surface (UI prioritizes text input)
 class Structuralizer {
-  constructor(apiKey) {
+  constructor(apiKey, testConfig = null) {
     this.isTestMode = process.env.NODE_ENV === 'test';
     this.client = OpenAIClient ? new OpenAIClient({ apiKey: apiKey || process.env.OPENAI_API_KEY || '' }) : null;
     // In test mode, treat mocked OpenAI client as available even without a real key
     this.isOpenAIAvailable = (!!this.client && !!(apiKey || process.env.OPENAI_API_KEY)) || this.isTestMode;
-    const requestedModel = process.env.OPENAI_MODEL || process.env.OPENAI_DEFAULT_MODEL || 'auto';
+    
+    // Test configuration override
+    this.testConfig = testConfig || {};
+    
+    const requestedModel = this.testConfig.model || process.env.OPENAI_MODEL || process.env.OPENAI_DEFAULT_MODEL || 'auto';
     if (/^(latest|auto)$/i.test(requestedModel)) {
-      this.modelCandidates = ['gpt-5',  'gpt-4o', 'gpt-4-turbo'];
+      this.defaultModel = 'gpt-5';
+      this.fallbackModels = ['gpt-4o', 'gpt-4-turbo'];
     } else {
-      this.modelCandidates = [requestedModel];
+      this.defaultModel = requestedModel;
+      this.fallbackModels = [];
     }
     this.resolvedModelName = null;
     // Keep reference text for structuralization flow
@@ -27,15 +33,35 @@ class Structuralizer {
 
   async callOpenAI(requestParams) {
     if (!this.isOpenAIAvailable) throw new Error("AI service unavailable");
-    let lastError = null;
-    for (const candidate of this.resolvedModelName ? [this.resolvedModelName] : this.modelCandidates) {
+    
+    // Use test config if available (bypasses candidate looping)
+    if (this.testConfig.model && this.testConfig.prompt) {
       try {
-        const response = await this.client.chat.completions.create({ model: candidate, ...requestParams });
-        this.resolvedModelName = candidate;
+        const response = await this.client.chat.completions.create({ 
+          model: this.testConfig.model, 
+          ...requestParams,
+          messages: this.testConfig.prompt === 'custom' ? requestParams.messages : [
+            { role: 'user', content: this.testConfig.prompt }
+          ]
+        });
+        return response;
+      } catch (e) {
+        throw e;
+      }
+    }
+    
+    // Try default model first, then fallback models if error
+    const modelsToTry = this.resolvedModelName ? [this.resolvedModelName] : [this.defaultModel, ...this.fallbackModels];
+    let lastError = null;
+    
+    for (const model of modelsToTry) {
+      try {
+        const response = await this.client.chat.completions.create({ model, ...requestParams });
+        this.resolvedModelName = model;
         return response;
       } catch (e) {
         lastError = e;
-        // Try next candidate if available
+        // Only try fallbacks if default model fails
         continue;
       }
     }

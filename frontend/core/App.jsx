@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PaymentProvider, usePayment } from '../components/ui/PaymentContext';
 import { useApi } from '../hooks/useApi';
 import { PRESET_VISUAL_TESTS, TEST_MOLECULES, SMILES_NAME_MAP } from './constants.js';
+import logger from './logger.js';
 import '../assets/style.css';
 
 const isMobileDevice = () => {
@@ -15,17 +16,17 @@ const PAYMENT_CONFIG = {
   devMode: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
 };
 
-// Styles moved to CSS in assets/style.css
-const styles = {
-  column: {
-    minWidth: '400px',
-    background: 'transparent',
-    padding: '20px',
-    position: 'relative',
-    zIndex: 1,
-    userSelect: 'text'
-  }
+// Validation patterns for input filtering
+const VALIDATION_PATTERNS = {
+  emotions: /^(love|hate|happy|sad|angry|joy|fear|hope|dream|idea|thought|feeling|emotion)/,
+  actions: /^(running|walking|talking|thinking|sleeping|eating|drinking)$/,
+  shortLetters: /^[a-z]{1,2}$/,
+  nonAlphabetic: /^[^a-z]*$/,
+  testStrings: /^(asdf|qwerty|test|random|nothing|something|anything|everything)$/i,
+  commonWords: /^(the|a|an|and|or|but|if|then|when|where|why|how|what|who)$/
 };
+
+// Styles moved to CSS in assets/style.css
 
 // Input Components (Top Row)
 const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
@@ -62,16 +63,9 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
       return 'Input must be less than 500 characters';
     }
     
-    const nonPhysicalPatterns = [
-      /^(love|hate|happy|sad|angry|joy|fear|hope|dream|idea|thought|feeling|emotion)/,
-      /^(running|walking|talking|thinking|sleeping|eating|drinking)$/,
-      /^[a-z]{1,2}$/,
-      /^[^a-z]*$/,
-      /^(asdf|qwerty|test|random|nothing|something|anything|everything)$/i,
-      /^(the|a|an|and|or|but|if|then|when|where|why|how|what|who)$/
-    ];
+    const invalidPatterns = Object.values(VALIDATION_PATTERNS);
     
-    if (nonPhysicalPatterns.some(pattern => pattern.test(trimmed))) {
+    if (invalidPatterns.some(pattern => pattern.test(trimmed))) {
       return 'Please describe a real, physical object (food, materials, plants, etc.)';
     }
     
@@ -113,7 +107,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           ref={inputRef}
           id="object-input"
           type="text"
-          placeholder="Type to analyze molecules..."
+          placeholder="Specify object..."
           className={`input-base${displayError ? ' input-error' : ''}`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -132,7 +126,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
         )}
         
         {/* Modern keyboard hint badge */}
-        {!value.trim() && (
+        {!value.trim() && !isMobileDevice() && (
           <div className="kbd-hint">{keyboardHint}</div>
         )}
       </div>
@@ -146,6 +140,8 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
 };
 
 const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, linkMode, setLinkMode }) => {
+  const isMobile = isMobileDevice();
+  
   const handleModeSelect = (mode) => {
     setCameraMode(false);
     setPhotoMode(false);
@@ -164,57 +160,57 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
     }
   };
 
-  const buttonStyle = {
-    background: 'transparent',
-    border: 'none',
-    color: '#ffffff',
-    padding: '8px 12px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    fontSize: '13px',
-    transition: 'all 0.2s'
-  };
 
-  const activeStyle = {
-    background: 'rgba(255, 255, 255, 0.1)'
-  };
 
   return (
     <div className="mode-row">
       <button 
-        style={{...buttonStyle, ...(cameraMode ? activeStyle : {})}}
+        className={`mode-btn${cameraMode ? ' active' : ''}`}
         onClick={() => handleModeSelect('camera')}
-        title="Capture from camera"
+        title={isMobile ? "Capture from camera" : "Capture from camera (⌘⇧C)"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8"/>
           <circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
         </svg>
+        {!isMobile && (
+          <span className="mode-btn-shortcut">
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧C' : 'Ctrl+Shift+C'}
+          </span>
+        )}
       </button>
 
       <button 
-        style={{...buttonStyle, ...(photoMode ? activeStyle : {})}}
+        className={`mode-btn${photoMode ? ' active' : ''}`}
         onClick={() => handleModeSelect('photo')}
-        title="Upload image"
+        title={isMobile ? "Upload image" : "Upload image (⌘⇧P)"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
           <circle cx="9" cy="9" r="2"/>
           <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
         </svg>
+        {!isMobile && (
+          <span className="mode-btn-shortcut">
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧P' : 'Ctrl+Shift+P'}
+          </span>
+        )}
       </button>
 
       <button 
-        style={{...buttonStyle, ...(linkMode ? activeStyle : {})}}
+        className={`mode-btn${linkMode ? ' active' : ''}`}
         onClick={() => handleModeSelect('link')}
-        title="Enter image link"
+        title={isMobile ? "Enter image link" : "Enter image link (⌘⇧L)"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
         </svg>
+        {!isMobile && (
+          <span className="mode-btn-shortcut">
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧L' : 'Ctrl+Shift+L'}
+          </span>
+        )}
       </button>
     </div>
   );
@@ -433,12 +429,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
             left: clickPosition.x,
             top: clickPosition.y,
             width: clickPosition.size,
-            height: clickPosition.size,
-            border: '2px solid #ffffff',
-            background: 'transparent',
-            boxShadow: 'none',
-            borderRadius: 0,
-            animation: 'none'
+            height: clickPosition.size
           }}
         />
       )}
@@ -600,7 +591,7 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
           <img
             src={previewUrl}
             alt="Selected"
-            style={{ display: 'block', maxWidth: '100%', maxHeight: 180, marginTop: 12, borderRadius: 4 }}
+            className="preview-image"
             onLoad={() => {
               // Revoke to release memory after first paint
               try { URL.revokeObjectURL(previewUrl); } catch (_) {}
@@ -775,6 +766,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
   const ref = useRef(null);
   const mountRef = useRef(null); // Dedicated imperative mount to avoid React DOM conflicts
   const [status, setStatus] = useState('loading');
+  const loggedFailuresRef = useRef(new Set()); // Track logged failures to avoid repetition
 
   useEffect(() => {
     let cancelled = false;
@@ -801,15 +793,36 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
         let sdfContent = null;
         if (molecularData.sdfData && molecularData.sdfData.startsWith('file://')) {
           const rawPath = molecularData.sdfData.replace('file://', '');
+          // Construct URL properly - rawPath should already be a valid server path like "/sdf_files/filename.sdf"
           const url = rawPath.startsWith('/sdf_files/')
             ? rawPath
-            : `/sdf_files/${rawPath.split('/').pop()}`;
+            : `/sdf_files/${rawPath}`;
           const response = await fetch(url);
           if (response.ok) {
             sdfContent = await response.text();
-            // SDF fetched
+            // SDF fetched successfully
           } else {
-            console.log(`SDF fetch failed for ${molecularData.name}: HTTP ${response.status}`);
+            const failureKey = `${molecularData.name}-${response.status}`;
+            if (!loggedFailuresRef.current.has(failureKey)) {
+              logger.info(`SDF fetch failed for ${molecularData.name}: HTTP ${response.status}`);
+              logger.debug(`Failed URL: ${url}`);
+              loggedFailuresRef.current.add(failureKey);
+            }
+            // Try fallback approaches for debugging
+            if (molecularData.smiles) {
+              const sanitizeSmiles = (s) => s.replace(/[^a-zA-Z0-9]/g, ch => ch === '=' ? '__' : '_');
+              const fallbackUrl = `/sdf_files/${sanitizeSmiles(molecularData.smiles)}.sdf`;
+              const fallbackKey = `${molecularData.name}-fallback`;
+              if (!loggedFailuresRef.current.has(fallbackKey)) {
+                logger.debug(`Trying fallback URL: ${fallbackUrl}`);
+                loggedFailuresRef.current.add(fallbackKey);
+              }
+              const fallbackResponse = await fetch(fallbackUrl);
+              if (fallbackResponse.ok) {
+                sdfContent = await fallbackResponse.text();
+                logger.info(`SDF fallback successful for ${molecularData.name}`);
+              }
+            }
           }
         }
 
@@ -853,7 +866,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
           }
         }
       } catch (error) {
-        console.log(`Molecule load failed for ${molecularData.name}: ${error.message || 'Unknown error'}`);
+        logger.warn(`Molecule load failed for ${molecularData.name}: ${error.message || 'Unknown error'}`);
         setStatus('failed');
       }
     };
@@ -897,7 +910,7 @@ const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
   // Render column header and viewers
   
   return (
-    <div style={styles.column}>
+    <div className="column">
       {/* GUARANTEED VISIBLE HEADER */}
       <div className="column-header">
         <div className="column-meta">
@@ -943,7 +956,12 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [columns, setColumns] = useState([]);
   const [error, setError] = useState('');
-  const [autoVisualMode, setAutoVisualMode] = useState(process.env.NODE_ENV === 'development');
+  // Visual tests only run when explicitly enabled (not automatic in dev mode)
+  // Enable via: REACT_APP_RUN_VISUAL_TESTS=true or URL ?visual-tests
+  const [autoVisualMode, setAutoVisualMode] = useState(
+    process.env.NODE_ENV === 'development' && 
+    (process.env.REACT_APP_RUN_VISUAL_TESTS === 'true' || new URLSearchParams(window.location.search).has('visual-tests'))
+  );
   const [showSettings, setShowSettings] = useState(false);
   const [columnMode, setColumnMode] = useState('accumulate'); // 'replace' or 'accumulate'
 
@@ -972,9 +990,14 @@ function App() {
     }
   }, [autoVisualMode, columnMode]);
 
-  // Handle keyboard shortcuts
+  // Handle keyboard shortcuts (desktop only)
   useEffect(() => {
     const handleKeyDown = (event) => {
+      // Skip keyboard shortcuts on mobile devices
+      if (isMobileDevice()) {
+        return;
+      }
+      
       if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
         return;
       }
@@ -986,11 +1009,35 @@ function App() {
         event.preventDefault();
         document.getElementById('object-input')?.focus();
       }
+      
+      // Camera mode shortcut: ⌘/Ctrl + Shift + C
+      if (modifier && event.shiftKey && event.key.toLowerCase() === 'c') {
+        event.preventDefault();
+        setCameraMode(true);
+        setPhotoMode(false);
+        if (setLinkMode) setLinkMode(false);
+      }
+      
+      // Photo mode shortcut: ⌘/Ctrl + Shift + P
+      if (modifier && event.shiftKey && event.key.toLowerCase() === 'p') {
+        event.preventDefault();
+        setCameraMode(false);
+        setPhotoMode(true);
+        if (setLinkMode) setLinkMode(false);
+      }
+      
+      // Link mode shortcut: ⌘/Ctrl + Shift + L
+      if (modifier && event.shiftKey && event.key.toLowerCase() === 'l') {
+        event.preventDefault();
+        setCameraMode(false);
+        setPhotoMode(false);
+        if (setLinkMode) setLinkMode(true);
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [setCameraMode, setPhotoMode, setLinkMode]);
 
   const handleTextAnalysis = useCallback(async (value) => {
     if (!value.trim()) return;
@@ -1253,14 +1300,28 @@ function App() {
                 }}
                 className="select"
               >
-                <option value="replace" style={{ background: '#222', color: '#fff' }}>
+                <option value="replace">
                   Replace (Default) - New analysis displaces previous
                 </option>
-                <option value="accumulate" style={{ background: '#222', color: '#fff' }}>
+                <option value="accumulate">
                   Accumulate - Add columns side by side
                 </option>
               </select>
             </div>
+
+            {process.env.NODE_ENV === 'development' && (
+              <div className="settings-field">
+                <label className="label">
+                  <input
+                    type="checkbox"
+                    checked={autoVisualMode}
+                    onChange={(e) => setAutoVisualMode(e.target.checked)}
+                    className="checkbox-input"
+                  />
+                  Enable Visual Tests (Dev Mode)
+                </label>
+              </div>
+            )}
 
             <button
               onClick={() => setShowSettings(false)}

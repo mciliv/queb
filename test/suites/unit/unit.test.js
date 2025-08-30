@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const Structuralizer = require("../../../backend/services/Structuralizer");
 const MolecularProcessor = require("../../../backend/services/molecular-processor");
+const testConfigs = require("../../../backend/test-config-example");
 const {
   ImageMoleculeSchema,
   TextMoleculeSchema,
@@ -101,6 +102,63 @@ describe("Unit Tests", () => {
     test("should construct and expose analysis methods", () => {
       expect(typeof atomPredictor.structuralizeText).toBe("function");
       expect(typeof atomPredictor.structuralizeImage).toBe("function");
+    });
+
+    describe("Test Configuration Interface", () => {
+      test("should accept test configuration for model/prompt override", () => {
+        const testStructuralizer = new Structuralizer("test-key", testConfigs.customPrompt);
+        expect(testStructuralizer.testConfig.model).toBe("gpt-4o");
+        expect(testStructuralizer.testConfig.prompt).toBe("custom");
+      });
+
+      test("should use test config model instead of candidates when provided", () => {
+        const testStructuralizer = new Structuralizer("test-key", testConfigs.hardcodedPrompt);
+        expect(testStructuralizer.testConfig.model).toBe("gpt-4-turbo");
+        expect(testStructuralizer.testConfig.prompt).toContain("chemical structure");
+      });
+
+      test("should fall back to default behavior when no test config", () => {
+        const defaultStructuralizer = new Structuralizer("test-key");
+        expect(defaultStructuralizer.testConfig).toEqual({});
+        expect(defaultStructuralizer.modelCandidates).toContain("gpt-4o");
+      });
+
+      test("should handle different test configurations", () => {
+        const configs = [
+          testConfigs.customPrompt,
+          testConfigs.hardcodedPrompt,
+          testConfigs.structuralizeTest,
+          testConfigs.objectDetectionTest
+        ];
+
+        configs.forEach((config, index) => {
+          const testStructuralizer = new Structuralizer("test-key", config);
+          expect(testStructuralizer.testConfig.model).toBeDefined();
+          expect(testStructuralizer.testConfig.prompt).toBeDefined();
+          console.log(`Test config ${index + 1}: ${config.model} with ${config.prompt.length > 10 ? 'custom' : config.prompt} prompt`);
+        });
+      });
+
+      test("should bypass candidate looping when test config provided", async () => {
+        const mockOpenAI = require("openai");
+        const mockCreate = jest.fn().mockResolvedValue({
+          choices: [{ message: { content: '{"object": "test", "chemicals": []}' } }]
+        });
+        
+        mockOpenAI.OpenAI.mockImplementationOnce(() => ({
+          chat: { completions: { create: mockCreate } }
+        }));
+
+        const testStructuralizer = new Structuralizer("test-key", testConfigs.hardcodedPrompt);
+        await testStructuralizer.structuralizeText("test input");
+
+        expect(mockCreate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            model: "gpt-4-turbo",
+            messages: [{ role: 'user', content: testConfigs.hardcodedPrompt.prompt }]
+          })
+        );
+      });
     });
 
     describe("structuralizeImage", () => {

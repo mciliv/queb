@@ -15,7 +15,7 @@ const puppeteer = require('puppeteer');
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const FRONTEND_SRC_DIR = path.join(PROJECT_ROOT, 'frontend');
 const FRONTEND_DIST_FILE = path.join(PROJECT_ROOT, 'frontend', 'dist', 'bundle.js');
-const TARGET_URL = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+const TARGET_URL = process.env.FRONTEND_URL || `https://localhost:${process.env.PORT || 3001}`;
 const USER_DATA_DIR = path.join(PROJECT_ROOT, 'test', `chrome-molecular-profile-${Date.now()}-dev`);
 const PID_FILE = '/tmp/dev_browser_pid';
 const STICKY = (
@@ -103,9 +103,10 @@ async function openBrowser() {
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
-        '--start-fullscreen',
         '--start-maximized',
-        '--kiosk',
+        '--window-size=1920,1080',
+        '--ignore-certificate-errors',
+        '--ignore-ssl-errors',
         // Auto-open DevTools for tabs
         '--auto-open-devtools-for-tabs'
       ]
@@ -114,14 +115,14 @@ async function openBrowser() {
     if (!usedSystemBrowserFallback) {
       try {
         if (process.platform === 'darwin') {
-          // Try to open Google Chrome in fullscreen/kiosk mode with DevTools
+          // Try to open Google Chrome in maximized window with DevTools
           exec(
-            `open -a "Google Chrome" --args --kiosk --start-fullscreen --start-maximized --auto-open-devtools-for-tabs "${TARGET_URL}"`,
+            `open -a "Google Chrome" --args --start-maximized --window-size=1920,1080 --ignore-certificate-errors --ignore-ssl-errors --auto-open-devtools-for-tabs "${TARGET_URL}"`,
             { stdio: 'ignore' }
           );
         } else if (process.platform === 'win32') {
           exec(
-            `start chrome --kiosk --start-fullscreen --start-maximized --auto-open-devtools-for-tabs "${TARGET_URL}"`,
+            `start chrome --start-maximized --window-size=1920,1080 --ignore-certificate-errors --ignore-ssl-errors --auto-open-devtools-for-tabs "${TARGET_URL}"`,
             { shell: true, stdio: 'ignore' }
           );
         } else {
@@ -146,14 +147,9 @@ async function openBrowser() {
   }
   await page.bringToFront().catch(() => {});
   await page.goto(TARGET_URL, { waitUntil: 'networkidle0' }).catch(() => {});
-  // Best-effort: request DOM fullscreen after navigation
+  // Set window to fill screen without going fullscreen
   try {
-    await page.evaluate(() => {
-      const el = document.documentElement;
-      if (el && el.requestFullscreen) {
-        el.requestFullscreen().catch(() => {});
-      }
-    });
+    await page.setViewport({ width: 1920, height: 1080 });
   } catch (_) {}
   // Ensure body/root consume full viewport
   try {
@@ -209,17 +205,16 @@ function watchBuildArtifact() {
     fs.writeFileSync(FRONTEND_DIST_FILE, '');
   }
   fs.watchFile(FRONTEND_DIST_FILE, { interval: 250 }, debounce(async () => {
-    if (STICKY && browser && page) {
+    if (browser && page) {
       try {
+        // Always reload the tab when build artifact changes
         await page.reload({ waitUntil: 'networkidle0' });
         await page.bringToFront().catch(() => {});
-        log('🔁 Dev browser reloaded after build (sticky)');
+        log('🔁 Dev browser reloaded after build');
       } catch (_) {}
     } else {
       // Reopen only if currently closed
-      if (!browser) {
-        await openBrowser();
-      }
+      await openBrowser();
     }
   }, 400));
   log('🔄 Watching build output for completion');

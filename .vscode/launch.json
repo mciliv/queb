@@ -2,62 +2,60 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Start Dev Server",
-      "type": "node",
+      "name": "Debug Current Shell Script",
+      "type": "bashdb",
       "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/dev",
-      "console": "integratedTerminal",
-      "skipFiles": ["<node_internals>/**"],
-      "serverReadyAction": {
-        "pattern": "Server: http://localhost:([0-9]+)",
-        "uriFormat": "http://localhost:%s",
-        "action": "openExternally"
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "presentation": {
+        "hidden": false,
+        "group": "",
+        "order": 1
       }
     },
     {
-      "name": "Debug with Nodemon",
+      "name": "Debug Current Node Script", 
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/node_modules/.bin/nodemon",
-      "args": [
-        "--watch", "backend/",
-        "--watch", "frontend/",
-        "--ext", "js,html,css",
-        "--ignore", "node_modules/",
-        "--ignore", "test/",
-        "--delay", "1000ms",
-        "--exec", "node --inspect-brk",
-        "backend/api/server.js"
-      ],
+      "program": "${file}",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"],
-      "restart": true,
+      "cwd": "${workspaceFolder}",
       "env": {
         "NODE_ENV": "development"
       }
     },
     {
-      "name": "Run dev",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "${workspaceFolder}/dev",
-      "console": "externalTerminal",
-      "skipFiles": ["<node_internals>/**"]
+      "name": "Debug Current Python Script",
+      "type": "debugpy",
+      "request": "launch", 
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
     },
     {
-      "name": "Attach to Running Server",
-      "type": "node",
-      "request": "attach",
-      "port": 9229,
-      "skipFiles": ["<node_internals>/**"],
-      "restart": true
+      "name": "Debug Dev Script",
+      "type": "bashdb",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/dev",
+      "args": ["serve", "--debug"],
+      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "openOnSessionStart"
     }
   ],
   "compounds": [
     {
-      "name": "Run dev + Attach",
-      "configurations": ["Run dev", "Attach to Running Server"],
-      "stopAll": true
+      "name": "Debug Dev Script + Backend",
+      "configurations": [
+        "Debug Dev Script"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "hidden": false,
+        "group": "Debug Scripts",
+        "order": 1
+      }
     }
   ]
 }
