@@ -1,0 +1,29 @@
+[
+  {
+    "key": "f5",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Run Current Shell Script",
+    "when": "editorTextFocus && resourceExtname =~ /\\.(sh|bash|zsh)$/"
+  },
+  {
+    "key": "f5", 
+    "command": "workbench.action.tasks.runTask",
+    "args": "Run Current Node Script",
+    "when": "editorTextFocus && resourceExtname == '.js'"
+  },
+  {
+    "key": "f5",
+    "command": "workbench.action.tasks.runTask", 
+    "args": "Run Current Python Script",
+    "when": "editorTextFocus && resourceExtname == '.py'"
+  },
+  {
+    "key": "ctrl+f5",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Run Current Shell Script"
+  },
+  {
+    "key": "ctrl+shift+f5",
+    "command": "workbench.action.tasks.terminate"
+  }
+]

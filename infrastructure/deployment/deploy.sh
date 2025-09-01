@@ -5,11 +5,11 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/../.. && pwd)"
 cd "$ROOT_DIR"
 
 # Actual deploy entrypoint logic goes here.
-# For now, keep it simple and invoke a project-specific helper if present.
+# Use the main deployment script.
 
-if [ -x infrastructure/scripts/project-specific/template-generic.sh ]; then
-  exec infrastructure/scripts/project-specific/template-generic.sh "$@"
+if [ -x scripts/deploy ]; then
+  exec scripts/deploy "$@"
 fi
 
-echo "No deploy implementation found. Add one at infrastructure/scripts/project-specific/template-generic.sh" >&2
+echo "No deploy implementation found. Main deployment script should be at scripts/deploy" >&2
 exit 1

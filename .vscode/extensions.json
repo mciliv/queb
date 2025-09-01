@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "rogalmic.bash-debug",
+    "formulahendry.code-runner", 
+    "ms-python.python",
+    "ms-python.debugpy"
+  ],
+  "unwantedRecommendations": []
+}

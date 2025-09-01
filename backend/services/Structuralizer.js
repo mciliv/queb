@@ -25,6 +25,9 @@ class Structuralizer {
       this.defaultModel = requestedModel;
       this.fallbackModels = [];
     }
+    
+    // Legacy property for tests
+    this.modelCandidates = [this.defaultModel, ...this.fallbackModels];
     this.resolvedModelName = null;
     // Keep reference text for structuralization flow
     this.chemicalInstructions = null;

@@ -1,11 +1,7 @@
-# Ignore test directories and files
 test/
 tests/
 *.test.js
 __tests__/
-
-# Ignore development files
-frontend/
 logs/
 screenshots/
 docs/
@@ -13,21 +9,19 @@ infrastructure/
 scripts/dev*
 scripts/test*
 .vscode/
-
-# Ignore build artifacts
-dist/
-build/
-*.log
+!frontend/
+frontend/dev-browser.js
+frontend/build-frontend.js
+/dist/
+/build/
+!frontend/dist/
+*.logz
 *.map
-
-# Ignore environment and config files
 .env*
 .git/
 .gitignore
 .DS_Store
 *.md
-
-# Keep only essential backend files for the cloud function
 !backend/
 !package.json
 !package-lock.json

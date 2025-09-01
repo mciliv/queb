@@ -166,7 +166,7 @@ describe("Unit Tests", () => {
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 
       test("should analyze image without cropped region", async () => {
-        const result = await atomPredictor.structuralizeImage(mockImageBase64);
+        const result = await atomPredictor.structuralize({ imageBase64: mockImageBase64, object: "" });
         expect(result).toHaveProperty("object");
         expect(result).toHaveProperty("chemicals");
         expect(Array.isArray(result.chemicals)).toBe(true);
@@ -175,27 +175,24 @@ describe("Unit Tests", () => {
       });
 
       test("should analyze image with cropped region", async () => {
-        const result = await atomPredictor.structuralizeImage(
-          mockImageBase64,
-          mockImageBase64,
-          100,
-          100,
-          50,
-          50,
-          100
-        );
+        const result = await atomPredictor.structuralize({
+          imageBase64: mockImageBase64,
+          object: "",
+          x: 100,
+          y: 100
+        });
         expect(result).toHaveProperty("object");
         expect(result).toHaveProperty("chemicals");
         expect(Array.isArray(result.chemicals)).toBe(true);
       });
 
       test("should handle null parameters gracefully", async () => {
-        const result = await atomPredictor.structuralizeImage(
-          mockImageBase64,
-          null,
-          null,
-          null
-        );
+        const result = await atomPredictor.structuralize({
+          imageBase64: mockImageBase64,
+          object: "",
+          x: null,
+          y: null
+        });
         expect(result).toHaveProperty("object");
         expect(result).toHaveProperty("chemicals");
       });
@@ -215,7 +212,7 @@ describe("Unit Tests", () => {
       });
 
       test("should handle empty image base64", async () => {
-        await expect(atomPredictor.analyzeImage("")).rejects.toThrow();
+        await expect(atomPredictor.structuralizeImage("")).rejects.toThrow();
       });
     });
 
@@ -590,8 +587,8 @@ describe("Unit Tests", () => {
         },
       }));
 
-      const analyzer = new AtomPredictor("test-key");
-      await expect(analyzer.analyzeText("test")).rejects.toThrow(
+      const analyzer = new Structuralizer("test-key");
+      await expect(analyzer.structuralizeText("test")).rejects.toThrow(
         "Network Error",
       );
     });

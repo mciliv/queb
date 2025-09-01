@@ -1,9 +1,0 @@
----
-globs: frontend/**
----
-just use icons, no text
-
-## "Simplest" UI Guidelines
-- **No Extraneous Lines**: No borders, outlines, shadows, or decorative elements
-- **Consistent Spacing**: Use consistent padding and margins throughout
-- Make backgrounds uniform, e.g. for 3dmol same as default

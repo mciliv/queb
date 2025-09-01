@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PaymentProvider, usePayment } from '../components/ui/PaymentContext';
 import { useApi } from '../hooks/useApi';
 import { PRESET_VISUAL_TESTS, TEST_MOLECULES, SMILES_NAME_MAP } from './constants.js';
+import { PAYMENT_CONFIG, VALIDATION_PATTERNS } from '../utils/config-loader.js';
 import logger from './logger.js';
 import '../assets/style.css';
 
@@ -10,23 +11,7 @@ const isMobileDevice = () => {
          (window.innerWidth <= 768 && 'ontouchstart' in window);
 };
 
-// Configuration
-const PAYMENT_CONFIG = {
-  enabled: false, // Set to true to enable payment functionality
-  devMode: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-};
 
-// Validation patterns for input filtering
-const VALIDATION_PATTERNS = {
-  emotions: /^(love|hate|happy|sad|angry|joy|fear|hope|dream|idea|thought|feeling|emotion)/,
-  actions: /^(running|walking|talking|thinking|sleeping|eating|drinking)$/,
-  shortLetters: /^[a-z]{1,2}$/,
-  nonAlphabetic: /^[^a-z]*$/,
-  testStrings: /^(asdf|qwerty|test|random|nothing|something|anything|everything)$/i,
-  commonWords: /^(the|a|an|and|or|but|if|then|when|where|why|how|what|who)$/
-};
-
-// Styles moved to CSS in assets/style.css
 
 // Input Components (Top Row)
 const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
@@ -124,12 +109,12 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
             →
          </button>
         )}
-        
-        {/* Modern keyboard hint badge */}
-        {!value.trim() && !isMobileDevice() && (
-          <div className="kbd-hint">{keyboardHint}</div>
-        )}
       </div>
+      
+      {!value.trim() && !isMobileDevice() && (
+        <div className="kbd-hint">{keyboardHint}</div>
+      )}
+      
       {displayError && (
         <div id="input-error" className="error-text" role="alert">
           {displayError}
@@ -993,50 +978,80 @@ function App() {
   // Handle keyboard shortcuts (desktop only)
   useEffect(() => {
     const handleKeyDown = (event) => {
+      // Debug: log all keyboard events with modifiers
+      if (event.metaKey || event.ctrlKey) {
+        console.log('Keyboard event detected:', {
+          key: event.key,
+          metaKey: event.metaKey,
+          ctrlKey: event.ctrlKey,
+          shiftKey: event.shiftKey,
+          target: event.target.tagName,
+          isMobile: isMobileDevice()
+        });
+      }
+      
       // Skip keyboard shortcuts on mobile devices
       if (isMobileDevice()) {
+        console.log('Skipping shortcuts - mobile device detected');
         return;
       }
       
-      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+      // Skip if typing in form fields
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.contentEditable === 'true') {
+        console.log('Skipping shortcuts - typing in form field');
         return;
       }
 
       const isMac = navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
       const modifier = isMac ? event.metaKey : event.ctrlKey;
 
-      if (modifier && event.key.toLowerCase() === 'k') {
+      // Focus input shortcut: ⌘/Ctrl + K
+      if (modifier && !event.shiftKey && event.key.toLowerCase() === 'k') {
+        console.log('⌘K shortcut triggered');
         event.preventDefault();
-        document.getElementById('object-input')?.focus();
+        event.stopPropagation();
+        const inputElement = document.getElementById('object-input');
+        console.log('Found input element:', inputElement);
+        inputElement?.focus();
+        return;
       }
       
-      // Camera mode shortcut: ⌘/Ctrl + Shift + C
+      // Camera mode shortcut: ⌘/Ctrl + Shift + C  
       if (modifier && event.shiftKey && event.key.toLowerCase() === 'c') {
         event.preventDefault();
+        event.stopPropagation();
+        console.log('Camera mode shortcut triggered');
         setCameraMode(true);
         setPhotoMode(false);
-        if (setLinkMode) setLinkMode(false);
+        setLinkMode(false);
+        return;
       }
       
       // Photo mode shortcut: ⌘/Ctrl + Shift + P
       if (modifier && event.shiftKey && event.key.toLowerCase() === 'p') {
         event.preventDefault();
+        event.stopPropagation();
+        console.log('Photo mode shortcut triggered');
         setCameraMode(false);
         setPhotoMode(true);
-        if (setLinkMode) setLinkMode(false);
+        setLinkMode(false);
+        return;
       }
       
       // Link mode shortcut: ⌘/Ctrl + Shift + L
       if (modifier && event.shiftKey && event.key.toLowerCase() === 'l') {
         event.preventDefault();
+        event.stopPropagation();
+        console.log('Link mode shortcut triggered');
         setCameraMode(false);
         setPhotoMode(false);
-        if (setLinkMode) setLinkMode(true);
+        setLinkMode(true);
+        return;
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => document.removeEventListener('keydown', handleKeyDown, { capture: true });
   }, [setCameraMode, setPhotoMode, setLinkMode]);
 
   const handleTextAnalysis = useCallback(async (value) => {

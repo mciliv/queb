@@ -165,14 +165,14 @@ class MolecularProcessor {
     });
     
     if (exited === 0) {
-      const filename = `${chemical.replace(/[^a-zA-Z0-9]/g, ch => ch === "=" ? "__" : "_")}.sdf`;
+      const filename = this.generateSafeFilename(chemical);
       return `/sdf_files/${filename}`;
     }
     
     // If python path fails, attempt PubChem download then fallback
     try {
       const sdf = await downloadSDFBySmiles(chemical);
-      const filename = `${chemical.replace(/[^a-zA-Z0-9]/g, ch => ch === "=" ? "__" : "_")}.sdf`;
+      const filename = this.generateSafeFilename(chemical);
       const dest = path.join(this.sdfDir, filename);
       await fsPromises.writeFile(dest, sdf, "utf8");
       return `/sdf_files/${filename}`;
@@ -189,6 +189,7 @@ class MolecularProcessor {
       const fallbackDir = path.join(__dirname, "..", "..", "test", "sdf_files");
       const filenames = [
         `${smiles}.sdf`,
+        this.generateSafeFilename(smiles),
         `${smiles.replace(/[^a-zA-Z0-9]/g, ch => ch === "=" ? "__" : "_")}.sdf`,
       ];
       for (const name of filenames) {
@@ -207,9 +208,26 @@ class MolecularProcessor {
     }
   }
 
+  generateSafeFilename(smiles) {
+    // Create a hash for long SMILES to avoid filesystem limits and display issues
+    const cleanedName = smiles.replace(/[^a-zA-Z0-9]/g, ch => ch === "=" ? "__" : "_");
+    
+    // If the cleaned filename would be too long for display or filesystem
+    if (cleanedName.length > 50) {
+      const hash = crypto.createHash('md5').update(smiles).digest('hex').substring(0, 12);
+      // Include first few characters for recognition + hash
+      const prefix = cleanedName.substring(0, 8);
+      return `${prefix}_${hash}.sdf`;
+    }
+    
+    // For shorter SMILES, use the cleaned version
+    return `${cleanedName}.sdf`;
+  }
+
   findExistingSdfFile(smiles) {
     const possibleFilenames = [
       `${smiles}.sdf`,
+      this.generateSafeFilename(smiles),
       `${smiles.replace(/[^a-zA-Z0-9]/g, ch => ch === "=" ? "__" : "_")}.sdf`,
     ];
 

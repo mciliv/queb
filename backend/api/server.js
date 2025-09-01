@@ -1,12 +1,5 @@
-// server.js - Clean modular architecture
-
-// Load environment configuration
 const config = require('../config/env');
-
-// Validate configuration
 config.validateConfig();
-
-// Simple logger - emit logs only in debug mode (errors always shown)
 const isDebugMode = config.NODE_ENV === 'debug';
 const log = isDebugMode
   ? {
@@ -22,7 +15,7 @@ const log = isDebugMode
       error: (msg) => console.error(msg),
     };
 
-// ==================== IMPORTS ====================
+
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
@@ -31,9 +24,17 @@ const HttpsServer = require("./https-server");
 const Structuralizer = require("../services/Structuralizer");
 const MolecularProcessor = require("../services/molecular-processor");
 const { resolveName, getPropertiesByCID } = require("../services/name-resolver");
-const ScreenshotService = require("../services/screenshot-service");
 
-// Direct frontend serving (no proxy needed)
+let ScreenshotService = null;
+if (config.NODE_ENV === 'development') {
+  try {
+    ScreenshotService = require("../services/screenshot-service");
+  } catch (error) {
+    log.warning('⚠️ Screenshot service not available in development mode');
+  }
+}
+
+
 let proxy = null;
 if (config.NODE_ENV === 'development') {
   try {
@@ -42,7 +43,7 @@ if (config.NODE_ENV === 'development') {
     log.warning('⚠️ http-proxy-middleware not available - install with: npm install http-proxy-middleware');
   }
 }
-// UserService import - only if database is available
+
 let UserService = null;
 try {
   UserService = require("../services/user-service");
@@ -123,7 +124,7 @@ const testDatabaseConnection = async () => {
   }
 };
 
-// ==================== CONFIGURATION ====================
+
 const app = express();
 const DEFAULT_PORT = 8080;
 const HTTPS_PORT = process.env.HTTPS_PORT || 3001;
@@ -239,7 +240,7 @@ const initializeDatabase = async () => {
   }
 };
 
-// ==================== MIDDLEWARE ====================
+
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 
@@ -282,7 +283,7 @@ app.post('/api/log-error', (req, res) => {
 // User data now stored in PostgreSQL instead of in-memory
 // Database schema will be created by the database setup script
 
-// ==================== API ROUTES ====================
+
 
 // Image analysis route
 app.post("/image-molecules", async (req, res) => {
@@ -310,15 +311,12 @@ app.post("/image-molecules", async (req, res) => {
       return res.status(400).json({ error: "No image data provided" });
     }
 
-    const result = await structuralizer.structuralizeImage(
+    const result = await structuralizer.structuralize({
+      object: "", // Let image detection determine the object
       imageBase64,
-      croppedImageBase64,
       x,
-      y,
-      cropMiddleX,
-      cropMiddleY,
-      cropSize,
-    );
+      y
+    });
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -368,7 +366,7 @@ app.post("/analyze-text", async (req, res) => {
       return res.status(400).json({ error: "No object description provided" });
     }
 
-    const result = await structuralizer.analyzeText(object);
+    const result = await structuralizer.structuralizeText(object);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -501,8 +499,6 @@ app.post("/name-to-smiles", async (req, res) => {
 });
 
 // ==================== STATIC FILE SERVING ====================
-// Serve frontend files first (before API routes)
-
 app.use(express.static(path.join(__dirname, "..", "..", "frontend")));
 app.use("/dist", express.static(path.join(__dirname, "..", "..", "frontend", "dist")));
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));
@@ -520,171 +516,183 @@ app.use(
   )
 );
 
-// ==================== SCREENSHOT ROUTES ====================
 
-// Initialize screenshot service
-const screenshotService = new ScreenshotService();
 
-// Serve screenshot files for LLM access
-app.use("/api/screenshot", express.static(path.join(__dirname, "..", "..")));
 
-// Capture current app state
-app.post("/api/capture-screenshot", async (req, res) => {
-  try {
-    const { filename } = req.body;
-    const result = await screenshotService.captureApp(filename);
-    
-    res.json({
-      success: true,
-      screenshot: result,
-      message: "Screenshot captured successfully"
-    });
-  } catch (error) {
-    log.error(`Screenshot capture failed: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+let screenshotService = null;
+if (config.NODE_ENV === 'development' && ScreenshotService) {
+  screenshotService = new ScreenshotService();
+  log.info("🔧 Screenshot service enabled for development");
+} else {
+  log.info("📦 Screenshot service disabled for production");
+}
 
-// Capture screenshot with text input
-app.post("/api/capture-with-input", async (req, res) => {
-  try {
-    const { inputText, filename } = req.body;
-    
-    if (!inputText) {
-      return res.status(400).json({
+// Development-only screenshot routes
+if (config.NODE_ENV === 'development' && screenshotService) {
+  // Serve screenshot files for LLM access
+  app.use("/api/screenshot", express.static(path.join(__dirname, "..", "..")));
+
+  // Capture current app state
+  app.post("/api/capture-screenshot", async (req, res) => {
+    try {
+      const { filename } = req.body;
+      const result = await screenshotService.captureApp(filename);
+      
+      res.json({
+        success: true,
+        screenshot: result,
+        message: "Screenshot captured successfully"
+      });
+    } catch (error) {
+      log.error(`Screenshot capture failed: ${error.message}`);
+      res.status(500).json({
         success: false,
-        error: "inputText is required"
+        error: error.message
       });
     }
-    
-    if (!screenshotService) {
-      return res.status(503).json({ error: "Screenshot service not available" });
-    }
-    const result = await screenshotService.captureWithInput(inputText, filename);
-    
-    res.json({
-      success: true,
-      screenshot: result,
-      message: "Screenshot with input captured successfully"
-    });
-  } catch (error) {
-    log.error(`Screenshot with input failed: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+  });
 
-// Capture screenshot after analysis
-app.post("/api/capture-analysis", async (req, res) => {
-  try {
-    const { inputText, filename } = req.body;
-    
-    if (!inputText) {
-      return res.status(400).json({
-        success: false,
-        error: "inputText is required"
-      });
-    }
-    
-    if (!screenshotService) {
-      return res.status(503).json({ error: "Screenshot service not available" });
-    }
-    const result = await screenshotService.captureAnalysis(inputText, filename);
-    
-    res.json({
-      success: true,
-      screenshot: result,
-      message: "Analysis screenshot captured successfully"
-    });
-  } catch (error) {
-    log.error(`Analysis screenshot failed: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// List all available screenshots
-app.get("/api/screenshots", async (req, res) => {
-  try {
-    if (!screenshotService) {
-      return res.status(503).json({ error: "Screenshot service not available" });
-    }
-    const screenshots = await screenshotService.listScreenshots();
-    
-    res.json({
-      success: true,
-      screenshots: screenshots,
-      count: screenshots.length
-    });
-  } catch (error) {
-    log.error(`Failed to list screenshots: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// Get specific screenshot info
-app.get("/api/screenshot-info/:filename", async (req, res) => {
-  try {
-    const { filename } = req.params;
-    if (!screenshotService) {
-      return res.status(503).json({ error: "Screenshot service not available" });
-    }
-    const screenshotPath = await screenshotService.getScreenshotPath(filename);
-    
-    const stats = fs.statSync(screenshotPath);
-    
-    res.json({
-      success: true,
-      screenshot: {
-        filename: filename,
-        path: screenshotPath,
-        url: `/api/screenshot/${filename}`,
-        size: stats.size,
-        created: stats.birthtime,
-        modified: stats.mtime
+  // Capture screenshot with text input
+  app.post("/api/capture-with-input", async (req, res) => {
+    try {
+      const { inputText, filename } = req.body;
+      
+      if (!inputText) {
+        return res.status(400).json({
+          success: false,
+          error: "inputText is required"
+        });
       }
-    });
-  } catch (error) {
-    res.status(404).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// Cleanup old screenshots
-app.post("/api/cleanup-screenshots", async (req, res) => {
-  try {
-    const { keepCount = 10 } = req.body;
-    if (!screenshotService) {
-      return res.status(503).json({ error: "Screenshot service not available" });
+      
+      const result = await screenshotService.captureWithInput(inputText, filename);
+      
+      res.json({
+        success: true,
+        screenshot: result,
+        message: "Screenshot with input captured successfully"
+      });
+    } catch (error) {
+      log.error(`Screenshot with input failed: ${error.message}`);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
     }
-    await screenshotService.cleanupOldScreenshots(keepCount);
-    
-    res.json({
-      success: true,
-      message: `Cleaned up old screenshots, kept ${keepCount} most recent`
-    });
-  } catch (error) {
-    log.error(`Screenshot cleanup failed: ${error.message}`);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+  });
 
-// ==================== PAYMENT ROUTES ====================
+  // Capture screenshot after analysis
+  app.post("/api/capture-analysis", async (req, res) => {
+    try {
+      const { inputText, filename } = req.body;
+      
+      if (!inputText) {
+        return res.status(400).json({
+          success: false,
+          error: "inputText is required"
+        });
+      }
+      
+      const result = await screenshotService.captureAnalysis(inputText, filename);
+      
+      res.json({
+        success: true,
+        screenshot: result,
+        message: "Analysis screenshot captured successfully"
+      });
+    } catch (error) {
+      log.error(`Analysis screenshot failed: ${error.message}`);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  // List all available screenshots
+  app.get("/api/screenshots", async (req, res) => {
+    try {
+      const screenshots = await screenshotService.listScreenshots();
+      
+      res.json({
+        success: true,
+        screenshots: screenshots,
+        count: screenshots.length
+      });
+    } catch (error) {
+      log.error(`Failed to list screenshots: ${error.message}`);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  // Get specific screenshot info
+  app.get("/api/screenshot-info/:filename", async (req, res) => {
+    try {
+      const { filename } = req.params;
+      const screenshotPath = await screenshotService.getScreenshotPath(filename);
+      
+      const stats = fs.statSync(screenshotPath);
+      
+      res.json({
+        success: true,
+        screenshot: {
+          filename: filename,
+          path: screenshotPath,
+          url: `/api/screenshot/${filename}`,
+          size: stats.size,
+          created: stats.birthtime,
+          modified: stats.mtime
+        }
+      });
+    } catch (error) {
+      res.status(404).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  // Cleanup old screenshots
+  app.post("/api/cleanup-screenshots", async (req, res) => {
+    try {
+      const { keepCount = 10 } = req.body;
+      await screenshotService.cleanupOldScreenshots(keepCount);
+      
+      res.json({
+        success: true,
+        message: `Cleaned up old screenshots, kept ${keepCount} most recent`
+      });
+    } catch (error) {
+      log.error(`Screenshot cleanup failed: ${error.message}`);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  log.info("🔧 Screenshot routes enabled for development");
+} else {
+  // Stub routes for production
+  const screenshotDisabled = (req, res) => {
+    res.status(503).json({ 
+      error: "Screenshot functionality disabled in production" 
+    });
+  };
+  
+  app.post("/api/capture-screenshot", screenshotDisabled);
+  app.post("/api/capture-with-input", screenshotDisabled);
+  app.post("/api/capture-analysis", screenshotDisabled);
+  app.get("/api/screenshots", screenshotDisabled);
+  app.get("/api/screenshot-info/:filename", screenshotDisabled);
+  app.post("/api/cleanup-screenshots", screenshotDisabled);
+  
+  log.info("📦 Screenshot routes disabled for production");
+}
+
+
 
 // Stripe configuration endpoint
 app.get("/api/stripe-config", (req, res) => {
@@ -961,7 +969,7 @@ app.post("/increment-usage", async (req, res) => {
   }
 });
 
-// ==================== ANALYSIS ROUTES ====================
+
 
 // Image analysis route
 app.post("/image-molecules", async (req, res) => {
@@ -989,15 +997,12 @@ app.post("/image-molecules", async (req, res) => {
       return res.status(400).json({ error: "No image data provided" });
     }
 
-    const result = await structuralizer.analyzeImage(
+    const result = await structuralizer.structuralize({
+      object: "", // Let image detection determine the object
       imageBase64,
-      croppedImageBase64,
       x,
-      y,
-      cropMiddleX,
-      cropMiddleY,
-      cropSize,
-    );
+      y
+    });
     res.json(result);
   } catch (error) {
     console.error("Image analysis error:", error);
@@ -1198,23 +1203,38 @@ app.post("/generate-sdfs", async (req, res) => {
   }
 });
 
-// Serve frontend directly in all modes
 console.log('NODE_ENV:', config.NODE_ENV);
-console.log('Setting up frontend static routes');
+console.log('Setting up frontend routes');
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
 });
 
-// SEO routes
+
 app.get("/robots.txt", (req, res) => {
   res.type('text/plain');
-  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "robots.txt"));
+  res.send(`User-agent: *
+Allow: /
+
+Sitemap: https://${req.get('host') || 'localhost'}/sitemap.xml
+`);
 });
 
 app.get("/sitemap.xml", (req, res) => {
   res.type('application/xml');
-  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "sitemap.xml"));
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://${req.get('host') || 'localhost'}/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`);
 });
+
+
+app.use(express.static(path.join(__dirname, "..", "..", "frontend", "dist")));
 
 // Catch-all route for SPA (prevents 404s on direct navigation)
 app.get("*", (req, res, next) => {

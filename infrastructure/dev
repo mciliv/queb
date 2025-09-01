@@ -6,23 +6,6 @@ const fs = require('fs');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
-// Constants
-const PORTS = [3000, 3001, 3002, 3004, 9229, 9230, 9231];
-const DEV_TIMEOUT = 2000;
-const COMMIT_MAX_LENGTH = 72;
-const HEALTH_CHECK_TIMEOUT = 10000;
-
-// Project Configuration (from infrastructure/scripts/config.sh)
-const PROJECT_CONFIG = {
-  name: 'molecular-analysis',
-  description: 'Molecular analysis app with AI-powered chemical identification',
-  domain: 'queb.space',
-  dnsZone: 'queb-space-zone',
-  region: 'us-central1',
-  functionName: 'molecular-analysis',
-  pythonVersion: '3.12.9'
-};
-
 // Logging functions with emojis and colors
 const colors = {
   red: '\033[0;31m',
@@ -44,51 +27,6 @@ const log = {
   rocket: (msg) => console.log(`${colors.green}🚀 ${msg}${colors.nc}`)
 };
 
-// Utility functions (from infrastructure scripts)
-function checkAuth() {
-  try {
-    const activeAccount = execSync('gcloud auth list --filter=status:ACTIVE --format="value(account)"', { encoding: 'utf8' }).trim();
-    if (activeAccount) {
-      log.success('Google Cloud authenticated');
-      return true;
-    }
-  } catch (err) {}
-  log.error('Google Cloud not authenticated');
-  return false;
-}
-
-function testUrl(url, timeout = 5000) {
-  try {
-    execSync(`curl -s --max-time ${timeout/1000} "${url}"`, { stdio: 'pipe' });
-    log.success(`URL is responding: ${url}`);
-    return true;
-  } catch (err) {
-    log.warning(`URL not responding: ${url} (may be cold start)`);
-    return false;
-  }
-}
-
-function checkDomain(domain, timeout = 5) {
-  log.info(`Checking domain: ${domain}`);
-  try {
-    const result = execSync(`dig "${domain}" A +short +timeout=${timeout}`, { encoding: 'utf8' }).trim();
-    if (result) {
-      log.success(`Domain ${domain} is resolving`);
-      return true;
-    }
-  } catch (err) {
-    try {
-      execSync(`nslookup ${domain}`, { stdio: 'pipe' });
-      log.success(`Domain ${domain} is resolving`);
-      return true;
-    } catch (err2) {
-      log.error(`Domain ${domain} is not resolving`);
-      return false;
-    }
-  }
-  return false;
-}
-
 function setupAliases() {
   const os = require('os');
   const rcFile = process.env.SHELL?.includes('zsh') ? `${os.homedir()}/.zshrc` : `${os.homedir()}/.bashrc`;
@@ -104,26 +42,14 @@ function setupAliases() {
 }
 
 async function generateCommitMessage() {
-  let diff, detailedDiff;
+  const diff = execSync('git diff --cached --stat', { encoding: 'utf-8' });
+  const detailedDiff = execSync('git diff --cached', { encoding: 'utf-8', maxBuffer: 1024 * 1024 });
   
-  try {
-    diff = execSync('git diff --cached --stat', { encoding: 'utf-8', cwd: PROJECT_ROOT });
-    detailedDiff = execSync('git diff --cached', { 
-      encoding: 'utf-8', 
-      maxBuffer: 1024 * 1024,
-      cwd: PROJECT_ROOT 
-    });
-  } catch (err) {
-    log.warning('Failed to get git diff, using fallback message');
-    return 'chore: update files';
-  }
-  
-  // Try OpenAI if available
   try {
     const openai = require('openai');
     const apiKey = process.env.OPENAI_API_KEY;
     
-    if (apiKey && apiKey.length > 10) {
+    if (apiKey) {
       const client = new openai.OpenAI({ apiKey });
       
       const prompt = `Generate a concise, semantic commit message for these changes:
@@ -136,7 +62,7 @@ ${detailedDiff.substring(0, 500)}
 
 Guidelines:
 - Use conventional commit format (feat:, fix:, refactor:, docs:, style:, test:, chore:)
-- Be specific but concise (max ${COMMIT_MAX_LENGTH} chars)
+- Be specific but concise (max 72 chars)
 - Focus on WHAT changed and WHY, not HOW
 - Single line only`;
 
@@ -147,8 +73,7 @@ Guidelines:
         temperature: 0.3
       });
       
-      const message = response.choices[0].message.content.trim();
-      return message.length <= COMMIT_MAX_LENGTH ? message : message.substring(0, COMMIT_MAX_LENGTH);
+      return response.choices[0].message.content.trim();
     }
   } catch (err) {
     log.info('OpenAI unavailable, using fallback...');
@@ -168,7 +93,7 @@ Guidelines:
     else if (filePath.includes('README') || filePath.includes('.md')) changes.docs++;
     else if (filePath.includes('.css') || filePath.includes('.scss')) changes.style++;
     else if (filePath.includes('package.json') || filePath.includes('config')) changes.chore++;
-    else if (detailedDiff.toLowerCase().includes('fix') || detailedDiff.toLowerCase().includes('bug')) changes.fix++;
+    else if (detailedDiff.includes('fix') || detailedDiff.includes('bug')) changes.fix++;
     else changes.feat++;
   });
   
@@ -176,16 +101,14 @@ Guidelines:
   
   if (fileCount === 1) {
     const fileName = path.basename(files[0].split('|')[0].trim());
-    const message = `${primaryType}: update ${fileName}`;
-    return message.length <= COMMIT_MAX_LENGTH ? message : message.substring(0, COMMIT_MAX_LENGTH);
+    return `${primaryType}: update ${fileName}`;
   } else {
     const areas = [...new Set(files.map(f => {
       const parts = f.split('|')[0].trim().split('/');
       return parts[0] === 'backend' || parts[0] === 'frontend' ? parts[0] : 'project';
     }))];
     
-    const message = `${primaryType}: update ${areas.join(', ')} (${fileCount} files)`;
-    return message.length <= COMMIT_MAX_LENGTH ? message : message.substring(0, COMMIT_MAX_LENGTH);
+    return `${primaryType}: update ${areas.join(', ')} (${fileCount} files)`;
   }
 }
 
@@ -248,7 +171,8 @@ function cleanupPorts() {
 
   // Free up ports
   try {
-    PORTS.forEach(port => {
+    const ports = [3000, 3001, 3002, 3004, 9229, 9230, 9231];
+    ports.forEach(port => {
       try {
         const pids = execSync(`lsof -ti:${port}`, { encoding: 'utf8' }).trim();
         if (pids) {
@@ -475,228 +399,6 @@ function clean(args = []) {
   cleanupPorts();
 }
 
-function init(args = []) {
-  log.info(`Initializing project: ${PROJECT_CONFIG.name}`);
-
-  // Check if we're in a git repository
-  try {
-    execSync('git rev-parse --git-dir', { stdio: 'pipe', cwd: PROJECT_ROOT });
-  } catch (err) {
-    log.error('Not in a git repository. Please run this from your project root.');
-    process.exit(1);
-  }
-
-  // Check if project is already initialized
-  const packageJsonPath = path.join(PROJECT_ROOT, 'package.json');
-  if (fs.existsSync(packageJsonPath)) {
-    log.warning('Project appears to be already initialized');
-    console.log('Options:');
-    console.log('1. Reinitialize (will update existing config)');
-    console.log('2. Skip initialization');
-    
-    const readline = require('readline');
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    rl.question('Choose option (1-2): ', (choice) => {
-      if (choice === '1') {
-        log.info('Reinitializing project...');
-        initializeProject();
-      } else if (choice === '2') {
-        log.info('Skipping initialization');
-      } else {
-        log.error('Invalid choice');
-        process.exit(1);
-      }
-      rl.close();
-    });
-  } else {
-    initializeProject();
-  }
-}
-
-function initializeProject() {
-  log.info('Creating project structure...');
-
-  // Create logs directory
-  const logsDir = path.join(PROJECT_ROOT, 'logs');
-  if (!fs.existsSync(logsDir)) {
-    fs.mkdirSync(logsDir, { recursive: true });
-    log.info('Created logs directory');
-  }
-
-  // Create .gitignore if it doesn't exist
-  const gitignorePath = path.join(PROJECT_ROOT, '.gitignore');
-  if (!fs.existsSync(gitignorePath)) {
-    const gitignoreContent = `# Logs
-logs/
-*.log
-
-# Environment variables
-.env
-.env.local
-
-# Dependencies
-node_modules/
-__pycache__/
-*.pyc
-
-# Build outputs
-dist/
-build/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db`;
-    
-    fs.writeFileSync(gitignorePath, gitignoreContent);
-    log.info('Created .gitignore');
-  }
-
-  // Create basic README if it doesn't exist
-  const readmePath = path.join(PROJECT_ROOT, 'README.md');
-  if (!fs.existsSync(readmePath)) {
-    const readmeContent = `# ${PROJECT_CONFIG.name}
-
-## Overview
-${PROJECT_CONFIG.description}
-
-## Setup
-
-### Prerequisites
-- Node.js
-- Python 3.12+
-- Google Cloud CLI
-- Git
-
-### Installation
-1. Clone the repository
-2. Initialize the project:
-   \`\`\`bash
-   dev init
-   \`\`\`
-
-3. Set up environment variables:
-   \`\`\`bash
-   export OPENAI_API_KEY="your-api-key"
-   export GOOGLE_CLOUD_PROJECT="your-project-id"
-   \`\`\`
-
-## Usage
-
-### Development
-\`\`\`bash
-dev serve
-\`\`\`
-
-### Deployment
-\`\`\`bash
-dev deploy
-\`\`\`
-
-### Other Commands
-- \`dev test\` - Run tests
-- \`dev clean\` - Clean up processes
-- \`dev commit\` - Commit and push changes
-- \`dev status\` - Check environment status`;
-    
-    fs.writeFileSync(readmePath, readmeContent);
-    log.info('Created README.md');
-  }
-
-  // Commit changes
-  try {
-    execSync('git add .', { stdio: 'inherit', cwd: PROJECT_ROOT });
-    execSync('git commit -m "feat: initialize project structure"', { stdio: 'inherit', cwd: PROJECT_ROOT });
-    log.success('Project initialization completed!');
-    
-    console.log('');
-    console.log('Next steps:');
-    console.log('1. Set up your environment variables (.env file)');
-    console.log('2. Install dependencies: npm install');
-    console.log('3. Start development: dev serve');
-    console.log('4. Deploy: dev deploy');
-  } catch (err) {
-    log.warning('Could not commit changes automatically');
-    log.success('Project initialization completed!');
-  }
-}
-
-function trustCert(args = []) {
-  log.info('Molecular Analysis App - Certificate Trust Setup');
-  console.log('==================================================');
-
-  const certPath = path.join(PROJECT_ROOT, 'backend/api/certs/cert.pem');
-  
-  if (!fs.existsSync(certPath)) {
-    log.error(`Certificate not found at: ${certPath}`);
-    log.info('Please start the development server first to generate certificates');
-    log.info('Run: dev serve');
-    process.exit(1);
-  }
-
-  log.info(`Certificate found: ${certPath}`);
-
-  const os = require('os');
-  const platform = os.platform();
-
-  try {
-    switch (platform) {
-      case 'darwin':
-        log.info('🍎 macOS detected - adding certificate to system keychain');
-        execSync(`sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "${certPath}"`, { stdio: 'inherit' });
-        log.success('Certificate added to macOS system keychain');
-        log.success('You should no longer see "trust website" prompts');
-        break;
-        
-      case 'linux':
-        log.info('🐧 Linux detected');
-        try {
-          // Try Ubuntu/Debian
-          execSync(`sudo cp "${certPath}" /usr/local/share/ca-certificates/mol-dev.crt`, { stdio: 'inherit' });
-          execSync('sudo update-ca-certificates', { stdio: 'inherit' });
-          log.success('Certificate added to Linux CA store');
-        } catch (err) {
-          try {
-            // Try CentOS/RHEL/Fedora
-            execSync(`sudo cp "${certPath}" /etc/pki/ca-trust/source/anchors/mol-dev.crt`, { stdio: 'inherit' });
-            execSync('sudo update-ca-trust', { stdio: 'inherit' });
-            log.success('Certificate added to Linux CA store');
-          } catch (err2) {
-            log.warning('Automatic certificate installation not supported');
-            showManualCertInstructions(certPath);
-          }
-        }
-        break;
-        
-      default:
-        log.warning(`Unsupported OS: ${platform}`);
-        showManualCertInstructions(certPath);
-        break;
-    }
-  } catch (err) {
-    log.error(`Failed to install certificate: ${err.message}`);
-    showManualCertInstructions(certPath);
-  }
-}
-
-function showManualCertInstructions(certPath) {
-  console.log('');
-  console.log('🌐 Manual browser setup:');
-  console.log('   Chrome: Visit https://localhost:3001 → Advanced → Proceed to localhost (unsafe)');
-  console.log('   Firefox: Visit https://localhost:3001 → Advanced → Accept the Risk and Continue');
-  console.log('   Safari: Visit https://localhost:3001 → Show Details → Visit this website');
-  console.log('');
-  console.log(`   Certificate file: ${certPath}`);
-  console.log('🔄 Restart your browser after certificate installation');
-}
-
 async function commit(args = []) {
   const messageFlag = args.indexOf('-m');
   let message = null;
@@ -789,103 +491,81 @@ function deploy(args = []) {
   const force = args.includes('--force');
   const skipTests = args.includes('--skip-tests');
 
-  log.rocket('Deploying to queb.space');
+  console.log('🚀 Deploying to queb.space');
 
   // Check environment
   const envPath = path.join(PROJECT_ROOT, '.env');
   if (!fs.existsSync(envPath)) {
-    log.error('.env file not found');
+    console.error('❌ .env file not found');
     process.exit(1);
   }
 
-  let apiKey;
-  try {
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    const apiKeyMatch = envContent.match(/^OPENAI_API_KEY=(.+)$/m);
-    if (!apiKeyMatch) {
-      log.error('OPENAI_API_KEY not set in .env file');
-      process.exit(1);
-    }
-    apiKey = apiKeyMatch[1].replace(/['"]/g, '').trim();
-    
-    if (!apiKey || apiKey.length < 10) {
-      log.error('Invalid OPENAI_API_KEY in .env file');
-      process.exit(1);
-    }
-  } catch (err) {
-    log.error(`Failed to read .env file: ${err.message}`);
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  const apiKeyMatch = envContent.match(/^OPENAI_API_KEY=(.+)$/m);
+  if (!apiKeyMatch) {
+    console.error('❌ OPENAI_API_KEY not set in .env file');
     process.exit(1);
   }
+  const apiKey = apiKeyMatch[1].replace(/['"]/g, '');
 
   try {
-    // Check gcloud authentication
-    const activeAccount = execSync('gcloud auth list --filter=status:ACTIVE --format="value(account)"', { encoding: 'utf8' }).trim();
-    if (!activeAccount) {
-      log.error('Not authenticated with gcloud - run: gcloud auth login');
-      process.exit(1);
-    }
-    log.info(`Authenticated as: ${activeAccount}`);
+    // Check gcloud
+    execSync('gcloud auth list --filter=status:ACTIVE --format="value(account)"', { stdio: 'pipe' });
   } catch (err) {
-    log.error('Not authenticated with gcloud - run: gcloud auth login');
+    console.error('❌ Not authenticated with gcloud - run: gcloud auth login');
     process.exit(1);
   }
 
   // Run tests
   if (!skipTests) {
     try {
-      log.info('Running tests before deployment...');
       test(['all']);
-      log.success('Tests passed');
+      console.log('✅ Tests passed');
     } catch (err) {
-      log.error('Tests failed');
+      console.error('❌ Tests failed');
       if (!force) {
-        log.info('Use --skip-tests or --force to proceed anyway');
+        console.log('Use --skip-tests or --force to proceed anyway');
         process.exit(1);
       }
-      log.warning('Proceeding with deployment despite test failures (--force)');
     }
   }
 
   // Build frontend
-  log.info('Building frontend...');
   build();
 
   // Deploy to Google Cloud Functions
   try {
-    log.info('Deploying to Google Cloud Functions...');
-    const deployCmd = [
-      'gcloud', 'functions', 'deploy', 'molecular-analysis',
-      '--runtime', 'nodejs20',
-      '--trigger-http',
-      '--allow-unauthenticated',
-      '--memory', '1GB',
-      '--timeout', '540s',
-      '--region', 'us-central1',
-      '--entry-point', 'molecularAnalysis',
-      '--source', '.',
-      '--max-instances', '10',
-      '--set-env-vars', `OPENAI_API_KEY=${apiKey},NODE_ENV=production,FUNCTION_NAME=molecular-analysis,FUNCTION_TARGET=molecularAnalysis`
-    ];
-    
-    execSync(deployCmd.join(' '), { stdio: 'inherit', cwd: PROJECT_ROOT });
+    execSync(`gcloud functions deploy molecular-analysis \\
+      --runtime nodejs20 \\
+      --trigger-http \\
+      --allow-unauthenticated \\
+      --memory 1GB \\
+      --timeout 540s \\
+      --region us-central1 \\
+      --entry-point molecularAnalysis \\
+      --source . \\
+      --max-instances 10 \\
+      --set-env-vars "OPENAI_API_KEY=${apiKey},NODE_ENV=production,FUNCTION_NAME=molecular-analysis,FUNCTION_TARGET=molecularAnalysis"`, 
+      { stdio: 'inherit', cwd: PROJECT_ROOT });
 
     console.log('');
-    log.success('Deployment successful!');
+    console.log('✅ Deployment successful!');
     
     // Test deployment
-    log.info('Testing deployment...');
-    const healthUrls = [
-      'https://us-central1-mol-analysis-app.cloudfunctions.net/molecular-analysis/health',
-      'https://queb.space/health'
-    ];
+    console.log('🧪 Testing deployment...');
+    try {
+      execSync('curl -sf "https://us-central1-mol-analysis-app.cloudfunctions.net/molecular-analysis/health"', { stdio: 'pipe' });
+      console.log('✅ Health check passed');
+    } catch (err) {
+      console.log('⚠️ Health check failed');
+    }
     
-    for (const url of healthUrls) {
-      try {
-        execSync(`curl -sf "${url}"`, { stdio: 'pipe', timeout: 10000 });
-        log.success(`Health check passed: ${url}`);
-      } catch (err) {
-        log.warning(`Health check failed: ${url}`);
-      }
+    // Test domain
+    try {
+      execSync('curl -sf "https://queb.space/health"', { stdio: 'pipe' });
+      console.log('✅ Domain working');
+    } catch (err) {
+      console.log('⚠️ Domain may need time to propagate');
     }
     
     console.log('');
@@ -900,7 +580,7 @@ function deploy(args = []) {
     console.log('🔧 Cloud console: https://console.cloud.google.com/functions/list');
   } catch (err) {
     console.log('');
-    log.error('Deployment failed');
+    console.log('❌ Deployment failed');
     console.log('');
     console.log('💡 Troubleshooting tips:');
     console.log('   1. Check the error logs above');
@@ -1165,11 +845,7 @@ const [cmd = 'serve', ...args] = process.argv.slice(2);
       break;
     case 'alias':
       setupAliases();
-      log.success('Aliases installed. Reload your shell to activate:');
-      log.info('  # Bash');
-      log.info('  source ~/.bashrc');
-      log.info('  # Zsh');
-      log.info('  source ~/.zshrc');
+      log.success('Aliases setup complete. Restart your shell.');
       break;
     case '--help':
     case '-h':
