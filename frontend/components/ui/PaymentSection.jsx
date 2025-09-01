@@ -48,9 +48,8 @@ const PaymentSection = () => {
         <div className="payment-content">
           <div className="account-status">
             <div className="account-link">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <line x1="2" y1="10" x2="22" y2="10"/>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="5" width="18" height="14" rx="3" fill="currentColor"/>
               </svg>
               <span>{userName || 'Account'}</span>
             </div>
