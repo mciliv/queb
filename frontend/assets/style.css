@@ -138,7 +138,7 @@ input.input-base {
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: all 0.2s;
+  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
 .btn-ghost.active {
@@ -257,7 +257,7 @@ button, input, canvas, video, svg {
   font-size: 20px;
   cursor: pointer;
   padding: 4px 8px;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
   flex-shrink: 0;
   min-width: 32px;
   height: 32px;
@@ -339,7 +339,7 @@ canvas[class*="threeDmol"] {
   display: flex;
   align-items: center;
   font-size: 13px;
-  transition: all 0.2s;
+  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
 .mode-btn.active {
@@ -439,7 +439,7 @@ canvas[class*="threeDmol"] {
   justify-content: center;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.05);
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
   gap: 12px;
 }
 
@@ -670,7 +670,7 @@ canvas[class*="threeDmol"] {
   padding: 8px 16px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 6px;
-  transition: all 0.2s;
+  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
 .back-link:hover {
@@ -876,7 +876,7 @@ canvas[class*="threeDmol"] {
 
 .btn-primary:hover {
   background: #ffffff;
-  transform: translateY(-1px);
+  /* Remove transform to avoid flicker/spazzing on some GPUs */
 }
 
 .btn-primary:disabled {
