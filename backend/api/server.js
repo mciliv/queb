@@ -1206,9 +1206,31 @@ app.post("/generate-sdfs", async (req, res) => {
 console.log('NODE_ENV:', config.NODE_ENV);
 console.log('Setting up frontend routes');
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
-});
+// Helper to serve index.html with token replacement
+const serveIndexWithTokens = (req, res) => {
+  try {
+    const indexPath = path.join(__dirname, "..", "..", "frontend", "core", "index.html");
+    let html = fs.readFileSync(indexPath, "utf8");
+
+    const host = req.get('host') || 'localhost';
+    const baseUrl = `${req.protocol || 'http'}://${host}`;
+
+    const tokens = {
+      '{{TITLE}}': 'Structuralizer - Structural Analysis',
+      '{{DESCRIPTION}}': 'Advanced 3D visualization tool for chemical compounds. Analyze molecular structures from camera images or text input.',
+      '{{CANONICAL}}': `${baseUrl}/`,
+      '{{OG_IMAGE}}': '/assets/favicon.svg'
+    };
+
+    html = html.replace(/\{\{TITLE\}\}|\{\{DESCRIPTION\}\}|\{\{CANONICAL\}\}|\{\{OG_IMAGE\}\}/g, (match) => tokens[match] || '');
+
+    res.type('html').send(html);
+  } catch (e) {
+    res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
+  }
+};
+
+app.get("/", serveIndexWithTokens);
 
 
 app.get("/robots.txt", (req, res) => {
@@ -1249,7 +1271,7 @@ app.get("*", (req, res, next) => {
   }
   
   // Serve index.html for all other routes (SPA behavior)
-  res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
+  serveIndexWithTokens(req, res);
 });
 
 // Request logging middleware
