@@ -30,6 +30,7 @@ debug-logs/
 test/chrome-molecular-profile*/
 test/seamless-chrome-profile/
 test/single-tab-chrome/
+test/chrome-dev-profile/
 .vscode/settings.json
 
 # Logs
