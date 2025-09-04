@@ -35,3 +35,6 @@ test/chrome-dev-profile/
 
 # Logs
 logs/
+
+# Unused root bundle
+bundle.js
