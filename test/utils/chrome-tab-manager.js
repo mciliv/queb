@@ -93,7 +93,7 @@ class ChromeTabManager {
     for (const page of pages) {
       try {
         const url = page.url();
-        if (url.includes('localhost:3001') || url.includes('molecular')) {
+        if (url.includes('localhost:8080') || url.includes('molecular')) {
           molecularPage = page;
           console.log('♻️  Found existing molecular testing tab');
           break;
@@ -109,7 +109,7 @@ class ChromeTabManager {
       
       // Refresh the page to ensure clean state
       console.log('🔄 Refreshing molecular tab...');
-      await this.page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+      await this.page.goto('http://localhost:8080', { waitUntil: 'networkidle0' });
       
     } else {
       // Create new tab for molecular testing
@@ -124,7 +124,7 @@ class ChromeTabManager {
       }
       
       // Navigate to molecular app
-      await this.page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+      await this.page.goto('http://localhost:8080', { waitUntil: 'networkidle0' });
     }
 
     // Set up page monitoring

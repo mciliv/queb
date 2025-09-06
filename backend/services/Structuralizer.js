@@ -7,7 +7,7 @@ const MolecularProcessor = require("./molecular-processor");
 const { resolveName, getPropertiesByCID } = require("./name-resolver");
 
 class Structuralizer {
-  constructor(apiKey = null) {
+  constructor(apiKey = null, testConfig = null) {
     // Single provider/model
     this.client = createClient();
     const effectiveApiKey = apiKey || aiConfig.apiKey;
@@ -16,6 +16,15 @@ class Structuralizer {
     this.resolvedModelName = null;
     this.chemicalInstructions = null;
     this.molecularProcessor = new MolecularProcessor();
+
+    // Test configuration support
+    this.testConfig = testConfig || {};
+    if (this.testConfig.model) {
+      this.model = this.testConfig.model;
+    }
+
+    // Model candidates for fallback behavior
+    this.modelCandidates = ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
   }
 
   async callOpenAI(requestParams) {
@@ -59,7 +68,9 @@ class Structuralizer {
   // Primary: text → molecules (names→structures) using a single structuralization prompt
   async structuralizeText(object) {
     if (!this.isOpenAIAvailable) throw new Error("AI service unavailable for structuralization");
-    const prompt = buildStructuralizePrompt(object || '');
+    const prompt = this.testConfig.prompt && this.testConfig.prompt !== 'custom'
+      ? this.testConfig.prompt
+      : buildStructuralizePrompt(object || '');
     // Ask for JSON with chemicals[{name, smiles}]
     const response = await this.callOpenAI({
       messages: [{ role: 'user', content: prompt }],

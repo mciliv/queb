@@ -1,9 +1,14 @@
-// Version Configuration - now consolidated in project.js
-// This file is deprecated, use project.js configuration instead
+// Client-side version configuration
+// No server-side dependencies for browser compatibility
 
-import project from '../../config/project.js';
+export const VERSION_CONFIG = {
+  defaultVersion: 'react',
+  allowToggle: false,
+  showToggleButton: false,
+  persistChoice: false,
+  performanceMode: false
+};
 
-export const VERSION_CONFIG = project.helpers.getVersionConfig();
 export const getActiveConfig = () => VERSION_CONFIG;
 export const getFinalConfig = () => VERSION_CONFIG;
 export const CONFIG_PRESETS = {};

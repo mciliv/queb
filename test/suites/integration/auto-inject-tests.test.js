@@ -40,7 +40,7 @@ describe('Auto-Inject Molecular Tests', () => {
         slowMo: 300
       });
       page = await browser.newPage();
-      await page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+      await page.goto('http://localhost:8080', { waitUntil: 'networkidle0' });
     }
     
     // Log molecular analysis activity

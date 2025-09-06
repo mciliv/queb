@@ -12,15 +12,32 @@ AI-powered molecular identification and 3D visualization from text, images, or c
 ## Quick Start
 
 ### Development
-```bash
-# Generic development (no domain)
-../web/dev serve
 
-# With queb profile
-../web/dev serve
-# or
-PROFILE=queb ../web/dev serve
+#### Quick Start
+```bash
+# Basic development server (manual restart)
+npm run dev
+
+# Auto-restart on backend changes
+npm run dev:watch
+
+# Full development with frontend watching (requires concurrently)
+npm run dev:full
 ```
+
+#### Development Scripts
+- `npm run dev` - Basic server (manual restart)
+- `npm run dev:watch` - Auto-restart on backend changes
+- `npm run build:watch` - Watch frontend builds
+- `npm run dev:full` - Full development workflow
+- `npm run lint` - Check code style
+- `npm run lint:fix` - Fix code style issues
+
+#### Keyboard Shortcuts
+- `Ctrl+K` / `⌘K` - Focus input field
+- `Ctrl+M` / `⌘M` - Camera mode
+- `Ctrl+P` / `⌘P` - Photo mode
+- `Ctrl+L` / `⌘L` - Link mode
 
 ### Deployment
 ```bash

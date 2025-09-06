@@ -12,20 +12,20 @@ describe('Keyboard Shortcuts Robustness', () => {
       targetId: 'object-input'
     },
     CAMERA_MODE: {
-      key: 'c',
-      modifiers: { meta: false, ctrl: false, alt: true, shift: false },
+      key: 'm',
+      modifiers: { meta: true, ctrl: true, alt: false, shift: false },
       action: 'cameraMode',
       description: 'Switch to camera mode'
     },
     PHOTO_MODE: {
       key: 'p',
-      modifiers: { meta: false, ctrl: false, alt: true, shift: false },
+      modifiers: { meta: true, ctrl: true, alt: false, shift: false },
       action: 'photoMode',
       description: 'Switch to photo mode'
     },
     LINK_MODE: {
       key: 'l',
-      modifiers: { meta: false, ctrl: false, alt: true, shift: false },
+      modifiers: { meta: true, ctrl: true, alt: false, shift: false },
       action: 'linkMode',
       description: 'Switch to link mode'
     }
@@ -47,10 +47,7 @@ describe('Keyboard Shortcuts Robustness', () => {
       expect(shortcut.modifiers).toHaveProperty('meta');
       expect(shortcut.modifiers).toHaveProperty('ctrl');
       expect(shortcut.modifiers).toHaveProperty('shift');
-      // Alt is optional - only present for mode shortcuts
-      if (shortcut.action !== 'focusInput') {
-        expect(shortcut.modifiers).toHaveProperty('alt');
-      }
+      expect(shortcut.modifiers).toHaveProperty('alt');
     });
   });
 

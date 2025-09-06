@@ -109,7 +109,7 @@ class SeamlessTabManager {
     for (const page of pages) {
       try {
         const url = page.url();
-        if (url.includes('localhost:3001')) {
+        if (url.includes('localhost:8080')) {
           molecularPage = page;
           break;
         }
@@ -121,11 +121,11 @@ class SeamlessTabManager {
     if (molecularPage) {
       this.page = molecularPage;
       // Silently refresh to clean state
-      await this.page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+      await this.page.goto('http://localhost:8080', { waitUntil: 'networkidle0' });
     } else {
       // Use existing tab or create new one
       this.page = pages.length > 0 ? pages[0] : await this.browser.newPage();
-      await this.page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+      await this.page.goto('http://localhost:8080', { waitUntil: 'networkidle0' });
     }
 
     // Silent setup - no console monitoring

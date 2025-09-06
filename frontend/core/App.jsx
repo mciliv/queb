@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PaymentProvider, usePayment } from '../components/ui/PaymentContext';
 import { useApi } from '../hooks/useApi';
-import { PRESET_VISUAL_TESTS, TEST_MOLECULES, SMILES_NAME_MAP } from './constants.js';
+import { PRESET_VISUAL_TESTS, TEST_MOLECULES, SMILES_NAME_MAP } from '../utils/constants.js';
 import { PAYMENT_CONFIG, VALIDATION_PATTERNS } from '../utils/config-loader.js';
 import logger from './logger.js';
 import { createKeyboardHandler } from './keyboard-shortcuts.js';
@@ -161,7 +161,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
         </svg>
         {!isMobile && (
           <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌥C' : 'Alt+C'}
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘M' : 'Ctrl+M'}
           </span>
         )}
       </button>
@@ -178,7 +178,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
         </svg>
         {!isMobile && (
           <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌥P' : 'Alt+P'}
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘P' : 'Ctrl+P'}
           </span>
         )}
       </button>
@@ -194,7 +194,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
         </svg>
         {!isMobile && (
           <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌥L' : 'Alt+L'}
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘L' : 'Ctrl+L'}
           </span>
         )}
       </button>

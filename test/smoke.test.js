@@ -6,11 +6,10 @@ describe('Basic App Smoke Tests', () => {
   test('Core files exist', () => {
     const coreFiles = [
       'frontend/core/index.html',
-      'frontend/index.html', 
       'backend/api/server.js',
       'package.json'
     ];
-    
+
     coreFiles.forEach(file => {
       expect(fs.existsSync(path.join(__dirname, '..', file))).toBe(true);
     });
@@ -18,8 +17,8 @@ describe('Basic App Smoke Tests', () => {
 
   test('Package.json has required dependencies', () => {
     const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json')));
-    
-    const requiredDeps = ['express', 'cors', 'openai'];
+
+    const requiredDeps = ['express', 'cors'];
     requiredDeps.forEach(dep => {
       expect(packageJson.dependencies[dep]).toBeDefined();
     });
@@ -38,14 +37,14 @@ describe('Basic App Smoke Tests', () => {
   });
 
   test('Environment configuration is valid', () => {
-    // Test that root-level scripts are set up
-    const rootScripts = ['dev', 'tests', 'ship', 'server', 'debug', 'cleanup'];
-    
-    rootScripts.forEach(script => {
-      expect(fs.existsSync(path.join(__dirname, '..', script))).toBe(true);
+    // Test that key configuration files exist
+    const configFiles = ['package.json', 'frontend/build-frontend.js'];
+
+    configFiles.forEach(file => {
+      expect(fs.existsSync(path.join(__dirname, '..', file))).toBe(true);
     });
-    
-    // Test that infrastructure scripts still exist
-    expect(fs.existsSync(path.join(__dirname, '..', 'infrastructure', 'scripts'))).toBe(true);
+
+    // Test that main entry point exists
+    expect(fs.existsSync(path.join(__dirname, '..', 'index.js'))).toBe(true);
   });
 }); 

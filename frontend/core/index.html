@@ -32,7 +32,7 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <title>{{TITLE}}</title>
-    <link rel="stylesheet" href="/assets/style.css" />
+    <link rel="stylesheet" href="/assets/style.css?v={{CACHE_BUST}}" />
     <style>
       /* Critical paint: ensure full-bleed black on first render */
       html, body, #root { margin:0; padding:0; background:#000; height:100%; width:100%; }
@@ -40,6 +40,50 @@
   </head>
   <body>
     <div id="root"></div>
-    <script src="/dist/bundle.js" defer></script>
+    <script src="/dist/bundle.js?v={{CACHE_BUST}}" defer></script>
+    <script>
+      // Reliable PWA Development Setup - Disable SW in dev, use LiveReload
+      const isDevelopment = window.location.hostname === 'localhost' ||
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.hostname.includes('192.168.') ||
+                           window.location.hostname.includes('172.');
+
+      if (isDevelopment) {
+        console.log('[DEV] Development mode detected - Service Worker disabled for reliable hot reloading');
+
+        // LiveReload implementation (most reliable for PWA dev)
+        let liveReloadScript = document.createElement('script');
+        liveReloadScript.src = 'https://cdn.jsdelivr.net/npm/livereload-js@3.4.1/dist/livereload.min.js';
+        liveReloadScript.onload = function() {
+          console.log('[DEV] LiveReload loaded successfully');
+        };
+        liveReloadScript.onerror = function() {
+          console.log('[DEV] LiveReload failed to load, falling back to manual refresh');
+        };
+        document.head.appendChild(liveReloadScript);
+
+      } else {
+        // Production: Enable Service Worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js?v={{CACHE_BUST}}')
+              .then((registration) => {
+                console.log('[PWA] Service Worker registered:', registration.scope);
+              })
+              .catch((error) => {
+                console.log('[PWA] Service Worker registration failed:', error);
+              });
+          });
+
+          // Handle PWA install prompt
+          let deferredPrompt;
+          window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('[PWA] Install prompt captured');
+          });
+        }
+      }
+    </script>
   </body>
 </html>

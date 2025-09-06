@@ -1,0 +1,21 @@
+# Molecular configuration files
+frontend/config/molecular-config.json
+
+# Build outputs
+frontend/dist/
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Test artifacts
+test/results/
+test/screenshots/
+
+# Certificates
+backend/api/certs/
+
+# Python cache
+__pycache__/
+*.pyc

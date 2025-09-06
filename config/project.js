@@ -51,7 +51,7 @@ module.exports = {
     domain: process.env.DOMAIN_NAME || '',
     dnsZone: process.env.DNS_ZONE_NAME || '',
     region: process.env.REGION || 'us-central1',
-    functionName: process.env.FUNCTION_NAME || 'molecular-analysis',
+    functionName: process.env.FUNCTION_NAME,
     googleCloudProject: process.env.GOOGLE_CLOUD_PROJECT,
     functionTarget: process.env.FUNCTION_TARGET,
     kService: process.env.K_SERVICE

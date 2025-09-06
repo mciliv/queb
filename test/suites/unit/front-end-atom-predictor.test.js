@@ -62,19 +62,19 @@ const mockUIManager = {
 };
 
 // Mock modules
-jest.doMock('../../frontend/components/payment.js', () => ({
+jest.mock('../../frontend/components/payment.js', () => ({
   paymentManager: mockPaymentManager
 }));
 
-jest.doMock('../../frontend/components/camera.js', () => ({
+jest.mock('../../frontend/components/camera.js', () => ({
   cameraManager: mockCameraManager
 }));
 
-jest.doMock('../../frontend/components/camera-handler.js', () => ({
+jest.mock('../../frontend/components/camera-handler.js', () => ({
   cameraHandler: mockCameraHandler
 }));
 
-jest.doMock('../../frontend/components/ui-utils.js', () => ({
+jest.mock('../../frontend/components/ui-utils.js', () => ({
   uiManager: mockUIManager
 }));
 

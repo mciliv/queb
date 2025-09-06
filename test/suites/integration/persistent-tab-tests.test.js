@@ -39,7 +39,7 @@ describe('Persistent Tab Molecular Tests', () => {
     
     // Verify we're still on the same page
     const tabInfo = await tabManager.getTabInfo();
-    expect(tabInfo.url).toContain('localhost:3001');
+    expect(tabInfo.url).toContain('localhost:8080');
     
     console.log('✅ Water test complete in persistent tab');
   }, 30000);
@@ -59,7 +59,7 @@ describe('Persistent Tab Molecular Tests', () => {
     
     // Verify same tab is still being used
     const tabInfo = await tabManager.getTabInfo();
-    expect(tabInfo.url).toContain('localhost:3001');
+    expect(tabInfo.url).toContain('localhost:8080');
     
     console.log('✅ Ethanol test complete in same persistent tab');
   }, 30000);
@@ -79,7 +79,7 @@ describe('Persistent Tab Molecular Tests', () => {
     
     // Verify tab persistence
     const tabInfo = await tabManager.getTabInfo();
-    expect(tabInfo.url).toContain('localhost:3001');
+    expect(tabInfo.url).toContain('localhost:8080');
     
     console.log('✅ Coffee test complete in same persistent tab');
   }, 30000);

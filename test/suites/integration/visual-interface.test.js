@@ -10,7 +10,7 @@ const AutoTabConnector = require('../../utils/auto-tab-connector');
 describe('Visual Interface Tests', () => {
   let browser;
   let page;
-  const frontendUrl = 'http://localhost:3001';
+  const frontendUrl = 'http://localhost:8080';
 
   beforeAll(async () => {
     console.log('🚀 Starting visual interface tests...');

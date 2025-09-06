@@ -1,14 +1,16 @@
 {
   "name": "Molecular Structure Analysis",
   "short_name": "MolAnalysis",
-  "start_url": "/",
+  "start_url": "/?v={{CACHE_BUST}}",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#000000",
   "scope": "/",
+  "version": "{{CACHE_BUST}}",
+  "update_via_cache": "none",
   "icons": [
     {
-      "src": "/assets/favicon.svg",
+      "src": "/assets/favicon.svg?v={{CACHE_BUST}}",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

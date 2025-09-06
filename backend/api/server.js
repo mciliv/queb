@@ -129,7 +129,42 @@ const testDatabaseConnection = async () => {
 
 const app = express();
 const DEFAULT_PORT = 8080;
+// Consistent port configuration with cleanup
 const HTTPS_PORT = process.env.HTTPS_PORT || 3001;
+const HTTP_PORT = process.env.HTTP_PORT || 3002;
+
+// Port cleanup utility
+const cleanupPorts = async () => {
+  const net = require("net");
+  const portsToCheck = [HTTPS_PORT, HTTP_PORT, 3003, 3004, 3005];
+
+  for (const port of portsToCheck) {
+    try {
+      const server = net.createServer();
+      const isPortFree = await new Promise((resolve) => {
+        server.listen(port, "127.0.0.1", () => {
+          server.close();
+          resolve(true);
+        });
+        server.on("error", () => resolve(false));
+      });
+
+      if (!isPortFree) {
+        console.log(`⚠️ Port ${port} is in use, attempting cleanup...`);
+        // Kill any processes using this port
+        try {
+          const { execSync } = require("child_process");
+          execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null || true`);
+          console.log(`✅ Cleaned up port ${port}`);
+        } catch (e) {
+          console.log(`⚠️ Could not cleanup port ${port}: ${e.message}`);
+        }
+      }
+    } catch (e) {
+      // Ignore cleanup errors
+    }
+  }
+};
 
 // Utility function to get local IP address
 const getLocalIPAddress = () => {
@@ -1281,20 +1316,42 @@ const serveIndexWithTokens = (req, res) => {
     const host = req.get('host') || 'localhost';
     const baseUrl = `${req.protocol || 'http'}://${host}`;
 
+    // Generate cache busting timestamp
+    const cacheBust = Date.now();
+
     const tokens = {
-      '{{TITLE}}': 'Structuralizer - Structural Analysis',
+      '{{TITLE}}': 'Molecular Contents',
       '{{DESCRIPTION}}': 'Advanced 3D visualization tool for chemical compounds. Analyze molecular structures from camera images or text input.',
       '{{CANONICAL}}': `${baseUrl}/`,
-      '{{OG_IMAGE}}': '/assets/favicon.svg'
+      '{{OG_IMAGE}}': '/assets/favicon.svg',
+      '{{CACHE_BUST}}': cacheBust
     };
 
-    html = html.replace(/\{\{TITLE\}\}|\{\{DESCRIPTION\}\}|\{\{CANONICAL\}\}|\{\{OG_IMAGE\}\}/g, (match) => tokens[match] || '');
+    html = html.replace(/\{\{TITLE\}\}|\{\{DESCRIPTION\}\}|\{\{CANONICAL\}\}|\{\{OG_IMAGE\}\}|\{\{CACHE_BUST\}\}/g, (match) => tokens[match] || '');
 
     res.type('html').send(html);
   } catch (e) {
     res.sendFile(path.join(__dirname, "..", "..", "frontend", "core", "index.html"));
   }
 };
+
+// Serve manifest.json with cache busting
+app.get("/manifest.json", (req, res) => {
+  try {
+    const manifestPath = path.join(__dirname, "..", "..", "public", "manifest.json");
+    let manifest = fs.readFileSync(manifestPath, "utf8");
+
+    // Generate cache busting timestamp
+    const cacheBust = Date.now();
+
+    // Replace cache busting tokens
+    manifest = manifest.replace(/\{\{CACHE_BUST\}\}/g, cacheBust);
+
+    res.type('json').send(manifest);
+  } catch (e) {
+    res.status(500).send('Error serving manifest');
+  }
+});
 
 app.get("/", serveIndexWithTokens);
 
@@ -1382,6 +1439,10 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
   console.log('Starting server in local development mode...');
   // Local development mode
   const startServer = async () => {
+    // Clean up any stale ports before starting
+    console.log('🧹 Cleaning up ports...');
+    await cleanupPorts();
+
     try {
       let actualPort = PORT;
 
@@ -1444,13 +1505,13 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
         
         if (httpsServerInstance) {
           log.success("✅ HTTPS server started with trusted certificates");
-          
+
           // Handle HTTPS server errors after startup
           httpsServerInstance.on("error", (error) => {
             console.error("❌ HTTPS server error after startup:", error.message);
             console.log("💡 HTTPS server will continue running if possible");
           });
-          
+
           // Register with cleanup system if available
           try {
             const cleanupRegistry = require('../test/fixtures/cleanup-registry');
@@ -1568,6 +1629,8 @@ process.on("uncaughtException", (error) => {
   ErrorStackLogger.log(error, "Uncaught Exception");
   process.exit(1);
 });
+
+// Hot reload is now handled by LiveReload in development
 
 // Always export the app for Cloud Functions
 module.exports = app;

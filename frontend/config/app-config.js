@@ -1,9 +1,15 @@
-// Application configuration - now consolidated in project.js
-// This file is deprecated, use project.js configuration instead
+// Client-side application configuration
+// No server-side dependencies for browser compatibility
 
-import project from '../../config/project.js';
+export const PAYMENT_CONFIG = {
+  enabled: process.env.NODE_ENV === 'development',
+  devMode: process.env.NODE_ENV === 'development',
+  required: false,
+  effectiveEnabled: process.env.NODE_ENV === 'development'
+};
 
-export const PAYMENT_CONFIG = project.helpers.getPaymentConfig();
 export const APP_CONFIG = {
-  // All configuration moved to project.js
+  // Client-side configuration
+  environment: process.env.NODE_ENV || 'development',
+  version: '1.0.0'
 };

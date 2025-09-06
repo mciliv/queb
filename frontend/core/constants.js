@@ -1,8 +1,13 @@
-// Frontend constants - now consolidated in project.js
-// This file is deprecated, use project.js configuration instead
+// Client-side constants for browser compatibility
+// Loads configuration from external config file
 
-import project from '../../config/project.js';
+import fs from 'fs';
+import path from 'path';
 
-export const TEST_MOLECULES = project.constants.testMolecules;
-export const SMILES_NAME_MAP = project.helpers.getSmilesNameMap();
-export const PRESET_VISUAL_TESTS = project.constants.visualTests;
+// Load molecular configuration from JSON file
+const configPath = path.join(process.cwd(), 'frontend', 'config', 'molecular-config.json');
+const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
+export const TEST_MOLECULES = configData.TEST_MOLECULES;
+export const SMILES_NAME_MAP = configData.SMILES_NAME_MAP;
+export const PRESET_VISUAL_TESTS = configData.PRESET_VISUAL_TESTS;

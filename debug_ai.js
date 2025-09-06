@@ -18,3 +18,4 @@ if (client) {
 console.log('\nEnvironment check:');
 console.log('- OPENAI_API_KEY env:', !!process.env.OPENAI_API_KEY);
 console.log('- OPENAI_API_KEY length:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0);
+

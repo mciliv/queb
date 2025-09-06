@@ -4,7 +4,7 @@
 const request = require("supertest");
 const fs = require("fs");
 const path = require("path");
-const { TestFileManager, TestAssertions } = require("./utils");
+const { TestFileManager, TestAssertions } = require("./fixtures/utils");
 const {
   getTestMolecule,
   createTestRequest,

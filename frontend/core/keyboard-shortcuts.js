@@ -1,6 +1,6 @@
 // Minimal keyboard shortcut handler to keep UI simple and functional
 // - ⌘/Ctrl + K: focus input
-// - ⌥/Alt + C/P/L: toggle modes via provided actions
+// - ⌘/Ctrl + M/P/L: toggle modes via provided actions
 
 import logger from './logger.js';
 
@@ -30,10 +30,10 @@ const createSimpleKeyboardHandler = (actions = {}) => {
         return;
       }
 
-      // Alt/Option combos for modes
-      if (!event.altKey) return;
+      // Ctrl/Cmd combos for modes
+      if (!modifier) return;
       const code = event.code || '';
-      if (code === 'KeyC' && typeof actions.cameraMode === 'function') {
+      if (code === 'KeyM' && typeof actions.cameraMode === 'function') {
         event.preventDefault();
         actions.cameraMode();
       } else if (code === 'KeyP' && typeof actions.photoMode === 'function') {
@@ -60,20 +60,20 @@ export const KEYBOARD_SHORTCUTS = {
     targetId: 'object-input'
   },
   CAMERA_MODE: {
-    key: 'c',
-    modifiers: { meta: false, ctrl: false, alt: true, shift: false },
+    key: 'm',
+    modifiers: { meta: true, ctrl: true, alt: false, shift: false },
     action: 'cameraMode',
     description: 'Switch to camera mode'
   },
   PHOTO_MODE: {
     key: 'p',
-    modifiers: { meta: false, ctrl: false, alt: true, shift: false },
+    modifiers: { meta: true, ctrl: true, alt: false, shift: false },
     action: 'photoMode',
     description: 'Switch to photo mode'
   },
   LINK_MODE: {
     key: 'l',
-    modifiers: { meta: false, ctrl: false, alt: true, shift: false },
+    modifiers: { meta: true, ctrl: true, alt: false, shift: false },
     action: 'linkMode',
     description: 'Switch to link mode'
   }
