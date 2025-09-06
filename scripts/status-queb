@@ -1,4 +1,0 @@
-#!/bin/bash
-# Queb-specific status script
-export PROFILE=queb
-exec "$(dirname "$0")/dev" status "$@"
