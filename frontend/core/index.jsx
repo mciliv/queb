@@ -55,11 +55,24 @@ if (process.env.NODE_ENV !== 'production') {
   console.warn = (...args) => { capture('warn', args); originalWarn(...args); };
   console.error = (...args) => { capture('error', args); originalError(...args); };
 
-  // Also forward global errors/rejections
+  // Also forward global errors/rejections (but suppress Chrome extension errors)
   window.addEventListener('error', (e) => {
+    // Suppress Chrome extension runtime errors
+    if (e.message && (e.message.includes('Extension context invalidated') ||
+        e.message.includes('message port closed') ||
+        e.message.includes('runtime.lastError'))) {
+      return; // Don't forward Chrome extension errors
+    }
     capture('error', [e.message, e.error || '']);
   });
   window.addEventListener('unhandledrejection', (e) => {
+    // Suppress Chrome extension promise rejections
+    if (e.reason && typeof e.reason === 'string' &&
+        (e.reason.includes('Extension context invalidated') ||
+         e.reason.includes('message port closed') ||
+         e.reason.includes('runtime.lastError'))) {
+      return; // Don't forward Chrome extension errors
+    }
     capture('error', ['UnhandledRejection', e.reason || '']);
   });
 }

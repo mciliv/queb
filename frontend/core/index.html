@@ -42,6 +42,28 @@
     <div id="root"></div>
     <script src="/dist/bundle.js?v={{CACHE_BUST}}" defer></script>
     <script>
+      // Suppress Chrome extension runtime errors
+      window.addEventListener('error', (event) => {
+        // Suppress "Unchecked runtime.lastError" from Chrome extensions
+        if (event.message && event.message.includes('Extension context invalidated') ||
+            event.message.includes('message port closed') ||
+            event.message.includes('runtime.lastError')) {
+          event.preventDefault();
+          return false;
+        }
+      });
+
+      // Also suppress unhandled promise rejections from extensions
+      window.addEventListener('unhandledrejection', (event) => {
+        if (event.reason && typeof event.reason === 'string' &&
+            (event.reason.includes('Extension context invalidated') ||
+             event.reason.includes('message port closed') ||
+             event.reason.includes('runtime.lastError'))) {
+          event.preventDefault();
+          return false;
+        }
+      });
+
       // Reliable PWA Development Setup - Disable SW in dev, use LiveReload
       const isDevelopment = window.location.hostname === 'localhost' ||
                            window.location.hostname === '127.0.0.1' ||
