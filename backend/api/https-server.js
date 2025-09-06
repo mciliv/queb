@@ -54,14 +54,12 @@ class HttpsServer {
     });
   }
 
-  // Find an available port starting from the requested port
+  // Find an available port - NO BACKUP PORTS (only try the requested port)
   async findAvailablePort(startPort) {
-    for (let port = startPort; port < startPort + 100; port++) {
-      if (await this.isPortAvailable(port)) {
-        return port;
-      }
+    if (await this.isPortAvailable(startPort)) {
+      return startPort;
     }
-    throw new Error(`No available ports found in range ${startPort}-${startPort + 99}`);
+    throw new Error(`Port ${startPort} is not available - no backup ports allowed`);
   }
 
   loadCertificates() {
@@ -137,20 +135,9 @@ class HttpsServer {
         server.on("error", (error) => {
           if (error.code === "EADDRINUSE") {
             log.error(`❌ HTTPS port ${this.actualPort} is already in use`);
-            log.warning("💡 HTTPS server will retry with a different port...");
-            
-            // Try to find another port and restart
-            this.findAvailablePort(this.actualPort + 1)
-              .then(newPort => {
-                this.actualPort = newPort;
-                log.warning(`🔄 Retrying HTTPS on port ${newPort}...`);
-                server.close();
-                this.start().then(resolve).catch(reject);
-              })
-              .catch(err => {
-                log.error("❌ Could not find alternative HTTPS port:", err.message);
-                resolve(null);
-              });
+            log.warning("💡 No backup ports allowed - stopping server");
+            server.close();
+            resolve(null);
           } else if (error.code === "EACCES") {
             log.error(`❌ Permission denied: Cannot bind to HTTPS port ${this.actualPort}`);
             log.warning("💡 Try using a port > 1024 or run with appropriate permissions");
