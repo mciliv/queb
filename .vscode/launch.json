@@ -41,12 +41,12 @@
       "request": "launch",
       "program": "${workspaceFolder}/../web/dev",
       "cwd": "${workspaceFolder}",
-      "console": "internalConsole",
+      "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"],
       "env": {
         "NODE_ENV": "development"
       },
-      "outputCapture": "std"
+      "args": ["--no-debug"]
     }
   ],
 }
