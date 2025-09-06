@@ -153,7 +153,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
       <button 
         className={`mode-btn${cameraMode ? ' active' : ''}`}
         onClick={() => handleModeSelect('camera')}
-        title={isMobile ? "Capture from camera" : "Capture from camera (⌥C)"}
+        title={isMobile ? "Capture from camera" : "Capture from camera (⌘⇧C)"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8"/>
@@ -161,7 +161,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
         </svg>
         {!isMobile && (
           <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘M' : 'Ctrl+M'}
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧C' : 'Ctrl+Shift+C'}
           </span>
         )}
       </button>
@@ -169,7 +169,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
       <button 
         className={`mode-btn${photoMode ? ' active' : ''}`}
         onClick={() => handleModeSelect('photo')}
-        title={isMobile ? "Upload image" : "Upload image (⌥P)"}
+        title={isMobile ? "Upload image" : "Upload image (⌘⇧P)"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -178,7 +178,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
         </svg>
         {!isMobile && (
           <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘P' : 'Ctrl+P'}
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧P' : 'Ctrl+Shift+P'}
           </span>
         )}
       </button>
@@ -194,7 +194,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
         </svg>
         {!isMobile && (
           <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘L' : 'Ctrl+L'}
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧L' : 'Ctrl+Shift+L'}
           </span>
         )}
       </button>
