@@ -12,20 +12,20 @@ describe('Keyboard Shortcuts Robustness', () => {
       targetId: 'object-input'
     },
     CAMERA_MODE: {
-      key: 'm',
-      modifiers: { meta: true, ctrl: true, alt: false, shift: false },
+      key: 'c',
+      modifiers: { meta: true, ctrl: true, alt: false, shift: true },
       action: 'cameraMode',
       description: 'Switch to camera mode'
     },
     PHOTO_MODE: {
       key: 'p',
-      modifiers: { meta: true, ctrl: true, alt: false, shift: false },
+      modifiers: { meta: true, ctrl: true, alt: false, shift: true },
       action: 'photoMode',
       description: 'Switch to photo mode'
     },
     LINK_MODE: {
       key: 'l',
-      modifiers: { meta: true, ctrl: true, alt: false, shift: false },
+      modifiers: { meta: true, ctrl: true, alt: false, shift: true },
       action: 'linkMode',
       description: 'Switch to link mode'
     }
