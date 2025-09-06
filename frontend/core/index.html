@@ -49,18 +49,7 @@
                            window.location.hostname.includes('172.');
 
       if (isDevelopment) {
-        console.log('[DEV] Development mode detected - Service Worker disabled for reliable hot reloading');
-
-        // LiveReload implementation (most reliable for PWA dev)
-        let liveReloadScript = document.createElement('script');
-        liveReloadScript.src = 'https://cdn.jsdelivr.net/npm/livereload-js@3.4.1/dist/livereload.min.js';
-        liveReloadScript.onload = function() {
-          console.log('[DEV] LiveReload loaded successfully');
-        };
-        liveReloadScript.onerror = function() {
-          console.log('[DEV] LiveReload failed to load, falling back to manual refresh');
-        };
-        document.head.appendChild(liveReloadScript);
+        console.log('[DEV] Development mode - manual refresh required for changes');
 
       } else {
         // Production: Enable Service Worker for PWA functionality

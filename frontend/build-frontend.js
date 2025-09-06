@@ -42,12 +42,12 @@ async function build() {
     // Ensure initial build so /dist/bundle.js exists
     await ctx.rebuild();
 
-    // Watch for changes - LiveReload will handle the rest
+    // Watch for changes - manual refresh required
     await ctx.watch(() => {
-      if (!quiet) console.log('🔄 Frontend rebuilt - LiveReload will handle browser refresh');
+      if (!quiet) console.log('🔄 Frontend rebuilt - refresh browser to see changes');
     });
 
-    if (!quiet) console.log('👀 Frontend watch build started (esbuild) with hot reload support');
+    if (!quiet) console.log('👀 Frontend watch build started (esbuild)');
   } else {
     await esbuild.build({
       entryPoints: [entry],
