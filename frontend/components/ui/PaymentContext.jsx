@@ -20,18 +20,12 @@ export const PaymentProvider = ({ children, config }) => {
 
   useEffect(() => {
     if (!config.enabled) {
-      if (!hasLoggedPaymentStatus) {
-        logger.info('💳 Payment functionality disabled');
-        setHasLoggedPaymentStatus(true);
-      }
+      setHasLoggedPaymentStatus(true);
       return;
     }
 
     if (config.devMode) {
-      if (!hasLoggedPaymentStatus) {
-        logger.info('🔧 Auto-enabling developer mode for localhost');
-        setHasLoggedPaymentStatus(true);
-      }
+      setHasLoggedPaymentStatus(true);
       setIsPaymentSetup(true);
     }
   }, [config, hasLoggedPaymentStatus]);

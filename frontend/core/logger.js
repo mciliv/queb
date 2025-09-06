@@ -79,7 +79,7 @@ const logger = {
   }
 };
 
-// Add global debug helpers
+// Add global debug helpers (silent in production)
 if (isDebugMode) {
   window.debugLogger = {
     enable: () => logger.setDebug(true),
@@ -93,8 +93,6 @@ if (isDebugMode) {
       isDev: isDebugMode
     })
   };
-  
-  console.log('🔧 Debug logger available: window.debugLogger');
 }
 
 export default logger;

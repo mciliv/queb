@@ -7,7 +7,7 @@
       content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
     />
     <meta name="theme-color" content="#000000" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
@@ -49,27 +49,16 @@
                            window.location.hostname.includes('172.');
 
       if (isDevelopment) {
-        console.log('[DEV] Development mode - manual refresh required for changes');
+        // Silent development mode - no console noise
 
       } else {
         // Production: Enable Service Worker for PWA functionality
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js?v={{CACHE_BUST}}')
-              .then((registration) => {
-                console.log('[PWA] Service Worker registered:', registration.scope);
-              })
-              .catch((error) => {
-                console.log('[PWA] Service Worker registration failed:', error);
+              .catch(() => {
+                // Silent failure in production
               });
-          });
-
-          // Handle PWA install prompt
-          let deferredPrompt;
-          window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            console.log('[PWA] Install prompt captured');
           });
         }
       }
