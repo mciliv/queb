@@ -1,10 +1,9 @@
-// Application configuration settings
-export const PAYMENT_CONFIG = {
-  enabled: false, // Set to true to enable payment functionality
-  devMode: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-};
+// Application configuration - now consolidated in project.js
+// This file is deprecated, use project.js configuration instead
 
-// Additional app settings can be added here as needed
+import project from '../../config/project.js';
+
+export const PAYMENT_CONFIG = project.helpers.getPaymentConfig();
 export const APP_CONFIG = {
-  // Future app-wide configuration values
+  // All configuration moved to project.js
 };

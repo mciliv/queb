@@ -39,7 +39,7 @@
       "name": "Debug Dev Script",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/scripts/dev",
+      "program": "${workspaceFolder}/../web/dev",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"],

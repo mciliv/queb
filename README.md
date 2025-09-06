@@ -14,34 +14,34 @@ AI-powered molecular identification and 3D visualization from text, images, or c
 ### Development
 ```bash
 # Generic development (no domain)
-./scripts/dev serve
+../web/dev serve
 
 # With queb profile
-./scripts/dev-queb serve
+../web/dev serve
 # or
-PROFILE=queb ./scripts/dev serve
+PROFILE=queb ../web/dev serve
 ```
 
 ### Deployment
 ```bash
 # Generic deployment
-./scripts/dev deploy
+../web/dev deploy
 
 # Queb-specific deployment
-./scripts/deploy-queb
+../web/dev deploy
 # or
-PROFILE=queb ./scripts/dev deploy
+PROFILE=queb ../web/dev deploy
 ```
 
 ### Status Check
 ```bash
 # Generic status
-./scripts/dev status
+../web/dev status
 
 # Queb-specific status
-./scripts/status-queb
+../web/dev status
 # or
-PROFILE=queb ./scripts/dev status
+PROFILE=queb ../web/dev status
 ```
 
 ## Profiles
@@ -53,9 +53,9 @@ The app supports domain-specific profiles:
 
 ### Using Profiles
 
-1. **Environment Variable**: `PROFILE=queb ./scripts/dev serve`
-2. **Command Line**: `./scripts/dev --profile=queb serve`
-3. **Profile Scripts**: `./scripts/dev-queb serve`, `./scripts/deploy-queb`, `./scripts/status-queb`
+1. **Environment Variable**: `PROFILE=queb ../web/dev serve`
+2. **Command Line**: `../web/dev --profile=queb serve`
+3. **Profile Scripts**: `../web/dev serve`, `../web/dev deploy`, `../web/dev status`
 
 ## Configuration
 
