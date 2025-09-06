@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PaymentProvider, usePayment } from '../components/ui/PaymentContext';
 import { useApi } from '../hooks/useApi';
-import { PRESET_VISUAL_TESTS, TEST_MOLECULES, SMILES_NAME_MAP } from '../utils/constants.js';
+import { PRESET_VISUAL_TESTS, TEST_MOLECULES, SMILES_NAME_MAP } from './constants.js';
 import { PAYMENT_CONFIG, VALIDATION_PATTERNS } from '../utils/config-loader.js';
 import logger from './logger.js';
 import { createKeyboardHandler } from './keyboard-shortcuts.js';

@@ -6,7 +6,7 @@ describe('Keyboard Shortcuts Robustness', () => {
   const KEYBOARD_SHORTCUTS = {
     FOCUS_INPUT: {
       key: 'k',
-      modifiers: { meta: true, ctrl: true, shift: false },
+      modifiers: { meta: true, ctrl: true, shift: false, alt: false },
       action: 'focusInput',
       description: 'Focus input field',
       targetId: 'object-input'

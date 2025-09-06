@@ -39,7 +39,7 @@ module.exports = {
   projects: [
     {
       displayName: 'unit-frontend',
-      testMatch: ['**/suites/unit/camera*.test.js', '**/suites/unit/manual.test.js', '**/suites/unit/front-end*.test.js'],
+      testMatch: ['**/suites/unit/camera*.test.js', '**/suites/unit/manual.test.js', '**/suites/unit/front-end*.test.js', '**/suites/unit/keyboard-shortcuts.test.js'],
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/support/fixtures/setup.js'],
       globals: {
