@@ -5,11 +5,34 @@ class FileLogger {
   constructor() {
     this.logsDir = path.join(__dirname, '..', '..', 'logs');
     this.ensureLogsDirectory();
+    this.clearOldLogs();
   }
 
   ensureLogsDirectory() {
     if (!fs.existsSync(this.logsDir)) {
       fs.mkdirSync(this.logsDir, { recursive: true });
+    }
+  }
+
+  clearOldLogs() {
+    try {
+      const files = fs.readdirSync(this.logsDir);
+      let clearedCount = 0;
+
+      for (const file of files) {
+        // Only delete .log files, preserve screenshots and other files
+        if (file.endsWith('.log') && !file.includes('Screenshot')) {
+          const filePath = path.join(this.logsDir, file);
+          fs.unlinkSync(filePath);
+          clearedCount++;
+        }
+      }
+
+      if (clearedCount > 0) {
+        console.log(`🧹 Cleared ${clearedCount} old log file(s) from previous session`);
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to clear old logs:', error.message);
     }
   }
 
