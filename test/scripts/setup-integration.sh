@@ -34,9 +34,9 @@ lsof -ti:8080 | xargs kill -9 2>/dev/null || true
 lsof -ti:3001 | xargs kill -9 2>/dev/null || true
 
 # Setup test database (if needed)
-if [ -f "infrastructure/scripts/setup-database.sh" ]; then
+if [ -f "../web/setup-database.sh" ]; then
     echo "🗄️ Setting up test database..."
-    NODE_ENV=test ./infrastructure/scripts/setup-database.sh
+    NODE_ENV=test ../web/setup-database.sh
 fi
 
 echo "✅ Integration test environment ready!"

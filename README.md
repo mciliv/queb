@@ -70,13 +70,13 @@ Generate trusted SSL certificates for local development:
 
 ```bash
 # Generate certificates (stored in config/certs/)
-./scripts/generate-certs.js
+../web/generate-certs.js
 
 # Generate with custom domains
-./scripts/generate-certs.js myapp.local dev.myapp.local
+../web/generate-certs.js myapp.local dev.myapp.local
 
 # Force regeneration
-./scripts/generate-certs.js --force
+../web/generate-certs.js --force
 ```
 
 ### Prerequisites

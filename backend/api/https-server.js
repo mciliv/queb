@@ -90,9 +90,7 @@ class HttpsServer {
     // No certificates found
     log.error("❌ No SSL certificates found");
     log.warning("💡 To generate trusted certificates, run:");
-    log.warning("   node util/dev-toolkit/certs/generate-certs.js");
-    log.warning("   # or from project root:");
-    log.warning("   node ../util/dev-toolkit/certs/generate-certs.js");
+    log.warning("   node ../../web/generate-certs.js");
 
     return null;
   }
