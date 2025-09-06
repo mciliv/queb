@@ -39,28 +39,14 @@
       "name": "Debug Dev Script",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/scripts/dev",
+      "program": "${workspaceFolder}/../web/dev",
       "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
+      "console": "internalConsole",
       "skipFiles": ["<node_internals>/**"],
       "env": {
-        "NODE_ENV": "development",
-        "NODEBUG": "1"
-      }
+        "NODE_ENV": "development"
+      },
+      "outputCapture": "std"
     }
   ],
-  "compounds": [
-    {
-      "name": "Debug Dev Script + Backend",
-      "configurations": [
-        "Debug Dev Script"
-      ],
-      "stopAll": true,
-      "presentation": {
-        "hidden": false,
-        "group": "Debug Scripts",
-        "order": 1
-      }
-    }
-  ]
 }
