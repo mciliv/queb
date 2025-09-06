@@ -5,6 +5,7 @@ const os = require("os");
 const { execSync } = require("child_process");
 const net = require("net");
 const WebSocket = require("ws");
+const logger = require("../services/file-logger");
 
 // Simple logging utility for consistency
 const log = {
@@ -122,17 +123,39 @@ class HttpsServer {
       // Add WebSocket support for browser extensions/tools
       const wss = new WebSocket.Server({ server });
 
-      wss.on('connection', (ws) => {
+      wss.on('connection', (ws, req) => {
+        logger.websocket('connection_established', {
+          ip: req.socket.remoteAddress,
+          port: req.socket.remotePort,
+          url: req.url
+        });
+
         // Handle WebSocket connections (basic implementation)
         ws.on('message', (message) => {
+          logger.websocket('message_received', {
+            size: message.length,
+            data: message.toString().substring(0, 100) // Log first 100 chars
+          });
           // Echo back any messages received
           ws.send('WebSocket connection established');
         });
 
-        ws.on('error', (error) => {
-          // Silently handle WebSocket errors
-          console.log('WebSocket connection error:', error.message);
+        ws.on('close', (code, reason) => {
+          logger.websocket('connection_closed', {
+            code: code,
+            reason: reason.toString()
+          });
         });
+
+        ws.on('error', (error) => {
+          logger.websocket('connection_error', {
+            error: error.message
+          });
+        });
+      });
+
+      wss.on('error', (error) => {
+        logger.error('WebSocket server error', { error: error.message });
       });
 
       // Register with cleanup system if available

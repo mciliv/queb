@@ -1,19 +1,14 @@
 const config = require('../config/env');
 config.validateConfig();
-const isDebugMode = config.NODE_ENV === 'debug';
-const log = isDebugMode
-  ? {
-      info: (msg) => console.log(msg),
-      success: (msg) => console.log(msg),
-      warning: (msg) => console.warn(msg),
-      error: (msg) => console.error(msg),
-    }
-  : {
-      info: () => {},
-      success: () => {},
-      warning: () => {},
-      error: (msg) => console.error(msg),
-    };
+const logger = require('../services/file-logger');
+
+// Legacy log object for backward compatibility
+const log = {
+  info: (msg, meta = {}) => logger.info(msg, meta),
+  success: (msg, meta = {}) => logger.success(msg, meta),
+  warning: (msg, meta = {}) => logger.warn(msg, meta),
+  error: (msg, meta = {}) => logger.error(msg, meta),
+};
 
 
 const express = require("express");
@@ -132,6 +127,14 @@ const DEFAULT_PORT = 8080;
 // Consistent port configuration with cleanup
 const HTTPS_PORT = process.env.HTTPS_PORT || 3001;
 const HTTP_PORT = process.env.HTTP_PORT || 3002;
+
+// Log server startup
+logger.startup('Server initialization started');
+logger.info('Environment configuration loaded', {
+  node_env: config.NODE_ENV,
+  port: config.PORT,
+  https_port: HTTPS_PORT
+});
 
 // Port cleanup utility
 const cleanupPorts = async () => {
@@ -280,6 +283,33 @@ const initializeDatabase = async () => {
 
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const startTime = Date.now();
+
+  // Log the incoming request
+  logger.info(`Incoming request: ${req.method} ${req.url}`, {
+    method: req.method,
+    url: req.url,
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  });
+
+  // Log response when finished
+  res.on('finish', () => {
+    const responseTime = Date.now() - startTime;
+    logger.info(`Request completed: ${req.method} ${req.url}`, {
+      method: req.method,
+      url: req.url,
+      status: res.statusCode,
+      responseTime: `${responseTime}ms`,
+      ip: req.ip || req.connection.remoteAddress
+    });
+  });
+
+  next();
+});
 
 // ==================== HEALTH CHECK ENDPOINT ====================
 app.get('/health', (req, res) => {
@@ -1486,10 +1516,11 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
 
       const localIP = getLocalIPAddress();
       httpServer = app.listen(actualPort, "0.0.0.0", () => {
-        console.log(`http://localhost:${actualPort}`);
-        if (localIP) {
-          console.log(`On your phone: http://${localIP}:${actualPort}`);
-        }
+        logger.startup(`HTTP server started on port ${actualPort}`);
+        logger.info('Server URLs', {
+          localhost: `http://localhost:${actualPort}`,
+          network: localIP ? `http://${localIP}:${actualPort}` : null
+        });
       });
     } catch (error) {
       console.error(`❌ Failed to start server: ${error.message}`);
@@ -1504,12 +1535,11 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
         httpsServerInstance = await httpsServer.start();
         
         if (httpsServerInstance) {
-          log.success("✅ HTTPS server started with trusted certificates");
+          logger.startup("HTTPS server started with trusted certificates");
 
           // Handle HTTPS server errors after startup
           httpsServerInstance.on("error", (error) => {
-            console.error("❌ HTTPS server error after startup:", error.message);
-            console.log("💡 HTTPS server will continue running if possible");
+            logger.error("HTTPS server error after startup", { error: error.message });
           });
 
           // Register with cleanup system if available
