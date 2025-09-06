@@ -4,6 +4,7 @@ const path = require("path");
 const os = require("os");
 const { execSync } = require("child_process");
 const net = require("net");
+const WebSocket = require("ws");
 
 // Simple logging utility for consistency
 const log = {
@@ -117,7 +118,23 @@ class HttpsServer {
       }
 
       const server = https.createServer(credentials, this.app);
-      
+
+      // Add WebSocket support for browser extensions/tools
+      const wss = new WebSocket.Server({ server });
+
+      wss.on('connection', (ws) => {
+        // Handle WebSocket connections (basic implementation)
+        ws.on('message', (message) => {
+          // Echo back any messages received
+          ws.send('WebSocket connection established');
+        });
+
+        ws.on('error', (error) => {
+          // Silently handle WebSocket errors
+          console.log('WebSocket connection error:', error.message);
+        });
+      });
+
       // Register with cleanup system if available
       if (cleanupRegistry) {
         cleanupRegistry.register(server);
