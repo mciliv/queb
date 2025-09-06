@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 // Use same-origin for all API calls to avoid port/protocol mismatches
 const getApiBase = () => '';
@@ -13,14 +13,32 @@ const RETRY_DELAY = 1000; // 1 second
 export const useApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const requestCacheRef = useRef(new Map());
+  const pendingRequestsRef = useRef(new Map());
 
   const apiCall = useCallback(async (endpoint, options = {}, retryCount = 0) => {
     const maxRetries = options.maxRetries || DEFAULT_RETRIES;
     const timeout = options.timeout || DEFAULT_TIMEOUT;
+    const cacheKey = `${endpoint}:${JSON.stringify(options.body || {})}`;
+    const enableCaching = options.enableCaching !== false; // Default to true
+
+    // Check cache first for GET requests or explicitly cached requests
+    if (enableCaching && (options.method !== 'POST' || options.cachePost)) {
+      const cached = requestCacheRef.current.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < (options.cacheDuration || 300000)) { // 5 min default
+        return cached.data;
+      }
+    }
+
+    // Check for pending identical requests to avoid duplicates
+    if (pendingRequestsRef.current.has(cacheKey)) {
+      return pendingRequestsRef.current.get(cacheKey);
+    }
 
     setLoading(true);
     setError(null);
 
+    const requestPromise = (async () => {
     try {
       const url = `${API_BASE}${endpoint}`;
       
@@ -45,6 +63,20 @@ export const useApi = () => {
       }
 
       const data = await response.json();
+      
+      // Cache successful responses
+      if (enableCaching) {
+        requestCacheRef.current.set(cacheKey, {
+          data,
+          timestamp: Date.now()
+        });
+        // Limit cache size to prevent memory leaks
+        if (requestCacheRef.current.size > 100) {
+          const firstKey = requestCacheRef.current.keys().next().value;
+          requestCacheRef.current.delete(firstKey);
+        }
+      }
+      
       return data;
     } catch (err) {
       // Handle different types of errors
@@ -107,6 +139,19 @@ export const useApi = () => {
       throw new Error(errorMessage);
     } finally {
       setLoading(false);
+      pendingRequestsRef.current.delete(cacheKey);
+    }
+    })();
+    
+    // Store pending request
+    pendingRequestsRef.current.set(cacheKey, requestPromise);
+    
+    try {
+      const result = await requestPromise;
+      return result;
+    } catch (error) {
+      pendingRequestsRef.current.delete(cacheKey);
+      throw error;
     }
   }, []);
 
@@ -120,6 +165,8 @@ export const useApi = () => {
       body: JSON.stringify({ object: text }),
       maxRetries: 2,
       timeout: 30000,
+      cachePost: true,
+      cacheDuration: 600000, // 10 minutes for text analysis
     });
   }, [apiCall]);
 
@@ -148,6 +195,22 @@ export const useApi = () => {
     if (typeof cropMiddleY === 'number') payload.cropMiddleY = clamp(Math.round(cropMiddleY), 0, 1000);
     if (typeof cropSize === 'number') payload.cropSize = clamp(Math.round(cropSize), 10, 500);
 
+    try {
+      const previewType = typeof imageData === 'string' && imageData.startsWith('data:')
+        ? imageData.slice(5, imageData.indexOf(';'))
+        : 'base64';
+      // Structured, safe debug info (no base64 dump)
+      console.log('AnalyzeImage payload summary:', {
+        type: previewType,
+        hasCoords: typeof x === 'number' && typeof y === 'number',
+        coords: typeof x === 'number' && typeof y === 'number' ? { x: payload.x, y: payload.y } : null,
+        hasCrop: typeof cropMiddleX === 'number' && typeof cropMiddleY === 'number' && typeof cropSize === 'number',
+        crop: (typeof cropMiddleX === 'number' && typeof cropMiddleY === 'number' && typeof cropSize === 'number')
+          ? { cx: payload.cropMiddleX, cy: payload.cropMiddleY, size: payload.cropSize }
+          : null
+      });
+    } catch (_) {}
+
     return apiCall('/structuralize', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -168,7 +231,9 @@ export const useApi = () => {
         overwrite: overwrite
       }),
       maxRetries: 1,
-      timeout: 30000, // 30 seconds for SDF generation
+      timeout: 30000,
+      cachePost: !overwrite, // Cache if not overwriting
+      cacheDuration: 1800000, // 30 minutes for SDF generation
     });
   }, [apiCall]);
 
@@ -185,11 +250,32 @@ export const useApi = () => {
       body: JSON.stringify({ names: list, overwrite }),
       maxRetries: 1,
       timeout: 30000,
+      cachePost: !overwrite,
+      cacheDuration: 1800000, // 30 minutes
+    });
+  }, [apiCall]);
+
+  const nameToSdf = useCallback(async (name, overwrite = false) => {
+    if (typeof name !== 'string' || name.trim().length === 0) {
+      throw new Error('Valid name is required');
+    }
+    return apiCall('/name-to-sdf', {
+      method: 'POST',
+      body: JSON.stringify({ name, overwrite }),
+      maxRetries: 1,
+      timeout: 20000,
+      cachePost: !overwrite,
+      cacheDuration: 1800000,
     });
   }, [apiCall]);
 
   const clearError = useCallback(() => {
     setError(null);
+  }, []);
+
+  const clearCache = useCallback(() => {
+    requestCacheRef.current.clear();
+    pendingRequestsRef.current.clear();
   }, []);
 
   const testConnection = useCallback(async () => {
@@ -211,7 +297,9 @@ export const useApi = () => {
     analyzeImage: structuralizeImage,
     generateSDFs,
     twoNamesToSdf,
+    nameToSdf,
     clearError,
+    clearCache,
     testConnection,
   };
 };

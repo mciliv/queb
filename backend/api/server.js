@@ -20,6 +20,8 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+let fetchLib = null;
+try { fetchLib = require('node-fetch'); } catch (_) { fetchLib = null; }
 const HttpsServer = require("./https-server");
 const Structuralizer = require("../services/Structuralizer");
 const MolecularProcessor = require("../services/molecular-processor");
@@ -404,61 +406,105 @@ app.post("/generate-sdfs", async (req, res) => {
   }
 });
 
-// Convert two names to SMILES and SDFs
-app.post("/two-names-to-sdf", async (req, res) => {
+// ==================== DIRECT PUBCHEM SDF FETCHERS ====================
+const fetchText = async (url) => {
   try {
-    const { names = [], overwrite = false } = req.body || {};
-    if (!Array.isArray(names) || names.length === 0) {
-      return res.status(400).json({ error: "names array is required" });
+    if (typeof fetch !== 'undefined') {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return await resp.text();
     }
-    // Limit to first two names for this variant
-    const input = names.slice(0, 2);
-    const results = [];
+  } catch (_) {}
+  if (fetchLib) {
+    const resp = await fetchLib(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return await resp.text();
+  }
+  throw new Error('No fetch available');
+};
 
-    for (const rawName of input) {
-      const nameStr = typeof rawName === 'string' ? rawName : '';
-      if (!nameStr || nameStr.trim().length === 0) {
-        results.push({ name: '', cid: null, smiles: null, sdfPath: null, status: 'invalid_name' });
-        continue;
-      }
-      try {
-        const reso = await resolveName(nameStr);
-        const canonicalName = reso?.title || reso?.iupac || nameStr;
-        const cid = reso?.cid ?? null;
-        const smiles = reso?.smiles || null;
-        let sdfPath = null;
+const ensureSdfDir = () => {
+  const dir = path.join(
+    __dirname,
+    "..",
+    "..",
+    process.env.NODE_ENV === "test" ? "test/sdf_files" : "backend/sdf_files"
+  );
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+};
 
-        if (smiles) {
-          try {
-            sdfPath = await molecularProcessor.generateSDF(smiles, overwrite);
-          } catch (_) {
-            sdfPath = null;
-          }
-        }
-        if (!sdfPath) {
-          const byName = await molecularProcessor.generateSDFByName(nameStr, overwrite);
-          if (byName && byName.sdfPath) {
-            sdfPath = byName.sdfPath;
-          }
-        }
+const sanitizeName = (raw) => {
+  try {
+    const base = String(raw || '').trim();
+    if (!base) return 'unknown';
+    const cleaned = base.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    if (cleaned.length <= 64) return cleaned;
+    const crypto = require('crypto');
+    const hash = crypto.createHash('md5').update(base).digest('hex').slice(0, 12);
+    return `${cleaned.slice(0, 32)}_${hash}`;
+  } catch (_) {
+    return 'unknown';
+  }
+};
 
-        results.push({
-          name: canonicalName,
-          cid,
-          smiles: smiles || null,
-          sdfPath: sdfPath || null,
-          status: sdfPath ? 'ok' : 'lookup_required'
-        });
-      } catch (_) {
-        results.push({ name: nameStr, cid: null, smiles: null, sdfPath: null, status: 'error' });
-      }
+const saveSdf = (filename, text) => {
+  const dir = ensureSdfDir();
+  const file = path.join(dir, filename);
+  fs.writeFileSync(file, text, 'utf8');
+  return `/sdf_files/${filename}`;
+};
+
+// Unified PubChem SDF fetch: select single highest-priority identifier (CID → name → SMILES)
+const fetchPubchemSdf = async ({ cid, name, smiles, record_type = '3d' }) => {
+  const rt = String(record_type).toLowerCase() === '2d' ? '2d' : '3d';
+  let selected = null;
+  if (cid != null) {
+    selected = { type: 'cid', value: String(cid) };
+  } else if (typeof name === 'string' && name.trim()) {
+    selected = { type: 'name', value: name.trim() };
+  } else if (typeof smiles === 'string' && smiles.trim()) {
+    selected = { type: 'smiles', value: smiles.trim() };
+  }
+  if (!selected) {
+    const err = new Error('no valid identifier provided');
+    err.code = 'INVALID';
+    throw err;
+  }
+  try {
+    const enc = encodeURIComponent(selected.value);
+    const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/${selected.type}/${enc}/SDF?record_type=${rt}`;
+    const text = await fetchText(url);
+    return { text, used: selected.type, rt, token: `${selected.type.toUpperCase()}_${selected.value}` };
+  } catch (e) {
+    const err = new Error(e?.message || 'identifier fetch failed');
+    err.code = 'NOT_FOUND';
+    throw err;
+  }
+};
+
+app.post('/pubchem/sdf', async (req, res) => {
+  try {
+    const { cid, name, smiles, record_type = '3d' } = req.body || {};
+    if (
+      cid == null &&
+      !(typeof name === 'string' && name.trim()) &&
+      !(typeof smiles === 'string' && smiles.trim())
+    ) {
+      return res.status(400).json({ error: 'Provide cid, name, or smiles' });
     }
-
-    res.json({ molecules: results });
+    const out = await fetchPubchemSdf({ cid, name, smiles, record_type });
+    const safe = sanitizeName(`${out.token}_${out.rt}`);
+    const sdfPath = saveSdf(`${safe}.sdf`, out.text);
+    res.json({ sdfPath, status: 'ok', source: 'pubchem', used: out.used });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error && error.code === 'NOT_FOUND') {
+      return res.status(404).json({ error: 'not found from provided identifiers' });
+    }
+    res.status(500).json({ error: error.message || 'fetch failed' });
   }
 });
+
 
 // Programmatic name → SMILES conversion (PubChem-backed)
 app.post("/name-to-smiles", async (req, res) => {
@@ -498,8 +544,28 @@ app.post("/name-to-smiles", async (req, res) => {
   }
 });
 
+// Direct precise name → SDF (single name)
+app.post("/name-to-sdf", async (req, res) => {
+  try {
+    const { name, overwrite = false } = req.body || {};
+    if (typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ error: "name is required" });
+    }
+
+    const byName = await molecularProcessor.generateSDFByName(name, overwrite);
+    if (!byName || !byName.sdfPath) {
+      return res.json({ name, sdfPath: null, status: 'lookup_required' });
+    }
+
+    res.json({ name: byName.name || name, sdfPath: byName.sdfPath, status: 'ok' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== STATIC FILE SERVING ====================
 app.use(express.static(path.join(__dirname, "..", "..", "frontend")));
+app.use(express.static(path.join(__dirname, "..", "..", "public"))); // PWA manifest and icons
 app.use("/dist", express.static(path.join(__dirname, "..", "..", "frontend", "dist")));
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "frontend", "assets")));
 app.use("/components", express.static(path.join(__dirname, "..", "..", "frontend", "components")));
@@ -1370,38 +1436,6 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
     }
   };
 
-  startServer()
-    .then(() => {
-      // Handle port binding errors
-      httpServer.on("error", (error) => {
-        if (error.code === "EADDRINUSE") {
-          console.error(`❌ Port ${PORT} is already in use`);
-          console.log(`💡 Solutions:`);
-          console.log(
-            `   1. Kill existing process: pkill -f "node.*server.js"`,
-          );
-          console.log(`   2. Use different port: PORT=8081 npm start`);
-          console.log(`   3. Check what's using the port: lsof -i :${PORT}`);
-          process.exit(1);
-        } else if (error.code === "EACCES") {
-          console.error(`❌ Permission denied: Cannot bind to port ${PORT}`);
-          console.log(`💡 Try using a port > 1024 or run with sudo`);
-          process.exit(1);
-        } else {
-          console.error("❌ Server error:", error.message);
-          console.log(`💡 Check your network configuration and try again`);
-          process.exit(1);
-        }
-      });
-
-      // Initialize database after server starts
-      initializeDatabase();
-    })
-    .catch((error) => {
-      console.error(`❌ Failed to start server: ${error.message}`);
-      process.exit(1);
-    });
-
   // Start HTTPS server with mkcert certificates
   const startHttpsServer = async () => {
       try {
@@ -1433,8 +1467,47 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
       }
     };
 
-    // Start HTTPS server immediately
-    startHttpsServer();
+  // Prefer HTTPS: try it first; fall back to HTTP only if HTTPS not available
+  startHttpsServer()
+    .then(() => {
+      if (!httpsServerInstance) {
+        return startServer()
+          .then(() => {
+            // Handle port binding errors
+            httpServer.on("error", (error) => {
+              if (error.code === "EADDRINUSE") {
+                console.error(`❌ Port ${PORT} is already in use`);
+                console.log(`💡 Solutions:`);
+                console.log(`   1. Kill existing process: pkill -f "node.*server.js"`);
+                console.log(`   2. Use different port: PORT=8081 npm start`);
+                console.log(`   3. Check what's using the port: lsof -i :${PORT}`);
+                process.exit(1);
+              } else if (error.code === "EACCES") {
+                console.error(`❌ Permission denied: Cannot bind to port ${PORT}`);
+                console.log(`💡 Try using a port > 1024 or run with sudo`);
+                process.exit(1);
+              } else {
+                console.error("❌ Server error:", error.message);
+                console.log(`💡 Check your network configuration and try again`);
+                process.exit(1);
+              }
+            });
+            // Initialize database after server starts
+            initializeDatabase();
+          })
+          .catch((error) => {
+            console.error(`❌ Failed to start server: ${error.message}`);
+            process.exit(1);
+          });
+      } else {
+        // HTTPS started successfully; initialize database
+        initializeDatabase();
+      }
+    })
+    .catch((error) => {
+      console.error(`❌ Failed to start HTTPS/HTTP server: ${error.message}`);
+      process.exit(1);
+    });
 } else {
   // Serverless mode
   if (isCloudFunction) {

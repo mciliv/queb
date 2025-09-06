@@ -1,5 +1,6 @@
 // Version Configuration - Control React vs Vanilla JS behavior
 // Modify these settings to control which version loads and how
+import logger from './logger.js';
 
 export const VERSION_CONFIG = {
   // Default version to load
@@ -152,12 +153,12 @@ export const CONFIG_PRESETS = {
 export const applyPreset = (presetName) => {
   const preset = CONFIG_PRESETS[presetName];
   if (!preset) {
-    console.error(`❌ Unknown preset: ${presetName}`);
+    logger.error(`❌ Unknown preset: ${presetName}`);
     return false;
   }
   
   Object.assign(VERSION_CONFIG, preset);
-  console.log(`✅ Applied preset: ${presetName}`);
+  logger.info(`✅ Applied preset: ${presetName}`);
   return true;
 };
 

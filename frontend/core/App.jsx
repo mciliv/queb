@@ -4,6 +4,7 @@ import { useApi } from '../hooks/useApi';
 import { PRESET_VISUAL_TESTS, TEST_MOLECULES, SMILES_NAME_MAP } from './constants.js';
 import { PAYMENT_CONFIG, VALIDATION_PATTERNS } from '../utils/config-loader.js';
 import logger from './logger.js';
+import { createKeyboardHandler } from './keyboard-shortcuts.js';
 import '../assets/style.css';
 
 const isMobileDevice = () => {
@@ -99,9 +100,13 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           onKeyDown={handleKeyDown}
           aria-describedby={displayError ? 'input-error' : undefined}
         />
+        {!isMobileDevice() && !value.trim() && (
+          <div className="kbd-hint kbd-inside">{keyboardHint}</div>
+        )}
         
         {value.trim() && (
           <button 
+            id="object-submit"
             className="btn-icon"
             onClick={handleSubmit}
             aria-label="Structuralize"
@@ -110,10 +115,6 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
          </button>
         )}
       </div>
-      
-      {!value.trim() && !isMobileDevice() && (
-        <div className="kbd-hint">{keyboardHint}</div>
-      )}
       
       {displayError && (
         <div id="input-error" className="error-text" role="alert">
@@ -152,7 +153,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
       <button 
         className={`mode-btn${cameraMode ? ' active' : ''}`}
         onClick={() => handleModeSelect('camera')}
-        title={isMobile ? "Capture from camera" : "Capture from camera (⌘⇧C)"}
+        title={isMobile ? "Capture from camera" : "Capture from camera (⌥C)"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8"/>
@@ -160,7 +161,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
         </svg>
         {!isMobile && (
           <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧C' : 'Ctrl+Shift+C'}
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌥C' : 'Alt+C'}
           </span>
         )}
       </button>
@@ -168,7 +169,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
       <button 
         className={`mode-btn${photoMode ? ' active' : ''}`}
         onClick={() => handleModeSelect('photo')}
-        title={isMobile ? "Upload image" : "Upload image (⌘⇧P)"}
+        title={isMobile ? "Upload image" : "Upload image (⌥P)"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -177,7 +178,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
         </svg>
         {!isMobile && (
           <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧P' : 'Ctrl+Shift+P'}
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌥P' : 'Alt+P'}
           </span>
         )}
       </button>
@@ -185,7 +186,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
       <button 
         className={`mode-btn${linkMode ? ' active' : ''}`}
         onClick={() => handleModeSelect('link')}
-        title={isMobile ? "Enter image link" : "Enter image link (⌘⇧L)"}
+        title={isMobile ? "Enter image link" : "Enter image link (⌥L)"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -193,7 +194,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
         </svg>
         {!isMobile && (
           <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧L' : 'Ctrl+Shift+L'}
+            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌥L' : 'Alt+L'}
           </span>
         )}
       </button>
@@ -243,7 +244,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
       setShowSwitchCamera(videoDevices.length > 1);
     } catch (error) {
-      console.error('Camera access error:', error);
+      logger.error('Camera access error:', error);
       setPermissionMessage('Camera access required to structuralize from camera');
       setHasPermission(false);
     }
@@ -340,6 +341,13 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       const abVariant = Math.random() < 0.5 ? 'coords' : 'crop';
       let result;
       if (abVariant === 'coords') {
+        logger.debug('Camera click payload summary', {
+          variant: 'coords',
+          frame: { width, height },
+          mappedClick: { x: Math.round(centerX), y: Math.round(centerY) },
+          crop: { cx: cropX + Math.floor(cropSide / 2), cy: cropY + Math.floor(cropSide / 2), size: cropSide },
+          display: { rectWidth: Math.round(rect.width), rectHeight: Math.round(rect.height), offsetX: Math.round(offsetX), offsetY: Math.round(offsetY), scale: Number(scale.toFixed(3)) }
+        });
         result = await analyzeImage(
           fullImageDataUrl,
           Math.round(centerX),
@@ -351,6 +359,12 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       } else {
         // For cropped case, provide center relative to the crop
         const mid = Math.floor(cropSide / 2);
+        logger.debug('Camera click payload summary', {
+          variant: 'crop',
+          frame: { width, height },
+          cropCenter: { mid },
+          crop: { size: cropSide }
+        });
         result = await analyzeImage(
           croppedImageDataUrl,
           mid,
@@ -364,7 +378,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
         onAnalysisComplete({ ...result, abVariant });
       }
       } catch (error) {
-        console.error('Camera structuralization failed:', error);
+        logger.error('Camera structuralization failed:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -390,7 +404,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
       
       setStream(mediaStream);
     } catch (error) {
-      console.error('Camera switch error:', error);
+      logger.error('Camera switch error:', error);
     }
   };
 
@@ -467,36 +481,42 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
               ctx.drawImage(img, cropX, cropY, cropSide, cropSide, 0, 0, cropSide, cropSide);
               const croppedHeaderImage = canvas.toDataURL('image/jpeg', 0.8);
 
+              logger.debug('Photo analyze payload summary', {
+                variant: 'file',
+                image: { width: w, height: h },
+                crop: { size: cropSide, cx: cropX + Math.floor(cropSide/2), cy: cropY + Math.floor(cropSide/2) }
+              });
               const result = await analyzeImage(dataUrl);
               if (onAnalysisComplete) {
                 onAnalysisComplete(result);
               }
             } catch (innerErr) {
-              console.error('Photo header crop failed:', innerErr);
+              logger.error('Photo header crop failed:', innerErr);
             } finally {
               setIsProcessing(false);
             }
           };
           img.onerror = () => {
             // Fallback: pass original if crop fails to load
+            logger.debug('Photo analyze payload summary', { variant: 'file-fallback' });
             analyzeImage(dataUrl)
               .then((result) => {
                 if (onAnalysisComplete) {
                   onAnalysisComplete(result);
                 }
               })
-              .catch((err) => console.error('Photo structuralization failed:', err))
+              .catch((err) => logger.error('Photo structuralization failed:', err))
               .finally(() => setIsProcessing(false));
           };
           img.src = dataUrl;
         } catch (error) {
-          console.error('File reading or processing failed:', error);
+          logger.error('File reading or processing failed:', error);
           setIsProcessing(false);
         }
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      console.error('File reading failed:', error);
+      logger.error('File reading failed:', error);
       setIsProcessing(false);
     }
   };
@@ -621,13 +641,14 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
     setUrlError('');
     
     try {
+      logger.debug('Link analyze payload summary', { variant: 'url', url: imageUrl });
       const result = await analyzeImage(imageUrl);
       if (onAnalysisComplete) {
         onAnalysisComplete(result);
       }
       setImageUrl('');
       } catch (error) {
-        console.error('URL structuralization failed:', error);
+        logger.error('URL structuralization failed:', error);
         setUrlError('Failed to structuralize from URL');
     } finally {
       setIsProcessing(false);
@@ -663,11 +684,12 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
           reader.onload = async (ev) => {
             try {
               const dataUrl = ev.target.result;
+              logger.debug('Drop analyze payload summary', { variant: 'file-drop' });
               const result = await analyzeImage(dataUrl);
               if (onAnalysisComplete) onAnalysisComplete(result);
               setImageUrl('');
             } catch (err) {
-              console.error('File drop structuralization failed:', err);
+              logger.error('File drop structuralization failed:', err);
               setUrlError('Failed to structuralize dropped image');
             } finally {
               setIsProcessing(false);
@@ -703,7 +725,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
         if (onAnalysisComplete) onAnalysisComplete(result);
         setImageUrl('');
       } catch (error) {
-        console.error('URL drop structuralization failed:', error);
+        logger.error('URL drop structuralization failed:', error);
         setUrlError('Failed to structuralize from dropped URL');
       } finally {
         setIsProcessing(false);
@@ -811,7 +833,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
           }
         }
 
-        if (sdfContent) {
+        if (sdfContent || molecularData.smiles || molecularData.name) {
           // Now replace the canvas with a fresh viewer
           if (!host) return;
           host.innerHTML = '';
@@ -825,7 +847,32 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
           }
           if (typeof viewer.removeAllModels === 'function') viewer.removeAllModels();
           if (typeof viewer.clear === 'function') viewer.clear();
-          viewer.addModel(sdfContent, 'sdf');
+          if (sdfContent) {
+            viewer.addModel(sdfContent, 'sdf');
+          } else if (!molecularData?.skipCid && molecularData?.cid) {
+            try {
+              const cid = encodeURIComponent(String(molecularData.cid));
+              const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/SDF?record_type=3d`;
+              const fetched = await fetch(url);
+              if (fetched.ok) {
+                const text = await fetched.text();
+                viewer.addModel(text, 'sdf');
+              }
+            } catch (_) {}
+          } else if (molecularData.smiles) {
+            try { viewer.addModel(molecularData.smiles, 'smiles'); }
+            catch (_) { /* fall through to error path if load fails */ }
+          } else if (molecularData.name) {
+            try {
+              const encoded = encodeURIComponent(molecularData.name);
+              const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encoded}/SDF?record_type=3d`;
+              const fetched = await fetch(url);
+              if (fetched.ok) {
+                const text = await fetched.text();
+                viewer.addModel(text, 'sdf');
+              }
+            } catch (_) {}
+          }
           // Use sphere representation with proper element colors
           // For ionic compounds like NaCl, show individual atoms clearly
           viewer.setStyle({}, { 
@@ -840,7 +887,13 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
           viewer.setStyle({element: 'O'}, { sphere: { color: 'red', scale: 0.8 } });
           viewer.setStyle({element: 'C'}, { sphere: { color: 'gray', scale: 0.8 } });
           viewer.setStyle({element: 'N'}, { sphere: { color: 'blue', scale: 0.8 } });
-          viewer.zoomTo();
+          // Fit, then back the camera off slightly to avoid being inside
+          // very small/degenerate bounding boxes (e.g., single-atom SDFs).
+          if (typeof viewer.resize === 'function') viewer.resize();
+          if (typeof viewer.zoomTo === 'function') viewer.zoomTo();
+          if (typeof viewer.zoom === 'function') {
+            try { viewer.zoom(0.85); } catch (_) {}
+          }
           viewer.render();
           setStatus('loaded');
           // Render complete
@@ -977,81 +1030,42 @@ function App() {
 
   // Handle keyboard shortcuts (desktop only)
   useEffect(() => {
-    const handleKeyDown = (event) => {
-      // Debug: log all keyboard events with modifiers
-      if (event.metaKey || event.ctrlKey) {
-        console.log('Keyboard event detected:', {
-          key: event.key,
-          metaKey: event.metaKey,
-          ctrlKey: event.ctrlKey,
-          shiftKey: event.shiftKey,
-          target: event.target.tagName,
-          isMobile: isMobileDevice()
-        });
-      }
-      
-      // Skip keyboard shortcuts on mobile devices
-      if (isMobileDevice()) {
-        console.log('Skipping shortcuts - mobile device detected');
-        return;
-      }
-      
-      // Skip if typing in form fields
-      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.contentEditable === 'true') {
-        console.log('Skipping shortcuts - typing in form field');
-        return;
-      }
+    // Skip keyboard shortcuts on mobile devices
+    if (isMobileDevice()) {
+      logger.info('Skipping shortcuts - mobile device detected');
+      return;
+    }
 
-      const isMac = navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
-      const modifier = isMac ? event.metaKey : event.ctrlKey;
-
-      // Focus input shortcut: ⌘/Ctrl + K
-      if (modifier && !event.shiftKey && event.key.toLowerCase() === 'k') {
-        console.log('⌘K shortcut triggered');
-        event.preventDefault();
-        event.stopPropagation();
+    // Create keyboard handler with mode actions
+    const actions = {
+      focusInput: () => {
         const inputElement = document.getElementById('object-input');
-        console.log('Found input element:', inputElement);
-        inputElement?.focus();
-        return;
-      }
-      
-      // Camera mode shortcut: ⌘/Ctrl + Shift + C  
-      if (modifier && event.shiftKey && event.key.toLowerCase() === 'c') {
-        event.preventDefault();
-        event.stopPropagation();
-        console.log('Camera mode shortcut triggered');
+        if (inputElement) {
+          inputElement.focus();
+          inputElement.select();
+        }
+      },
+      cameraMode: () => {
         setCameraMode(true);
         setPhotoMode(false);
         setLinkMode(false);
-        return;
-      }
-      
-      // Photo mode shortcut: ⌘/Ctrl + Shift + P
-      if (modifier && event.shiftKey && event.key.toLowerCase() === 'p') {
-        event.preventDefault();
-        event.stopPropagation();
-        console.log('Photo mode shortcut triggered');
+      },
+      photoMode: () => {
         setCameraMode(false);
         setPhotoMode(true);
         setLinkMode(false);
-        return;
-      }
-      
-      // Link mode shortcut: ⌘/Ctrl + Shift + L
-      if (modifier && event.shiftKey && event.key.toLowerCase() === 'l') {
-        event.preventDefault();
-        event.stopPropagation();
-        console.log('Link mode shortcut triggered');
+      },
+      linkMode: () => {
         setCameraMode(false);
         setPhotoMode(false);
         setLinkMode(true);
-        return;
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown, { capture: true });
-    return () => document.removeEventListener('keydown', handleKeyDown, { capture: true });
+    const keyboardHandler = createKeyboardHandler(actions);
+    document.addEventListener('keydown', keyboardHandler, { capture: true });
+
+    return () => document.removeEventListener('keydown', keyboardHandler, { capture: true });
   }, [setCameraMode, setPhotoMode, setLinkMode]);
 
   const handleTextAnalysis = useCallback(async (value) => {
@@ -1143,7 +1157,7 @@ function App() {
                 col.id === columnId ? { ...col, viewers, loading: false, failed: false } : col
               )));
             } catch (sdfError) {
-              console.error('SDF generation failed:', sdfError);
+              logger.error('SDF generation failed:', sdfError);
               setError('Failed to generate molecular structures');
               setColumns(prev => prev.map(col => (
                 col.id === columnId ? { ...col, loading: false, failed: true } : col
@@ -1165,7 +1179,7 @@ function App() {
       
       setObjectInput('');
     } catch (error) {
-      console.error('Analysis failed:', error);
+      logger.error('Analysis failed:', error);
       setError('Analysis failed. Please try again.');
       // Mark column as failed
       setColumns(prev => prev.map(col => (
@@ -1220,7 +1234,7 @@ function App() {
             col.id === columnId ? { ...col, viewers, loading: false, failed: false } : col
           )));
         } catch (sdfError) {
-          console.error('SDF generation failed:', sdfError);
+          logger.error('SDF generation failed:', sdfError);
           setColumns(prev => prev.map(col => (
             col.id === columnId ? { ...col, loading: false, failed: true } : col
           )));
@@ -1289,7 +1303,7 @@ function App() {
         {/* Settings gear icon in top right - OUTSIDE main to avoid conflicts */}
         <button
           onClick={() => {
-            console.log('Settings button clicked, current state:', showSettings);
+            logger.debug('Settings button clicked', { showSettings });
             setShowSettings(!showSettings);
           }}
           className="settings-btn"
@@ -1310,7 +1324,7 @@ function App() {
               <select
                 value={columnMode}
                 onChange={(e) => {
-                  console.log('Column mode changed to:', e.target.value);
+                  logger.info('Column mode changed', { value: e.target.value });
                   setColumnMode(e.target.value);
                 }}
                 className="select"
@@ -1349,57 +1363,47 @@ function App() {
         
         <div className="main">          
           <div className="input-section">
-            <div className="mb-15">
-              <TextInput 
-                value={objectInput}
-                onChange={setObjectInput}
-                onSubmit={handleTextAnalysis}
-                isProcessing={isProcessing}
-                error={error}
-              />
-            </div>
+            <TextInput 
+              value={objectInput}
+              onChange={setObjectInput}
+              onSubmit={handleTextAnalysis}
+              isProcessing={isProcessing}
+              error={error}
+            />
 
-            <div className="mb-15">
-              <ModeSelector
-                cameraMode={cameraMode}
-                setCameraMode={setCameraMode}
-                photoMode={photoMode}
-                setPhotoMode={setPhotoMode}
-                linkMode={linkMode}
-                setLinkMode={setLinkMode}
-              />
-            </div>
+            <ModeSelector
+              cameraMode={cameraMode}
+              setCameraMode={setCameraMode}
+              photoMode={photoMode}
+              setPhotoMode={setPhotoMode}
+              linkMode={linkMode}
+              setLinkMode={setLinkMode}
+            />
 
             {cameraMode && (
-              <div className="mb-15">
-                <CameraSection
-                  isProcessing={isProcessing}
-                  setIsProcessing={setIsProcessing}
-                  setCurrentAnalysisType={() => {}}
-                  onAnalysisComplete={handleAnalysisComplete}
-                />
-              </div>
+              <CameraSection
+                isProcessing={isProcessing}
+                setIsProcessing={setIsProcessing}
+                setCurrentAnalysisType={() => {}}
+                onAnalysisComplete={handleAnalysisComplete}
+              />
             )}
 
             {photoMode && (
-              <div className="mb-15">
-                <PhotoSection
-                  isProcessing={isProcessing}
-                  setIsProcessing={setIsProcessing}
-                  setCurrentAnalysisType={() => {}}
-                  onAnalysisComplete={handleAnalysisComplete}
-                />
-              </div>
+              <PhotoSection
+                isProcessing={isProcessing}
+                setIsProcessing={setIsProcessing}
+                setCurrentAnalysisType={() => {}}
+                onAnalysisComplete={handleAnalysisComplete}
+              />
             )}
 
             {linkMode && (
-              <div className="mb-15">
-                <LinkSection
-                  isProcessing={isProcessing}
-                  setIsProcessing={setIsProcessing}
-                  onAnalysisComplete={handleAnalysisComplete}
-                />
-              </div>
+              <LinkSection
+                isProcessing={isProcessing}
+                setIsProcessing={setIsProcessing}
+                onAnalysisComplete={handleAnalysisComplete}
+              />
             )}
           </div>
 

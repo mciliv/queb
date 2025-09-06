@@ -56,6 +56,7 @@ async function convertNamesToSmiles(payload, llmClient = null) {
   const object = payload?.object || "";
   const input = Array.isArray(payload?.molecules) ? payload.molecules : [];
   const results = [];
+  const conversionMethods = ['openeye', 'rdkit', 'pubchem_cid', 'pubchem_name', 'llm'];
   
   for (const mol of input) {
     const name = typeof mol?.name === 'string' ? mol.name.trim() : '';
@@ -64,69 +65,104 @@ async function convertNamesToSmiles(payload, llmClient = null) {
     let method = null;
 
     if (name) {
-      const openeye = await convertNameToSmilesOpenEye(name).catch(() => null);
-      if (openeye) {
-        smiles = openeye;
-        method = 'openeye';
-      }
-
-      if (!smiles) {
-        const rdkit = await convertNameToSmilesRDKit(name).catch(() => null);
-        if (rdkit) {
-          smiles = rdkit;
-          method = 'rdkit';
-        }
-      }
-
-      if (!smiles) {
-        let resolveNameFn = null;
-        let getPropertiesByCIDFn = null;
-        try {
-          const mod = require('../services/pubchem');
-          resolveNameFn = typeof mod?.resolveName === 'function' ? mod.resolveName : null;
-          getPropertiesByCIDFn = typeof mod?.getPropertiesByCID === 'function' ? mod.getPropertiesByCID : null;
-        } catch (_) {}
-
-        if (cid && getPropertiesByCIDFn) {
-          const props = await getPropertiesByCIDFn(cid).catch(() => null);
-          const found = props?.smiles || null;
-          if (found) {
-            smiles = found;
-            method = 'pubchem_cid';
+      // Try multiple methods with progressive fallback
+      const methods = [
+        { name: 'openeye', fn: () => convertNameToSmilesOpenEye(name) },
+        { name: 'rdkit', fn: () => convertNameToSmilesRDKit(name) }
+      ];
+      
+      for (const methodInfo of methods) {
+        if (!smiles) {
+          try {
+            const result = await methodInfo.fn();
+            if (result) {
+              smiles = result;
+              method = methodInfo.name;
+              break;
+            }
+          } catch (error) {
+            console.warn(`${methodInfo.name} conversion failed for ${name}:`, error.message);
           }
         }
-         if (!smiles && resolveNameFn) {
-          const res = await resolveNameFn(name).catch(() => null);
-          if (res) {
-            cid = res?.cid || cid;
-            if (res?.smiles) {
-              smiles = res.smiles;
-              method = 'pubchem_name';
+      }
+
+      // PubChem fallback with error handling
+      if (!smiles) {
+        try {
+          let resolveNameFn = null;
+          let getPropertiesByCIDFn = null;
+          try {
+            const mod = require('../services/pubchem');
+            resolveNameFn = typeof mod?.resolveName === 'function' ? mod.resolveName : null;
+            getPropertiesByCIDFn = typeof mod?.getPropertiesByCID === 'function' ? mod.getPropertiesByCID : null;
+          } catch (pubchemError) {
+            console.warn(`PubChem module unavailable for ${name}:`, pubchemError.message);
+          }
+
+          if (cid && getPropertiesByCIDFn) {
+            try {
+              const props = await getPropertiesByCIDFn(cid);
+              const found = props?.smiles || null;
+              if (found) {
+                smiles = found;
+                method = 'pubchem_cid';
+              }
+            } catch (cidError) {
+              console.warn(`PubChem CID lookup failed for ${name} (CID: ${cid}):`, cidError.message);
             }
           }
+          
+          if (!smiles && resolveNameFn) {
+            try {
+              const res = await resolveNameFn(name);
+              if (res) {
+                cid = res?.cid || cid;
+                if (res?.smiles) {
+                  smiles = res.smiles;
+                  method = 'pubchem_name';
+                }
+              }
+            } catch (nameError) {
+              console.warn(`PubChem name lookup failed for ${name}:`, nameError.message);
+            }
+          }
+        } catch (pubchemGeneralError) {
+          console.warn(`PubChem lookup general error for ${name}:`, pubchemGeneralError.message);
         }
       }
 
+      // LLM fallback with enhanced error handling
       if (!smiles && llmClient) {
-        const prompt = buildNameToSmilesPrompt({ object, molecules: [{ name, cid }] });
-        const response = await llmClient.chat.completions
-          .create({
+        try {
+          const prompt = buildNameToSmilesPrompt({ object, molecules: [{ name, cid }] });
+          const response = await llmClient.chat.completions.create({
             model: process.env.OPENAI_MODEL || process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o',
             messages: [{ role: 'user', content: prompt }],
             max_tokens: 500,
             temperature: 0.1,
             response_format: { type: 'json_object' },
-          })
-          .catch(() => null);
-        if (response && response.choices?.[0]?.message?.content) {
-          try {
-            const parsed = JSON.parse(response.choices[0].message.content);
-            const llmResult = parsed.molecules?.[0];
-            if (llmResult?.smiles) {
-              smiles = llmResult.smiles;
-              method = 'llm';
+          });
+          
+          if (response && response.choices?.[0]?.message?.content) {
+            try {
+              const parsed = JSON.parse(response.choices[0].message.content);
+              const llmResult = parsed.molecules?.[0];
+              if (llmResult?.smiles) {
+                // Basic SMILES validation
+                const smilesPattern = /^[A-Za-z0-9@+\-\[\]()=#\/\\]+$/;
+                if (smilesPattern.test(llmResult.smiles)) {
+                  smiles = llmResult.smiles;
+                  method = 'llm';
+                } else {
+                  console.warn(`Invalid SMILES format from LLM for ${name}: ${llmResult.smiles}`);
+                }
+              }
+            } catch (parseError) {
+              console.warn(`LLM response parsing failed for ${name}:`, parseError.message);
             }
-          } catch (_) {}
+          }
+        } catch (llmError) {
+          console.warn(`LLM conversion failed for ${name}:`, llmError.message);
         }
       }
     }
@@ -137,6 +173,12 @@ async function convertNamesToSmiles(payload, llmClient = null) {
       smiles: smiles || null,
       status: smiles ? 'ok' : 'lookup_required',
       method: method || 'failed',
+      attempted_methods: conversionMethods.filter(m => 
+        (m === 'openeye' || m === 'rdkit') ? true :
+        (m === 'pubchem_cid' && cid) ? true :
+        (m === 'pubchem_name') ? true :
+        (m === 'llm' && llmClient) ? true : false
+      ),
     });
   }
   

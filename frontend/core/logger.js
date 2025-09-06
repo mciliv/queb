@@ -18,7 +18,9 @@
 // URL parameters:
 //   ?debug=true     - Enable debug logging
 //   ?verbose=true   - Enable verbose logging
-const isDebugMode = window.location.hostname === 'localhost' || 
+const host = window.location.hostname;
+const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host === '::1' || /\.local$/i.test(host);
+const isDebugMode = isLocalHost || 
                    window.location.search.includes('debug=true') ||
                    localStorage.getItem('debug-logging') === 'true';
 

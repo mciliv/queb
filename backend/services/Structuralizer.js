@@ -1,35 +1,19 @@
-let OpenAIClient = null;
-try { OpenAIClient = require("openai").OpenAI; } catch (_) { OpenAIClient = null; }
+const { createClient } = require("../ai/openai/client");
+const aiConfig = require("../ai/config");
 
 const { buildObjectDetectionPrompt } = require("../prompts/object-detection");
 const { buildStructuralizePrompt } = require("../prompts/structuralize");
 const MolecularProcessor = require("./molecular-processor");
 const { resolveName, getPropertiesByCID } = require("./name-resolver");
 
-// Text-first API surface (UI prioritizes text input)
 class Structuralizer {
-  constructor(apiKey, testConfig = null) {
-    this.isTestMode = process.env.NODE_ENV === 'test';
-    this.client = OpenAIClient ? new OpenAIClient({ apiKey: apiKey || process.env.OPENAI_API_KEY || '' }) : null;
-    // In test mode, treat mocked OpenAI client as available even without a real key
-    this.isOpenAIAvailable = (!!this.client && !!(apiKey || process.env.OPENAI_API_KEY)) || this.isTestMode;
-    
-    // Test configuration override
-    this.testConfig = testConfig || {};
-    
-    const requestedModel = this.testConfig.model || process.env.OPENAI_MODEL || process.env.OPENAI_DEFAULT_MODEL || 'auto';
-    if (/^(latest|auto)$/i.test(requestedModel)) {
-      this.defaultModel = 'gpt-5';
-      this.fallbackModels = ['gpt-4o', 'gpt-4-turbo'];
-    } else {
-      this.defaultModel = requestedModel;
-      this.fallbackModels = [];
-    }
-    
-    // Legacy property for tests
-    this.modelCandidates = [this.defaultModel, ...this.fallbackModels];
+  constructor(apiKey = null) {
+    // Single provider/model
+    this.client = createClient();
+    const effectiveApiKey = apiKey || aiConfig.apiKey;
+    this.isOpenAIAvailable = !!(this.client && effectiveApiKey);
+    this.model = aiConfig.model || 'gpt-4o';
     this.resolvedModelName = null;
-    // Keep reference text for structuralization flow
     this.chemicalInstructions = null;
     this.molecularProcessor = new MolecularProcessor();
   }
@@ -37,38 +21,10 @@ class Structuralizer {
   async callOpenAI(requestParams) {
     if (!this.isOpenAIAvailable) throw new Error("AI service unavailable");
     
-    // Use test config if available (bypasses candidate looping)
-    if (this.testConfig.model && this.testConfig.prompt) {
-      try {
-        const response = await this.client.chat.completions.create({ 
-          model: this.testConfig.model, 
-          ...requestParams,
-          messages: this.testConfig.prompt === 'custom' ? requestParams.messages : [
-            { role: 'user', content: this.testConfig.prompt }
-          ]
-        });
-        return response;
-      } catch (e) {
-        throw e;
-      }
-    }
-    
-    // Try default model first, then fallback models if error
-    const modelsToTry = this.resolvedModelName ? [this.resolvedModelName] : [this.defaultModel, ...this.fallbackModels];
-    let lastError = null;
-    
-    for (const model of modelsToTry) {
-      try {
-        const response = await this.client.chat.completions.create({ model, ...requestParams });
-        this.resolvedModelName = model;
-        return response;
-      } catch (e) {
-        lastError = e;
-        // Only try fallbacks if default model fails
-        continue;
-      }
-    }
-    throw lastError || new Error('Model invocation failed');
+    const activeModel = this.resolvedModelName || this.model;
+    const response = await this.client.chat.completions.create({ model: activeModel, ...requestParams });
+    this.resolvedModelName = activeModel;
+    return response;
   }
 
   // Structuralize multimodal: accepts { object?, imageBase64?, x?, y? } and returns { object, chemicals, recommendedBox?, reason? }

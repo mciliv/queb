@@ -9,13 +9,14 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const https = require('https');
 const { exec } = require('child_process');
 const puppeteer = require('puppeteer');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const FRONTEND_SRC_DIR = path.join(PROJECT_ROOT, 'frontend');
 const FRONTEND_DIST_FILE = path.join(PROJECT_ROOT, 'frontend', 'dist', 'bundle.js');
-const TARGET_URL = process.env.FRONTEND_URL || `https://localhost:${process.env.PORT || 3001}`;
+const TARGET_URL = process.env.FRONTEND_URL || `https://localhost:${process.env.HTTPS_PORT || 3001}`;
 const USER_DATA_DIR = path.join(PROJECT_ROOT, 'test', `chrome-molecular-profile-${Date.now()}-dev`);
 const PID_FILE = '/tmp/dev_browser_pid';
 const STICKY = (
@@ -54,11 +55,15 @@ async function waitForServer(url, timeoutMs = 20000) {
   const urlObj = new URL(url);
   return new Promise((resolve, reject) => {
     const tryOnce = () => {
-      const req = http.request({
+      const isHttps = urlObj.protocol === 'https:';
+      const agent = isHttps ? new https.Agent({ rejectUnauthorized: false }) : undefined;
+      const requester = isHttps ? https : http;
+      const req = requester.request({
         method: 'GET',
         hostname: urlObj.hostname,
-        port: urlObj.port || 80,
+        port: urlObj.port || (isHttps ? 443 : 80),
         path: urlObj.pathname,
+        agent
       }, (res) => {
         if (res.statusCode && res.statusCode >= 200 && res.statusCode < 500) {
           resolve(true);
@@ -85,6 +90,32 @@ async function openBrowser() {
     log('⏳ Server not ready, postponing browser launch');
     return;
   }
+
+  // Use builtin browser instead of Puppeteer
+  try {
+    if (process.platform === 'darwin') {
+      // macOS: Use default browser with flags
+      exec(
+        `open "${TARGET_URL}"`,
+        { stdio: 'ignore' }
+      );
+    } else if (process.platform === 'win32') {
+      // Windows: Use default browser
+      exec(
+        `start "${TARGET_URL}"`,
+        { shell: true, stdio: 'ignore' }
+      );
+    } else {
+      // Linux: Use default browser
+      exec(`xdg-open "${TARGET_URL}"`, { stdio: 'ignore' });
+    }
+    log('🌐 Dev browser opened (builtin)');
+    return;
+  } catch (err) {
+    log(`⚠️ Failed to launch builtin browser: ${err.message}`);
+    return;
+  }
+
   try {
     browser = await puppeteer.launch({
       headless: false,
@@ -162,7 +193,10 @@ async function closeBrowser() {
   if (!browser || closing) return;
   closing = true;
   try {
-    await browser.close();
+    // Only close if it's a Puppeteer browser instance
+    if (browser && typeof browser.close === 'function') {
+      await browser.close();
+    }
   } catch (_) {}
   browser = null;
   page = null;
@@ -207,14 +241,16 @@ function watchBuildArtifact() {
   fs.watchFile(FRONTEND_DIST_FILE, { interval: 250 }, debounce(async () => {
     if (browser && page) {
       try {
-        // Always reload the tab when build artifact changes
+        // Puppeteer browser: reload the page
         await page.reload({ waitUntil: 'networkidle0' });
         await page.bringToFront().catch(() => {});
         log('🔁 Dev browser reloaded after build');
       } catch (_) {}
     } else {
-      // Reopen only if currently closed
-      await openBrowser();
+      // Builtin browser: notify user to refresh manually
+      log('🔄 Build complete - refresh your browser manually');
+      // Try to reopen if somehow closed
+      setTimeout(() => openBrowser().catch(() => {}), 1000);
     }
   }, 400));
   log('🔄 Watching build output for completion');

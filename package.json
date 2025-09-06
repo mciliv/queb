@@ -1,18 +1,8 @@
 {
   "name": "molecular-space-analyzer",
   "version": "1.0.0",
-  "description": "Molecular analysis app - maximally simplified",
+  "description": "Molecular analysis app",
   "main": "index.js",
-  "scripts": {
-    "start": "node backend/api/server.js",
-    "dev": "scripts/dev",
-    "build": "scripts/dev build",
-    "deploy": "scripts/deploy",
-    "test": "node test/scripts/unified-test-runner.js",
-    "test:quick": "node test/scripts/unified-test-runner.js --quick",
-    "clean": "scripts/clean",
-    "format": "prettier --write ."
-  },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
@@ -43,5 +33,10 @@
     "type": "git",
     "url": "git+https://github.com/mciliv/mol.git"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "test": "jest",
+    "test:quick": "jest test/suites/unit/keyboard-shortcuts.test.js",
+    "dev": "node scripts/dev"
+  }
 }

@@ -5,12 +5,14 @@ const path = require('path');
 const fs = require('fs');
 
 async function build() {
-  const outdir = path.resolve(__dirname, '..', 'dist');
-  const entry = path.resolve(__dirname, '..', 'frontend', 'core', 'index.jsx');
+  // Output to frontend/dist so server serves /dist/* correctly
+  const outdir = path.resolve(__dirname, 'dist');
+  const entry = path.resolve(__dirname, 'core', 'index.jsx');
   fs.mkdirSync(outdir, { recursive: true });
 
   const args = process.argv.slice(2);
   const watch = args.includes('--watch');
+  const quiet = args.includes('--quiet') || args.includes('-q');
 
   if (watch) {
     const ctx = await esbuild.context({
@@ -26,9 +28,12 @@ async function build() {
         'global': 'globalThis'
       },
       platform: 'browser',
+      logLevel: quiet ? 'silent' : 'info'
     });
+    // Ensure initial build so /dist/bundle.js exists
+    await ctx.rebuild();
     await ctx.watch();
-    console.log('👀 Fron‘tend watch build started (esbuild)');
+    if (!quiet) console.log('👀 Frontend watch build started (esbuild)');
   } else {
     await esbuild.build({
       entryPoints: [entry],
@@ -45,9 +50,10 @@ async function build() {
       },
       platform: 'browser',
       drop: ['console', 'debugger'],
+      logLevel: quiet ? 'silent' : 'info'
     });
   
-    console.log('✅ Frontend built to dist/bundle.js');
+    if (!quiet) console.log('✅ Frontend built to dist/bundle.js');
   }
 }
 

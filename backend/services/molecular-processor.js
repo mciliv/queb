@@ -165,8 +165,14 @@ class MolecularProcessor {
     });
     
     if (exited === 0) {
-      const filename = this.generateSafeFilename(chemical);
-      return `/sdf_files/${filename}`;
+      // The Python helper may succeed but choose a different filename format
+      // (raw SMILES) or even fail silently without creating a file.
+      // Verify on-disk existence using our resolver and only return if found.
+      const existing = this.findExistingSdfFile(chemical);
+      if (existing) {
+        return existing;
+      }
+      // Fall through to network fallback if the file wasn't actually created
     }
     
     // If python path fails, attempt PubChem download then fallback

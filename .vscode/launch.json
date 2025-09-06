@@ -15,7 +15,7 @@
       }
     },
     {
-      "name": "Debug Current Node Script", 
+      "name": "Debug Current Node Script",
       "type": "node",
       "request": "launch",
       "program": "${file}",
@@ -23,7 +23,8 @@
       "skipFiles": ["<node_internals>/**"],
       "cwd": "${workspaceFolder}",
       "env": {
-        "NODE_ENV": "development"
+        "NODE_ENV": "development",
+        "NODEBUG": "1"
       }
     },
     {
@@ -36,12 +37,16 @@
     },
     {
       "name": "Debug Dev Script",
-      "type": "bashdb",
+      "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/scripts/dev",
-      "args": ["serve", "--debug"],
       "cwd": "${workspaceFolder}",
-      "internalConsoleOptions": "openOnSessionStart"
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "env": {
+        "NODE_ENV": "development",
+        "NODEBUG": "1"
+      }
     }
   ],
   "compounds": [

@@ -1,0 +1,4 @@
+#!/bin/bash
+# Queb-specific dev script
+export PROFILE=queb
+exec "$(dirname "$0")/dev" "$@"

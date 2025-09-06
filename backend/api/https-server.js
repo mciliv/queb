@@ -65,22 +65,35 @@ class HttpsServer {
   }
 
   loadCertificates() {
-    const certDir = path.join(__dirname, "certs");
-    const keyPath = path.join(certDir, "key.pem");
-    const certPath = path.join(certDir, "cert.pem");
+    // Try multiple certificate locations for flexibility
+    const certLocations = [
+      path.join(__dirname, "certs"),                    // backend/api/certs (legacy)
+      path.join(process.cwd(), "certs"),               // project root certs
+      path.join(process.cwd(), "config", "certs")      // config/certs
+    ];
 
-    // Check for mkcert certificates
-    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
-      log.success("✅ Using mkcert SSL certificates (trusted on this machine)");
-      return { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
+    for (const certDir of certLocations) {
+      const keyPath = path.join(certDir, "key.pem");
+      const certPath = path.join(certDir, "cert.pem");
+
+      if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        try {
+          log.success(`✅ Using mkcert SSL certificates from: ${certDir}`);
+          return { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
+        } catch (error) {
+          log.warning(`⚠️ Could not read certificates from ${certDir}: ${error.message}`);
+          continue;
+        }
+      }
     }
 
     // No certificates found
-    log.error("❌ No SSL certificates found in:", certDir);
+    log.error("❌ No SSL certificates found");
     log.warning("💡 To generate trusted certificates, run:");
-    log.warning("   cd backend/api/certs");
-    log.warning(`   mkcert -key-file key.pem -cert-file cert.pem localhost 127.0.0.1 ::1 ${this.localIP}`);
-    
+    log.warning("   node util/dev-toolkit/certs/generate-certs.js");
+    log.warning("   # or from project root:");
+    log.warning("   node ../util/dev-toolkit/certs/generate-certs.js");
+
     return null;
   }
 
