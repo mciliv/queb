@@ -1,0 +1,88 @@
+#!/usr/bin/env node
+
+// Molecular analysis app development server launcher
+const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+
+// Load environment configuration if available
+function loadEnvConfig() {
+  try {
+    // Try project-specific config
+    const envPath = path.join(__dirname, '..', 'config', 'env.js');
+    if (fs.existsSync(envPath)) {
+      require(envPath);
+      return true;
+    }
+
+    // Try .env file as fallback
+    const dotenvPath = path.join(__dirname, '..', '.env');
+    if (fs.existsSync(dotenvPath)) {
+      require('dotenv').config({ path: dotenvPath });
+      return true;
+    }
+  } catch (error) {
+    // Silently ignore config loading errors
+  }
+  return false;
+}
+
+// Find the main entry point
+function findEntryPoint() {
+  const projectRoot = path.dirname(__dirname);
+  const possibleEntries = ['index.js', 'server.js', 'app.js', 'main.js'];
+
+  for (const entry of possibleEntries) {
+    const entryPath = path.join(projectRoot, entry);
+    if (fs.existsSync(entryPath)) {
+      return entryPath;
+    }
+  }
+
+  // Check package.json main field
+  try {
+    const packagePath = path.join(projectRoot, 'package.json');
+    if (fs.existsSync(packagePath)) {
+      const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+      if (pkg.main) {
+        return path.join(projectRoot, pkg.main);
+      }
+    }
+  } catch (error) {
+    // Ignore package.json parsing errors
+  }
+
+  return null;
+}
+
+// Main execution
+const projectRoot = path.dirname(__dirname);
+const entryPoint = findEntryPoint();
+
+if (!entryPoint) {
+  console.error('❌ No entry point found in molecular analysis app');
+  console.error('Expected: index.js, server.js, app.js, main.js, or package.json main field');
+  process.exit(1);
+}
+
+console.log(`🧬 Starting molecular analysis app from: ${projectRoot}`);
+console.log(`📁 Entry point: ${entryPoint}`);
+
+// Load environment configuration
+if (loadEnvConfig()) {
+  console.log('✅ Environment configuration loaded');
+}
+
+// Set environment variables for development
+process.env.NODE_ENV = 'development';
+process.env.NODEBUG = '1';
+
+// Start the server
+const child = spawn('node', [entryPoint, ...process.argv.slice(2)], {
+  stdio: 'inherit',
+  cwd: projectRoot
+});
+
+child.on('exit', (code) => {
+  process.exit(code);
+});

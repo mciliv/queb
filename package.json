@@ -37,6 +37,6 @@
   "scripts": {
     "test": "jest",
     "test:quick": "jest test/suites/unit/keyboard-shortcuts.test.js",
-    "dev": "node ../web/dev"
+    "dev": "node scripts/dev"
   }
 }
