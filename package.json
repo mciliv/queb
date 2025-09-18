@@ -38,13 +38,17 @@
   },
   "license": "MIT",
   "scripts": {
-    "test": "jest --config test/jest.config.js",
-    "test:quick": "jest --config test/jest.config.js test/suites/unit/keyboard-shortcuts.test.js",
-    "dev": "node ../web/dev",
-    "dev:watch": "nodemon --exec \"node ../web/dev\" --watch backend --watch config --ext js,json",
+    "test": "jest --config tests/jest.config.js",
+    "test:quick": "jest --config tests/jest.config.js tests/suites/unit/keyboard-shortcuts.test.js",
+    "dev": "./scripts/d dev",
+    "dev:watch": "nodemon --exec \"./scripts/d dev\" --watch src/server --watch config --ext js,json",
     "dev:full": "concurrently \"npm run dev:watch\" \"npm run build:watch\"",
-    "build:watch": "node --watch frontend/build-frontend.js",
-    "lint": "eslint backend frontend --ext .js,.jsx",
-    "lint:fix": "eslint backend frontend --ext .js,.jsx --fix"
+    "build": "./scripts/d build",
+    "build:watch": "node --watch src/client/build-frontend.js",
+    "clean": "./scripts/d clean",
+    "status": "./scripts/d status",
+    "deploy": "./scripts/d deploy",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:fix": "eslint src --ext .js,.jsx --fix"
   }
 }

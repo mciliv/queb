@@ -1,3 +1,576 @@
-#!/bin/bash
-# Simple alias for Dave - just the character 'd'
-exec /Users/m/mol/scripts/Dave "$@"
+#!/usr/bin/env node
+
+const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+
+const operations = {
+  'dev': 'Start development server',
+  'build': 'Build frontend',
+  'test': 'Run tests',
+  'clean': 'Clean up ports and processes',
+  'status': 'Check server status',
+  'deploy': 'Deploy to production',
+  'setup-aliases': 'Output shell aliases for sourcing',
+  'help': 'Show this help'
+};
+
+// Determine project directory (look for package.json or index.js)
+function findProjectRoot(startDir) {
+  // For flattened repo, the project root is one level up from scripts/
+  const scriptDir = __dirname;
+  const projectRoot = path.dirname(scriptDir);
+  
+  // Verify this is correct by checking for package.json
+  if (fs.existsSync(path.join(projectRoot, 'package.json'))) {
+    return projectRoot;
+  }
+  
+  // Fallback to original logic if needed
+  let currentDir = startDir;
+  const maxDepth = 10;
+
+  for (let i = 0; i < maxDepth; i++) {
+    if (fs.existsSync(path.join(currentDir, 'package.json')) ||
+        fs.existsSync(path.join(currentDir, 'index.js'))) {
+      return currentDir;
+    }
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) break; // Reached root
+    currentDir = parentDir;
+  }
+
+  return projectRoot; // Use calculated project root
+}
+
+// Load project configuration
+// Returns config object from PROJECT_ROOT/config/project.js or null if not found
+function loadProjectConfig(projectRoot) {
+  const configPath = path.join(projectRoot, 'config', 'project.js');
+
+  if (fs.existsSync(configPath)) {
+    return require(configPath);
+  }
+
+  return null;
+}
+
+function showHelp() {
+  console.log('🧬 Universal Development Assistant\n');
+  console.log('Usage: d [operation]\n');
+  console.log('Available operations:');
+  Object.entries(operations).forEach(([op, desc]) => {
+    console.log(`  ${op.padEnd(10)} - ${desc}`);
+  });
+  console.log('\nExamples:');
+  console.log('  d dev     # Start development server');
+  console.log('  d test    # Run tests');
+  console.log('  d clean   # Clean up ports');
+  console.log('  d deploy  # Deploy to production');
+}
+
+// Process and port cleanup utility (aggressive mode)
+async function cleanupProcesses(projectRoot, aggressive = false) {
+  const { execSync } = require('child_process');
+  const net = require("net");
+
+  if (aggressive) {
+    console.log('🧹 Cleaning up previous processes...');
+  }
+
+  // Define ports to check and clean
+  const portsToCheck = [8080, 3001, 3002, 3003, 3004, 3005];
+
+  // Check and kill processes using our ports
+  for (const port of portsToCheck) {
+    try {
+      const isPortFree = await new Promise((resolve) => {
+        const server = net.createServer();
+        server.listen(port, "127.0.0.1", () => {
+          server.close();
+          resolve(true);
+        });
+        server.on("error", () => resolve(false));
+      });
+
+      if (!isPortFree) {
+        if (aggressive) {
+          console.log(`⚠️ Port ${port} is in use, cleaning up...`);
+        }
+        // Try to find and kill the process quietly
+        try {
+          const pidOutput = execSync(`lsof -ti:${port}`, { encoding: 'utf8' }).trim();
+          if (pidOutput) {
+            const pids = pidOutput.split('\n');
+            for (const pid of pids) {
+              if (pid.trim()) {
+                try {
+                  process.kill(parseInt(pid), 'SIGTERM');
+                  if (aggressive) {
+                    console.log(`✅ Killed process ${pid} on port ${port}`);
+                  }
+                  // Wait for process to terminate
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                } catch (killError) {
+                  // Silent failure
+                }
+              }
+            }
+          }
+        } catch (findError) {
+          // Silent failure
+        }
+      }
+    } catch (e) {
+      if (aggressive) {
+        console.log(`⚠️ Port ${port} check failed: ${e.message}`);
+      }
+    }
+  }
+
+  // Additional cleanup: kill any node processes running our scripts
+  if (aggressive) {
+    try {
+      const nodeProcesses = execSync(`pgrep -f "node.*${path.basename(projectRoot)}" || true`, { encoding: 'utf8' }).trim();
+      if (nodeProcesses) {
+        const pids = nodeProcesses.split('\n');
+        for (const pid of pids) {
+          if (pid.trim()) {
+            try {
+              process.kill(parseInt(pid), 'SIGTERM');
+              console.log(`✅ Killed node process ${pid}`);
+            } catch (killError) {
+              // Ignore if process is already dead
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore pgrep errors
+    }
+
+    // Clean up log files and temp files
+    try {
+      const logsDir = path.join(projectRoot, 'logs');
+      if (fs.existsSync(logsDir)) {
+        const files = fs.readdirSync(logsDir);
+        let cleanedCount = 0;
+        for (const file of files) {
+          if (file.endsWith('.log') && files.length > 5) { // Keep last 5 log files
+            fs.unlinkSync(path.join(logsDir, file));
+            cleanedCount++;
+          }
+        }
+        if (cleanedCount > 0) {
+          console.log(`🧹 Cleaned up ${cleanedCount} old log files`);
+        }
+      }
+    } catch (e) {
+      // Ignore cleanup errors
+    }
+  }
+
+  if (aggressive) {
+    console.log('✅ Process cleanup completed');
+  }
+}
+
+async function runBuild(projectRoot) {
+  console.log('🔨 Building frontend...');
+  const buildScript = path.join(projectRoot, 'src', 'client', 'build-frontend.js');
+
+  const child = spawn('node', [buildScript], {
+    stdio: 'inherit',
+    cwd: projectRoot
+  });
+
+  return new Promise((resolve, reject) => {
+    child.on('close', (code) => {
+      if (code === 0) {
+        console.log('✅ Build completed');
+        resolve();
+      } else {
+        reject(new Error(`Build failed with code ${code}`));
+      }
+    });
+  });
+}
+
+async function runTest(projectRoot) {
+  console.log('🧪 Running tests...');
+
+  const child = spawn('npm', ['run', 'test:quick'], {
+    stdio: 'inherit',
+    cwd: projectRoot
+  });
+
+  return new Promise((resolve, reject) => {
+    child.on('close', (code) => {
+      if (code === 0) {
+        console.log('✅ Tests passed');
+        resolve();
+      } else {
+        reject(new Error(`Tests failed with code ${code}`));
+      }
+    });
+  });
+}
+
+async function runClean(projectRoot) {
+  await cleanupProcesses(projectRoot, true);
+}
+
+async function checkStatus(projectRoot) {
+  console.log('📊 Checking server status...');
+  const net = require('net');
+  const portsToCheck = [8080, 3001, 3002, 3003, 3004, 3005];
+
+  for (const port of portsToCheck) {
+    try {
+      const server = net.createServer();
+      const isPortFree = new Promise((resolve) => {
+        server.listen(port, '127.0.0.1', () => {
+          server.close();
+          resolve(true);
+        });
+        server.on('error', () => resolve(false));
+      });
+
+      const free = await isPortFree;
+      if (!free) {
+        console.log(`🟢 Port ${port} is in use`);
+      } else {
+        console.log(`⚪ Port ${port} is free`);
+      }
+    } catch (e) {
+      console.log(`❌ Error checking port ${port}: ${e.message}`);
+    }
+  }
+}
+
+async function runDeploy(projectRoot) {
+  console.log('🚀 Starting deployment...');
+  
+  // Look for deploy script in multiple locations
+  const possibleDeployScripts = [
+    path.join(projectRoot, 'scripts', 'deploy', 'deploy.sh'),
+    path.join(projectRoot, 'scripts', 'deploy.sh'),
+    '/Users/m/web/deploy.sh'
+  ];
+  
+  let deployScript = null;
+  for (const script of possibleDeployScripts) {
+    if (fs.existsSync(script)) {
+      deployScript = script;
+      break;
+    }
+  }
+  
+  if (!deployScript) {
+    console.error('❌ Deploy script not found!');
+    console.log('💡 Looked in these locations:');
+    possibleDeployScripts.forEach(script => console.log(`   - ${script}`));
+    console.log('💡 Create a deploy script in one of these locations or update the path in the d script');
+    throw new Error('Deploy script not found');
+  }
+  
+  console.log(`📜 Using deploy script: ${deployScript}`);
+
+  const child = spawn('bash', [deployScript], {
+    stdio: 'inherit',
+    cwd: projectRoot
+  });
+
+  return new Promise((resolve, reject) => {
+    child.on('close', (code) => {
+      if (code === 0) {
+        console.log('✅ Deployment completed successfully');
+        resolve();
+      } else {
+        console.error(`❌ Deployment failed with exit code ${code}`);
+        console.log('💡 Check the deploy script for errors');
+        reject(new Error(`Deployment failed with code ${code}`));
+      }
+    });
+
+    child.on('error', (error) => {
+      console.error('❌ Failed to start deployment process:', error.message);
+      console.log('💡 Make sure the deploy script has execute permissions: chmod +x deploy.sh');
+      reject(error);
+    });
+  });
+}
+
+function setupAliases(projectRoot) {
+  const scriptPath = path.join(projectRoot, 'scripts', 'd');
+  
+  // Output shell aliases that can be sourced
+  console.log(`# Development aliases for ${path.basename(projectRoot)}`);
+  console.log(`alias d='${scriptPath}'`);
+  console.log(`alias ship='${scriptPath} deploy'`);
+  console.log(`alias clean='${scriptPath} clean'`);
+  console.log(`alias test='${scriptPath} test'`);
+  console.log(`alias build='${scriptPath} build'`);
+  console.log(`alias status='${scriptPath} status'`);
+}
+
+// Development server startup (original dev functionality)
+async function runDevServer(projectRoot) {
+  const entryPoint = findEntryPoint(projectRoot);
+
+  if (!entryPoint) {
+    console.error('❌ No entry point found');
+    process.exit(1);
+  }
+
+  // Load config from PROJECT_ROOT/config/project.js
+  const config = loadProjectConfig(projectRoot);
+
+  // Set development mode - preserve existing NODE_OPTIONS
+  process.env.NODE_ENV = 'development';
+
+  // Check for existing server processes to avoid conflicts
+  try {
+    const { execSync } = require("child_process");
+    const existingProcesses = execSync(`pgrep -f "node.*${path.basename(entryPoint)}" || true`, { encoding: 'utf8' });
+    if (existingProcesses.trim()) {
+      console.log('⚠️ Found existing server processes, they will be managed by the new instance');
+    }
+  } catch (e) {
+    // Ignore process check errors
+  }
+
+  // Clean up ports (lightweight) and build frontend
+  try {
+    await cleanupProcesses(projectRoot, false); // Light cleanup
+  } catch (error) {
+    console.log('⚠️ Port cleanup failed:', error.message);
+  }
+
+  // Start server with loaded configuration
+  console.log(`🚀 Starting Dave - Universal Development Assistant`);
+  console.log(`📁 Project: ${projectRoot}`);
+  console.log(`🔧 Initializing development server...\n`);
+
+  const port = config ? config.env.PORT : 8080;
+  const httpsPort = process.env.HTTPS_PORT || 3001;
+
+  // Check for no-debug flag (default to true for cleaner output)
+  const noDebug = !process.argv.includes('--debug');
+
+  // Filter out debugger-related arguments and our custom flag
+  const filteredArgs = process.argv.slice(2).filter(arg =>
+    arg !== '--no-debug' &&
+    arg !== '--debug' &&
+    !arg.includes('--inspect') &&
+    !arg.includes('VSCODE_INSPECTOR') &&
+    !arg.includes('NODE_OPTIONS') &&
+    !arg.startsWith('--require=') &&
+    !arg.includes('bootloader.js')
+  );
+
+  // Start the server
+  const spawnArgs = noDebug
+    ? ['--no-deprecation', entryPoint, ...filteredArgs]
+    : [entryPoint, ...filteredArgs];
+
+  const spawnEnv = {
+    ...process.env,
+    // Disable debugger completely by default
+    ...(noDebug && { 
+      NODE_OPTIONS: '',
+      NODE_INSPECT_RESUME_ON_START: '0',
+      NODE_INSPECT: '0'
+    })
+  };
+
+  // Remove any debugger-related environment variables
+  if (noDebug) {
+    delete spawnEnv.NODE_INSPECT;
+    delete spawnEnv.NODE_INSPECT_RESUME_ON_START;
+    delete spawnEnv.VSCODE_INSPECTOR_OPTIONS;
+  }
+
+  const child = spawn('node', spawnArgs, {
+    stdio: ['inherit', 'pipe', 'pipe'], // Capture stdout and stderr to reduce noise
+    cwd: projectRoot,
+    env: spawnEnv,
+    // Disable debugger detection
+    detached: false
+  });
+
+  // Reduce debugger noise by buffering output
+  let serverStarted = false;
+  let outputBuffer = '';
+  let fallbackTimeout;
+
+  child.stdout?.on('data', (data) => {
+    const output = data.toString();
+    outputBuffer += output;
+
+    // Look for server ready indicators - show clean startup
+    if (!serverStarted && (output.includes('Server initialization started') || output.includes('HTTP server started'))) {
+      serverStarted = true;
+      if (fallbackTimeout) {
+        clearTimeout(fallbackTimeout);
+      }
+
+      // Clear any previous output and show clean startup
+      console.log('\n🚀 Server started successfully!');
+      console.log(`📡 HTTP:  http://localhost:${port}`);
+      console.log(`🔐 HTTPS: https://localhost:${httpsPort}`);
+      console.log(`📱 LAN:   http://localhost:${port} (or your network IP)`);
+      console.log('✅ Ready to accept connections...\n');
+    }
+
+    // Show important server initialization messages
+    if (output.includes('Server initialization started') ||
+        output.includes('PostgreSQL module loaded') ||
+        output.includes('HTTPS server started') ||
+        output.includes('Environment configuration loaded') ||
+        output.includes('HTTP server started') ||
+        output.includes('Server exited with code') ||
+        output.includes('❌ Failed to start') ||
+        output.includes('Error:') ||
+        output.includes('SyntaxError')) {
+      if (output.includes('Error:') || output.includes('SyntaxError') || output.includes('Server exited with code')) {
+        console.log('❌', output.trim());
+      } else {
+        console.log(output.trim());
+      }
+    }
+  });
+
+  child.stderr?.on('data', (data) => {
+    const error = data.toString();
+    // Comprehensive debugger noise suppression
+    const debuggerMessages = [
+      'Debugger listening',
+      'Debugger attached',
+      'Waiting for the debugger',
+      'For help, see:',
+      'ws://127.0.0.1:',
+      'nodejs.org/en/docs/inspector',
+      'Debugger ending on',
+      'Waiting for the debugger to disconnect'
+    ];
+    
+    const isDebuggerNoise = debuggerMessages.some(msg => error.includes(msg));
+    
+    if (!isDebuggerNoise) {
+      // Only show real errors that aren't part of normal startup
+      if (error.includes('Error') || error.includes('failed') || error.includes('exception') || error.includes('ENOENT')) {
+        console.log('⚠️ ', error.trim());
+      }
+    }
+  });
+
+  child.on('exit', (code) => {
+    if (code === 0) {
+      console.log('✅ Server exited cleanly');
+    } else if (code === null) {
+      console.log('⚠️ Server process terminated (possibly due to debugger conflict)');
+      console.log('💡 Try running with --no-debug flag if this persists');
+    } else {
+      console.log(`❌ Server exited with code ${code}`);
+    }
+    process.exit(code);
+  });
+
+  // Fallback: Show basic startup message if server detection fails
+  fallbackTimeout = setTimeout(() => {
+    if (!serverStarted) {
+      console.log('\n⏳ Starting server...');
+      console.log(`📡 Will be available at: http://localhost:${port}`);
+      console.log(`🔐 HTTPS at: https://localhost:${httpsPort}`);
+    }
+  }, 3000);
+
+  child.on('error', (error) => {
+    console.error('❌ Failed to start server:', error.message);
+    console.log('💡 Try: d dev --no-debug');
+    process.exit(1);
+  });
+
+  // Handle parent process signals
+  process.on('SIGINT', () => {
+    console.log('\n🛑 Received SIGINT, shutting down server...');
+    child.kill('SIGINT');
+  });
+
+  process.on('SIGTERM', () => {
+    console.log('\n🛑 Received SIGTERM, shutting down server...');
+    child.kill('SIGTERM');
+  });
+}
+
+// Find the main entry point
+function findEntryPoint(projectRoot) {
+  const possibleEntries = ['index.js', 'server.js', 'app.js', 'main.js'];
+
+  for (const entry of possibleEntries) {
+    const entryPath = path.join(projectRoot, entry);
+    if (fs.existsSync(entryPath)) {
+      return entryPath;
+    }
+  }
+
+  // Check if there's a scripts.start in package.json
+  try {
+    const packagePath = path.join(projectRoot, 'package.json');
+    if (fs.existsSync(packagePath)) {
+      const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+      if (pkg.main) {
+        return path.join(projectRoot, pkg.main);
+      }
+    }
+  } catch (error) {
+    // Ignore package.json parsing errors
+  }
+
+  return null;
+}
+
+// Main execution - operation dispatcher
+async function main() {
+  const operation = process.argv[2] || 'dev';
+  const projectRoot = findProjectRoot(process.cwd());
+
+  switch (operation) {
+    case 'dev':
+      await runDevServer(projectRoot);
+      break;
+    case 'build':
+      await runBuild(projectRoot);
+      break;
+    case 'test':
+      await runTest(projectRoot);
+      break;
+    case 'clean':
+      await runClean(projectRoot);
+      break;
+    case 'status':
+      await checkStatus(projectRoot);
+      break;
+    case 'deploy':
+      await runDeploy(projectRoot);
+      break;
+    case 'setup-aliases':
+      setupAliases(projectRoot);
+      break;
+    case 'help':
+      showHelp();
+      break;
+    default:
+      console.log(`❌ Unknown operation: ${operation}`);
+      showHelp();
+      process.exit(1);
+  }
+}
+
+// Run the main function
+main().catch((error) => {
+  console.error('❌ Fatal error:', error);
+  process.exit(1);
+});
+
