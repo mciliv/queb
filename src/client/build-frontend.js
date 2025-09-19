@@ -29,7 +29,14 @@ async function build() {
       },
       platform: 'browser',
       logLevel: quiet ? 'silent' : 'info',
-      external: ['config/*', '../../config/*'],
+      external: [
+        'config/*', 
+        '../../config/*',
+        'config/project.js',
+        'config/env.js',
+        'backend/*',
+        'src/server/*'
+      ],
       banner: {
         js: `
           // Development mode optimizations
@@ -65,7 +72,14 @@ async function build() {
       platform: 'browser',
       drop: ['console', 'debugger'],
       logLevel: quiet ? 'silent' : 'info',
-      external: ['config/*', '../../config/*']
+      external: [
+        'config/*', 
+        '../../config/*',
+        'config/project.js',
+        'config/env.js',
+        'backend/*',
+        'src/server/*'
+      ]
     });
   
     if (!quiet) console.log('✅ Frontend built to dist/bundle.js');

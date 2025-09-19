@@ -1051,7 +1051,7 @@ app.post("/structuralize", async (req, res) => {
     if (!req.body || (typeof req.body !== 'object')) {
       return res.status(400).json({ error: "Invalid payload" });
     }
-    const out = await structuralizer. structuralize(req.body);
+    const out = await structuralizer.structuralize(req.body);
     res.json(out);
   } catch (error) {
     res.status(500).json({ error: `Structuralization failed: ${error.message}` });
@@ -1204,7 +1204,7 @@ const serveIndexWithTokens = (req, res) => {
 // Serve manifest.json with cache busting
 app.get("/manifest.json", (req, res) => {
   try {
-    const manifestPath = path.join(__dirname, "..", "..", "public", "manifest.json");
+    const manifestPath = path.join(__dirname, "..", "..", "..", "public", "manifest.json");
     let manifest = fs.readFileSync(manifestPath, "utf8");
 
     // Generate cache busting timestamp

@@ -1,5 +1,15 @@
 #!/usr/bin/env node
 
+// Aggressively suppress debugger output immediately
+process.env.NODE_OPTIONS = '';
+process.env.NODE_INSPECT = '0';
+process.env.NODE_INSPECT_RESUME_ON_START = '0';
+process.env.VSCODE_INSPECTOR_OPTIONS = '';
+delete process.env.NODE_OPTIONS;
+delete process.env.NODE_INSPECT;
+delete process.env.NODE_INSPECT_RESUME_ON_START;
+delete process.env.VSCODE_INSPECTOR_OPTIONS;
+
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -452,10 +462,15 @@ async function runDevServer(projectRoot) {
       'ws://127.0.0.1:',
       'nodejs.org/en/docs/inspector',
       'Debugger ending on',
-      'Waiting for the debugger to disconnect'
+      'Waiting for the debugger to disconnect',
+      'Debugger listening on ws://',
+      'Debugger attached.',
+      'For help, see: https://nodejs.org/en/docs/inspector'
     ];
     
-    const isDebuggerNoise = debuggerMessages.some(msg => error.includes(msg));
+    const isDebuggerNoise = debuggerMessages.some(msg => error.includes(msg)) || 
+                           error.match(/ws:\/\/127\.0\.0\.1:\d+\/[a-f0-9-]+/) ||
+                           error.includes('nodejs.org/en/docs/inspector');
     
     if (!isDebuggerNoise) {
       // Only show real errors that aren't part of normal startup

@@ -80,8 +80,21 @@ class Structuralizer {
     });
     const content = response.choices[0].message.content;
     let parsed;
-    try { parsed = JSON.parse(content); }
-    catch (_) { const m = content && content.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : { object, chemicals: [] }; }
+    try { 
+      parsed = JSON.parse(content); 
+    } catch (_) { 
+      const m = content && content.match(/\{[\s\S]*\}/); 
+      if (m) {
+        try {
+          parsed = JSON.parse(m[0]);
+        } catch (parseError) {
+          console.warn('Failed to parse extracted JSON:', parseError.message);
+          parsed = { object, chemicals: [] };
+        }
+      } else {
+        parsed = { object, chemicals: [] };
+      }
+    }
     const list = Array.isArray(parsed?.chemicals) ? parsed.chemicals : [];
 
     // Programmatic fallback: fill missing SMILES (and CID) using resolvers
