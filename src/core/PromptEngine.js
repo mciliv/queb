@@ -86,26 +86,12 @@ Schema:
    */
   _getChemicalExamples() {
     return `
-EXAMPLES:
-// Simple molecules
-Water → { "name": "Water", "smiles": "O" }
-Ethanol → { "name": "Ethanol", "smiles": "CCO" }
-Glucose → { "name": "Glucose", "smiles": "C(C(C(C(C(C=O)O)O)O)O)O" }
-
-// Ionic compounds
-Sodium chloride → { "name": "Sodium chloride", "smiles": "[Na+].[Cl-]" }
-
-// Complex materials
-Coffee → [
-  { "name": "Water", "smiles": "O" },
-  { "name": "Caffeine", "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C" }
-]
-
-Wine → [
-  { "name": "Ethanol", "smiles": "CCO" },
-  { "name": "Water", "smiles": "O" },
-  { "name": "Tartaric acid", "smiles": "OC(C(O)C(O)=O)C(O)=O" }
-]`;
+GUIDANCE:
+- Use authoritative databases: PubChem (NCBI) and ChEBI.
+- Prefer PubChem IsomericSMILES when a CID is available.
+- Do not guess: if uncertain or ambiguous, set "smiles": null.
+- Output JSON only; no commentary.
+- Focus on characteristic constituents (major first, then minor).`;
   }
 
   /**
@@ -167,21 +153,19 @@ Wine → [
   _getContextExamples(objectType) {
     const contexts = {
       beverage: `
-Beverage examples:
-- Wine: Ethanol "CCO", Water "O", Tartaric acid
-- Coffee: Water "O", Caffeine "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
-- Beer: Ethanol "CCO", Water "O", various sugars`,
+Beverage guidance:
+- Identify typical constituents for the beverage.
+- Verify identities against PubChem/ChEBI; prefer PubChem IsomericSMILES.`,
       
       food: `
-Food examples:
-- Apple: Water "O", Fructose, Malic acid "C(C(=O)O)C(C(=O)O)O"
-- Bread: Starch units, Water "O", various proteins`,
+Food guidance:
+- Identify characteristic small molecules (sugars, acids, etc.).
+- Verify against PubChem/ChEBI; return SMILES or null if uncertain.`,
       
       material: `
-Material examples:
-- Plastic: Polymer units with specific SMILES
-- Metal: Ionic forms like "[Na+]" for sodium
-- Glass: Silicon dioxide components`
+Material guidance:
+- Identify representative units/ions for the material.
+- Verify against PubChem/ChEBI; prefer canonical SMILES.`
     };
 
     return contexts[objectType] || '';
