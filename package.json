@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^17.2.0",
+    "dotenv": "^17.2.2",
     "express": "^4.21.2",
     "node-fetch": "^3.3.2",
     "react": "^19.1.1",
@@ -47,7 +47,6 @@
     "dev:full": "concurrently \"npm run dev:watch\" \"npm run build:watch\"",
     "build": "node src/client/build-frontend.js",
     "build:watch": "node --watch src/client/build-frontend.js",
-    "dev:full": "concurrently \"npm run dev:watch\" \"npm run build:watch\"",
     "clean": "./scripts/d clean",
     "status": "./scripts/d status",
     "deploy": "./scripts/d deploy",
