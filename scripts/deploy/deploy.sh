@@ -3,7 +3,7 @@
 # Deploy to queb.space
 # This script handles production deployment
 
-set -e
+set -ex
 
 echo "🚀 Deploying to queb.space..."
 echo "📝 Committing local changes..."
