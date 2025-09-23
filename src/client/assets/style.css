@@ -603,6 +603,35 @@ canvas[class*="threeDmol"] {
   aspect-ratio: 4 / 3;
 }
 
+/* Fullscreen camera mode for better screen utilization */
+@media (max-width: 768px) {
+  .camera-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  .camera-box {
+    max-width: none;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    aspect-ratio: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 .camera-box.multi-camera {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -614,6 +643,32 @@ canvas[class*="threeDmol"] {
   height: 100%;
   object-fit: cover;
   cursor: crosshair;
+}
+
+/* Enhanced mobile video display */
+@media (max-width: 768px) {
+  .camera-video {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    object-position: center;
+  }
+  
+  .camera-video.primary {
+    grid-column: unset;
+  }
+  
+  .camera-video.secondary {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 120px;
+    height: 90px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    z-index: 10;
+    grid-column: unset;
+  }
 }
 
 .camera-video.primary {
@@ -635,6 +690,17 @@ canvas[class*="threeDmol"] {
   border-radius: 4px;
   font-size: 12px;
   z-index: 10;
+}
+
+/* Mobile fullscreen adjustments */
+@media (max-width: 768px) {
+  .multi-camera-indicator {
+    top: calc(env(safe-area-inset-top) + 20px);
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
 
 .switch-camera-btn {
