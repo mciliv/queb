@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Import server for testing
-const app = require('../../backend/api/server');
+const app = require('../../../src/server/api/server');
 
 describe('Molecular Visualization Integration Tests', () => {
   beforeAll(async () => {

@@ -1,8 +1,22 @@
-const config = require('../../../config/env');
-config.validateConfig();
+// Use unified configuration and error handling
+const configuration = require('../../core/Configuration');
+const errorHandler = require('../../core/ErrorHandler');
 const logger = require('../services/file-logger');
 
-// Legacy log object for backward compatibility
+// Initialize error handling
+errorHandler.initialize(logger);
+
+// Validate configuration
+try {
+  configuration.validate();
+  logger.info('✅ Configuration validated successfully');
+} catch (error) {
+  const handled = errorHandler.handle(error, { category: 'configuration', critical: true });
+  logger.error('❌ Configuration validation failed:', handled.message);
+  process.exit(1);
+}
+
+// Simplified logging interface
 const log = {
   info: (msg, meta = {}) => logger.info(msg, meta),
   success: (msg, meta = {}) => logger.success(msg, meta),
@@ -27,7 +41,7 @@ const { captureErrorScreenshot } = require("../utils/error-screenshot");
 
 
 let proxy = null;
-if (config.NODE_ENV === 'development') {
+if (configuration.isDevelopment()) {
   try {
     proxy = require('http-proxy-middleware');
   } catch (error) {
@@ -51,27 +65,27 @@ const {
 let pool = null;
 let dbConnected = false;
 
-// Skip database setup entirely if disabled
-if (!config.DB_ENABLED) {
-  log.info('💡 Database disabled via DB_ENABLED=false - running without user storage');
+// Initialize database based on configuration
+const dbConfig = configuration.getDatabaseConfig();
+if (!dbConfig.enabled) {
+  log.info('💡 Database disabled - running without user storage');
 } else {
   try {
     const { Pool } = require('pg');
   
-  // Database configuration with local development defaults
-  const dbConfig = {
-    host: config.DB_HOST,
-    port: config.DB_PORT,
-    database: config.DB_NAME,
-    user: config.DB_USER,
-    password: config.DB_PASSWORD,
-    // Connection pool settings
-    max: 20, // maximum number of clients in pool
-    idleTimeoutMillis: 30000, // close idle clients after 30 seconds
-    connectionTimeoutMillis: 2000, // return error after 2 seconds if connection could not be established
+  // Use configuration from unified config system
+  const poolConfig = {
+    host: dbConfig.host,
+    port: dbConfig.port,
+    database: dbConfig.name,
+    user: dbConfig.user,
+    password: dbConfig.password,
+    max: dbConfig.maxConnections,
+    idleTimeoutMillis: dbConfig.idleTimeout,
+    connectionTimeoutMillis: dbConfig.connectionTimeout,
   };
 
-  pool = new Pool(dbConfig);
+  pool = new Pool(poolConfig);
   
   // Database connection error handling
   pool.on('error', (err, client) => {
@@ -117,18 +131,14 @@ const testDatabaseConnection = async () => {
 
 
 const app = express();
+// Use configuration system for ports
 const DEFAULT_PORT = 8080;
-// Consistent port configuration with cleanup
-const HTTPS_PORT = process.env.HTTPS_PORT || 3001;
-const HTTP_PORT = process.env.HTTP_PORT || 3002;
+const HTTPS_PORT = configuration.get('ssl.httpsPort');
+const HTTP_PORT = configuration.get('port');
 
-// Log server startup
+// Log server startup with configuration info
 logger.startup('Server initialization started');
-logger.info('Environment configuration loaded', {
-  node_env: config.NODE_ENV,
-  port: config.PORT,
-  https_port: HTTPS_PORT
-});
+logger.info('Configuration loaded', configuration.getDebugInfo());
 
 // Port cleanup utility
 const cleanupPorts = async () => {
@@ -244,11 +254,10 @@ const findAvailablePort = async (startPort) => {
   );
 };
 
-const PORT = config.PORT;
+const PORT = configuration.get('port');
 
-// Initialize modules
-// Do not inject a fake key; rely on real OPENAI_API_KEY or none
-const openaiApiKey = config.OPENAI_API_KEY;
+// Initialize services with configuration
+const openaiApiKey = configuration.get('openai.apiKey');
 const structuralizer = new Structuralizer(openaiApiKey);
 const molecularProcessor = new MolecularProcessor();
 const userService = (pool && UserService) ? new UserService(pool) : null;
@@ -316,13 +325,16 @@ app.get('/health', (req, res) => {
 
 // ==================== CONFIGURATION ENDPOINT ====================
 app.get('/api/config', (req, res) => {
-  const paymentConfig = config.getPaymentConfig();
-  
-  res.json({
-    payments: paymentConfig,
-    environment: config.NODE_ENV,
-    timestamp: new Date().toISOString()
-  });
+  try {
+    res.json({
+      payments: configuration.getPaymentConfig(),
+      environment: configuration.get('nodeEnv'),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    const handled = errorHandler.handleValidationError(error, { endpoint: '/api/config' });
+    res.status(500).json({ error: handled.message });
+  }
 });
 
 // ==================== ERROR LOGGING ENDPOINT ====================
@@ -623,10 +635,13 @@ app.post("/name-to-sdf", async (req, res) => {
 });
 
 // ==================== STATIC FILE SERVING ====================
-app.use(express.static(path.join(__dirname, "..", "..", "client")));
-app.use(express.static(path.join(__dirname, "..", "..", "public"))); // PWA manifest and icons
+// Serve built frontend files from /dist route
 app.use("/dist", express.static(path.join(__dirname, "..", "..", "client", "dist")));
+// Serve static assets
 app.use("/assets", express.static(path.join(__dirname, "..", "..", "client", "assets")));
+// Serve PWA manifest and icons
+app.use(express.static(path.join(__dirname, "..", "..", "public")));
+// Serve components (if needed for development)
 app.use("/components", express.static(path.join(__dirname, "..", "..", "client", "components")));
 // Serve SDF files directory (uses test folder in test env, otherwise production folder)
 app.use(
@@ -644,19 +659,30 @@ app.use(
 
 
 
-// Error handling with optional screenshot capture
+// Unified error handling middleware
 app.use((error, req, res, next) => {
+  const context = {
+    method: req.method,
+    url: req.url,
+    userAgent: req.get('User-Agent'),
+    ip: req.ip
+  };
+  
+  const handled = errorHandler.handle(error, context);
+  
   // Capture screenshot on errors in development
-  if (config.NODE_ENV === 'development') {
-    captureErrorScreenshot(error, {
-      method: req.method,
-      url: req.url,
-      userAgent: req.get('User-Agent')
-    }).catch(() => {}); // Don't let screenshot errors break error handling
+  if (configuration.isDevelopment() && configuration.get('development.enableScreenshots')) {
+    captureErrorScreenshot(error, context).catch(() => {});
   }
   
-  // Continue with normal error handling
-  next(error);
+  // Send appropriate response
+  const statusCode = error.status || error.statusCode || 500;
+  res.status(statusCode).json({
+    error: handled.message,
+    code: handled.code,
+    timestamp: handled.timestamp,
+    ...(configuration.isDevelopment() && { details: error.message })
+  });
 });
 
 
@@ -1170,7 +1196,7 @@ app.post("/generate-sdfs", async (req, res) => {
   }
 });
 
-console.log('NODE_ENV:', config.NODE_ENV);
+console.log('NODE_ENV:', configuration.get('nodeEnv'));
 console.log('Setting up frontend routes');
 
 // Helper to serve index.html with token replacement
@@ -1244,9 +1270,6 @@ app.get("/sitemap.xml", (req, res) => {
 `);
 });
 
-
-app.use(express.static(path.join(__dirname, "..", "..", "client", "dist")));
-
 // Catch-all route for SPA (prevents 404s on direct navigation)
 app.get("*", (req, res, next) => {
   // Skip API routes, assets, and special files
@@ -1279,17 +1302,19 @@ app.use((req, res, next) => {
 });
 
 // ==================== SERVER STARTUP ====================
-const isCloudFunction =
-  config.FUNCTION_NAME ||
-  config.FUNCTION_TARGET ||
-  config.K_SERVICE ||
-  config.GOOGLE_CLOUD_PROJECT ||
-  config.GCP_PROJECT;
-const isNetlify = !!config.NETLIFY;
+const cloudConfig = configuration.get('cloud');
+const isCloudFunction = cloudConfig.isCloudFunction;
+const isAppEngine = !!(
+  process.env.GAE_APPLICATION ||
+  process.env.GOOGLE_CLOUD_PROJECT ||
+  process.env.GAE_SERVICE ||
+  process.env.GAE_VERSION
+);
+const isNetlify = cloudConfig.isNetlify;
 const isTestMode =
-  config.NODE_ENV === "test" || !!process.env.JEST_WORKER_ID;
-const isIntegrationTest = !!config.INTEGRATION_TEST;
-const isServerless = !!(isCloudFunction || isNetlify);
+  configuration.get('nodeEnv') === "test" || !!process.env.JEST_WORKER_ID;
+const isIntegrationTest = !!process.env.INTEGRATION_TEST;
+const isServerless = !!(isCloudFunction || isNetlify || isAppEngine);
 
 // Store server instances for cleanup
 let httpServer;
@@ -1433,6 +1458,39 @@ if (!isServerless && (!isTestMode || isIntegrationTest)) {
   // Serverless mode
   if (isCloudFunction) {
     console.log(`Running in Cloud Functions mode`);
+    
+    // For Cloud Functions 2nd gen (Cloud Run), we need to start the server
+    if (process.env.PORT) {
+      const port = process.env.PORT;
+      console.log(`Starting server on port ${port} for Cloud Functions`);
+      
+      httpServer = app.listen(port, "0.0.0.0", () => {
+        console.log(`✅ Cloud Functions server started on port ${port}`);
+      });
+      
+      httpServer.on('error', (error) => {
+        console.error('❌ Cloud Functions server error:', error);
+        process.exit(1);
+      });
+    }
+  } else if (isAppEngine) {
+    console.log(`Running in App Engine mode`);
+    
+    // For App Engine, always use port 8080 (App Engine standard)
+    const port = 8080;
+    console.log(`Environment PORT: ${process.env.PORT}`);
+    console.log(`Forcing port to 8080 for App Engine compatibility`);
+    console.log(`Starting server on port ${port} for App Engine`);
+    
+    // Simplified server startup for App Engine
+    httpServer = app.listen(port, () => {
+      console.log(`✅ App Engine server started successfully on port ${port}`);
+    });
+    
+    httpServer.on('error', (error) => {
+      console.error('❌ App Engine server error:', error);
+      process.exit(1);
+    });
   } else if (isNetlify) {
     console.log(`Running in Netlify mode`);
   }

@@ -102,8 +102,8 @@ const mockPaymentManager = {
 };
 
 // Use __mocks__ for automatic mocking
-jest.mock('../../frontend/components/ui-utils.js');
-jest.mock('../../frontend/components/payment.js');
+jest.mock('../../../src/client/components/ui-utils.js');
+jest.mock('../../../src/client/components/payment.js');
 
 // Add additional global mocks
 global.alert = jest.fn();

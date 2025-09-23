@@ -3,18 +3,45 @@ const path = require('path');
 
 class FileLogger {
   constructor() {
-    this.logsDir = path.join(__dirname, '..', '..', 'logs');
+    // Use a more robust logs directory path that works in serverless environments
+    // Always use the project root for logs, not the current working directory
+    const projectRoot = this.findProjectRoot();
+    this.logsDir = process.env.LOGS_DIR || path.join(projectRoot, 'logs');
     this.ensureLogsDirectory();
     this.clearOldLogs();
   }
 
+  findProjectRoot() {
+    // Start from the current file location and walk up to find project root
+    let currentDir = __dirname;
+    
+    // Walk up the directory tree to find package.json (project root indicator)
+    while (currentDir !== path.dirname(currentDir)) {
+      if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+        return currentDir;
+      }
+      currentDir = path.dirname(currentDir);
+    }
+    
+    // Fallback to process.cwd() if we can't find package.json
+    return process.cwd();
+  }
+
   ensureLogsDirectory() {
-    if (!fs.existsSync(this.logsDir)) {
-      fs.mkdirSync(this.logsDir, { recursive: true });
+    try {
+      if (!fs.existsSync(this.logsDir)) {
+        fs.mkdirSync(this.logsDir, { recursive: true });
+      }
+    } catch (error) {
+      // In serverless environments, fall back to console logging only
+      console.warn('⚠️ Could not create logs directory, falling back to console logging:', error.message);
+      this.logsDir = null;
     }
   }
 
   clearOldLogs() {
+    if (!this.logsDir) return;
+    
     try {
       const files = fs.readdirSync(this.logsDir);
       let clearedCount = 0;
@@ -39,6 +66,7 @@ class FileLogger {
   }
 
   getLogFile(type = 'server') {
+    if (!this.logsDir) return null;
     const today = new Date().toISOString().split('T')[0];
     return path.join(this.logsDir, `${type}-${today}.log`);
   }
@@ -50,6 +78,8 @@ class FileLogger {
   }
 
   writeToFile(filename, content) {
+    if (!filename || !this.logsDir) return;
+    
     try {
       fs.appendFileSync(filename, content);
     } catch (error) {

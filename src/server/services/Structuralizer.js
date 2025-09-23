@@ -1,8 +1,8 @@
 const { createClient } = require("../ai/openai/client");
 const aiConfig = require("../ai/config");
-
-const { buildObjectDetectionPrompt } = require("../prompts/object-detection");
-const { buildStructuralizePrompt } = require("../prompts/structuralize");
+const logger = require("./file-logger");
+const promptEngine = require('../../core/PromptEngine');
+const errorHandler = require('../../core/ErrorHandler');
 const MolecularProcessor = require("./molecular-processor");
 const { resolveName, getPropertiesByCID } = require("./name-resolver");
 
@@ -12,7 +12,7 @@ class Structuralizer {
     this.client = createClient();
     const effectiveApiKey = apiKey || aiConfig.apiKey;
     this.isOpenAIAvailable = !!(this.client && effectiveApiKey);
-    this.model = aiConfig.model || 'gpt-4o';
+    this.model = aiConfig.model;
     this.resolvedModelName = null;
     this.chemicalInstructions = null;
     this.molecularProcessor = new MolecularProcessor();
@@ -23,15 +23,21 @@ class Structuralizer {
       this.model = this.testConfig.model;
     }
 
-    // Model candidates for fallback behavior
-    this.modelCandidates = ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
   }
 
+  // Pattern according to https://platform.openai.com/docs/overview
+  // as of 2025-09-21
   async callOpenAI(requestParams) {
     if (!this.isOpenAIAvailable) throw new Error("AI service unavailable");
     
     const activeModel = this.resolvedModelName || this.model;
-    const response = await this.client.chat.completions.create({ model: activeModel, ...requestParams });
+    
+    // Modern OpenAI API call
+    const response = await this.client.chat.completions.create({
+      model: activeModel,
+      ...requestParams
+    });
+    
     this.resolvedModelName = activeModel;
     return response;
   }
@@ -67,36 +73,48 @@ class Structuralizer {
 
   // Primary: text → molecules (names→structures) using a single structuralization prompt
   async structuralizeText(object) {
-    if (!this.isOpenAIAvailable) throw new Error("AI service unavailable for structuralization");
+    logger.info(`🔍 Starting text analysis for: "${object}"`);
+    
+    if (!this.isOpenAIAvailable) {
+      logger.error("❌ AI service unavailable for structuralization");
+      throw new Error("AI service unavailable for structuralization");
+    }
+    
     const prompt = this.testConfig.prompt && this.testConfig.prompt !== 'custom'
       ? this.testConfig.prompt
-      : buildStructuralizePrompt(object || '');
-    // Ask for JSON with chemicals[{name, smiles}]
-    const response = await this.callOpenAI({
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 800,
-      temperature: 0.1,
-      response_format: { type: 'json_object' }
-    });
-    const content = response.choices[0].message.content;
-    let parsed;
-    try { 
-      parsed = JSON.parse(content); 
-    } catch (_) { 
-      const m = content && content.match(/\{[\s\S]*\}/); 
-      if (m) {
-        try {
-          parsed = JSON.parse(m[0]);
-        } catch (parseError) {
-          console.warn('Failed to parse extracted JSON:', parseError.message);
-          parsed = { object, chemicals: [] };
-        }
+      : promptEngine.generateChemicalPrompt(object || '', { includeReason: true });
+    
+    logger.info(`📝 Generated prompt for analysis`);
+    
+    let parsed = { object, chemicals: [] }; // Initialize with fallback
+    try {
+      // Modern OpenAI API call for structured analysis
+      const response = await this.callOpenAI({
+        messages: [{ 
+          role: 'user', 
+          content: prompt 
+        }],
+        response_format: { type: 'json_object' }
+      });
+      
+      logger.info(`✅ Received AI response`);
+      const content = response.choices[0].message.content;
+      logger.info(`📄 Raw AI response: ${content?.substring(0, 200)}...`);
+      
+      // Use PromptEngine for JSON parsing and repair
+      parsed = promptEngine.repairJSON(content);
+      if (parsed) {
+        logger.info(`✅ Successfully parsed JSON response`);
       } else {
+        logger.warn(`⚠️ Failed to parse JSON response, using fallback`);
         parsed = { object, chemicals: [] };
       }
+    } catch (aiError) {
+      const handled = errorHandler.handleAIError(aiError, { method: 'structuralizeText', object });
+      logger.error(`❌ AI call failed:`, handled);
+      throw new Error(handled.message);
     }
     const list = Array.isArray(parsed?.chemicals) ? parsed.chemicals : [];
-
     // Programmatic fallback: fill missing SMILES (and CID) using resolvers
     const enriched = [];
     for (const item of list) {
@@ -114,7 +132,9 @@ class Structuralizer {
             cid = (res && res.cid) ? res.cid : cid;
             smiles = (res && res.smiles) ? res.smiles : smiles;
           }
-        } catch (_) {}
+        } catch (resolveError) {
+          logger.warn(`⚠️ Failed to resolve name "${name}":`, resolveError.message);
+        }
       }
       enriched.push({ name, smiles: smiles || null, cid: cid ?? null });
     }
@@ -133,9 +153,17 @@ class Structuralizer {
           const byName = await this.molecularProcessor.generateSDFByName(name, false).catch(() => null);
           if (byName && byName.sdfPath) sdfPath = byName.sdfPath;
         }
-      } catch (_) {}
+      } catch (sdfError) {
+        logger.warn(`⚠️ Failed to generate SDF for "${name}" (${smiles}):`, sdfError.message);
+      }
       resolved.push({ name, smiles: smiles || null, sdfPath: sdfPath || null, status: sdfPath ? 'ok' : (smiles ? 'smiles_only' : 'lookup_required') });
     }
+    
+    logger.info(`🎯 Text analysis complete: Found ${resolved.length} chemicals`);
+    resolved.forEach((chem, i) => {
+      logger.info(`   ${i+1}. ${chem.name} - Status: ${chem.status}`);
+    });
+    
     return { object: parsed.object || object, chemicals: resolved };
   }
 
@@ -150,7 +178,7 @@ class Structuralizer {
       const buf = await resp.buffer();
       imageBase64 = buf.toString('base64');
     }
-    const detectionText = buildObjectDetectionPrompt(x, y);
+    const detectionText = promptEngine.generateDetectionPrompt({ x, y });
     const messages = [{ role: 'user', content: [
       { type: 'text', text: detectionText },
       { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: 'high' } }
@@ -159,7 +187,7 @@ class Structuralizer {
       messages[0].content.push({ type: 'text', text: `Here is a cropped view near the focus area.` });
       messages[0].content.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${croppedImageBase64}`, detail: 'high' } });
     }
-    const response = await this.callOpenAI({ messages, max_tokens: 500, temperature: 0.1, response_format: { type: 'json_object' } });
+    const response = await this.callOpenAI({ messages, max_tokens: 500, response_format: { type: 'json_object' } });
     const content = response.choices[0].message.content;
     let parsed; try { parsed = JSON.parse(content); } catch (_) { parsed = { object: 'Unknown object' }; }
     const box = parsed?.recommendedBox || parsed?.box || parsed?.recommendedCrop || {};

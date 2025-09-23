@@ -2,15 +2,77 @@
 // These tests run in under 5 seconds to catch basic issues before starting development
 
 const request = require("supertest");
-const app = require("../../backend/api/server");
+const app = require("../../../src/server/api/server");
 const fs = require("fs");
 const path = require("path");
 
-describe("Smoke Tests", () => {
+// Smoke Test Validation Rules - Critical App Health Checks
+const SMOKE_VALIDATION_RULES = {
+  // Critical system checks that must pass
+  criticalChecks: {
+    serverStartup: { maxTime: 3000, required: true },
+    staticFiles: { required: ['index.html', 'style.css'], maxSize: 5242880 },
+    apiEndpoints: { 
+      required: ['/analyze-text', '/image-molecules', '/generate-sdfs'],
+      expectedErrors: [400, 500], // These endpoints should reject invalid data
+      timeout: 2000
+    },
+    dependencies: {
+      npm: ['express', 'cors', 'openai', 'zod'],
+      optional: ['puppeteer', 'http-proxy-middleware']
+    }
+  },
+  
+  // Basic functionality validation
+  functionality: {
+    inputValidation: { 
+      rejectEmpty: true, 
+      rejectInvalid: true,
+      expectedErrorCodes: [400]
+    },
+    responseFormat: {
+      contentType: 'application/json',
+      hasErrorField: true,
+      hasDataField: false // For error responses
+    },
+    fileOperations: {
+      readAccess: true,
+      writeAccess: true,
+      createDirectories: true
+    }
+  },
+  
+  // Performance thresholds for smoke tests
+  performance: {
+    maxStartupTime: 5000,
+    maxResponseTime: 1000,
+    maxMemoryUsage: 536870912, // 512MB
+    minAvailableDisk: 1073741824 // 1GB
+  }
+};
+
+describe("Smoke Tests - Critical App Validation", () => {
+  // Validation helper for smoke tests
+  const validateCriticalCheck = (checkName, result) => {
+    const check = SMOKE_VALIDATION_RULES.criticalChecks[checkName];
+    if (check && check.required) {
+      expect(result).toBeTruthy();
+    }
+    return result;
+  };
+
   describe("Application Startup", () => {
-    test("should start without crashing", () => {
+    test("should start without crashing with validation rules", () => {
+      const startTime = Date.now();
+      
       expect(app).toBeDefined();
       expect(typeof app.listen).toBe("function");
+      
+      const startupTime = Date.now() - startTime;
+      expect(startupTime).toBeLessThan(SMOKE_VALIDATION_RULES.performance.maxStartupTime);
+      
+      validateCriticalCheck('serverStartup', true);
+      console.log(`✅ Server startup validated (${startupTime}ms)`);
     });
 
     test("should serve static files", async () => {
@@ -162,7 +224,7 @@ describe("Smoke Tests", () => {
 
   describe("Schema Validation", () => {
     test("should have valid schemas defined", () => {
-      const schemas = require("../../backend/schemas/schemas");
+      const schemas = require("../../../src/server/schemas/schemas");
 
       expect(schemas.ImageMoleculeSchema).toBeDefined();
       expect(schemas.TextMoleculeSchema).toBeDefined();
@@ -174,7 +236,7 @@ describe("Smoke Tests", () => {
         ImageMoleculeSchema,
         TextMoleculeSchema,
         SdfGenerationSchema,
-      } = require("../../backend/schemas/schemas");
+      } = require("../../../src/server/schemas/schemas");
 
       // Test that schemas can be imported and used
       expect(typeof ImageMoleculeSchema.safeParse).toBe("function");

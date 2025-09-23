@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Use the Express app directly (local server impl)
-const app = require('../../../backend/api/server');
+const app = require('../../../src/server/api/server');
 
 describe('End-to-End: /structures-from-text', () => {
   beforeAll(() => {

@@ -50,7 +50,14 @@ module.exports = {
     },
     {
       displayName: 'unit-backend',
-      testMatch: ['**/suites/unit/unit.test.js'],
+      testMatch: [
+        '**/suites/unit/unit.test.js',
+        '**/suites/unit/check-env.test.js',
+        '**/suites/unit/health-check.test.js',
+        '**/suites/unit/backup.test.js',
+        '**/suites/unit/restore.test.js',
+        '**/suites/unit/setup-database.test.js'
+      ],
       testEnvironment: 'node',
       globals: {
         TextEncoder: TextEncoder,
@@ -73,11 +80,21 @@ module.exports = {
       testMatch: ['**/smoke.test.js'],
       testEnvironment: 'node',
       detectOpenHandles: true
+    },
+    {
+      displayName: 'e2e',
+      testMatch: ['**/suites/e2e/*.test.js'],
+      testEnvironment: 'node',
+      globals: {
+        TextEncoder: TextEncoder,
+        TextDecoder: TextDecoder
+      },
+      detectOpenHandles: true
     }
   ],
   forceExit: true,
   detectOpenHandles: true,
-  testTimeout: 30000,
+  testTimeout: 120000, // 2 minutes for e2e tests
   verbose: false
 };
 

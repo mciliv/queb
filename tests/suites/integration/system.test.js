@@ -2,7 +2,7 @@
 // These tests validate the entire system working together (2-5 minutes)
 
 const request = require("supertest");
-const app = require("../../backend/api/server");
+const app = require("../../../src/server/api/server");
 const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require("jsdom");

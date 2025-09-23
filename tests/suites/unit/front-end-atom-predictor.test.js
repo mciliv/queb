@@ -1,6 +1,70 @@
 // test/unit/front-end-atom-predictor.test.js - Frontend AI integration tests
 // Tests for AI analysis methods in the frontend application
 
+// Frontend Validation Rules - UI/UX and Component Integration
+const FRONTEND_VALIDATION_RULES = {
+  // UI component validation
+  components: {
+    textInput: {
+      required: ['value', 'onChange', 'onSubmit'],
+      validation: { minLength: 2, maxLength: 500 },
+      errorHandling: true,
+      accessibility: { ariaLabel: true, focusManagement: true }
+    },
+    cameraSection: {
+      required: ['video-feed', 'capture-btn', 'permission-status'],
+      permissions: ['camera'],
+      errorRecovery: true,
+      safariCompatibility: true
+    },
+    paymentSection: {
+      required: ['payment-setup', 'account-status'],
+      validation: { tokenValidation: true },
+      security: { encryptedStorage: true }
+    },
+    molecularViewer: {
+      required: ['viewer-container', 'molecule-data'],
+      rendering: { '3d': true, responsive: true },
+      performance: { maxRenderTime: 5000 }
+    }
+  },
+  
+  // User interaction validation
+  interactions: {
+    textSubmission: {
+      validation: ['input-sanitization', 'pattern-matching'],
+      feedback: ['loading-states', 'error-messages', 'success-indicators'],
+      performance: { responseTime: 15000 }
+    },
+    imageCapture: {
+      validation: ['format-check', 'size-limits', 'quality-assessment'],
+      feedback: ['preview', 'cropping-tools', 'analysis-progress'],
+      performance: { captureTime: 3000, processTime: 20000 }
+    },
+    paymentFlow: {
+      validation: ['token-verification', 'usage-tracking'],
+      security: ['data-encryption', 'secure-transmission'],
+      feedback: ['status-updates', 'error-recovery']
+    }
+  },
+  
+  // Frontend performance benchmarks
+  performance: {
+    initialLoad: { maxTime: 3000, criticalResources: ['bundle.js', 'style.css'] },
+    componentMount: { maxTime: 1000, memoryEfficient: true },
+    userInteraction: { maxLatency: 100, smoothAnimations: true },
+    dataProcessing: { maxTime: 25000, progressIndicators: true }
+  },
+  
+  // Error handling and reliability
+  reliability: {
+    errorBoundaries: { implemented: true, gracefulDegradation: true },
+    networkResilience: { offlineMode: false, retryLogic: true },
+    stateManagement: { consistent: true, recoverable: true },
+    userExperience: { feedbackLoop: true, helpText: true }
+  }
+};
+
 // Mock DOM environment
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
@@ -62,7 +126,7 @@ const mockUIManager = {
 };
 
 // Mock modules
-jest.mock('../../frontend/components/payment.js', () => ({
+jest.mock('../../../src/client/components/payment.js', () => ({
   paymentManager: mockPaymentManager
 }));
 

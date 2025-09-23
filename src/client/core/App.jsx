@@ -1063,9 +1063,27 @@ function App() {
     };
 
     const keyboardHandler = createKeyboardHandler(actions);
-    document.addEventListener('keydown', keyboardHandler, { capture: true });
+    
+    // Debug wrapper to help diagnose shortcut issues
+    const debugHandler = (event) => {
+      if ((event.metaKey || event.ctrlKey) && 
+          (event.key.toLowerCase() === 'k' || 
+           (event.shiftKey && ['1', '2', '3'].includes(event.key)))) {
+        logger.info('🎹 Keyboard shortcut attempt:', {
+          key: event.key,
+          metaKey: event.metaKey,
+          ctrlKey: event.ctrlKey,
+          altKey: event.altKey,
+          shiftKey: event.shiftKey,
+          target: event.target.tagName
+        });
+      }
+      return keyboardHandler(event);
+    };
+    
+    document.addEventListener('keydown', debugHandler, { capture: true });
 
-    return () => document.removeEventListener('keydown', keyboardHandler, { capture: true });
+    return () => document.removeEventListener('keydown', debugHandler, { capture: true });
   }, [setCameraMode, setPhotoMode, setLinkMode]);
 
   const handleTextAnalysis = useCallback(async (value) => {
@@ -1171,9 +1189,10 @@ function App() {
           }
         }
       } else {
-        setError('No molecules found for this input.');
+        // No molecules found is not a failure - it's a valid result
+        // Some objects (like "spark") genuinely have no specific molecules
         setColumns(prev => prev.map(col => (
-          col.id === columnId ? { ...col, loading: false, failed: true } : col
+          col.id === columnId ? { ...col, viewers: [], loading: false, failed: false } : col
         )));
       }
       

@@ -887,6 +887,17 @@ canvas[class*="threeDmol"] {
   color: rgba(255, 193, 7, 0.95);
 }
 
+.alert-info {
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: rgba(13, 110, 253, 0.12);
+  border: 1px solid rgba(13, 110, 253, 0.4);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(13, 110, 253, 0.95);
+}
+
 /* Settings */
 .settings-btn {
   position: absolute;

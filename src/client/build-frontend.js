@@ -13,6 +13,7 @@ async function build() {
   const args = process.argv.slice(2);
   const watch = args.includes('--watch');
   const quiet = args.includes('--quiet') || args.includes('-q');
+  const dev = args.includes('--dev') || process.env.NODE_ENV === 'development';
 
   if (watch) {
     const ctx = await esbuild.context({
@@ -49,9 +50,9 @@ async function build() {
     // Ensure initial build so /dist/bundle.js exists
     await ctx.rebuild();
 
-    // Watch for changes - manual refresh required
+    // Watch for changes - Chrome auto-reload will handle refreshing
     await ctx.watch(() => {
-      if (!quiet) console.log('🔄 Frontend rebuilt - refresh browser to see changes');
+      if (!quiet) console.log('🔄 Frontend rebuilt');
     });
 
     if (!quiet) console.log('👀 Frontend watch build started (esbuild)');
@@ -60,17 +61,17 @@ async function build() {
       entryPoints: [entry],
       outfile: path.join(outdir, 'bundle.js'),
       bundle: true,
-      sourcemap: false,
-      minify: true,
-      treeShaking: true,
+      sourcemap: dev,
+      minify: !dev,
+      treeShaking: !dev,
       loader: { '.js': 'jsx', '.jsx': 'jsx' },
       define: {
-        'process.env.NODE_ENV': '"production"',
+        'process.env.NODE_ENV': dev ? '"development"' : '"production"',
         'process.env.REACT_APP_RUN_VISUAL_TESTS': '"false"',
         'global': 'globalThis'
       },
       platform: 'browser',
-      drop: ['console', 'debugger'],
+      drop: dev ? [] : ['console', 'debugger'],
       logLevel: quiet ? 'silent' : 'info',
       external: [
         'config/*', 

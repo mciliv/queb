@@ -1,6 +1,6 @@
 // Minimal keyboard shortcut handler to keep UI simple and functional
 // - ⌘/Ctrl + K: focus input
-// - ⌘/Ctrl + Shift + C/P/L: toggle modes via provided actions
+// - ⌘/Ctrl + Shift + 1/2/3: toggle modes via provided actions
 
 import logger from './logger.js';
 
@@ -30,16 +30,16 @@ const createSimpleKeyboardHandler = (actions = {}) => {
         return;
       }
 
-      // Ctrl/Cmd + Shift combos for modes
+      // Ctrl/Cmd + Shift + Number combos for modes
       if (!modifier || !event.shiftKey) return;
-      const code = event.code || '';
-      if (code === 'KeyC' && typeof actions.cameraMode === 'function') {
+      const key = event.key;
+      if (key === '1' && typeof actions.cameraMode === 'function') {
         event.preventDefault();
         actions.cameraMode();
-      } else if (code === 'KeyP' && typeof actions.photoMode === 'function') {
+      } else if (key === '2' && typeof actions.photoMode === 'function') {
         event.preventDefault();
         actions.photoMode();
-      } else if (code === 'KeyL' && typeof actions.linkMode === 'function') {
+      } else if (key === '3' && typeof actions.linkMode === 'function') {
         event.preventDefault();
         actions.linkMode();
       }
@@ -60,19 +60,19 @@ export const KEYBOARD_SHORTCUTS = {
     targetId: 'object-input'
   },
   CAMERA_MODE: {
-    key: 'c',
+    key: '1',
     modifiers: { meta: true, ctrl: true, alt: false, shift: true },
     action: 'cameraMode',
     description: 'Switch to camera mode'
   },
   PHOTO_MODE: {
-    key: 'p',
+    key: '2',
     modifiers: { meta: true, ctrl: true, alt: false, shift: true },
     action: 'photoMode',
     description: 'Switch to photo mode'
   },
   LINK_MODE: {
-    key: 'l',
+    key: '3',
     modifiers: { meta: true, ctrl: true, alt: false, shift: true },
     action: 'linkMode',
     description: 'Switch to link mode'
@@ -133,15 +133,17 @@ export function createKeyboardHandlerValidated(actions) {
 
     // Check each shortcut
     for (const [name, shortcut] of Object.entries(KEYBOARD_SHORTCUTS)) {
+      // Handle regular shortcuts with modifiers
       const wantsAlt = !!shortcut.modifiers.alt;
       const modifierMatch = wantsAlt
         ? event.altKey
         : (isMac ? (shortcut.modifiers.meta && event.metaKey) : (shortcut.modifiers.ctrl && event.ctrlKey));
 
-      if (modifierMatch && 
-          event.shiftKey === shortcut.modifiers.shift &&
-          event.key.toLowerCase() === shortcut.key.toLowerCase()) {
-        
+      const matches = modifierMatch && 
+               event.shiftKey === shortcut.modifiers.shift &&
+               event.key.toLowerCase() === shortcut.key.toLowerCase();
+
+      if (matches) {
         logger.info(`Shortcut match found: ${name}`, {
           shortcut,
           targetId: shortcut.targetId,

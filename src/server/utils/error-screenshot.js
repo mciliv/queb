@@ -7,8 +7,26 @@ const fs = require('fs').promises;
  */
 class ErrorScreenshot {
   constructor() {
-    this.screenshotDir = path.join(__dirname, '..', 'logs', 'error-screenshots');
+    // Find project root and use top-level logs directory
+    const projectRoot = this.findProjectRoot();
+    this.screenshotDir = path.join(projectRoot, 'logs', 'error-screenshots');
     this.isEnabled = process.env.NODE_ENV === 'development';
+  }
+
+  findProjectRoot() {
+    // Start from the current file location and walk up to find project root
+    let currentDir = __dirname;
+    
+    // Walk up the directory tree to find package.json (project root indicator)
+    while (currentDir !== path.dirname(currentDir)) {
+      if (require('fs').existsSync(path.join(currentDir, 'package.json'))) {
+        return currentDir;
+      }
+      currentDir = path.dirname(currentDir);
+    }
+    
+    // Fallback to process.cwd() if we can't find package.json
+    return process.cwd();
   }
 
   /**

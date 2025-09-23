@@ -79,7 +79,7 @@ describe('Full Pipeline Molecular Visualization Tests', () => {
 
   beforeAll(async () => {
     // Import server for testing
-    app = require('../../../backend/api/server');
+    app = require('../../../src/server/api/server');
     process.env.NODE_ENV = 'test';
     
     // Check if we have OpenAI API key for testing

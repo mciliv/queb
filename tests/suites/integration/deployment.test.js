@@ -5,12 +5,12 @@ const request = require("supertest");
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
-const { TestFileManager, TestAssertions } = require("./utils");
+const { TestFileManager, TestAssertions } = require("../../integration/utils");
 const {
   getTestMolecule,
   createTestRequest,
   MOCK_IMAGES,
-} = require("./fixtures");
+} = require("./fixtures/fixtures");
 
 describe("Pre-Deployment Validation", () => {
   let app;

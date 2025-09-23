@@ -2,10 +2,108 @@ const puppeteer = require('puppeteer');
 const path = require('path');
 const IntegrationTestSetup = require('./setup-integration');
 
-describe('Molecular App Integration Tests', () => {
+// Integration Test Validation Rules - End-to-End App Functionality
+const INTEGRATION_VALIDATION_RULES = {
+  // Critical user flows that must work
+  userFlows: {
+    textAnalysis: {
+      steps: ['input-text', 'validate-input', 'process-ai', 'display-molecules'],
+      maxDuration: 20000,
+      criticalElements: ['#object-input', '.molecules-container']
+    },
+    imageAnalysis: {
+      steps: ['upload-image', 'crop-image', 'process-ai', 'display-molecules'],
+      maxDuration: 25000,
+      criticalElements: ['#photo-upload', '#video-feed', '.molecules-container']
+    },
+    cameraCapture: {
+      steps: ['request-permission', 'initialize-camera', 'capture-frame', 'process-image'],
+      maxDuration: 15000,
+      criticalElements: ['#video-feed', '#capture-btn']
+    },
+    paymentFlow: {
+      steps: ['check-payment', 'validate-token', 'update-usage'],
+      maxDuration: 5000,
+      criticalElements: ['.payment-setup', '.account-status']
+    }
+  },
+  
+  // System-wide validation checks
+  systemHealth: {
+    serverResponse: { maxLatency: 2000, requiredEndpoints: ['/'] },
+    databaseOperations: { optional: true, maxLatency: 1000 },
+    aiServiceIntegration: { timeout: 30000, retries: 2 },
+    fileSystemOperations: { writeable: true, readableDirectories: ['sdf_files'] }
+  },
+  
+  // Data integrity validation
+  dataIntegrity: {
+    smilesValidation: { format: /^[A-Za-z0-9@+\-\[\]()=#$]+$/, maxLength: 1000 },
+    imageProcessing: { supportedFormats: ['jpeg', 'png', 'webp'], maxSize: 10485760 },
+    molecularData: { requiredFields: ['name', 'smiles'], validation: true },
+    userSessions: { tokenValidation: true, expirationCheck: true }
+  },
+  
+  // Performance and reliability benchmarks
+  reliability: {
+    errorHandling: { gracefulDegradation: true, userFeedback: true },
+    networkResilience: { retryLogic: true, timeoutHandling: true },
+    memoryManagement: { noLeaks: true, efficientCleanup: true },
+    concurrentUsers: { supportMultiple: true, sessionIsolation: true }
+  }
+};
+
+describe('Molecular App Integration Tests - Full App Validation', () => {
   let browser;
   let page;
   let testSetup;
+  
+  // Validation helper functions
+  const validateUserFlow = async (flowName, page) => {
+    const flow = INTEGRATION_VALIDATION_RULES.userFlows[flowName];
+    const startTime = Date.now();
+    
+    // Check critical elements exist
+    for (const element of flow.criticalElements) {
+      await expect(page.$(element)).resolves.toBeTruthy();
+    }
+    
+    const duration = Date.now() - startTime;
+    expect(duration).toBeLessThan(flow.maxDuration);
+    
+    return { success: true, duration, elements: flow.criticalElements.length };
+  };
+  
+  const validateSystemHealth = async (page) => {
+    const health = INTEGRATION_VALIDATION_RULES.systemHealth;
+    
+    // Check server response time
+    const startTime = Date.now();
+    await page.goto('http://localhost:8080');
+    const responseTime = Date.now() - startTime;
+    
+    expect(responseTime).toBeLessThan(health.serverResponse.maxLatency);
+    
+    return { responseTime, healthy: true };
+  };
+  
+  const validateDataIntegrity = (data, type) => {
+    const rules = INTEGRATION_VALIDATION_RULES.dataIntegrity;
+    
+    switch(type) {
+      case 'smiles':
+        expect(data).toMatch(rules.smilesValidation.format);
+        expect(data.length).toBeLessThanOrEqual(rules.smilesValidation.maxLength);
+        break;
+      case 'molecular':
+        rules.molecularData.requiredFields.forEach(field => {
+          expect(data[field]).toBeDefined();
+        });
+        break;
+    }
+    
+    return true;
+  };
 
   beforeAll(async () => {
     // Start the server first

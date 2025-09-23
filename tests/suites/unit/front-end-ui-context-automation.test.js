@@ -1,4 +1,4 @@
-require('../../src/client/core/ui-context-automation.js');
+require('../../../src/client/core/ui-context-automation.js');
 
 const UIContextAutomation = window.uiContextAutomation.constructor;
 

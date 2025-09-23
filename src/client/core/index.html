@@ -42,36 +42,16 @@
     <div id="root"></div>
     <script src="/dist/bundle.js?v={{CACHE_BUST}}" defer></script>
     <script>
-      // Suppress Chrome extension runtime errors
-      window.addEventListener('error', (event) => {
-        // Suppress "Unchecked runtime.lastError" from Chrome extensions
-        if (event.message && event.message.includes('Extension context invalidated') ||
-            event.message.includes('message port closed') ||
-            event.message.includes('runtime.lastError')) {
-          event.preventDefault();
-          return false;
-        }
-      });
 
-      // Also suppress unhandled promise rejections from extensions
-      window.addEventListener('unhandledrejection', (event) => {
-        if (event.reason && typeof event.reason === 'string' &&
-            (event.reason.includes('Extension context invalidated') ||
-             event.reason.includes('message port closed') ||
-             event.reason.includes('runtime.lastError'))) {
-          event.preventDefault();
-          return false;
-        }
-      });
-
-      // Reliable PWA Development Setup - Disable SW in dev, use LiveReload
+      // Development/Production Setup - Chrome auto-reload in dev, PWA in production
       const isDevelopment = window.location.hostname === 'localhost' ||
                            window.location.hostname === '127.0.0.1' ||
                            window.location.hostname.includes('192.168.') ||
                            window.location.hostname.includes('172.');
 
       if (isDevelopment) {
-        // Silent development mode - no console noise
+        // Development mode - Chrome DevTools handles reloading
+        console.log('👨‍💻 Development mode: Chrome auto-reload active');
 
       } else {
         // Production: Enable Service Worker for PWA functionality

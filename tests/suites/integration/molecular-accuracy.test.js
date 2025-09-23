@@ -2,7 +2,7 @@
 // Tests actual AtomPredictor responses against known chemical compositions
 // Run with: npm test -- test/integration/molecular-accuracy.test.js
 
-const Structuralizer = require("../../../backend/services/Structuralizer");
+const Structuralizer = require("../../../src/server/services/Structuralizer");
 
 // Known molecular compositions for testing prompt accuracy
 const REFERENCE_MATERIALS = {

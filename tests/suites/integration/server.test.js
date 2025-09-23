@@ -10,7 +10,7 @@ jest.mock("fs");
 jest.mock("child_process");
 fetchMock.enableMocks();
 
-const appModule = require("../../backend/api/server");
+const appModule = require("../../../src/server/api/server");
 
 describe("POST /generate-sdfs", () => {
   const SDF_DIR = path.join(__dirname, "../../sdf_files");

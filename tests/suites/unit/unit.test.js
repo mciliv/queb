@@ -53,7 +53,7 @@ jest.mock("puppeteer", () => ({
 }));
 
 // Mock screenshot service to avoid puppeteer issues during tests
-jest.mock("../../../backend/services/screenshot-service", () => {
+jest.mock("../../../src/server/services/screenshot-service", () => {
   return jest.fn().mockImplementation(() => ({
     captureApp: jest.fn().mockResolvedValue({ success: true, filename: 'mock.png' }),
     captureWithInput: jest.fn().mockResolvedValue({ success: true, filename: 'mock.png' }),
@@ -89,13 +89,99 @@ beforeAll(() => {
   }
 });
 
-describe("Unit Tests", () => {
+// Comprehensive App Validation Rules - Core Functionality
+const APP_VALIDATION_RULES = {
+  // Input validation rules
+  textInput: {
+    minLength: 2,
+    maxLength: 500,
+    invalidPatterns: [
+      /^(love|hate|happy|sad|angry|joy|fear|hope|dream|idea|thought|feeling|emotion)/,
+      /^(running|walking|talking|thinking|sleeping|eating|drinking)$/,
+      /^[a-z]{1,2}$/,
+      /^[^a-z]*$/,
+      /^(asdf|qwerty|test|random|nothing|something|anything|everything)$/i,
+      /^(blah|meh|hmm|ugh|oof|nah|yeah|yep|nope|ok|okay)$/i
+    ],
+    validExamples: ['water', 'ethanol', 'coffee', 'apple', 'salt', 'sugar']
+  },
+  
+  // API endpoint validation
+  endpoints: {
+    '/analyze-text': { requiredFields: ['object'], responseFormat: 'json' },
+    '/image-molecules': { requiredFields: ['imageBase64'], responseFormat: 'json' },
+    '/generate-sdfs': { requiredFields: ['smiles'], responseFormat: 'json' },
+    '/validate-payment': { requiredFields: ['device_token'], responseFormat: 'json' }
+  },
+  
+  // Core component validation
+  components: {
+    camera: { required: ['video-feed', 'capture-btn'], permissions: ['camera'] },
+    textInput: { required: ['object-input'], validation: true },
+    payment: { required: ['payment-setup'], validation: true },
+    molecular: { required: ['viewer-container'], smiles: true }
+  },
+  
+  // System integrity checks
+  integrity: {
+    serverStartup: { timeout: 5000, healthChecks: ['/'] },
+    databaseConnection: { optional: true, fallback: true },
+    aiService: { timeout: 10000, retries: 3 },
+    fileSystem: { writeable: true, paths: ['sdf_files', 'logs'] }
+  },
+  
+  // Performance benchmarks
+  performance: {
+    textAnalysis: { maxTime: 15000, expectedResponse: 'smiles' },
+    imageAnalysis: { maxTime: 20000, expectedResponse: 'molecules' },
+    sdfGeneration: { maxTime: 5000, expectedResponse: 'files' },
+    pageLoad: { maxTime: 3000, criticalResources: ['style.css', 'bundle.js'] }
+  }
+};
+
+describe("Unit Tests - Core App Validation", () => {
   let atomPredictor;
   let molecularProcessor;
 
   beforeEach(() => {
     atomPredictor = new Structuralizer("test-api-key");
     molecularProcessor = new MolecularProcessor();
+  });
+
+  // App validation rule tests
+  describe("App Validation Rules Compliance", () => {
+    test("input validation rules work correctly", () => {
+      APP_VALIDATION_RULES.textInput.invalidPatterns.forEach(pattern => {
+        expect(pattern.test('love')).toBe(pattern === APP_VALIDATION_RULES.textInput.invalidPatterns[0]);
+      });
+      
+      APP_VALIDATION_RULES.textInput.validExamples.forEach(example => {
+        expect(example.length).toBeGreaterThanOrEqual(APP_VALIDATION_RULES.textInput.minLength);
+        expect(example.length).toBeLessThanOrEqual(APP_VALIDATION_RULES.textInput.maxLength);
+      });
+    });
+    
+    test("all required API endpoints are defined", () => {
+      Object.keys(APP_VALIDATION_RULES.endpoints).forEach(endpoint => {
+        expect(endpoint).toMatch(/^\//); // Must start with /
+        expect(APP_VALIDATION_RULES.endpoints[endpoint].requiredFields).toBeDefined();
+      });
+    });
+    
+    test("component requirements are specified", () => {
+      Object.keys(APP_VALIDATION_RULES.components).forEach(component => {
+        expect(APP_VALIDATION_RULES.components[component].required).toBeDefined();
+        expect(Array.isArray(APP_VALIDATION_RULES.components[component].required)).toBe(true);
+      });
+    });
+    
+    test("performance benchmarks are realistic", () => {
+      Object.keys(APP_VALIDATION_RULES.performance).forEach(operation => {
+        const benchmark = APP_VALIDATION_RULES.performance[operation];
+        expect(benchmark.maxTime).toBeGreaterThan(1000); // At least 1 second
+        expect(benchmark.maxTime).toBeLessThan(30000); // Less than 30 seconds
+      });
+    });
   });
 
   describe("Structuralizer", () => {

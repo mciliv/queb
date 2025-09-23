@@ -30,6 +30,13 @@ const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
         </div>
       )}
 
+      {/* No molecules found (not a failure) */}
+      {!column.loading && !column.failed && column.viewers.length === 0 && (
+        <div className="alert-info">
+          No specific molecules found. This is normal for concepts like "{column.query}".
+        </div>
+      )}
+
       {false && column.loading && column.viewers.length === 0 && (
         <div className="analyzing">
           Analyzing molecules...

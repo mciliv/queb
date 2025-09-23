@@ -1,53 +1,35 @@
 #!/bin/bash
 
-# Check current environment status
+# Quick Environment Check
+source "$(dirname "$0")/utils.sh"
 
-echo "🔍 Environment Status:"
+echo "🔍 Environment Status"
 echo "===================="
 
-# Check Node.js environment
-if [ "$NODE_ENV" = "production" ]; then
-    echo "🌐 Environment: PRODUCTION"
-    echo "   🚨 Be careful with changes!"
-else
-    echo "💻 Environment: DEVELOPMENT (Local)"
-    echo "   🛠️  Safe to experiment"
-fi
+# Environment
+[ "$NODE_ENV" = "production" ] && echo "🚨 PRODUCTION" || echo "💻 DEVELOPMENT"
 
-# Check if server is running
+# Local server
 if lsof -i :8080 > /dev/null 2>&1; then
-    echo "🟢 Local Server: RUNNING (Port 8080)"
-    echo "   📡 Access at: http://localhost:8080"
+    echo "🟢 Server: RUNNING (http://localhost:8080)"
 else
-    echo "🔴 Local Server: NOT RUNNING"
-    echo "   💡 Run 'd' to start local development"
+    echo "🔴 Server: NOT RUNNING (run 'd' to start)"
 fi
 
-# Check if production domain is accessible
+# Production check
 if curl -s --max-time 5 https://queb.space > /dev/null; then
-    echo "🟢 Production: ACCESSIBLE"
-    echo "   🌐 Live at: https://queb.space"
+    echo "🟢 Production: ACCESSIBLE (https://queb.space)"
 else
     echo "🟡 Production: NOT ACCESSIBLE"
-    echo "   📝 May need deployment or DNS update"
 fi
 
-# Check git status
+# Git status
 if [ -d ".git" ]; then
-    echo ""
-    echo "📋 Git Status:"
-    git status --porcelain | head -5
-    if [ $? -eq 0 ]; then
-        echo "   ✅ Repository is clean"
-    else
-        echo "   📝 Uncommitted changes exist"
-    fi
+    changes=$(git status --porcelain | wc -l)
+    [ "$changes" -eq 0 ] && echo "✅ Git: Clean" || echo "📝 Git: $changes changes"
 fi
 
 echo ""
-echo "🎯 Quick Actions:"
-echo "   Local dev:  d"
-echo "   Deploy:     ./scripts/deploy/deploy.sh"
-echo "   Check logs: tail -f logs/server-*.log"
+echo "Quick commands: d (dev) | d deploy (deploy) | d clean (cleanup)"
 
 
