@@ -6,6 +6,7 @@ const errorHandler = require('../../core/ErrorHandler');
 const MolecularProcessor = require("./molecular-processor");
 const { resolveName, getPropertiesByCID } = require("./name-resolver");
 const { convertNamesToSmiles } = require("../prompts/name-to-smiles");
+const wikidata = require('./wikidata-resolver');
 
 class Structuralizer {
   constructor(apiKey = null, testConfig = null) {
@@ -198,7 +199,22 @@ class Structuralizer {
     const objectText = typeof object === 'string' ? object.trim() : '';
     if (!objectText) return { object: '', molecules: [] };
 
-    // DB-first: if the object itself is a specific compound, resolve directly
+    // DB-first (Object-level): Try Wikidata for real-world object constituents
+    try {
+      const parts = await wikidata.findObjectConstituents(objectText);
+      if (Array.isArray(parts) && parts.length > 0) {
+        // Map to names then resolve via DB for SMILES/CID
+        const names = parts.map(p => ({ name: p.label })).filter(p => p.name);
+        if (names.length > 0) {
+          const resolved = await convertNamesToSmiles({ object: objectText, molecules: names }, this.client).catch(() => ({ molecules: [] }));
+          if (resolved && Array.isArray(resolved.molecules) && resolved.molecules.length > 0) {
+            return { object: objectText, molecules: resolved.molecules };
+          }
+        }
+      }
+    } catch (_) {}
+
+    // DB-first (Direct compound): if the object itself is a specific compound, resolve directly
     try {
       const direct = await resolveName(objectText);
       if (direct && (direct.smiles || direct.cid)) {
