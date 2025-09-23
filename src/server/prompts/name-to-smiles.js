@@ -86,17 +86,17 @@ async function convertNamesToSmiles(payload, llmClient = null) {
         }
       }
 
-      // PubChem fallback with error handling
+      // Database fallback with error handling (PubChem first, then alternates via name-resolver)
       if (!smiles) {
         try {
           let resolveNameFn = null;
           let getPropertiesByCIDFn = null;
           try {
-            const mod = require('../services/pubchem');
+            const mod = require('../services/name-resolver');
             resolveNameFn = typeof mod?.resolveName === 'function' ? mod.resolveName : null;
             getPropertiesByCIDFn = typeof mod?.getPropertiesByCID === 'function' ? mod.getPropertiesByCID : null;
-          } catch (pubchemError) {
-            console.warn(`PubChem module unavailable for ${name}:`, pubchemError.message);
+          } catch (resolverError) {
+            console.warn(`Resolver module unavailable for ${name}:`, resolverError.message);
           }
 
           if (cid && getPropertiesByCIDFn) {
@@ -126,8 +126,8 @@ async function convertNamesToSmiles(payload, llmClient = null) {
               console.warn(`PubChem name lookup failed for ${name}:`, nameError.message);
             }
           }
-        } catch (pubchemGeneralError) {
-          console.warn(`PubChem lookup general error for ${name}:`, pubchemGeneralError.message);
+        } catch (resolverGeneralError) {
+          console.warn(`Resolver lookup general error for ${name}:`, resolverGeneralError.message);
         }
       }
 
