@@ -5,6 +5,7 @@ const promptEngine = require('../../core/PromptEngine');
 const errorHandler = require('../../core/ErrorHandler');
 const MolecularProcessor = require("./molecular-processor");
 const { resolveName, getPropertiesByCID } = require("./name-resolver");
+const { convertNamesToSmiles } = require("../prompts/name-to-smiles");
 
 class Structuralizer {
   constructor(apiKey = null, testConfig = null) {
@@ -165,6 +166,83 @@ class Structuralizer {
     });
     
     return { object: parsed.object || object, chemicals: resolved };
+  }
+
+  // Stage 1: return only object specification (no molecules)
+  async specifyObject(payload) {
+    const inputObject = typeof payload?.object === 'string' ? payload.object.trim() : '';
+    const imageBase64 = typeof payload?.imageBase64 === 'string' ? payload.imageBase64 : null;
+    const x = typeof payload?.x === 'number' ? payload.x : null;
+    const y = typeof payload?.y === 'number' ? payload.y : null;
+
+    let objectText = inputObject;
+    let recommendedBox = null;
+    let reason = null;
+
+    // If object not provided but image present, detect object via vision
+    if (!objectText && imageBase64) {
+      const byImage = await this.structuralizeImage(imageBase64, null, x, y, null, null, null).catch(() => null);
+      if (byImage) {
+        objectText = byImage.object || '';
+        recommendedBox = byImage.recommendedBox || null;
+        reason = byImage.reason || null;
+      }
+    }
+
+    const objectType = this.detectObjectType(objectText || '');
+    return { object: objectText || (imageBase64 ? 'image' : ''), objectType, recommendedBox, reason };
+  }
+
+  // Stage 2: resolve components using DB-first, then LLM-assisted names listing
+  async resolveComponents(object) {
+    const objectText = typeof object === 'string' ? object.trim() : '';
+    if (!objectText) return { object: '', molecules: [] };
+
+    // DB-first: if the object itself is a specific compound, resolve directly
+    try {
+      const direct = await resolveName(objectText);
+      if (direct && (direct.smiles || direct.cid)) {
+        // Heuristic: if PubChem returns a direct match with SMILES or CID and the title closely matches the object
+        const title = (direct.title || '').toLowerCase();
+        const normalizedObj = objectText.toLowerCase();
+        const isDirectMatch = title === normalizedObj || title.includes(normalizedObj) || normalizedObj.includes(title);
+        if (isDirectMatch && (direct.smiles || direct.cid)) {
+          const molecules = [{ name: direct.title || objectText, cid: direct.cid || null, smiles: direct.smiles || null, status: (direct.smiles ? 'ok' : 'lookup_required') }];
+          return { object: objectText, molecules };
+        }
+      }
+    } catch (_) {}
+
+    // LLM names listing (no SMILES), then resolve via PubChem/DB, then optional LLM fallback for SMILES
+    if (!this.isOpenAIAvailable) {
+      // If AI unavailable, return empty and let caller handle
+      return { object: objectText, molecules: [] };
+    }
+
+    // Ask LLM to propose specific molecule names only
+    const namePrompt = require('../../core/PromptEngine').generateNamePrompt(objectText);
+    let namesOnly = [];
+    try {
+      const response = await this.callOpenAI({
+        messages: [{ role: 'user', content: namePrompt }],
+        response_format: { type: 'json_object' }
+      });
+      const content = response.choices[0].message.content;
+      const parsed = require('../../core/PromptEngine').repairJSON(content) || {};
+      const mols = Array.isArray(parsed.molecules) ? parsed.molecules : [];
+      namesOnly = mols.map(m => ({ name: typeof m?.name === 'string' ? m.name.trim() : '' })).filter(m => m.name);
+    } catch (_) {
+      namesOnly = [];
+    }
+
+    if (namesOnly.length === 0) {
+      // As a last resort, return empty set and let client decide next steps
+      return { object: objectText, molecules: [] };
+    }
+
+    // Resolve names to CIDs/SMILES using DB-first then LLM fallback (convertNamesToSmiles already does this)
+    const resolved = await convertNamesToSmiles({ object: objectText, molecules: namesOnly }, this.client).catch(() => ({ object: objectText, molecules: [] }));
+    return { object: resolved.object || objectText, molecules: Array.isArray(resolved.molecules) ? resolved.molecules : [] };
   }
 
   // Secondary: object detection from image → object text (+ optional bounding box)
