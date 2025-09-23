@@ -115,7 +115,7 @@ body {
 .main {
   position: relative;
   padding: 32px;
-  padding-top: 80px;
+  padding-top: 96px;
   user-select: text;
   max-width: 960px;
   width: 100%;
@@ -490,6 +490,11 @@ canvas[class*="threeDmol"] {
   gap: 8px;
 }
 
+.primary-cta {
+  margin-top: 12px;
+  width: 100%;
+}
+
 .kbd-hint {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -580,6 +585,8 @@ canvas[class*="threeDmol"] {
   color: #ffffff;
   box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
 }
+
+.mode-label { font-size: 14px; }
 
 .mode-btn-shortcut {
   font-size: 12px;
@@ -900,9 +907,7 @@ canvas[class*="threeDmol"] {
 
 /* Settings */
 .settings-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  position: relative;
   width: 48px;
   height: 48px;
   border-radius: 14px;
@@ -930,7 +935,7 @@ canvas[class*="threeDmol"] {
 
 .settings-modal {
   position: absolute;
-  top: 60px;
+  top: 68px;
   right: 12px;
   background: rgba(26, 26, 26, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1361,4 +1366,46 @@ canvas[class*="threeDmol"] {
   .user-info {
     text-align: center;
   }
+}
+
+/* Top bar */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 0 20px;
+  background: rgba(10,10,12,0.75);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 200;
+}
+
+.topbar-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Bottom mobile CTA */
+.bottom-cta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  display: none;
+  padding: 0 12px;
+  z-index: 150;
+}
+
+.bottom-cta-btn { width: 100%; }
+
+@media (max-width: 768px) {
+  .bottom-cta { display: block; }
+  .main { padding-bottom: 92px; }
 }
