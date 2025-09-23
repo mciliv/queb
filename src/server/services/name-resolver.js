@@ -234,27 +234,30 @@ async function resolveName(name) {
     } catch (_) {}
   }
 
-  // If still unresolved, try alternative resolvers (OPSIN → CACTUS → ChEMBL)
-  if (!smiles) {
-    const altOpsin = await resolveViaOPSIN(name);
-    if (altOpsin && altOpsin.smiles) {
-      smiles = altOpsin.smiles;
+  // If still unresolved, try alternative resolvers depending on configuration
+  try {
+    const configuration = require('../../core/Configuration');
+    const chemCfg = configuration.get('chem') || { primary: 'pubchem', enableAlternates: false };
+    if (!smiles && chemCfg.enableAlternates) {
+      const altOpsin = await resolveViaOPSIN(name);
+      if (altOpsin && altOpsin.smiles) {
+        smiles = altOpsin.smiles;
+      }
     }
-  }
-  if (!smiles) {
-    const altCactus = await resolveViaCACTUS(name);
-    if (altCactus && altCactus.smiles) {
-      smiles = altCactus.smiles;
+    if (!smiles && chemCfg.enableAlternates) {
+      const altCactus = await resolveViaCACTUS(name);
+      if (altCactus && altCactus.smiles) {
+        smiles = altCactus.smiles;
+      }
     }
-  }
-  if (!smiles) {
-    const altChEMBL = await resolveViaChEMBL(name);
-    if (altChEMBL && altChEMBL.smiles) {
-      smiles = altChEMBL.smiles;
-      // Prefer canonical title if provided
-      title = altChEMBL.pref_name || title;
+    if (!smiles && (chemCfg.primary === 'chembl' || chemCfg.enableAlternates)) {
+      const altChEMBL = await resolveViaChEMBL(name);
+      if (altChEMBL && altChEMBL.smiles) {
+        smiles = altChEMBL.smiles;
+        title = altChEMBL.pref_name || title;
+      }
     }
-  }
+  } catch (_) {}
 
   // If we obtained SMILES from alternates but no CID, try back-resolving CID via SMILES in PubChem
   if (smiles && !cid) {
