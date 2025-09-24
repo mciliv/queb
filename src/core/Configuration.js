@@ -75,6 +75,12 @@ class Configuration {
         stripePublishableKey: this._getString('STRIPE_PUBLISHABLE_KEY', 'pk_test_demo_key_for_development')
       },
 
+      // Chemistry providers
+      chem: {
+        primary: this._getString('CHEM_PRIMARY', 'pubchem'), // 'pubchem' | 'chembl'
+        enableAlternates: this._getBoolean('CHEM_ENABLE_ALTERNATES', false)
+      },
+
       // Cloud Services
       cloud: {
         isCloudFunction: !!(process.env.FUNCTION_NAME || process.env.FUNCTION_TARGET || process.env.K_SERVICE),

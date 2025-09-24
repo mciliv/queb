@@ -446,6 +446,31 @@ app.post("/analyze-text", async (req, res) => {
   }
 });
 
+// Staged flow: Stage 1 — return only object specification
+app.post("/specify-object", async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const result = await structuralizer.specifyObject(payload);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Staged flow: Stage 2 — resolve components DB-first, then LLM-assisted
+app.post("/resolve-components", async (req, res) => {
+  try {
+    const { object } = req.body || {};
+    if (!object || typeof object !== 'string' || object.trim().length === 0) {
+      return res.status(400).json({ error: "Invalid object: non-empty string required" });
+    }
+    const out = await structuralizer.resolveComponents(object);
+    res.json(out);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // SDF generation route
 app.post("/generate-sdfs", async (req, res) => {
   try {

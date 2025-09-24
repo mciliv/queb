@@ -1,4 +1,7 @@
 const PUBCHEM_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
+const OPSIN_BASE = 'https://opsin.ch.cam.ac.uk/opsin';
+const CACTUS_BASE = 'https://cactus.nci.nih.gov/chemical/structure';
+const CHEMBL_BASE = 'https://www.ebi.ac.uk/chembl/api/data';
 
 // Minimal in-memory caches to avoid hammering upstream on repeats
 const nameToCIDCache = new Map(); // key: lowercased name -> cid|null
@@ -45,6 +48,75 @@ async function fetchJson(url, attempt = 0) {
     throw err;
   }
 }
+// Plain text fetch with basic retry
+async function fetchText(url, attempt = 0) {
+  const f = await getFetch();
+  try {
+    const resp = await f(url);
+    if (!resp.ok) {
+      const status = resp.status;
+      if ((status === 429 || status === 500 || status === 502 || status === 503 || status === 504) && attempt < MAX_RETRIES) {
+        await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
+        return fetchText(url, attempt + 1);
+      }
+      throw new Error(`HTTP ${status}`);
+    }
+    return resp.text();
+  } catch (err) {
+    if (attempt < MAX_RETRIES && (err.name === 'FetchError' || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT')) {
+      await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
+      return fetchText(url, attempt + 1);
+    }
+    throw err;
+  }
+}
+
+async function resolveCIDBySmiles(smiles) {
+  const encoded = encodeURIComponent(smiles);
+  const url = `${PUBCHEM_BASE}/compound/smiles/${encoded}/cids/JSON`;
+  const data = await fetchJson(url).catch(() => null);
+  const cids = data?.IdentifierList?.CID || [];
+  return cids.length > 0 ? cids[0] : null;
+}
+
+async function resolveViaOPSIN(name) {
+  try {
+    const encoded = encodeURIComponent(name);
+    const url = `${OPSIN_BASE}/${encoded}.json`;
+    const data = await fetchJson(url);
+    const smiles = data?.smiles || null;
+    return smiles ? { smiles } : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function resolveViaCACTUS(name) {
+  try {
+    const encoded = encodeURIComponent(name);
+    const url = `${CACTUS_BASE}/${encoded}/smiles`;
+    const text = await fetchText(url);
+    const smiles = (text || '').trim();
+    if (!smiles || /not found/i.test(smiles)) return null;
+    return { smiles };
+  } catch (_) {
+    return null;
+  }
+}
+
+async function resolveViaChEMBL(name) {
+  try {
+    const q = encodeURIComponent(name);
+    const url = `${CHEMBL_BASE}/molecule/search.json?q=${q}&limit=1`;
+    const data = await fetchJson(url);
+    const mol = data?.molecules?.[0];
+    const smiles = mol?.molecule_structures?.canonical_smiles || null;
+    return smiles ? { smiles, chembl_id: mol?.molecule_chembl_id || null, pref_name: mol?.pref_name || null } : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 
 async function resolveNameToCID(name) {
   const encoded = encodeURIComponent(name);
@@ -162,6 +234,43 @@ async function resolveName(name) {
     } catch (_) {}
   }
 
+  // If still unresolved, try alternative resolvers depending on configuration
+  try {
+    const configuration = require('../../core/Configuration');
+    const chemCfg = configuration.get('chem') || { primary: 'pubchem', enableAlternates: false };
+    if (!smiles && chemCfg.enableAlternates) {
+      const altOpsin = await resolveViaOPSIN(name);
+      if (altOpsin && altOpsin.smiles) {
+        smiles = altOpsin.smiles;
+      }
+    }
+    if (!smiles && chemCfg.enableAlternates) {
+      const altCactus = await resolveViaCACTUS(name);
+      if (altCactus && altCactus.smiles) {
+        smiles = altCactus.smiles;
+      }
+    }
+    if (!smiles && (chemCfg.primary === 'chembl' || chemCfg.enableAlternates)) {
+      const altChEMBL = await resolveViaChEMBL(name);
+      if (altChEMBL && altChEMBL.smiles) {
+        smiles = altChEMBL.smiles;
+        title = altChEMBL.pref_name || title;
+      }
+    }
+  } catch (_) {}
+
+  // If we obtained SMILES from alternates but no CID, try back-resolving CID via SMILES in PubChem
+  if (smiles && !cid) {
+    try {
+      cid = await resolveCIDBySmiles(smiles);
+      if (cid) {
+        const p = await getPropertiesByCID(cid).catch(() => null);
+        title = (p?.title) || title;
+        iupac = (p?.iupac) || iupac;
+      }
+    } catch (_) {}
+  }
+
   const result = { cid, smiles, title, iupac };
   namePropsCache.set(cacheKey, result);
   return result;
@@ -173,6 +282,10 @@ module.exports = {
   getPropertiesByCID,
   downloadSDFByCID,
   downloadSDFBySmiles,
+  resolveCIDBySmiles,
+  resolveViaOPSIN,
+  resolveViaCACTUS,
+  resolveViaChEMBL,
 };
 
 
