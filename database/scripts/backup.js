@@ -16,28 +16,36 @@ const log = {
   error: (msg) => console.log(`\x1b[31m❌ ${msg}\x1b[0m`)
 };
 
-// Database configuration
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'mol_users',
-  user: process.env.DB_USER || 'mol_user',
-  password: process.env.DB_PASSWORD
-};
+function getDbConfig() {
+  return {
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    database: process.env.DB_NAME || 'mol_users',
+    user: process.env.DB_USER || 'mol_user',
+    password: process.env.DB_PASSWORD
+  };
+}
 
-// Backup configuration
-const backupDir = process.env.BACKUP_DIR || './backups';
-const timestamp = new Date().toISOString()
-  .replace(/[:.]/g, '-')
-  .replace('T', '_')
-  .split('.')[0]; // Format: YYYY-MM-DD_HH-MM-SS
+function getBackupDir() {
+  return process.env.BACKUP_DIR || './backups';
+}
 
-const backupFile = path.join(backupDir, `backup_${timestamp}.sql`);
+function getBackupFilePath(now = new Date()) {
+  const backupDir = getBackupDir();
+  const timestamp = now.toISOString()
+    .replace(/[:.]/g, '-')
+    .replace('T', '_')
+    .split('.')[0];
+  return path.join(backupDir, `backup_${timestamp}.sql`);
+}
 
 async function createBackup() {
   log.info('Starting PostgreSQL backup...');
 
   try {
+    const dbConfig = getDbConfig();
+    const backupDir = getBackupDir();
+    const backupFile = getBackupFilePath();
     // Create backup directory if it doesn't exist
     if (!fs.existsSync(backupDir)) {
       fs.mkdirSync(backupDir, { recursive: true });
@@ -79,6 +87,7 @@ async function createBackup() {
 
 async function cleanupOldBackups() {
   try {
+    const backupDir = getBackupDir();
     const files = fs.readdirSync(backupDir);
     const backupFiles = files.filter(file => file.startsWith('backup_') && file.endsWith('.sql'));
     
