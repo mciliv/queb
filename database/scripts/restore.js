@@ -69,7 +69,8 @@ async function askConfirmation(question) {
   });
 
   return new Promise((resolve) => {
-    rl.question(question, (answer) => {
+    const fullQuestion = `⚠️  This will overwrite the current database!\n${question}`;
+    rl.question(fullQuestion, (answer) => {
       rl.close();
       resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
     });

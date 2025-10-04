@@ -27,20 +27,26 @@ async function checkPort(port) {
 }
 
 async function checkUrl(url, timeout = 5000) {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
-    const response = await fetch(url, { 
-      signal: controller.signal,
-      method: 'HEAD'
-    });
-    
-    clearTimeout(timeoutId);
-    return response.ok;
-  } catch (error) {
-    return false;
-  }
+  // Race the fetch against a manual timeout so even misbehaving mocks resolve
+  const fetchPromise = (async () => {
+    try {
+      const controller = new AbortController();
+      const response = await fetch(url, { 
+        signal: controller.signal,
+        method: 'HEAD'
+      });
+      return !!response?.ok;
+    } catch (_) {
+      return false;
+    }
+  })();
+
+  const timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => resolve(false), timeout);
+  });
+
+  // Whichever resolves first decides the result
+  return Promise.race([fetchPromise, timeoutPromise]);
 }
 
 async function main() {

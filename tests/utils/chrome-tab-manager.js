@@ -58,7 +58,7 @@ class ChromeTabManager {
     const userDataDir = `./test/chrome-molecular-profile-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     this.browser = await puppeteer.launch({
-      headless: false,
+      headless: 'new',
       defaultViewport: { width: 1600, height: 1000 },
       userDataDir: userDataDir,
       args: [
