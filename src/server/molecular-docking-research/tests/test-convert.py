@@ -7,13 +7,13 @@ from sdf import sdf
 def cleanup_sdf():
     """Fixture to clean up any generated SDF files after the test."""
     yield
-    for sdf_file in Path("test/sdf_files").glob("*.sdf"):
+    for sdf_file in Path("tests/sdf_files").glob("*.sdf"):
         if sdf_file.name.startswith("test_"):
             sdf_file.unlink()
 
 @pytest.mark.parametrize("smiles", ["CCO", "O", "C1=CC=CC=C1"])
 def test_sdf_file_creation(smiles, cleanup_sdf):
-    directory = "test/sdf_files"
+    directory = "tests/sdf_files"
     Path(directory).mkdir(exist_ok=True)
 
     filepath = sdf(smiles, directory, overwrite=True)
