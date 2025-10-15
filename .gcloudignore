@@ -16,14 +16,12 @@
 node_modules/
 
 # Test files
-test/
 tests/
 *.test.js
 *.spec.js
 
 # Development files
 scripts/
-src/client/build-frontend.js
 src/client/dev-browser.js
 
 # Logs

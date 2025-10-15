@@ -1,6 +1,48 @@
 // Integration test for molecular visualization flow
 // Tests the complete pipeline from analysis to visualization
 
+// Mock OpenAI before any modules are imported
+jest.mock('openai', () => {
+  return {
+    default: jest.fn().mockImplementation(() => ({
+      chat: {
+        completions: {
+          create: jest.fn().mockImplementation(async ({ messages }) => {
+            const last = Array.isArray(messages) ? [...messages].reverse().find(m => m.role === 'user') : null;
+            const content = last?.content;
+            let text = '';
+            if (typeof content === 'string') {
+              text = content;
+            } else if (Array.isArray(content)) {
+              const textPart = content.find(p => p && p.type === 'text');
+              text = textPart?.text || '';
+            }
+
+            const lower = (text || '').toLowerCase();
+            const chemicals = [];
+            if (lower.includes('water')) chemicals.push({ name: 'water', smiles: 'O' });
+            if (lower.includes('ethanol') || lower.includes('wine')) chemicals.push({ name: 'ethanol', smiles: 'CCO' });
+            if (lower.includes('sodium') && lower.includes('chloride')) chemicals.push({ name: 'sodium chloride', smiles: '[Na+].[Cl-]' });
+            if (lower.includes('coffee')) {
+              chemicals.push({ name: 'caffeine', smiles: 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C' });
+              chemicals.push({ name: 'water', smiles: 'O' });
+            }
+            if (lower.includes('apple')) {
+              chemicals.push({ name: 'fructose', smiles: 'C(C(C(C(C(C=O)O)O)O)O)O' });
+              chemicals.push({ name: 'glucose', smiles: 'C([C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O)O)O)O)O' });
+              chemicals.push({ name: 'water', smiles: 'O' });
+            }
+            if (chemicals.length === 0) chemicals.push({ name: 'water', smiles: 'O' });
+
+            const json = { object: text || 'test object', chemicals };
+            return { choices: [{ message: { content: JSON.stringify(json) } }] };
+          })
+        }
+      }
+    }))
+  };
+});
+
 const request = require('supertest');
 const path = require('path');
 const fs = require('fs');
@@ -12,6 +54,7 @@ describe('Molecular Visualization Integration Tests', () => {
   beforeAll(async () => {
     // Set test environment
     process.env.NODE_ENV = 'test';
+    process.env.OPENAI_API_KEY = 'test-key';
   });
 
   afterAll(async () => {
@@ -107,7 +150,7 @@ describe('Molecular Visualization Integration Tests', () => {
         // Step 3: Verify SDF files are accessible
         for (const sdfPath of sdfResponse.body.sdfPaths) {
           const fileName = sdfPath.replace('/sdf_files/', '');
-          const fullPath = path.join(__dirname, '../../../test/sdf_files', fileName);
+          const fullPath = path.join(__dirname, '../../sdf_files', fileName);
           
           // Check if file exists
           expect(fs.existsSync(fullPath)).toBe(true);
@@ -123,7 +166,9 @@ describe('Molecular Visualization Integration Tests', () => {
             .get(sdfPath)
             .expect(200);
             
-          expect(fileResponse.text).toBe(content);
+          const responseContent = fileResponse.text || 
+            (Buffer.isBuffer(fileResponse.body) ? fileResponse.body.toString('utf8') : fileResponse.body);
+          expect(responseContent).toBe(content);
         }
 
         // Step 4: Verify complete visualization data structure

@@ -60,7 +60,7 @@ class AutoTabConnector {
     }
     
     // No existing Chrome found, launch new one silently
-    const userDataDir = `/Users/m/mol/test/chrome-molecular-profile-${Date.now()}`;
+    const userDataDir = `./test/chrome-molecular-profile-${Date.now()}`;
     const browser = await puppeteer.launch({
       headless: false,
       defaultViewport: { width: 1600, height: 1000 },

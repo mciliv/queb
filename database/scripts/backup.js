@@ -16,16 +16,25 @@ const log = {
   error: (msg) => console.log(`\x1b[31m❌ ${msg}\x1b[0m`)
 };
 
+<<<<<<< Updated upstream
 function getDbConfig() {
   return {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
+=======
+// Database configuration - read dynamically to support test environment
+function getDbConfig() {
+  return {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT) || 5432,
+>>>>>>> Stashed changes
     database: process.env.DB_NAME || 'mol_users',
     user: process.env.DB_USER || 'mol_user',
     password: process.env.DB_PASSWORD
   };
 }
 
+<<<<<<< Updated upstream
 function getBackupDir() {
   return process.env.BACKUP_DIR || './backups';
 }
@@ -37,9 +46,24 @@ function getBackupFilePath(now = new Date()) {
     .replace('T', '_')
     .split('.')[0];
   return path.join(backupDir, `backup_${timestamp}.sql`);
+=======
+// Backup configuration - read dynamically
+function getBackupConfig() {
+  const backupDir = process.env.BACKUP_DIR || './backups';
+  const timestamp = new Date().toISOString()
+    .replace(/[:.]/g, '-')
+    .replace('T', '_')
+    .split('.')[0]; // Format: YYYY-MM-DD_HH-MM-SS
+
+  const backupFile = path.join(backupDir, `backup_${timestamp}.sql`);
+  
+  return { backupDir, backupFile, timestamp };
+>>>>>>> Stashed changes
 }
 
 async function createBackup() {
+  const dbConfig = getDbConfig();
+  const { backupDir, backupFile } = getBackupConfig();
   log.info('Starting PostgreSQL backup...');
 
   try {
@@ -86,6 +110,7 @@ async function createBackup() {
 }
 
 async function cleanupOldBackups() {
+  const { backupDir } = getBackupConfig();
   try {
     const backupDir = getBackupDir();
     const files = fs.readdirSync(backupDir);

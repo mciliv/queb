@@ -14,12 +14,11 @@ jest.mock('../../../src/client/core/logger.js', () => ({
 }));
 
 // Import the keyboard shortcuts module
-import { 
-  KEYBOARD_SHORTCUTS, 
-  createKeyboardHandler, 
-  validateShortcuts,
-  testShortcuts
-} from '../../../src/client/core/keyboard-shortcuts.js';
+const {
+  KEYBOARD_SHORTCUTS,
+  createKeyboardHandler,
+  validateAllShortcutsConfigured
+} = require('../../../src/client/core/keyboard-shortcuts.js');
 
 describe('Keyboard Shortcuts Functionality Tests', () => {
   let mockActions;
@@ -102,8 +101,7 @@ describe('Keyboard Shortcuts Functionality Tests', () => {
     });
 
     test('Validation function works correctly', () => {
-      expect(validateShortcuts()).toBe(true);
-      expect(testShortcuts()).toBe(true);
+      expect(validateAllShortcutsConfigured()).toBe(true);
     });
   });
 
@@ -134,6 +132,9 @@ describe('Keyboard Shortcuts Functionality Tests', () => {
         value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
       });
 
+      // Recreate handler with Windows userAgent
+      const windowsKeyboardHandler = createKeyboardHandler(mockActions);
+
       const input = document.getElementById('object-input');
       const focusSpy = jest.spyOn(input, 'focus');
 
@@ -144,11 +145,11 @@ describe('Keyboard Shortcuts Functionality Tests', () => {
         shiftKey: false,
         bubbles: true
       });
-      
+
       // Set target to document body (not an input field)
       Object.defineProperty(event, 'target', { value: document.body, writable: false });
 
-      keyboardHandler(event);
+      windowsKeyboardHandler(event);
       expect(focusSpy).toHaveBeenCalled();
     });
 
@@ -230,6 +231,9 @@ describe('Keyboard Shortcuts Functionality Tests', () => {
         value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
       });
 
+      // Recreate handler with Windows userAgent
+      const windowsKeyboardHandler = createKeyboardHandler(mockActions);
+
       const event = new KeyboardEvent('keydown', {
         key: '1',
         ctrlKey: true,
@@ -237,11 +241,11 @@ describe('Keyboard Shortcuts Functionality Tests', () => {
         shiftKey: true,
         bubbles: true
       });
-      
+
       // Set target to document body (not an input field)
       Object.defineProperty(event, 'target', { value: document.body, writable: false });
 
-      keyboardHandler(event);
+      windowsKeyboardHandler(event);
       expect(mockActions.cameraMode).toHaveBeenCalled();
     });
   });

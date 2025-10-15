@@ -1,9 +1,12 @@
 const { createClient } = require("../ai/openai/client");
+const fs = require('fs');
+const path = require('path');
 const aiConfig = require("../ai/config");
 const logger = require("./file-logger");
 const promptEngine = require('../../core/PromptEngine');
 const errorHandler = require('../../core/ErrorHandler');
 const MolecularProcessor = require("./molecular-processor");
+<<<<<<< Updated upstream
 const { resolveName, getPropertiesByCID } = require("./name-resolver");
 const { convertNamesToSmiles } = require("../prompts/name-to-smiles");
 const wikidata = require('./wikidata-resolver');
@@ -24,148 +27,195 @@ class Structuralizer {
     if (this.testConfig.model) {
       this.model = this.testConfig.model;
     }
+=======
+const { resolveName } = require("./name-resolver");
+>>>>>>> Stashed changes
 
+/**
+ * Main function: Analyzes any input modality (text, image, or both) and returns structured chemical data
+ * @param {Object} payload - Input with { object?, imageBase64?, x?, y?, lookupMode?, testConfig? }
+ * @returns {Promise<Object>} - { object, chemicals, recommendedBox?, reason? }
+ */
+async function chemicals(payload) {
+  // Memory check at start
+  const memStart = process.memoryUsage();
+  if (memStart.heapUsed > 400 * 1024 * 1024) { // 400MB threshold
+    throw new Error("Server memory limit exceeded - please try again later");
   }
 
-  // Pattern according to https://platform.openai.com/docs/overview
-  // as of 2025-09-21
-  async callOpenAI(requestParams) {
-    if (!this.isOpenAIAvailable) throw new Error("AI service unavailable");
-    
-    const activeModel = this.resolvedModelName || this.model;
-    
-    // Modern OpenAI API call
-    const response = await this.client.chat.completions.create({
-      model: activeModel,
-      ...requestParams
+  const inputObject = typeof payload?.object === 'string' ? payload.object.trim() : '';
+  const imageBase64 = typeof payload?.imageBase64 === 'string' ? payload.imageBase64 : null;
+  const x = typeof payload?.x === 'number' ? payload.x : null;
+  const y = typeof payload?.y === 'number' ? payload.y : null;
+  const lookupMode = payload?.lookupMode || 'database';
+  const testConfig = payload?.testConfig || {};
+
+  // Initialize AI client
+  const client = createClient();
+  const apiKey = aiConfig.apiKey;
+  const isAIAvailable = !!(client && apiKey);
+  const model = testConfig.model || aiConfig.model;
+  const molecularProcessor = new MolecularProcessor();
+
+  if (!isAIAvailable) {
+    logger.error("❌ AI service unavailable - client or API key missing");
+    throw new Error("AI service unavailable - check OpenAI API key configuration");
+  }
+
+  // Helper: Call OpenAI API
+  const callAI = async (requestParams) => {
+    const timeoutMs = Math.min(10000, Number(process.env.AI_TIMEOUT_MS || 10000));
+    const aiPromise = client.chat.completions.create({ model, ...requestParams });
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('timeout')), timeoutMs);
+    });
+    return await Promise.race([aiPromise, timeoutPromise]);
+  };
+
+  let objectText = inputObject;
+  let recommendedBox = null;
+  let reason = null;
+
+  // Step 1: If image provided and no text, extract object name from image
+  if (!objectText && imageBase64) {
+    logger.info(`🖼️ Analyzing image to detect object`);
+    try {
+      let imageData = imageBase64;
+      if (/^https?:\/\//i.test(imageBase64)) {
+        const fetch = require('node-fetch');
+        const resp = await fetch(imageBase64);
+        if (!resp.ok) throw new Error(`Failed to fetch image URL: ${resp.status}`);
+        const buf = await resp.buffer();
+        imageData = buf.toString('base64');
+      }
+
+      // Load detection prompt base text and append click coordinates if provided
+      const detectionBasePath = path.join(__dirname, '../../core/prompts/object_detection.txt');
+      let detectionPrompt = '';
+      try { detectionPrompt = fs.readFileSync(detectionBasePath, 'utf8').trim(); } catch (_) { detectionPrompt = ''; }
+      if (Number.isFinite(x) && Number.isFinite(y)) {
+        detectionPrompt += `\n\nUser clicked at coordinates (${x}, ${y}). Focus analysis around this area.`;
+      }
+
+      const messages = [{ 
+        role: 'user', 
+        content: [
+          { type: 'text', text: detectionPrompt },
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageData}`, detail: 'high' } }
+        ] 
+      }];
+
+      const response = await callAI({ messages, max_tokens: 500, response_format: { type: 'json_object' } });
+      const content = response.choices[0].message.content;
+      let parsed;
+      try { parsed = JSON.parse(content); } catch (_) { parsed = { object: 'Unknown object' }; }
+      
+      objectText = parsed.object || 'Unknown object';
+      reason = typeof parsed?.reason === 'string' ? parsed.reason : null;
+
+      // Extract bounding box if provided
+      const box = parsed?.recommendedBox || parsed?.box || parsed?.recommendedCrop || {};
+      const bx = Number(box.x), by = Number(box.y), bw = Number(box.width), bh = Number(box.height);
+      if ([bx, by, bw, bh].every(n => Number.isFinite(n)) && bw > 0 && bh > 0) {
+        recommendedBox = { x: Math.round(bx), y: Math.round(by), width: Math.round(bw), height: Math.round(bh) };
+      }
+
+      logger.info(`✅ Image analysis complete: "${objectText}"`);
+    } catch (imageError) {
+      logger.warn(`⚠️ Image analysis failed:`, imageError.message);
+      objectText = 'Material in image';
+    }
+  }
+
+  // Step 2: Analyze text (from input or extracted from image) to identify chemicals
+  logger.info(`🔍 Starting chemical analysis for: "${objectText}"`);
+  
+  const prompt = (testConfig.prompt && testConfig.prompt !== 'custom')
+    ? testConfig.prompt
+    : (() => {
+        // Load minimal chemical analysis prompt and append object + optional reason suffix
+        const chemBasePath = path.join(__dirname, '../../core/prompts/chemical_analysis.txt');
+        const reasonPath = path.join(__dirname, '../../core/prompts/reason_suffix.txt');
+        let base = '';
+        let reasonSuffix = '';
+        try { base = fs.readFileSync(chemBasePath, 'utf8').trim(); } catch (_) { base = ''; }
+        try { reasonSuffix = fs.readFileSync(reasonPath, 'utf8').trim(); } catch (_) { reasonSuffix = ''; }
+        return [
+          base,
+          `Object: ${objectText || ''}`,
+          reasonSuffix
+        ].filter(Boolean).join('\n\n');
+      })();
+  
+  let parsed = { object: objectText, chemicals: [] };
+  try {
+    const response = await callAI({
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' }
     });
     
-    this.resolvedModelName = activeModel;
-    return response;
+    const content = response.choices[0].message.content;
+    logger.info(`📄 Raw AI response: ${content?.substring(0, 200)}...`);
+    
+    parsed = promptEngine.repairJSON(content);
+    if (!parsed) {
+      logger.warn(`⚠️ Failed to parse JSON response, using fallback`);
+      parsed = { object: objectText, chemicals: [] };
+    } else {
+      logger.info(`✅ Successfully parsed JSON response`);
+    }
+  } catch (aiError) {
+    logger.warn(`⚠️ AI call failed, using fallback:`, aiError?.message || String(aiError));
+    const handled = errorHandler.handleAIError(aiError, { method: 'chemicals', object: objectText });
+    reason = handled.message || 'AI unavailable';
+    parsed = { object: objectText, chemicals: [] };
   }
 
-  // Structuralize multimodal: accepts { object?, imageBase64?, x?, y? } and returns { object, chemicals, recommendedBox?, reason? }
-  async structuralize(payload) {
-    const inputObject = typeof payload?.object === 'string' ? payload.object.trim() : '';
-    const imageBase64 = typeof payload?.imageBase64 === 'string' ? payload.imageBase64 : null;
-    const x = typeof payload?.x === 'number' ? payload.x : null;
-    const y = typeof payload?.y === 'number' ? payload.y : null;
-
-    let objectText = inputObject;
-    let recommendedBox = null;
-    let reason = null;
-
-    if (!objectText && imageBase64) {
-      const byImage = await this.structuralizeImage(imageBase64, null, x, y, null, null, null).catch(() => null);
-      if (byImage) {
-        objectText = byImage.object || '';
-        recommendedBox = byImage.recommendedBox || null;
-        reason = byImage.reason || null;
+  const list = Array.isArray(parsed?.chemicals) ? parsed.chemicals : [];
+  logger.info(`🔧 Using lookup mode: ${lookupMode}`);
+  
+  // Step 3: Enrich SMILES based on lookup mode
+  const enriched = [];
+  for (const item of list) {
+    const name = item?.name || '';
+    let smiles = item?.smiles || null;
+    
+    if (lookupMode === 'database') {
+      // Database-first: Always try database lookup
+      if (name) {
+        try {
+          const res = await resolveName(name).catch(() => null);
+          smiles = (res && res.smiles) ? res.smiles : (item?.smiles || null);
+          logger.debug(`Database lookup for "${name}": ${smiles ? 'SUCCESS' : 'FAILED'}`);
+        } catch (resolveError) {
+          logger.warn(`⚠️ Database lookup failed for "${name}":`, resolveError.message);
+          smiles = item?.smiles || null;
+        }
       }
-    }
-
-    const byText = await this.structuralizeText(objectText || '');
-    return {
-      object: byText.object || objectText || (imageBase64 ? 'image' : ''),
-      chemicals: Array.isArray(byText.chemicals) ? byText.chemicals : [],
-      recommendedBox: recommendedBox || null,
-      reason: reason || byText.reason || null
-    };
-  }
-
-  // Primary: text → molecules (names→structures) using a single structuralization prompt
-  async structuralizeText(object) {
-    logger.info(`🔍 Starting text analysis for: "${object}"`);
-    
-    if (!this.isOpenAIAvailable) {
-      logger.error("❌ AI service unavailable for structuralization");
-      throw new Error("AI service unavailable for structuralization");
-    }
-    
-    const prompt = this.testConfig.prompt && this.testConfig.prompt !== 'custom'
-      ? this.testConfig.prompt
-      : promptEngine.generateChemicalPrompt(object || '', { includeReason: true });
-    
-    logger.info(`📝 Generated prompt for analysis`);
-    
-    let parsed = { object, chemicals: [] }; // Initialize with fallback
-    try {
-      // Modern OpenAI API call for structured analysis
-      const response = await this.callOpenAI({
-        messages: [{ 
-          role: 'user', 
-          content: prompt 
-        }],
-        response_format: { type: 'json_object' }
-      });
-      
-      logger.info(`✅ Received AI response`);
-      const content = response.choices[0].message.content;
-      logger.info(`📄 Raw AI response: ${content?.substring(0, 200)}...`);
-      
-      // Use PromptEngine for JSON parsing and repair
-      parsed = promptEngine.repairJSON(content);
-      if (parsed) {
-        logger.info(`✅ Successfully parsed JSON response`);
-      } else {
-        logger.warn(`⚠️ Failed to parse JSON response, using fallback`);
-        parsed = { object, chemicals: [] };
-      }
-    } catch (aiError) {
-      const handled = errorHandler.handleAIError(aiError, { method: 'structuralizeText', object });
-      logger.error(`❌ AI call failed:`, handled);
-      throw new Error(handled.message);
-    }
-    const list = Array.isArray(parsed?.chemicals) ? parsed.chemicals : [];
-    // Programmatic fallback: fill missing SMILES (and CID) using resolvers
-    const enriched = [];
-    for (const item of list) {
-      const name = item?.name || '';
-      let smiles = item?.smiles || null;
-      let cid = item?.cid ?? null;
+    } else {
+      // AI-first: Use AI SMILES, database fills gaps
       if (!smiles && name) {
         try {
-          if (cid) {
-            const props = await getPropertiesByCID(cid).catch(() => null);
-            smiles = (props && props.smiles) ? props.smiles : null;
-          }
-          if (!smiles) {
-            const res = await resolveName(name).catch(() => null);
-            cid = (res && res.cid) ? res.cid : cid;
-            smiles = (res && res.smiles) ? res.smiles : smiles;
-          }
+          const res = await resolveName(name).catch(() => null);
+          smiles = (res && res.smiles) ? res.smiles : smiles;
+          logger.debug(`Database fallback for "${name}": ${smiles ? 'SUCCESS' : 'FAILED'}`);
         } catch (resolveError) {
-          logger.warn(`⚠️ Failed to resolve name "${name}":`, resolveError.message);
+          logger.warn(`⚠️ Database fallback failed for "${name}":`, resolveError.message);
         }
       }
-      enriched.push({ name, smiles: smiles || null, cid: cid ?? null });
     }
+    
+    enriched.push({ name, smiles: smiles || null });
+  }
 
-    // Attempt SDF generation for identified molecules by name or smiles (after enrichment)
-    const resolved = [];
-    for (const item of enriched) {
-      const name = item?.name || '';
-      const smiles = item?.smiles || null;
-      let sdfPath = null;
-      try {
-        if (smiles) {
-          sdfPath = await this.molecularProcessor.generateSDF(smiles, false).catch(() => null);
-        }
-        if (!sdfPath && name) {
-          const byName = await this.molecularProcessor.generateSDFByName(name, false).catch(() => null);
-          if (byName && byName.sdfPath) sdfPath = byName.sdfPath;
-        }
-      } catch (sdfError) {
-        logger.warn(`⚠️ Failed to generate SDF for "${name}" (${smiles}):`, sdfError.message);
-      }
-      resolved.push({ name, smiles: smiles || null, sdfPath: sdfPath || null, status: sdfPath ? 'ok' : (smiles ? 'smiles_only' : 'lookup_required') });
-    }
+  // Step 4: Generate SDF files for molecules
+  const resolved = [];
+  for (const item of enriched) {
+    const name = item?.name || '';
+    const smiles = item?.smiles || null;
+    let sdfPath = null;
     
-    logger.info(`🎯 Text analysis complete: Found ${resolved.length} chemicals`);
-    resolved.forEach((chem, i) => {
-      logger.info(`   ${i+1}. ${chem.name} - Status: ${chem.status}`);
-    });
-    
+<<<<<<< Updated upstream
     return { object: parsed.object || object, chemicals: resolved };
   }
 
@@ -305,15 +355,95 @@ class Structuralizer {
   }
 
   parseAIResponse(content) {
+=======
+>>>>>>> Stashed changes
     try {
-      if (!content || typeof content !== "string") return { object: "Unknown object", chemicals: [] };
-      try { return JSON.parse(content); } catch (_) {}
-      const match = content.match(/\{[\s\S]*\}/); if (match) { try { return JSON.parse(match[0]); } catch (_) {} }
-      return { object: "Unknown object", chemicals: [] };
-    } catch (_) { return { object: "Unknown object", chemicals: [] }; }
+      const withTimeout = (p, ms) => new Promise((resolve) => {
+        let done = false;
+        const t = setTimeout(() => { if (!done) resolve(null); }, ms);
+        p.then((v) => { if (!done) { done = true; clearTimeout(t); resolve(v); } })
+         .catch(() => { if (!done) { done = true; clearTimeout(t); resolve(null); } });
+      });
+
+      if (smiles) {
+        const res = await withTimeout(molecularProcessor.generateSDF(smiles, false), 3000);
+        if (res && res.sdfPath) sdfPath = res.sdfPath;
+      }
+      if (!sdfPath && name) {
+        const byName = await withTimeout(molecularProcessor.generateSDFByName(name, false), 3000);
+        if (byName && byName.sdfPath) sdfPath = byName.sdfPath;
+      }
+    } catch (sdfError) {
+      logger.warn(`⚠️ Failed to generate SDF for "${name}" (${smiles}):`, sdfError.message);
+    }
+    
+    resolved.push({ 
+      name, 
+      smiles: smiles || null, 
+      sdfPath: sdfPath || null, 
+      status: sdfPath ? 'ok' : (smiles ? 'smiles_only' : 'lookup_required') 
+    });
+  }
+  
+  logger.info(`🎯 Chemical analysis complete: Found ${resolved.length} chemicals`);
+  resolved.forEach((chem, i) => {
+    logger.info(`   ${i+1}. ${chem.name} - Status: ${chem.status}`);
+  });
+  
+  // Memory cleanup and final check
+  const memEnd = process.memoryUsage();
+  const memUsed = memEnd.heapUsed - memStart.heapUsed;
+  logger.info(`Memory usage: ${Math.round(memUsed/1024/1024)}MB increase`);
+  
+  // Force garbage collection if available
+  if (global.gc) {
+    global.gc();
+  }
+  
+  return {
+    object: parsed.object || objectText || (imageBase64 ? 'Material in image' : ''),
+    chemicals: resolved,
+    recommendedBox: recommendedBox || null,
+    reason: reason || parsed.reason || null
+  };
+}
+
+// Backward compatibility: Export as class for existing code
+// DEPRECATED: This class will be removed in v2.0.0
+class Structuralizer {
+  constructor(apiKey = null, testConfig = null) {
+    console.warn(
+      '[DEPRECATED] Structuralizer class is deprecated and will be removed in v2.0.0.\n' +
+      'Migration: Use the chemicals() function instead:\n' +
+      '  Before: const s = new Structuralizer(apiKey); await s.structuralizeText("aspirin");\n' +
+      '  After:  const { chemicals } = require("./Structuralizer"); await chemicals({ object: "aspirin" });'
+    );
+    this.testConfig = testConfig || {};
+  }
+  
+  async structuralize(payload) {
+    logger.warn('[DEPRECATED] structuralize() → Use chemicals() directly');
+    return chemicals({ ...payload, testConfig: this.testConfig });
+  }
+  
+  async structuralizeText(object, lookupMode = 'database') {
+    logger.warn('[DEPRECATED] structuralizeText() → Use chemicals({ object, lookupMode })');
+    return chemicals({ object, lookupMode, testConfig: this.testConfig });
+  }
+  
+  async structuralizeImage(imageBase64, croppedImageBase64 = null, x = null, y = null) {
+    logger.warn('[DEPRECATED] structuralizeImage() → Use chemicals({ imageBase64, x, y })');
+    return chemicals({ imageBase64, x, y, testConfig: this.testConfig });
   }
 }
 
-module.exports = Structuralizer;
+// Export the new API as primary
+module.exports = { 
+  chemicals,
+  Structuralizer  // Deprecated - for backward compatibility only
+};
+
+// For CommonJS default import compatibility
+module.exports.default = chemicals;
 
 

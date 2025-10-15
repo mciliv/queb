@@ -1,17 +1,147 @@
 const PUBCHEM_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
+<<<<<<< Updated upstream
 const OPSIN_BASE = 'https://opsin.ch.cam.ac.uk/opsin';
 const CACTUS_BASE = 'https://cactus.nci.nih.gov/chemical/structure';
 const CHEMBL_BASE = 'https://www.ebi.ac.uk/chembl/api/data';
+=======
+const logger = console;
+>>>>>>> Stashed changes
 
-// Minimal in-memory caches to avoid hammering upstream on repeats
-const nameToCIDCache = new Map(); // key: lowercased name -> cid|null
-const cidPropsCache = new Map(); // key: cid -> { smiles, iupac, title }
-const namePropsCache = new Map(); // key: lowercased name -> { cid, smiles, title, iupac }
+// Enhanced caching with TTL and size limits
+const CACHE_CONFIG = {
+  TTL_MS: parseInt(process.env.PUBCHEM_CACHE_TTL_MS) || 1800000, // 30 minutes (reduced from 1 hour)
+  MAX_SIZE: parseInt(process.env.PUBCHEM_MAX_CACHE_SIZE) || 500, // Reduced from 1000
+  CLEANUP_INTERVAL_MS: parseInt(process.env.PUBCHEM_CACHE_CLEANUP_INTERVAL_MS) || 120000, // 2 minutes (reduced from 5 minutes)
+  MAX_MEMORY_MB: parseInt(process.env.PUBCHEM_MAX_CACHE_MEMORY_MB) || 50 // 50MB memory limit for cache
+};
 
-// Simple retry/backoff for transient errors (e.g., 503)
-const MAX_RETRIES = 2;
-const BASE_DELAY_MS = 400;
+// Cache with metadata for TTL and LRU
+const namePropsCache = new Map(); // key: lowercased name -> { value: { smiles, title, iupac }, timestamp: number, accessCount: number }
+
+// Periodic cache cleanup
+let cleanupInterval = null;
+
+// Start cleanup interval (can be stopped for testing)
+function startCleanupInterval() {
+  if (!cleanupInterval) {
+    cleanupInterval = setInterval(() => {
+      cleanupCache(namePropsCache);
+    }, CACHE_CONFIG.CLEANUP_INTERVAL_MS);
+    
+    // Allow unref in Node.js to prevent keeping process alive
+    if (cleanupInterval.unref) {
+      cleanupInterval.unref();
+    }
+  }
+}
+
+// Stop cleanup interval (for testing)
+function stopCleanupInterval() {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+}
+
+// Auto-start in non-test environments
+if (process.env.NODE_ENV !== 'test') {
+  startCleanupInterval();
+}
+
+function cleanupCache(cache) {
+  const now = Date.now();
+  const entries = Array.from(cache.entries());
+  
+  // Remove expired entries
+  entries.forEach(([key, data]) => {
+    if (now - data.timestamp > CACHE_CONFIG.TTL_MS) {
+      cache.delete(key);
+    }
+  });
+  
+  // Estimate cache memory usage (rough approximation)
+  const estimatedMemoryMB = cache.size * 0.1; // Rough estimate: 100KB per entry
+  
+  // If over memory limit, remove least recently accessed
+  if (estimatedMemoryMB > CACHE_CONFIG.MAX_MEMORY_MB) {
+    const sortedEntries = entries
+      .filter(([key]) => cache.has(key))
+      .sort((a, b) => a[1].accessCount - b[1].accessCount);
+    
+    // Remove 25% of entries to free up memory
+    const toRemove = Math.floor(sortedEntries.length * 0.25);
+    sortedEntries.slice(0, toRemove).forEach(([key]) => {
+      cache.delete(key);
+    });
+  }
+  
+  // If still over size limit, remove least recently accessed
+  if (cache.size > CACHE_CONFIG.MAX_SIZE) {
+    const sortedEntries = entries
+      .filter(([key]) => cache.has(key))
+      .sort((a, b) => a[1].accessCount - b[1].accessCount)
+      .slice(0, cache.size - CACHE_CONFIG.MAX_SIZE);
+    
+    sortedEntries.forEach(([key]) => {
+      cache.delete(key);
+    });
+  }
+}
+
+function getCacheValue(cache, key) {
+  const data = cache.get(key);
+  if (data && Date.now() - data.timestamp < CACHE_CONFIG.TTL_MS) {
+    data.accessCount++;
+    return data.value;
+  }
+  if (data) {
+    cache.delete(key); // Expired
+  }
+  return null;
+}
+
+function setCacheValue(cache, key, value) {
+  cache.set(key, { value, timestamp: Date.now(), accessCount: 1 });
+}
+
+// Custom error classes
+class PubChemError extends Error {
+  constructor(message, statusCode = null, originalError = null) {
+    super(message);
+    this.name = 'PubChemError';
+    this.statusCode = statusCode;
+    this.originalError = originalError;
+  }
+}
+
+class PubChemTimeoutError extends PubChemError {
+  constructor(message, originalError = null) {
+    super(message, 408, originalError);
+    this.name = 'PubChemTimeoutError';
+  }
+}
+
+class PubChemRateLimitError extends PubChemError {
+  constructor(message, originalError = null) {
+    super(message, 429, originalError);
+    this.name = 'PubChemRateLimitError';
+  }
+}
+
+// Enhanced retry/backoff configuration
+const RETRY_CONFIG = {
+  MAX_RETRIES: parseInt(process.env.PUBCHEM_MAX_RETRIES) || 3,
+  BASE_DELAY_MS: parseInt(process.env.PUBCHEM_BASE_DELAY_MS) || 500,
+  MAX_DELAY_MS: parseInt(process.env.PUBCHEM_MAX_DELAY_MS) || 5000,
+  BACKOFF_MULTIPLIER: parseFloat(process.env.PUBCHEM_BACKOFF_MULTIPLIER) || 2.0
+};
+
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+function calculateDelay(attempt) {
+  const delay = RETRY_CONFIG.BASE_DELAY_MS * Math.pow(RETRY_CONFIG.BACKOFF_MULTIPLIER, attempt - 1);
+  return Math.min(delay, RETRY_CONFIG.MAX_DELAY_MS);
+}
 
 let cachedFetch = null;
 async function getFetch() {
@@ -25,27 +155,83 @@ async function getFetch() {
   return cachedFetch;
 }
 
-async function fetchJson(url, attempt = 0) {
+async function fetchJson(url, attempt = 1) {
   const f = await getFetch();
-  try {
-    const resp = await f(url);
-    if (!resp.ok) {
-      const status = resp.status;
-      // Retry for transient upstream failures
-      if ((status === 429 || status === 500 || status === 502 || status === 503 || status === 504) && attempt < MAX_RETRIES) {
-        await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
-        return fetchJson(url, attempt + 1);
+  
+  for (let currentAttempt = attempt; currentAttempt <= RETRY_CONFIG.MAX_RETRIES; currentAttempt++) {
+    try {
+      logger.debug(`Fetching PubChem data from ${url} (attempt ${currentAttempt}/${RETRY_CONFIG.MAX_RETRIES})`);
+      
+      const resp = await f(url, {
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'MolecularAnalysisService/1.0',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!resp.ok) {
+        const status = resp.status;
+        const statusText = resp.statusText || 'Unknown Error';
+        
+        // Handle specific HTTP errors
+        if (status === 404) {
+          throw new PubChemError(`Resource not found: ${statusText}`, status);
+        } else if (status === 429) {
+          if (currentAttempt < RETRY_CONFIG.MAX_RETRIES) {
+            const delay = calculateDelay(currentAttempt) * 2; // Extra delay for rate limiting
+            logger.warn(`PubChem rate limit hit, retrying after ${delay}ms`);
+            await sleep(delay);
+            continue;
+          }
+          throw new PubChemRateLimitError(`Rate limit exceeded: ${statusText}`, status);
+        } else if ([500, 502, 503, 504].includes(status)) {
+          if (currentAttempt < RETRY_CONFIG.MAX_RETRIES) {
+            const delay = calculateDelay(currentAttempt);
+            logger.warn(`PubChem server error ${status}, retrying after ${delay}ms`);
+            await sleep(delay);
+            continue;
+          }
+          throw new PubChemError(`Server error: ${statusText}`, status);
+        } else {
+          throw new PubChemError(`HTTP error: ${statusText}`, status);
+        }
       }
-      throw new Error(`HTTP ${status}`);
+      
+      const data = await resp.json();
+      logger.debug(`Successfully fetched PubChem data from ${url}`);
+      return data;
+      
+    } catch (err) {
+      // Handle network and timeout errors
+      if (err.name === 'AbortError' || err.code === 'ETIMEDOUT') {
+        if (currentAttempt < RETRY_CONFIG.MAX_RETRIES) {
+          const delay = calculateDelay(currentAttempt);
+          logger.warn(`PubChem request timeout, retrying after ${delay}ms`);
+          await sleep(delay);
+          continue;
+        }
+        throw new PubChemTimeoutError(`Request timeout after ${RETRY_CONFIG.MAX_RETRIES} attempts`, err);
+      } else if (err.name === 'FetchError' || err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
+        if (currentAttempt < RETRY_CONFIG.MAX_RETRIES) {
+          const delay = calculateDelay(currentAttempt);
+          logger.warn(`PubChem network error, retrying after ${delay}ms: ${err.message}`);
+          await sleep(delay);
+          continue;
+        }
+        throw new PubChemError(`Network error after ${RETRY_CONFIG.MAX_RETRIES} attempts: ${err.message}`, null, err);
+      } else if (err instanceof PubChemError) {
+        throw err; // Re-throw our custom errors
+      } else {
+        if (currentAttempt < RETRY_CONFIG.MAX_RETRIES) {
+          const delay = calculateDelay(currentAttempt);
+          logger.warn(`PubChem unexpected error, retrying after ${delay}ms: ${err.message}`);
+          await sleep(delay);
+          continue;
+        }
+        throw new PubChemError(`Unexpected error after ${RETRY_CONFIG.MAX_RETRIES} attempts: ${err.message}`, null, err);
+      }
     }
-    return resp.json();
-  } catch (err) {
-    // Retry on network errors
-    if (attempt < MAX_RETRIES && (err.name === 'FetchError' || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT')) {
-      await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
-      return fetchJson(url, attempt + 1);
-    }
-    throw err;
   }
 }
 // Plain text fetch with basic retry
@@ -118,49 +304,62 @@ async function resolveViaChEMBL(name) {
 }
 
 
-async function resolveNameToCID(name) {
-  const encoded = encodeURIComponent(name);
-  const url = `${PUBCHEM_BASE}/compound/name/${encoded}/cids/JSON`;
-  const key = String(name || '').toLowerCase();
-  if (nameToCIDCache.has(key)) return nameToCIDCache.get(key);
-  const data = await fetchJson(url);
-  const cids = data?.IdentifierList?.CID || [];
-  const cid = cids.length > 0 ? cids[0] : null;
-  nameToCIDCache.set(key, cid);
-  return cid;
-}
-
-async function getPropertiesByCID(cid) {
-  const url = `${PUBCHEM_BASE}/compound/cid/${cid}/property/IsomericSMILES,IUPACName,Title/JSON`;
-  if (cidPropsCache.has(cid)) return cidPropsCache.get(cid);
-  const data = await fetchJson(url);
-  const props = data?.PropertyTable?.Properties?.[0] || {};
-  const out = {
-    smiles: props.IsomericSMILES || null,
-    iupac: props.IUPACName || null,
-    title: props.Title || null
-  };
-  cidPropsCache.set(cid, out);
-  return out;
-}
-
-async function downloadSDFByCID(cid) {
-  const url = `${PUBCHEM_BASE}/compound/CID/${cid}/SDF`;
-  const f = await getFetch();
-  let attempt = 0;
-  while (true) {
-    const resp = await f(url);
-    if (resp.ok) {
-      const text = await resp.text();
-      return text;
-    }
-    const status = resp.status;
-    if (attempt < MAX_RETRIES && (status === 429 || status === 500 || status === 502 || status === 503 || status === 504)) {
-      await sleep(BASE_DELAY_MS * Math.pow(2, attempt++));
-      continue;
-    }
-    throw new Error(`HTTP ${status}`);
+async function resolveName(name) {
+  // Returns { smiles, title, iupac } best-effort
+  if (!name || typeof name !== 'string') {
+    throw new PubChemError('Invalid name: must be a non-empty string');
   }
+  
+  const trimmedName = name.trim();
+  if (trimmedName.length === 0) {
+    throw new PubChemError('Invalid name: cannot be empty after trimming');
+  }
+  
+  const cacheKey = trimmedName.toLowerCase();
+  
+  // Check cache first
+  const cached = getCacheValue(namePropsCache, cacheKey);
+  if (cached !== null) {
+    logger.debug(`Cache hit for name resolution: "${trimmedName}"`);
+    return cached;
+  }
+  
+  logger.info(`Resolving name properties: "${trimmedName}"`);
+  
+  let smiles = null;
+  let title = null;
+  let iupac = null;
+  const errors = [];
+  
+  // First try: direct properties lookup by name
+  try {
+    logger.debug(`Trying direct properties lookup for "${trimmedName}"`);
+    const encoded = encodeURIComponent(trimmedName);
+    const url = `${PUBCHEM_BASE}/compound/name/${encoded}/property/IsomericSMILES,CID,IUPACName,Title/JSON`;
+    const data = await fetchJson(url);
+    const props = data?.PropertyTable?.Properties?.[0] || {};
+    smiles = props.IsomericSMILES || null;
+    title = props.Title || null;
+    iupac = props.IUPACName || null;
+    
+    if (smiles || title) {
+      logger.info(`Direct properties lookup succeeded for "${trimmedName}"`);
+    }
+  } catch (directError) {
+    errors.push(`Direct properties lookup failed: ${directError.message}`);
+    logger.warn(`Direct properties lookup failed for "${trimmedName}":`, directError.message);
+  }
+
+  const result = { smiles, title, iupac, errors: errors.length > 0 ? errors : undefined };
+  setCacheValue(namePropsCache, cacheKey, result);
+  
+  if (smiles) {
+    logger.info(`Successfully resolved "${trimmedName}": SMILES=${smiles}`);
+  } else {
+    logger.warn(`Failed to resolve "${trimmedName}" to SMILES. Errors: ${errors.join('; ')}`);
+  }
+  
+  return result;
 }
 
 async function downloadSDFBySmiles(smiles) {
@@ -196,6 +395,7 @@ async function downloadSDFBySmiles(smiles) {
   }
 }
 
+<<<<<<< Updated upstream
 async function resolveName(name) {
   // Returns { cid, smiles, title, iupac } best-effort
   if (!name || typeof name !== 'string') {
@@ -276,16 +476,20 @@ async function resolveName(name) {
   return result;
 }
 
+=======
+>>>>>>> Stashed changes
 module.exports = {
   resolveName,
-  resolveNameToCID,
-  getPropertiesByCID,
-  downloadSDFByCID,
   downloadSDFBySmiles,
+<<<<<<< Updated upstream
   resolveCIDBySmiles,
   resolveViaOPSIN,
   resolveViaCACTUS,
   resolveViaChEMBL,
+=======
+  startCleanupInterval,
+  stopCleanupInterval,
+>>>>>>> Stashed changes
 };
 
 

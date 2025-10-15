@@ -81,17 +81,7 @@ const MoleculeViewer = ({ molecularData }) => {
           if (typeof viewer.clear === 'function') viewer.clear();
           if (sdfContent) {
             viewer.addModel(sdfContent, 'sdf');
-          } else if (!molecularData?.skipCid && molecularData?.cid) {
-            try {
-              const cid = encodeURIComponent(String(molecularData.cid));
-              const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/SDF?record_type=3d`;
-              const fetched = await fetch(url);
-              if (fetched.ok) {
-                const text = await fetched.text();
-                viewer.addModel(text, 'sdf');
-              }
-            } catch (_) {}
-          } else if (molecularData.smiles) {
+          } else if (molecularData?.smiles) {
             try { viewer.addModel(molecularData.smiles, 'smiles'); } catch (_) {}
           } else if (molecularData.name) {
             try {

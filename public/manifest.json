@@ -1,7 +1,7 @@
 {
   "name": "Molecular Structure Analysis",
   "short_name": "MolAnalysis",
-  "start_url": "/?v={{CACHE_BUST}}",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#000000",
@@ -11,20 +11,7 @@
   "update_via_cache": "none",
   "categories": ["productivity", "science", "education"],
   "description": "Analyze molecular structures from camera, photos, text, and links with AI-powered analysis",
-  "screenshots": [
-    {
-      "src": "/assets/screenshot-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/assets/screenshot-desktop.png", 
-      "sizes": "1920x1080",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ],
+  "screenshots": [],
   "permissions": ["camera", "storage-access"],
   "prefer_related_applications": false,
   "icons": [
@@ -32,24 +19,24 @@
       "src": "/assets/favicon.svg?v={{CACHE_BUST}}",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/assets/icon-192.png",
+      "src": "/assets/favicon.svg?v={{CACHE_BUST}}",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/assets/icon-512.png",
-      "sizes": "512x512", 
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/icon-maskable.png",
+      "src": "/assets/favicon.svg?v={{CACHE_BUST}}",
       "sizes": "512x512",
-      "type": "image/png", 
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/favicon.svg?v={{CACHE_BUST}}",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
       "purpose": "maskable"
     }
   ]

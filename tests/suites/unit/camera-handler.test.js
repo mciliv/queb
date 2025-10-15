@@ -150,7 +150,7 @@ describe('CameraHandler Tests', () => {
     setupTestDOM();
     
     // Use the testable version with dependency injection
-    const { CameraHandler: TestableHandler } = require('./camera-handler-testable.js');
+    const { CameraHandler: TestableHandler } = require('../unit/camera-handler-testable.js');
     CameraHandler = TestableHandler;
     cameraHandler = new CameraHandler(mockUIManager, mockPaymentManager);
   });
@@ -256,7 +256,7 @@ describe('CameraHandler Tests', () => {
   describe('handleUrlAnalysis', () => {
     test('should analyze valid image URL', async () => {
       // Create isolated instance to avoid test contamination
-      const { CameraHandler: TestableHandler } = require('./camera-handler-testable.js');
+      const { CameraHandler: TestableHandler } = require('../unit/camera-handler-testable.js');
       const testHandler = new TestableHandler(mockUIManager, mockPaymentManager);
       
       const mockUrl = 'https://example.com/image.jpg';
@@ -333,7 +333,7 @@ describe('CameraHandler Tests', () => {
   describe('displayUploadedImage', () => {
     test('should display uploaded image with mobile reticle', async () => {
       // Create isolated instance to avoid test contamination
-      const { CameraHandler: TestableHandler } = require('./camera-handler-testable.js');
+      const { CameraHandler: TestableHandler } = require('../unit/camera-handler-testable.js');
       const testHandler = new TestableHandler(mockUIManager, mockPaymentManager);
       testHandler.isMobile = true;
       
@@ -353,7 +353,7 @@ describe('CameraHandler Tests', () => {
 
     test('should display uploaded image without mobile reticle on desktop', async () => {
       // Create isolated instance to avoid test contamination
-      const { CameraHandler: TestableHandler } = require('./camera-handler-testable.js');
+      const { CameraHandler: TestableHandler } = require('../unit/camera-handler-testable.js');
       const testHandler = new TestableHandler(mockUIManager, mockPaymentManager);
       testHandler.isMobile = false;
       
@@ -371,7 +371,7 @@ describe('CameraHandler Tests', () => {
 
     test('should handle image processing errors', async () => {
       // Create isolated instance to avoid test contamination
-      const { CameraHandler: TestableHandler } = require('./camera-handler-testable.js');
+      const { CameraHandler: TestableHandler } = require('../unit/camera-handler-testable.js');
       const testHandler = new TestableHandler(mockUIManager, mockPaymentManager);
       
       const mockFile = new File(['mock data'], 'test.jpg', { type: 'image/jpeg' });

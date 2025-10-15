@@ -17,7 +17,7 @@ describe("Pre-Deployment Validation", () => {
   let fileManager;
 
   beforeAll(async () => {
-    app = require("../../backend/api/server");
+    app = require("../../../src/server/api/server");
     fileManager = new TestFileManager();
   }, 30000);
 
@@ -28,7 +28,7 @@ describe("Pre-Deployment Validation", () => {
   describe("System Requirements", () => {
     it("should have all required dependencies installed", () => {
       const packageJson = JSON.parse(
-        fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"),
+        fs.readFileSync(path.join(__dirname, "../../../package.json"), "utf8"),
       );
       const requiredDeps = ["express", "cors", "multer", "openai", "zod"];
 
@@ -43,14 +43,13 @@ describe("Pre-Deployment Validation", () => {
 
     it("should have all core files present and valid", () => {
       const criticalFiles = [
-        "server.js",
-        "schemas.js",
-        // no python scripts required
-        "package.json",
+        "../../../src/server/api/server.js",
+        "../../../src/server/schemas/schemas.js",
+        "../../../package.json",
       ];
 
       criticalFiles.forEach((file) => {
-        const filePath = path.join(__dirname, "..", file);
+        const filePath = path.join(__dirname, file);
         expect(fs.existsSync(filePath)).toBe(true);
 
         const stats = fs.statSync(filePath);
@@ -102,19 +101,17 @@ describe("Pre-Deployment Validation", () => {
 
   describe("Schema Validation Coverage", () => {
     it("should validate all schema types thoroughly", () => {
-      const schemas = require("../../backend/schemas/schemas");
+      const schemas = require("../../../src/server/schemas/molecular");
 
       // Test valid data for all schemas
       const validTests = [
         { schema: schemas.smilesArray, data: { smiles: ["O", "CCO"] } },
         { schema: schemas.objectMoleculesRequest, data: { object: "water" } },
         {
-          schema: schemas.imageMoleculesRequest,
+          schema: schemas.ImageMoleculeSchema,
           data: {
-            imageBase64: "data:image/png;base64,test",
-            croppedImageBase64: "data:image/png;base64,test",
-            x: 100,
-            y: 100,
+            image: "data:image/png;base64,test",
+            format: "base64"
           },
         },
       ];
@@ -129,7 +126,7 @@ describe("Pre-Deployment Validation", () => {
         { schema: schemas.smilesArray, data: { smiles: [123] } },
         { schema: schemas.objectMoleculesRequest, data: {} },
         { schema: schemas.objectMoleculesRequest, data: { object: 123 } },
-        { schema: schemas.imageMoleculesRequest, data: { x: "not number" } },
+        { schema: schemas.ImageMoleculeSchema, data: { image: 123 } },
       ];
 
       invalidTests.forEach((test) => {
@@ -249,7 +246,7 @@ describe("Pre-Deployment Validation", () => {
     it("should have proper environment configuration", () => {
       // Check that deployment scripts exist
       const packageJson = JSON.parse(
-        fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"),
+        fs.readFileSync(path.join(__dirname, "../../../package.json"), "utf8"),
       );
 
       expect(packageJson.scripts["deploy"]).toBeDefined();
@@ -297,7 +294,7 @@ describe("Pre-Deployment Validation", () => {
         });
         const trackedFiles = gitFiles.split("\n");
 
-        const criticalFiles = ["server.js", "package.json", "schemas.js"];
+        const criticalFiles = ["src/server/api/server.js", "package.json", "src/server/schemas/schemas.js"];
         criticalFiles.forEach((file) => {
           expect(trackedFiles).toContain(file);
         });

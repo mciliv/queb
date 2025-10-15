@@ -1,1 +1,0 @@
-claude --add-dir ~/app --permission-mode "acceptEdits"

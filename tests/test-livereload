@@ -31,7 +31,6 @@ echo ""
 # Step 2: Clean up any existing processes
 log_step "Cleaning up existing processes..."
 pkill -f "node.*server.js" 2>/dev/null || true
-pkill -f "nodemon" 2>/dev/null || true
 lsof -ti:35730 | xargs kill -9 2>/dev/null || true
 lsof -ti:35729 | xargs kill -9 2>/dev/null || true  
 sleep 2

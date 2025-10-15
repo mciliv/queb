@@ -10,6 +10,8 @@
 
 const configuration = require('./Configuration');
 const promptEngine = require('./PromptEngine');
+const fs = require('fs');
+const path = require('path');
 
 class MolecularAnalysisService {
   constructor(dependencies = {}) {
@@ -84,11 +86,22 @@ class MolecularAnalysisService {
     try {
       this.logger.info(`🔍 Analyzing text: "${description}"`);
 
-      // Generate optimized prompt
-      const prompt = promptEngine.generateChemicalPrompt(description, {
-        objectType: this._detectObjectType(description),
-        includeReason: options.includeReason !== false
-      });
+      // Load minimal chemical analysis prompt text + optional reason suffix and compose inline
+      let chemBase = '';
+      let reasonSuffix = '';
+      try {
+        const chemPath = path.join(__dirname, 'prompts', 'chemical_analysis.txt');
+        chemBase = fs.readFileSync(chemPath, 'utf8').trim();
+      } catch (_) { chemBase = ''; }
+      try {
+        const reasonPath = path.join(__dirname, 'prompts', 'reason_suffix.txt');
+        reasonSuffix = fs.readFileSync(reasonPath, 'utf8').trim();
+      } catch (_) { reasonSuffix = ''; }
+      const prompt = [
+        chemBase,
+        `Object: ${description}`,
+        (options.includeReason !== false) ? reasonSuffix : ''
+      ].filter(Boolean).join('\n\n');
 
       // Call AI service with error handling
       const response = await this._callAI({
@@ -262,8 +275,17 @@ class MolecularAnalysisService {
    * Detect object in image using AI vision
    */
   async _detectObject(imageData, coordinates) {
-    const prompt = promptEngine.generateDetectionPrompt(coordinates);
-    
+    // Load detection prompt base text and append coordinates if provided
+    let detectionBase = '';
+    try {
+      const detPath = path.join(__dirname, 'prompts', 'object_detection.txt');
+      detectionBase = fs.readFileSync(detPath, 'utf8').trim();
+    } catch (_) { detectionBase = ''; }
+    let prompt = detectionBase;
+    if (coordinates && Number.isFinite(coordinates.x) && Number.isFinite(coordinates.y)) {
+      prompt += `\n\nUser clicked at coordinates (${coordinates.x}, ${coordinates.y}). Focus analysis around this area.`;
+    }
+
     const messages = [{
       role: 'user',
       content: [
@@ -296,8 +318,7 @@ class MolecularAnalysisService {
         try {
           const resolved = await this.nameResolver.resolveName(enrichedMol.name);
           if (resolved) {
-            enrichedMol.smiles = resolved.smiles;
-            enrichedMol.cid = resolved.cid;
+            enrichedMol.smiles = resolved.smiles || enrichedMol.smiles;
             enrichedMol.name = resolved.title || resolved.iupac || enrichedMol.name;
           }
         } catch (error) {

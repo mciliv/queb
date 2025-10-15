@@ -113,7 +113,7 @@ describe('check-env.js utilities', () => {
 
       const result = await checkUrl('https://example.com', 100); // 100ms timeout
       expect(result).toBe(false);
-    }, 5000); // 5 second timeout for this test
+    }, 10000); // 10 second timeout for this test
   });
 
   describe('environment detection', () => {

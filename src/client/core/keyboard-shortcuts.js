@@ -1,60 +1,9 @@
-// Minimal keyboard shortcut handler to keep UI simple and functional
-// - ⌘/Ctrl + K: focus input
-// - ⌘/Ctrl + Shift + 1/2/3: toggle modes via provided actions
-
 import logger from './logger.js';
-
-// Simple keyboard handler (moved to bottom to avoid conflicts)
-const createSimpleKeyboardHandler = (actions = {}) => {
-  return (event) => {
-    try {
-      const isMac = navigator.userAgent.toUpperCase().includes('MAC');
-      const modifier = isMac ? event.metaKey : event.ctrlKey;
-
-      // Ignore if typing in inputs/areas/contentEditable
-      const target = event.target;
-      const tag = target && target.tagName ? target.tagName.toUpperCase() : '';
-      const typing = tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable;
-      if (typing) return;
-
-      if (modifier && !event.shiftKey && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        const input = document.getElementById('object-input');
-        logger.debug('⌘K triggered, looking for input:', input);
-        if (input) {
-          input.focus();
-          logger.debug('Focused on input');
-        } else {
-          logger.warn('Input element not found!');
-        }
-        return;
-      }
-
-      // Ctrl/Cmd + Shift + Number combos for modes
-      if (!modifier || !event.shiftKey) return;
-      const key = event.key;
-      if (key === '1' && typeof actions.cameraMode === 'function') {
-        event.preventDefault();
-        actions.cameraMode();
-      } else if (key === '2' && typeof actions.photoMode === 'function') {
-        event.preventDefault();
-        actions.photoMode();
-      } else if (key === '3' && typeof actions.linkMode === 'function') {
-        event.preventDefault();
-        actions.linkMode();
-      }
-    } catch (_) {}
-  };
-};
-
-// PROTECTED: Keyboard Shortcut System
-// This file contains the canonical keyboard shortcut definitions
-// Changes here affect core user interaction patterns
 
 export const KEYBOARD_SHORTCUTS = {
   FOCUS_INPUT: {
     key: 'k',
-    modifiers: { meta: true, ctrl: true, shift: false },
+    modifiers: { meta: true, ctrl: true, alt: false, shift: false },
     action: 'focusInput',
     description: 'Focus input field',
     targetId: 'object-input'
@@ -79,97 +28,68 @@ export const KEYBOARD_SHORTCUTS = {
   }
 };
 
-// Validate shortcut integrity
-export function validateShortcuts() {
-  const required = ['FOCUS_INPUT', 'CAMERA_MODE', 'PHOTO_MODE', 'LINK_MODE'];
-  for (const name of required) {
-    if (!KEYBOARD_SHORTCUTS[name]) {
-      logger.error(`Missing required shortcut: ${name}`);
-      return false;
-    }
-    const shortcut = KEYBOARD_SHORTCUTS[name];
-    if (!shortcut.key || !shortcut.action || !shortcut.modifiers) {
-      logger.error(`Invalid shortcut configuration for ${name}`);
-      return false;
-    }
-  }
-  return true;
-}
+export function createKeyboardHandler(actions = {}) {
+  const platformIsMac = typeof navigator !== 'undefined' && (/Mac/i.test(navigator.platform) || /Mac/i.test(navigator.userAgent));
 
-// Create keyboard event handler with validation
-export function createKeyboardHandlerValidated(actions) {
-  // Validate on creation
-  if (!validateShortcuts()) {
-    logger.warn('Keyboard shortcuts validation failed - using fallback');
-  }
-
-  return (event) => {
-    // Debug logging for ⌘K
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-      logger.debug('⌘K detected, current state:', {
-        key: event.key,
-        metaKey: event.metaKey,
-        ctrlKey: event.ctrlKey,
-        shiftKey: event.shiftKey,
-        target: event.target.tagName,
-        targetId: event.target.id
-      });
-    }
-
-    // Skip on mobile
-    if (typeof window !== 'undefined' && window.matchMedia && 
-        window.matchMedia('(pointer: coarse)').matches) {
+  return (keyboardEvent) => {
+    logger.info(`🎹 Keyboard shortcut attempt:`, {
+      key: keyboardEvent.key,
+      metaKey: keyboardEvent.metaKey,
+      ctrlKey: keyboardEvent.ctrlKey,
+      altKey: keyboardEvent.altKey,
+      shiftKey: keyboardEvent.shiftKey,
+    });
+    
+    const deviceIsMobile = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+    if (deviceIsMobile) {
       return;
     }
 
-    // Skip if typing in form fields
-    if (event.target.tagName === 'INPUT' || 
-        event.target.tagName === 'TEXTAREA' || 
-        event.target.contentEditable === 'true') {
+    const targetElement = keyboardEvent.target;
+    const userIsTypingInFormField = targetElement.tagName === 'INPUT' || targetElement.tagName === 'TEXTAREA' || targetElement.isContentEditable;
+    if (userIsTypingInFormField) {
       return;
     }
 
-    const isMac = navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+    for (const [shortcutName, shortcutDefinition] of Object.entries(KEYBOARD_SHORTCUTS)) {
+      const { key, modifiers, targetId, action } = shortcutDefinition;
 
-    // Check each shortcut
-    for (const [name, shortcut] of Object.entries(KEYBOARD_SHORTCUTS)) {
-      // Handle regular shortcuts with modifiers
-      const wantsAlt = !!shortcut.modifiers.alt;
-      const modifierMatch = wantsAlt
-        ? event.altKey
-        : (isMac ? (shortcut.modifiers.meta && event.metaKey) : (shortcut.modifiers.ctrl && event.ctrlKey));
+      // Check if Cmd (Mac) or Ctrl (Windows/Linux) is pressed when the shortcut requires it
+      const requiresCtrlOrMeta = modifiers.meta || modifiers.ctrl;
+      const ctrlOrMetaKeyPressed = requiresCtrlOrMeta ? (platformIsMac ? keyboardEvent.metaKey : keyboardEvent.ctrlKey) : true;
 
-      const matches = modifierMatch && 
-               event.shiftKey === shortcut.modifiers.shift &&
-               event.key.toLowerCase() === shortcut.key.toLowerCase();
+      const allModifiersMatch =
+        ctrlOrMetaKeyPressed &&
+        keyboardEvent.altKey === !!modifiers.alt &&
+        keyboardEvent.shiftKey === !!modifiers.shift;
 
-      if (matches) {
-        logger.info(`Shortcut match found: ${name}`, {
-          shortcut,
-          targetId: shortcut.targetId,
-          action: shortcut.action
-        });
-        
-        event.preventDefault();
-        event.stopPropagation();
-        
-        // Execute action
-        if (shortcut.targetId) {
-          // Focus element action
-          const element = document.getElementById(shortcut.targetId);
-          logger.debug(`Looking for element with ID: ${shortcut.targetId}, found:`, element);
-          if (element) {
-            element.focus();
-            logger.info(`Shortcut ${name} executed: focused ${shortcut.targetId}`);
+      const keyMatchesAndModifiersMatch = keyboardEvent.key.toLowerCase() === key.toLowerCase() && allModifiersMatch;
+      
+      if (keyMatchesAndModifiersMatch) {
+        logger.debug(`🐛 Shortcut match found: ${shortcutName}`, { shortcut: shortcutDefinition });
+        keyboardEvent.preventDefault();
+        keyboardEvent.stopPropagation();
+
+        const shortcutTargetsElement = !!targetId;
+        if (shortcutTargetsElement) {
+          const targetElementInDOM = document.getElementById(targetId);
+          logger.debug(`Looking for element with ID: ${targetId}, found:`, targetElementInDOM);
+          
+          const elementExists = !!targetElementInDOM;
+          if (elementExists) {
+            targetElementInDOM.focus();
+            logger.info(`✅ Shortcut ${shortcutName} executed: focused ${targetId}`);
           } else {
-            logger.warn(`Shortcut ${name} failed: element ${shortcut.targetId} not found`);
+            logger.warn(`❌ Shortcut ${shortcutName} failed: element ${targetId} not found`);
           }
-        } else if (actions[shortcut.action]) {
-          // Custom action
-          actions[shortcut.action]();
-          logger.info(`Shortcut ${name} executed: ${shortcut.action}`);
         } else {
-          logger.warn(`Shortcut ${name} failed: action ${shortcut.action} not found`);
+          const actionExists = !!actions[action];
+          if (actionExists) {
+            actions[action]();
+            logger.info(`✅ Shortcut ${shortcutName} executed: ${action}`);
+          } else {
+            logger.warn(`❌ Shortcut ${shortcutName} failed: action ${action} not found`);
+          }
         }
         return;
       }
@@ -177,15 +97,22 @@ export function createKeyboardHandlerValidated(actions) {
   };
 }
 
-// Self-test function to verify shortcuts work  
-export function testShortcuts() {
-  return validateShortcuts();
+export function validateAllShortcutsConfigured() {
+  const requiredShortcutNames = ['FOCUS_INPUT', 'CAMERA_MODE', 'PHOTO_MODE', 'LINK_MODE'];
+  
+  for (const shortcutName of requiredShortcutNames) {
+    const shortcutExists = !!KEYBOARD_SHORTCUTS[shortcutName];
+    if (!shortcutExists) {
+      logger.error(`Missing required shortcut: ${shortcutName}`);
+      return false;
+    }
+    
+    const shortcutConfiguration = KEYBOARD_SHORTCUTS[shortcutName];
+    const configurationIsComplete = shortcutConfiguration.key && shortcutConfiguration.action && shortcutConfiguration.modifiers;
+    if (!configurationIsComplete) {
+      logger.error(`Invalid shortcut configuration for ${shortcutName}`);
+      return false;
+    }
+  }
+  return true;
 }
-
-// Export the main keyboard handler (uses validated version by default)
-export function createKeyboardHandler(actions) {
-  return createKeyboardHandlerValidated(actions);
-}
-
-// Export simple handler as alternative
-export { createSimpleKeyboardHandler };

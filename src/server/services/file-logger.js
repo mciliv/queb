@@ -7,6 +7,8 @@ class FileLogger {
     // Always use the project root for logs, not the current working directory
     const projectRoot = this.findProjectRoot();
     this.logsDir = process.env.LOGS_DIR || path.join(projectRoot, 'logs');
+    this.minimumLevel = (process.env.LOG_LEVEL || 'info').toLowerCase();
+    this.levelOrder = { error: 0, warn: 1, success: 2, info: 2, log: 2, debug: 3 };
     this.ensureLogsDirectory();
     this.clearOldLogs();
   }
@@ -21,6 +23,14 @@ class FileLogger {
         return currentDir;
       }
       currentDir = path.dirname(currentDir);
+    }
+    
+    // If we're in a src/ directory, go up one level to find the project root
+    if (currentDir.endsWith('src')) {
+      const parentDir = path.dirname(currentDir);
+      if (fs.existsSync(path.join(parentDir, 'package.json'))) {
+        return parentDir;
+      }
     }
     
     // Fallback to process.cwd() if we can't find package.json
@@ -71,10 +81,44 @@ class FileLogger {
     return path.join(this.logsDir, `${type}-${today}.log`);
   }
 
-  formatMessage(level, message, meta = {}) {
+  safeSerializeMeta(meta) {
+    if (!meta || typeof meta !== 'object') return undefined;
+    const seen = new WeakSet();
+    return JSON.parse(JSON.stringify(meta, (key, value) => {
+      if (value instanceof Error) {
+        return { message: value.message, stack: value.stack, name: value.name };
+      }
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) return '[Circular]';
+        seen.add(value);
+      }
+      return value;
+    }));
+  }
+
+  shouldLog(level) {
+    const current = this.levelOrder[level] ?? 2;
+    const min = this.levelOrder[this.minimumLevel] ?? 2;
+    return current <= min;
+  }
+
+  formatConsole(level, message, meta) {
     const timestamp = new Date().toISOString();
-    const metaStr = Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : '';
-    return `[${timestamp}] [${level.toUpperCase()}] ${message}${metaStr}\n`;
+    const levelLabel = level.toUpperCase();
+    const color = level === 'error' ? '\x1b[31m' : level === 'warn' ? '\x1b[33m' : level === 'debug' ? '\x1b[90m' : level === 'success' ? '\x1b[32m' : '\x1b[36m';
+    const reset = '\x1b[0m';
+    const metaStr = meta && Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : '';
+    return `${color}[${timestamp}] [${levelLabel}]${reset} ${message}${metaStr}`;
+  }
+
+  formatFileLine(level, message, meta) {
+    const payload = {
+      ts: new Date().toISOString(),
+      level,
+      msg: typeof message === 'string' ? message : String(message),
+      ...(meta && Object.keys(meta).length > 0 ? { meta } : {})
+    };
+    return JSON.stringify(payload) + '\n';
   }
 
   writeToFile(filename, content) {
@@ -88,16 +132,18 @@ class FileLogger {
   }
 
   log(level, message, meta = {}) {
-    const formattedMessage = this.formatMessage(level, message, meta);
+    const normalizedLevel = level === 'success' ? 'success' : level;
+    const safeMeta = this.safeSerializeMeta(meta) || {};
     const logFile = this.getLogFile();
 
-    // Write to file
-    this.writeToFile(logFile, formattedMessage);
+    // File: JSONL for easy parsing/ingestion
+    this.writeToFile(logFile, this.formatFileLine(normalizedLevel, message, safeMeta));
 
-    // Also write to console for development
-    const consoleMethod = level === 'error' ? 'error' :
-                         level === 'warn' ? 'warn' : 'log';
-    console[consoleMethod](formattedMessage.trim());
+    // Console: human-friendly with colors; respect LOG_LEVEL
+    if (this.shouldLog(normalizedLevel)) {
+      const consoleMethod = normalizedLevel === 'error' ? 'error' : normalizedLevel === 'warn' ? 'warn' : 'log';
+      console[consoleMethod](this.formatConsole(normalizedLevel, typeof message === 'string' ? message : String(message), safeMeta));
+    }
   }
 
   info(message, meta = {}) {

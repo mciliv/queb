@@ -1,16 +1,15 @@
-const childProcess = require("child_process"); // dynamic spawn access
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const fsPromises = require("fs").promises;
-const { resolveName, downloadSDFByCID, downloadSDFBySmiles } = require("./name-resolver");
+const { resolveName, downloadSDFBySmiles } = require("./name-resolver");
 
 class MolecularProcessor {
   constructor(sdfDir) {
     if (!sdfDir) {
       sdfDir = process.env.NODE_ENV === 'test'
-        ? 'test/sdf_files'
-        : 'backend/sdf_files';
+        ? 'tests/sdf_files'
+        : 'server/sdf_files';
     }
     this.sdfDir = path.join(__dirname, "..", "..", sdfDir);
     this.ensureSdfDirectory();
@@ -52,30 +51,17 @@ class MolecularProcessor {
     return results;
   }
 
-  async generateSDFByCID(cid) {
-    try {
-      const sdf = await downloadSDFByCID(cid);
-      const filename = `CID_${cid}.sdf`;
-      const dest = path.join(this.sdfDir, filename);
-      await fsPromises.writeFile(dest, sdf, "utf8");
-      return `/sdf_files/${filename}`;
-    } catch (err) {
-      return null;
-    }
-  }
-
   async generateSDFByName(name, overwrite = false) {
-    // Resolve via PubChem; prefer direct SDF by CID; fallback to SMILES→SDF
-    const { cid, smiles, title, iupac } = await resolveName(name);
+    const { smiles, title, iupac } = await resolveName(name);
     const displayName = title || iupac || name;
-    if (cid) {
-      const byCid = await this.generateSDFByCID(cid);
-      if (byCid) return { sdfPath: byCid, name: displayName };
-    }
+
     if (smiles) {
       const pathOrNull = await this.generateSDF(smiles, overwrite);
-      if (pathOrNull) return { sdfPath: pathOrNull, name: displayName };
+      if (pathOrNull) {
+        return { sdfPath: pathOrNull, name: displayName };
+      }
     }
+
     return null;
   }
 
@@ -87,14 +73,15 @@ class MolecularProcessor {
     // Allow common SMILES patterns and reject obvious molecular formulas
     const cleaned = smiles.replace(/\s/g, '');
     
-    // Common valid SMILES patterns
+    // Common valid SMILES patterns (allow lowercase for aromatic atoms)
     const validPatterns = [
-      /^[A-Z][A-Z][A-Z]$/, // CCO, CCC, etc.
-      /^[A-Z][A-Z]\(=O\)[A-Z]$/, // CC(=O)O, etc.
-      /^[A-Z]\([A-Z][A-Z]\)[A-Z]$/, // C(CC)C, etc.
-      /^[A-Z]1[A-Z]=[A-Z][A-Z]=[A-Z]1$/, // C1=CC=CC=C1 (benzene)
-      /^[A-Z]1[A-Z][A-Z][A-Z][A-Z][A-Z]1$/, // C1CCCCC1 (cyclohexane)
-      /^[A-Z]$/, // O, N, C, etc.
+      /^[A-Za-z][A-Za-z][A-Za-z]$/, // CCO, CCC, cco, etc.
+      /^[A-Za-z][A-Za-z]\(=O\)[A-Za-z]$/, // CC(=O)O, etc.
+      /^[A-Za-z]\([A-Za-z][A-Za-z]\)[A-Za-z]$/, // C(CC)C, etc.
+      /^[A-Za-z]1[A-Za-z]=[A-Za-z][A-Za-z]=[A-Za-z]1$/, // C1=CC=CC=C1 (benzene)
+      /^[A-Za-z]1[A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z]1$/, // C1CCCCC1 (cyclohexane)
+      /^[A-Za-z]$/, // O, N, C, c, etc.
+      /^[A-Za-z]1[A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z]1$/, // c1ccc2ccccc2c1 (naphthalene)
     ];
     
     // Check if it matches any valid pattern
@@ -192,7 +179,7 @@ class MolecularProcessor {
 
   copyFallbackSdf(smiles) {
     try {
-      const fallbackDir = path.join(__dirname, "..", "..", "test", "sdf_files");
+      const fallbackDir = path.join(__dirname, "..", "..", "tests", "sdf_files");
       const filenames = [
         `${smiles}.sdf`,
         this.generateSafeFilename(smiles),

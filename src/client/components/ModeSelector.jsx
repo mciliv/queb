@@ -1,62 +1,57 @@
-import React from 'react';
+import React, { memo } from 'react';
+import { useAppController } from '../core/AppController';
 import { isMobileDevice } from '../utils/device.js';
 
-const ModeSelector = ({ mode, setMode }) => {
+const cameraSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8" />
+  <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" />
+</svg>
+`;
+
+const photoSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+  <circle cx="9" cy="9" r="2" />
+  <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+</svg>
+`;
+
+const linkSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+</svg>
+`;
+
+const ModeButton = memo(({ id, svgMarkup, label, shortcut }) => {
+  const { activeMode, switchMode } = useAppController();
   const isMobile = isMobileDevice();
-  const handleModeSelect = (next) => setMode(next);
 
   return (
-    <div className="mode-row">
-      <button 
-        className={`mode-btn${mode === 'camera' ? ' active' : ''}`}
-        onClick={() => handleModeSelect('camera')}
-        title={isMobile ? "Capture from camera" : "Capture from camera (⌘⇧1)"}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8"/>
-          <circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
-        </svg>
-        {!isMobile && (
-          <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧1' : 'Ctrl+Shift+1'}
-          </span>
-        )}
-      </button>
-
-      <button 
-        className={`mode-btn${mode === 'photo' ? ' active' : ''}`}
-        onClick={() => handleModeSelect('photo')}
-        title={isMobile ? "Upload image" : "Upload image (⌘⇧2)"}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-          <circle cx="9" cy="9" r="2"/>
-          <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-        </svg>
-        {!isMobile && (
-          <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧2' : 'Ctrl+Shift+2'}
-          </span>
-        )}
-      </button>
-
-      <button 
-        className={`mode-btn${mode === 'link' ? ' active' : ''}`}
-        onClick={() => handleModeSelect('link')}
-        title={isMobile ? "Enter image link" : "Enter image link (⌘⇧3)"}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-        </svg>
-        {!isMobile && (
-          <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧3' : 'Ctrl+Shift+3'}
-          </span>
-        )}
-      </button>
-    </div>
+    <button
+      className={`mode-btn${activeMode === id ? ' active' : ''}`}
+      onClick={() => switchMode(id)}
+      title={isMobile ? label : `${label} (${shortcut})`}
+    >
+      <span
+        className="mode-icon"
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{ __html: svgMarkup }}
+      />
+      {!isMobile && <span className="mode-btn-shortcut">{shortcut}</span>}
+    </button>
   );
-};
+});
 
-export default ModeSelector;
+ModeButton.displayName = 'ModeButton';
+
+const ModeSelector = () => (
+  <div className="mode-row">
+    <ModeButton id="camera" svgMarkup={cameraSvg} label="Capture from camera" shortcut="Alt+1" />
+    <ModeButton id="photo" svgMarkup={photoSvg} label="Upload image" shortcut="Alt+2" />
+    <ModeButton id="link" svgMarkup={linkSvg} label="Enter image link" shortcut="Alt+3" />
+  </div>
+);
+
+export default memo(ModeSelector);

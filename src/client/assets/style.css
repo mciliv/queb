@@ -548,7 +548,7 @@ canvas[class*="threeDmol"] {
 .mode-row {
   display: flex;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 8px;
   animation: fadeInUp 0.6s ease-out 0.1s both;
 }
 
@@ -556,20 +556,34 @@ canvas[class*="threeDmol"] {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.08) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(245, 245, 247, 0.9);
-  padding: 14px 18px;
+  padding: 12px 16px;
   border-radius: 12px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
   font-size: 14px;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 48px;
+  min-height: 44px;
+  min-width: 44px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   position: relative;
   overflow: hidden;
+}
+
+.mode-btn .mode-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+}
+
+.mode-btn .mode-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
 }
 
 .mode-btn:hover {

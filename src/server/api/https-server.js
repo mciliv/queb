@@ -165,11 +165,13 @@ class HttpsServer {
       
       return new Promise((resolve, reject) => {
         server.listen(this.actualPort, "0.0.0.0", () => {
-          console.log(`https://localhost:${this.actualPort}`);
-          if (this.localIP && this.localIP !== "127.0.0.1") {
-            console.log(`https://${this.localIP}:${this.actualPort}`);
-          }
-          resolve(server);
+          const endpoints = [
+            `https://localhost:${this.actualPort}`,
+            ...(this.localIP && this.localIP !== "127.0.0.1" ? [`https://${this.localIP}:${this.actualPort}`] : [])
+          ];
+
+          const response = { server, endpoints };
+          resolve(response);
         });
 
         server.on("error", (error) => {

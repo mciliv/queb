@@ -1,98 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useStripeSetup } from '../hooks/useStripeSetup';
 
 const QuickSetup = () => {
-    // State management
-    const [stripe, setStripe] = useState(null);
-    const [cardElement, setCardElement] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null);
-    const [showExistingUser, setShowExistingUser] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [error, setError] = useState('');
+    const {
+        stripe,
+        cardElement,
+        currentUser,
+        loading,
+        error,
+        success,
+        cardElementRef,
+        setLoading,
+        setError,
+        setSuccess,
+        setCurrentUser,
+    } = useStripeSetup();
+
     const [userName, setUserName] = useState('');
-    const [paymentRequestButton, setPaymentRequestButton] = useState(null);
-    const cardElementRef = useRef(null);
-    
+    const [showExistingUser, setShowExistingUser] = useState(!!currentUser);
+
     useEffect(() => {
-        initializeStripe();
-        checkExistingUser();
-    }, []);
-
-    const initializeStripe = async () => {
-        try {
-            const response = await fetch('/api/stripe-config');
-            const config = await response.json();
-            
-            const stripeInstance = window.Stripe(config.publishableKey);
-            setStripe(stripeInstance);
-            
-            const elements = stripeInstance.elements();
-            const cardEl = elements.create('card', {
-                style: {
-                    base: {
-                        fontSize: '16px',
-                        color: '#333',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                        '::placeholder': {
-                            color: '#aaa'
-                        }
-                    },
-                    invalid: {
-                        color: '#ff6b6b',
-                        iconColor: '#ff6b6b'
-                    }
-                },
-                hidePostalCode: false
-            });
-            
-            cardEl.mount(cardElementRef.current);
-            setCardElement(cardEl);
-            
-            cardEl.on('change', (event) => {
-                setError(event.error ? event.error.message : '');
-            });
-
-            // Initialize Payment Request for Express Payments
-            const paymentRequest = stripeInstance.paymentRequest({
-                country: 'US',
-                currency: 'usd',
-                total: {
-                    label: 'Molecular Analysis Setup',
-                    amount: 25, // $0.25 in cents
-                },
-                requestPayerName: true,
-                requestPayerEmail: true,
-            });
-
-            const prButton = elements.create('paymentRequestButton', {
-                paymentRequest,
-            });
-
-            // Check if the browser supports Payment Request
-            paymentRequest.canMakePayment().then(result => {
-                if (result) {
-                    prButton.mount('#payment-request-button');
-                    setPaymentRequestButton(prButton);
-                }
-            });
-
-        } catch (err) {
-            setError('Failed to initialize payment system');
-        }
-    };
-
-    const checkExistingUser = async () => {
-        try {
-            const response = await fetch('/api/user/check');
-            if (response.ok) {
-                const user = await response.json();
-                setCurrentUser(user);
-                setShowExistingUser(true);
-            }
-        } catch (err) {
-            console.log('No existing user found');
-        }
-    };
+        setShowExistingUser(!!currentUser);
+    }, [currentUser]);
 
     const handleSubmit = async (event) => {
         event.preventDefault();

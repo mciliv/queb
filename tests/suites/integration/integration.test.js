@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
-const IntegrationTestSetup = require('./setup-integration');
+const IntegrationTestSetup = require('../../integration/setup-integration');
 
 // Integration Test Validation Rules - End-to-End App Functionality
 const INTEGRATION_VALIDATION_RULES = {

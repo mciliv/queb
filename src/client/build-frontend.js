@@ -22,7 +22,8 @@ async function build() {
       bundle: true,
       sourcemap: true,
       minify: false,
-      loader: { '.js': 'jsx', '.jsx': 'jsx' },
+      loader: { '.js': 'jsx', '.jsx': 'jsx', '.svg': 'text' },
+      assetNames: 'assets/[name]-[hash]',
       define: {
         'process.env.NODE_ENV': '"development"',
         'process.env.REACT_APP_RUN_VISUAL_TESTS': '"false"',
@@ -64,7 +65,8 @@ async function build() {
       sourcemap: dev,
       minify: !dev,
       treeShaking: !dev,
-      loader: { '.js': 'jsx', '.jsx': 'jsx' },
+      loader: { '.js': 'jsx', '.jsx': 'jsx', '.svg': 'text' },
+      assetNames: 'assets/[name]-[hash]',
       define: {
         'process.env.NODE_ENV': dev ? '"development"' : '"production"',
         'process.env.REACT_APP_RUN_VISUAL_TESTS': '"false"',

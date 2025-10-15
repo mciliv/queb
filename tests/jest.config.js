@@ -1,6 +1,10 @@
 module.exports = {
   rootDir: __dirname,
-  testEnvironment: 'jsdom',
+  testEnvironment: 'node',
+  reporters: [
+    'default',
+    '<rootDir>/reporters/one-line-reporter.js'
+  ],
   setupFilesAfterEnv: ['<rootDir>/support/fixtures/setup.js'],
   globalTeardown: '<rootDir>/support/fixtures/global-teardown.js',
   testMatch: [
@@ -16,13 +20,30 @@ module.exports = {
     '!<rootDir>/../**/node_modules/**',
     '!<rootDir>/../**/dist/**'
   ],
+  // Reduce noisy console during tests; reporter provides one-liners
+  silent: true,
   transform: {
-    '^.+\\.(js|jsx)$': ['babel-jest']
+    '^.+\\.(js|jsx)$': ['babel-jest', { 
+      presets: [
+        ['@babel/preset-env', { 
+          targets: { node: 'current' },
+          modules: 'commonjs'
+        }],
+        ['@babel/preset-react', { runtime: 'automatic' }]
+      ],
+      plugins: ['@babel/plugin-transform-modules-commonjs']
+    }]
   },
+  // Ensure source files are transformed
   transformIgnorePatterns: [
-    'node_modules/(?!(.*\\.(js|mjs)$))',
-    '!frontend/'
+    'node_modules/(?!(.*\\.(js|mjs)$))'
   ],
+  // Include source files in transformation
+  moduleNameMapper: {
+    '^queb$': '<rootDir>/../package.json',
+    '^@/(.*)$': '<rootDir>/../src/$1'
+  },
+  moduleFileExtensions: ['js', 'jsx', 'json'],
   modulePathIgnorePatterns: [
     '<rootDir>/dist/'
   ],
@@ -33,15 +54,30 @@ module.exports = {
     TextEncoder: TextEncoder,
     TextDecoder: TextDecoder
   },
-  moduleNameMapper: {
-    '^mol$': '<rootDir>/../package.json'
-  },
+  // Fail on skipped tests and ensure all tests pass
+  passWithNoTests: false,
+  errorOnDeprecated: true,
   projects: [
     {
       displayName: 'unit-frontend',
       testMatch: ['**/suites/unit/camera*.test.js', '**/suites/unit/manual.test.js', '**/suites/unit/front-end*.test.js', '**/suites/unit/keyboard-shortcuts.test.js'],
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/support/fixtures/setup.js'],
+      transform: {
+        '^.+\\.(js|jsx)$': ['babel-jest', { 
+          presets: [
+            ['@babel/preset-env', { 
+              targets: { node: 'current' },
+              modules: 'commonjs'
+            }],
+            ['@babel/preset-react', { runtime: 'automatic' }]
+          ],
+          plugins: ['@babel/plugin-transform-modules-commonjs']
+        }]
+      },
+      transformIgnorePatterns: [
+        'node_modules/(?!(.*\\.(js|mjs)$))'
+      ],
       globals: {
         TextEncoder: TextEncoder,
         TextDecoder: TextDecoder
@@ -56,7 +92,8 @@ module.exports = {
         '**/suites/unit/health-check.test.js',
         '**/suites/unit/backup.test.js',
         '**/suites/unit/restore.test.js',
-        '**/suites/unit/setup-database.test.js'
+        '**/suites/unit/setup-database.test.js',
+        '**/suites/unit/sdf-retriever.test.js'
       ],
       testEnvironment: 'node',
       globals: {

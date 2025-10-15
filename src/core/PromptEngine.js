@@ -1,12 +1,5 @@
-/**
- * Unified Prompt Engine
- * 
- * This module applies the "Deep Modules" principle by providing a simple interface
- * for prompt generation while hiding the complexity of different prompt types,
- * validation, and context-specific optimizations.
- * 
- * Philosophy: "Information hiding reduces complexity by eliminating dependencies"
- */
+const fs = require('fs');
+const path = require('path');
 
 class PromptEngine {
   constructor() {
@@ -19,68 +12,28 @@ class PromptEngine {
    * Initialize prompt templates - complex logic hidden from users
    */
   _initializeTemplates() {
-    // Chemical analysis template
+    // Load prompt templates from plain text files (synchronous for simplicity)
+    const chemicalBase = this._loadPromptFile('chemical_analysis.txt');
+    const detectionBase = this._loadPromptFile('object_detection.txt');
+    const nameBase = this._loadPromptFile('name_resolution.txt');
+
     this._templates.set('chemical_analysis', {
-      base: `Analyze the chemical composition of the provided object.
-Return JSON only. Provide valid, verified SMILES for each molecule.
-
-RULES:
-- Output valid, verified SMILES for each specific molecule
-- Prefer canonical, database-standard forms (PubChem/ChEBI)
-- Keep SMILES realistic and chemically plausible
-- Do not output chemical formulas; always use SMILES
-- Avoid commentary; return JSON only
-- Focus on characteristic constituents (major first, then minor)
-- If nothing identifiable, return empty list but valid JSON
-
-RESPONSE FORMAT:
-{
-  "object": "Object name",
-  "reason": "Brief explanation",
-  "chemicals": [
-    { "name": "Specific chemical name", "smiles": "valid SMILES" }
-  ]
-}`,
-      examples: this._getChemicalExamples(),
+      base: chemicalBase,
       validation: (result) => this._validateChemicalResponse(result)
     });
 
-    // Object detection template
     this._templates.set('object_detection', {
-      base: `Identify the main object in this image and provide a bounding box.
-Focus on the most prominent physical object that could contain molecules.
-
-Return JSON format:
-{
-  "object": "descriptive name",
-  "reason": "why this object was identified",
-  "recommendedBox": {
-    "x": number,
-    "y": number, 
-    "width": number,
-    "height": number
-  }
-}`,
+      base: detectionBase,
       validation: (result) => this._validateDetectionResponse(result)
     });
 
-    // Name resolution template
     this._templates.set('name_resolution', {
-      base: `Convert object description to specific chemical molecule names.
-Output ONLY fully specific molecule names (common names or IUPAC).
-No classes/families, no brand names.
-
-Schema:
-{
-  "object": "string",
-  "molecules": [
-    {"name": "string", "cid": "number|null"}
-  ]
-}`,
+      base: nameBase,
       validation: (result) => this._validateNameResponse(result)
     });
   }
 
+<<<<<<< Updated upstream
   /**
    * Get chemical analysis examples based on context
    */
@@ -92,6 +45,17 @@ GUIDANCE:
 - Do not guess: if uncertain or ambiguous, set "smiles": null.
 - Output JSON only; no commentary.
 - Focus on characteristic constituents (major first, then minor).`;
+=======
+  _loadPromptFile(filename) {
+    const filePath = path.join(__dirname, 'prompts', filename);
+    try {
+      const text = fs.readFileSync(filePath, 'utf8');
+      return typeof text === 'string' ? text.trim() : '';
+    } catch (err) {
+      // If missing, return empty string to avoid runtime failure
+      return '';
+    }
+>>>>>>> Stashed changes
   }
 
   /**
@@ -131,7 +95,7 @@ GUIDANCE:
     
     return response.molecules.every(mol => 
       mol.name && typeof mol.name === 'string' &&
-      (mol.cid === null || typeof mol.cid === 'number')
+      true
     );
   }
 
@@ -147,6 +111,7 @@ GUIDANCE:
     return /^[A-Za-z0-9\[\]()=+\-#@\\/.]+$/.test(cleaned);
   }
 
+<<<<<<< Updated upstream
   /**
    * Get context-specific examples
    */
@@ -170,6 +135,9 @@ Material guidance:
 
     return contexts[objectType] || '';
   }
+=======
+  // _getContextExamples removed: prompts now live in plain text files
+>>>>>>> Stashed changes
 
   /**
    * PUBLIC INTERFACE - Simple methods hiding complexity
@@ -180,13 +148,12 @@ Material guidance:
    */
   generateChemicalPrompt(objectDescription, options = {}) {
     const template = this._templates.get('chemical_analysis');
-    const contextExamples = this._getContextExamples(options.objectType || 'general');
     
+    // Minimal prompt: keep rules and schema only, avoid extra examples/context that can distract the model.
+    // Preserve option to include a brief reason.
     return [
       template.base,
       `Object: ${objectDescription}`,
-      template.examples,
-      contextExamples,
       options.includeReason ? 'Include a brief reason for your identification.' : ''
     ].filter(Boolean).join('\n\n');
   }

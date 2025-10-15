@@ -18,7 +18,10 @@ jest.mock("openai", () => ({
               message: {
                 content: JSON.stringify({
                   object: "test object",
-                  smiles: ["CCO", "CC(=O)O"],
+                  chemicals: [
+                    { name: "ethanol", smiles: "CCO" },
+                    { name: "acetic acid", smiles: "CC(=O)O" }
+                  ],
                 }),
               },
             },
@@ -59,7 +62,7 @@ describe("System Tests", () => {
   beforeEach(() => {
     // Create a DOM environment
     const htmlContent = fs.readFileSync(
-      path.join(__dirname, "../index.html"),
+      path.join(__dirname, "../../../src/client/core/index.html"),
       "utf8",
     );
     dom = new JSDOM(htmlContent, {
@@ -70,6 +73,17 @@ describe("System Tests", () => {
 
     document = dom.window.document;
     window = dom.window;
+
+    // Create required DOM elements for tests
+    const photoUpload = document.createElement('input');
+    photoUpload.id = 'photo-upload';
+    photoUpload.type = 'file';
+    document.body.appendChild(photoUpload);
+
+    const objectInput = document.createElement('input');
+    objectInput.id = 'object-input';
+    objectInput.type = 'text';
+    document.body.appendChild(objectInput);
 
     // Mock fetch
     window.fetch = jest.fn();

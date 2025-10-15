@@ -1,16 +1,8 @@
-// Enhanced validation patterns for input filtering
+// Minimal validation patterns - only block truly problematic inputs
 export const VALIDATION_PATTERNS = {
-  emotions: /^(love|hate|happy|sad|angry|joy|fear|hope|dream|idea|thought|feeling|emotion)/,
-  actions: /^(running|walking|talking|thinking|sleeping|eating|drinking)$/,
-  shortLetters: /^[a-z]{1,2}$/,
-  nonAlphabetic: /^[^a-z]*$/,
-  testStrings: /^(asdf|qwerty|test|random|nothing|something|anything|everything)$/i,
-  commonWords: /^(the|a|an|and|or|but|if|then|when|where|why|how|what|who)$/,
-  // Additional patterns for better filtering
-  profanity: /^(fuck|shit|damn|hell|ass|bitch|crap)$/i,
-  nonsense: /^(blah|meh|hmm|ugh|oof|nah|yeah|yep|nope|ok|okay)$/i,
-  spam: /^(spam|fake|scam|bot|robot|ai|gpt)$/i,
-  vague: /^(stuff|things|items|objects|materials|compounds)$/i
+  // Only block inputs that are clearly not useful
+  onlySymbols: /^[^a-zA-Z0-9\s]+$/,  // Only symbols/punctuation
+  emptyOrWhitespace: /^\s*$/          // Empty or only whitespace
 };
 
 // Positive patterns for likely valid inputs

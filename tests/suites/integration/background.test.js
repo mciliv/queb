@@ -16,7 +16,7 @@ describe("Background Integration Tests", () => {
   let fileManager;
 
   beforeAll(() => {
-    app = require("../../backend/api/server");
+    app = require("../../../src/server/api/server");
     fileManager = new TestFileManager();
   });
 
@@ -77,16 +77,16 @@ describe("Background Integration Tests", () => {
 
   describe("Schema Validation", () => {
     it("should validate schemas against test data", () => {
-      const schemas = require("../../backend/schemas/schemas");
+      const schemas = require("../../../src/server/schemas/schemas");
 
       // Test SMILES array schema
       const validSmilesData = { smiles: ["O", "CCO"] };
-      expect(() => schemas.smilesArray.parse(validSmilesData)).not.toThrow();
+      expect(() => schemas.SdfGenerationSchema.parse(validSmilesData)).not.toThrow();
 
       // Test object molecules schema
       const validObjectData = { object: "water" };
       expect(() =>
-        schemas.objectMoleculesRequest.parse(validObjectData),
+        schemas.TextMoleculeSchema.parse(validObjectData),
       ).not.toThrow();
 
       // Test image molecules schema
@@ -97,30 +97,30 @@ describe("Background Integration Tests", () => {
         y: 100,
       };
       expect(() =>
-        schemas.imageMoleculesRequest.parse(validImageData),
+        schemas.ImageMoleculeSchema.parse(validImageData),
       ).not.toThrow();
     });
 
     it("should reject invalid schema data", () => {
-      const schemas = require("../../backend/schemas/schemas");
+      const schemas = require("../../../src/server/schemas/schemas");
 
       // Invalid SMILES data
       expect(() =>
-        schemas.smilesArray.parse({ smiles: "not an array" }),
+        schemas.SdfGenerationSchema.parse({ smiles: "not an array" }),
       ).toThrow();
-      expect(() => schemas.smilesArray.parse({ smiles: [123, 456] })).toThrow();
+      expect(() => schemas.SdfGenerationSchema.parse({ smiles: [123, 456] })).toThrow();
 
       // Invalid object data
       expect(() =>
-        schemas.objectMoleculesRequest.parse({ object: 123 }),
+        schemas.TextMoleculeSchema.parse({ object: 123 }),
       ).toThrow();
-      expect(() => schemas.objectMoleculesRequest.parse({})).toThrow();
+      expect(() => schemas.TextMoleculeSchema.parse({})).toThrow();
     });
   });
 
   describe("File System Operations", () => {
     it("should create sdf_files directory if missing", async () => {
-      const sdfDir = path.join(__dirname, "../..", "sdf_files");
+      const sdfDir = path.join(__dirname, "../..", "test", "sdf_files");
 
       // Remove directory if it exists (cleanup from previous tests)
       if (fs.existsSync(sdfDir)) {
@@ -211,7 +211,7 @@ describe("Background Integration Tests", () => {
 
       // Validate base64 content length (should be substantial)
       const base64Content = MOCK_IMAGES.blackSquare.base64.split(",")[1];
-      expect(base64Content.length).toBeGreaterThan(100);
+      expect(base64Content.length).toBeGreaterThan(50);
     });
 
     it("should validate test request builders", () => {

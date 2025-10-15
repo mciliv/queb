@@ -79,20 +79,20 @@ describe("Smoke Tests - Critical App Validation", () => {
       const response = await request(app).get("/");
       expect(response.status).toBe(200);
       expect(response.text).toContain("<!doctype html>");
-      expect(response.text).toContain("Structuralizer - Structural Analysis");
+      expect(response.text).toContain("Materials");
     });
 
     test("should have required core files", () => {
       const requiredFiles = [
-        "server.js",
-        "schemas.js",
-        "Structuralizer.js",
-        "molecular-processor.js",
-        "package.json",
+        "../../../src/server/api/server.js",
+        "../../../src/server/schemas/molecular.js",
+        "../../../src/server/services/Structuralizer.js",
+        "../../../src/server/services/molecular-processor.js",
+        "../../../package.json",
       ];
 
       requiredFiles.forEach((file) => {
-        const filePath = path.join(__dirname, "..", file);
+        const filePath = path.join(__dirname, file);
         expect(fs.existsSync(filePath)).toBe(true);
         expect(fs.statSync(filePath).size).toBeGreaterThan(0);
       });
@@ -114,12 +114,12 @@ describe("Smoke Tests - Critical App Validation", () => {
     });
 
     test("should handle API endpoint requests", async () => {
-      // Test image molecules endpoint (should respond even without valid data)
-      const imageResponse = await request(app)
-        .post("/image-molecules")
+      // Test structures-from-text endpoint (should respond even without valid data)
+      const structuresResponse = await request(app)
+        .post("/structures-from-text")
         .send({});
 
-      expect([400, 500]).toContain(imageResponse.status); // Should reject invalid data
+      expect([400, 500]).toContain(structuresResponse.status); // Should reject invalid data
 
       // Test object molecules endpoint
       const objectResponse = await request(app)
@@ -138,13 +138,13 @@ describe("Smoke Tests - Critical App Validation", () => {
   describe("Core Dependencies", () => {
     test("should have required npm dependencies", () => {
       const packageJson = JSON.parse(
-        fs.readFileSync(path.join(__dirname, "../package.json"), "utf8"),
+        fs.readFileSync(path.join(__dirname, "../../../package.json"), "utf8"),
       );
 
       const requiredDeps = ["express", "cors", "openai", "zod"];
 
       requiredDeps.forEach((dep) => {
-        expect(packageJson.dependencies[dep]).toBeDefined();
+        expect(packageJson.dependencies[dep] || packageJson.optionalDependencies[dep]).toBeDefined();
       });
     });
 
@@ -156,10 +156,10 @@ describe("Smoke Tests - Critical App Validation", () => {
   describe("Configuration", () => {
     test("should have valid package.json", () => {
       const packageJson = JSON.parse(
-        fs.readFileSync(path.join(__dirname, "../package.json"), "utf8"),
+        fs.readFileSync(path.join(__dirname, "../../../package.json"), "utf8"),
       );
 
-      expect(packageJson.name).toBe("mol");
+      expect(packageJson.name).toBe("queb");
       expect(packageJson.version).toBeDefined();
       expect(packageJson.main).toBeDefined();
       expect(packageJson.scripts).toBeDefined();
@@ -167,19 +167,19 @@ describe("Smoke Tests - Critical App Validation", () => {
 
     test("should have test scripts configured", () => {
       const packageJson = JSON.parse(
-        fs.readFileSync(path.join(__dirname, "../package.json"), "utf8"),
+        fs.readFileSync(path.join(__dirname, "../../../package.json"), "utf8"),
       );
 
       expect(packageJson.scripts.test).toBeDefined();
-      expect(packageJson.scripts["test:unit"]).toBeDefined();
+      expect(packageJson.scripts["test:gate"]).toBeDefined();
       expect(packageJson.scripts["test:integration"]).toBeDefined();
     });
 
     test("should have proper directory structure", () => {
-      const requiredDirs = ["tests", "sdf_files"];
+      const requiredDirs = ["../../../tests", "../../../tests/sdf_files"];
 
       requiredDirs.forEach((dir) => {
-        const dirPath = path.join(__dirname, "..", dir);
+        const dirPath = path.join(__dirname, dir);
         expect(fs.existsSync(dirPath)).toBe(true);
       });
     });
@@ -188,17 +188,17 @@ describe("Smoke Tests - Critical App Validation", () => {
   describe("Frontend Assets", () => {
     test("should have valid HTML structure", () => {
       const htmlContent = fs.readFileSync(
-        path.join(__dirname, "../index.html"),
+        path.join(__dirname, "../../../src/client/core/index.html"),
         "utf8",
       );
 
       expect(htmlContent).toContain("<!doctype html>");
-      expect(htmlContent).toContain("<title>Structuralizer - Structural Analysis</title>");
+      expect(htmlContent).toContain("<title>{{TITLE}}</title>");
       expect(htmlContent).toContain("bundle.js");
     });
 
     test("should have valid CSS file", () => {
-      const cssPath = path.join(__dirname, "../style.css");
+      const cssPath = path.join(__dirname, "../../../src/client/assets/style.css");
       expect(fs.existsSync(cssPath)).toBe(true);
 
       const cssContent = fs.readFileSync(cssPath, "utf8");
@@ -207,13 +207,13 @@ describe("Smoke Tests - Critical App Validation", () => {
 
     test("should have valid JavaScript files", () => {
       const jsFiles = [
-        "server.js",
-        "Structuralizer.js",
-        "molecular-processor.js",
+        "../../../src/server/api/server.js",
+        "../../../src/server/services/Structuralizer.js",
+        "../../../src/server/services/molecular-processor.js",
       ];
 
       jsFiles.forEach((file) => {
-        const filePath = path.join(__dirname, "..", file);
+        const filePath = path.join(__dirname, file);
         expect(fs.existsSync(filePath)).toBe(true);
 
         const content = fs.readFileSync(filePath, "utf8");
@@ -248,7 +248,7 @@ describe("Smoke Tests - Critical App Validation", () => {
   describe("Error Handling", () => {
     test("should handle invalid routes gracefully", async () => {
       const response = await request(app).get("/nonexistent-route");
-      expect([404, 500]).toContain(response.status);
+      expect([200, 404, 500]).toContain(response.status); // 200 is expected for SPA routes
     });
 
     test("should handle malformed JSON requests", async () => {
@@ -298,10 +298,10 @@ describe("Smoke Tests - Critical App Validation", () => {
     });
 
     test("should handle large payloads appropriately", async () => {
-      const largePayload = { data: "x".repeat(10000) };
+      const largePayload = { object: "x".repeat(10000) };
 
       const response = await request(app)
-        .post("/image-molecules")
+        .post("/structures-from-text")
         .send(largePayload);
 
       expect([400, 413, 500]).toContain(response.status); // Should reject or handle appropriately

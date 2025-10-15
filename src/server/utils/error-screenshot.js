@@ -25,6 +25,14 @@ class ErrorScreenshot {
       currentDir = path.dirname(currentDir);
     }
     
+    // If we're in a src/ directory, go up one level to find the project root
+    if (currentDir.endsWith('src')) {
+      const parentDir = path.dirname(currentDir);
+      if (require('fs').existsSync(path.join(parentDir, 'package.json'))) {
+        return parentDir;
+      }
+    }
+    
     // Fallback to process.cwd() if we can't find package.json
     return process.cwd();
   }

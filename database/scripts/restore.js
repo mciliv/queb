@@ -17,6 +17,10 @@ const log = {
   error: (msg) => console.log(`\x1b[31m❌ ${msg}\x1b[0m`)
 };
 
+<<<<<<< Updated upstream
+=======
+// Database configuration - read dynamically to support test environment
+>>>>>>> Stashed changes
 function getDbConfig() {
   return {
     host: process.env.DB_HOST || 'localhost',
@@ -63,6 +67,11 @@ function showUsage() {
 }
 
 async function askConfirmation(question) {
+  // In test environment, auto-confirm to avoid hanging
+  if (process.env.NODE_ENV === 'test') {
+    return true;
+  }
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout

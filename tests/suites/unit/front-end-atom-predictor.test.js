@@ -130,15 +130,15 @@ jest.mock('../../../src/client/components/payment.js', () => ({
   paymentManager: mockPaymentManager
 }));
 
-jest.mock('../../frontend/components/camera.js', () => ({
+jest.mock('../../../src/client/components/camera.js', () => ({
   cameraManager: mockCameraManager
 }));
 
-jest.mock('../../frontend/components/camera-handler.js', () => ({
+jest.mock('../../../src/client/components/camera-handler.js', () => ({
   cameraHandler: mockCameraHandler
 }));
 
-jest.mock('../../frontend/components/ui-utils.js', () => ({
+jest.mock('../../../src/client/utils/ui-utils.js', () => ({
   uiManager: mockUIManager
 }));
 
@@ -176,7 +176,7 @@ describe('Frontend AI Integration Tests', () => {
     setupTestDOM();
     
     // Import MolecularApp after mocking
-    const appModule = await import('../../src/client/core/app.js');
+    const appModule = await import('../../../src/client/core/app.js');
     MolecularApp = appModule.MolecularApp;
   });
 

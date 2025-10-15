@@ -45,9 +45,9 @@ describe('End-to-End: /structures-from-text', () => {
         expect(text.length).toBeGreaterThan(0);
         expect(text.includes('$$$$')).toBe(true);
 
-        // Also confirm file exists on disk (served from test/sdf_files)
+        // Also confirm file exists on disk (served from tests/sdf_files)
         const fileName = item.sdfPath.replace('/sdf_files/', '');
-        const full = path.join(__dirname, '../../../test/sdf_files', fileName);
+        const full = path.join(__dirname, '../../sdf_files', fileName);
         expect(fs.existsSync(full)).toBe(true);
       }
     }, 30000);

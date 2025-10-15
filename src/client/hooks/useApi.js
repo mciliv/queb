@@ -106,7 +106,7 @@ export const useApi = () => {
       // Report image structuralization failures to backend logger (fire-and-forget)
       try {
         const isImageStructuralization = typeof endpoint === 'string' && (
-          endpoint.includes('structuralize-image') ||
+          endpoint.includes('structures-from-image') ||
           endpoint.includes('image-molecules') ||
           endpoint.includes('estimate-image')
         );
@@ -155,14 +155,14 @@ export const useApi = () => {
     }
   }, []);
 
-  const structuralizeText = useCallback(async (text) => {
+  const structuralizeText = useCallback(async (text, lookupMode = 'database') => {
     if (!text || !text.trim()) {
       throw new Error('Text input is required');
     }
 
     return apiCall('/structuralize', {
       method: 'POST',
-      body: JSON.stringify({ object: text }),
+      body: JSON.stringify({ object: text, lookupMode }),
       maxRetries: 2,
       timeout: 30000,
       cachePost: true,
@@ -237,23 +237,6 @@ export const useApi = () => {
     });
   }, [apiCall]);
 
-  const twoNamesToSdf = useCallback(async (names, overwrite = false) => {
-    let list = names;
-    if (typeof names === 'string') {
-      list = names.split(',').map(s => s.trim()).filter(Boolean);
-    }
-    if (!Array.isArray(list) || list.length === 0) {
-      throw new Error('Provide one or two names');
-    }
-    return apiCall('/two-names-to-sdf', {
-      method: 'POST',
-      body: JSON.stringify({ names: list, overwrite }),
-      maxRetries: 1,
-      timeout: 30000,
-      cachePost: !overwrite,
-      cacheDuration: 1800000, // 30 minutes
-    });
-  }, [apiCall]);
 
   const nameToSdf = useCallback(async (name, overwrite = false) => {
     if (typeof name !== 'string' || name.trim().length === 0) {
@@ -296,8 +279,24 @@ export const useApi = () => {
     structuresFromText: structuralizeText,
     analyzeImage: structuralizeImage,
     generateSDFs,
-    twoNamesToSdf,
     nameToSdf,
+    // FoodDB methods for input methods to call
+    listFoods: useCallback(async (limit = 25) => {
+      const params = new URLSearchParams({ limit: String(limit) });
+      return apiCall(`/api/fooddb/foods?${params.toString()}`, { method: 'GET' });
+    }, [apiCall]),
+    searchFoods: useCallback(async (query) => {
+      const q = typeof query === 'string' ? query.trim() : '';
+      const params = new URLSearchParams({ q });
+      return apiCall(`/api/fooddb/search?${params.toString()}`, { method: 'GET' });
+    }, [apiCall]),
+    getFood: useCallback(async (id) => {
+      return apiCall(`/api/fooddb/foods/${encodeURIComponent(String(id))}`, { method: 'GET' });
+    }, [apiCall]),
+    getFoodCompounds: useCallback(async (id, name = null) => {
+      const params = name ? `?name=${encodeURIComponent(name)}` : '';
+      return apiCall(`/api/fooddb/foods/${encodeURIComponent(String(id))}/compounds${params}`, { method: 'GET' });
+    }, [apiCall]),
     clearError,
     clearCache,
     testConnection,

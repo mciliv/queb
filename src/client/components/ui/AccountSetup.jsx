@@ -1,66 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
+import { useStripeSetup } from '../hooks/useStripeSetup';
 
 const AccountSetup = () => {
-    const [stripe, setStripe] = useState(null);
-    const [cardElement, setCardElement] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const cardElementRef = useRef(null);
-
-    useEffect(() => {
-        initializeStripe();
-        checkExistingUser();
-    }, []);
-
-    const initializeStripe = async () => {
-        try {
-            const response = await fetch('/api/stripe-config');
-            const config = await response.json();
-            
-            const stripeInstance = window.Stripe(config.publishableKey);
-            setStripe(stripeInstance);
-            
-            const elements = stripeInstance.elements();
-            const cardEl = elements.create('card', {
-                style: {
-                    base: {
-                        fontSize: '16px',
-                        color: '#ffffff',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                        '::placeholder': {
-                            color: 'rgba(255, 255, 255, 0.6)'
-                        }
-                    },
-                    invalid: {
-                        color: '#ff6b6b',
-                        iconColor: '#ff6b6b'
-                    }
-                },
-                hidePostalCode: true
-            });
-            
-            cardEl.mount(cardElementRef.current);
-            setCardElement(cardEl);
-            
-            cardEl.on('change', (event) => {
-                setError(event.error ? event.error.message : '');
-            });
-        } catch (err) {
-            setError('Failed to initialize payment system');
-        }
-    };
-
-    const checkExistingUser = async () => {
-        try {
-            const response = await fetch('/api/user/check');
-            const user = await response.json();
-            setCurrentUser(user);
-        } catch (err) {
-            console.log('No existing user found');
-        }
-    };
+    const {
+        stripe,
+        cardElement,
+        currentUser,
+        loading,
+        error,
+        success,
+        cardElementRef,
+        setLoading,
+        setError,
+        setSuccess,
+        setCurrentUser,
+    } = useStripeSetup();
 
     const handleSubmit = async (event) => {
         event.preventDefault();

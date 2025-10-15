@@ -4,7 +4,7 @@ async function testSDFHTTP() {
     console.log('🌐 Testing SDF file HTTP access...\n');
 
     const testUrls = [
-        'http://localhost:8080/test/sdf_files/CCO.sdf',
+        'http://localhost:8080/sdf_files/CCO.sdf',
         'http://localhost:8080/test/support/fixtures/CCO.sdf'
     ];
 

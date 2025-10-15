@@ -55,7 +55,7 @@ async function testSDFPipeline() {
 
     // Test 3: File System Check
     console.log('\n3. Testing File System');
-    const sdfDir = path.join(__dirname, 'test', 'sdf_files');
+    const sdfDir = path.join(__dirname, 'sdf_files');
     if (fs.existsSync(sdfDir)) {
         const files = fs.readdirSync(sdfDir).filter(f => f.endsWith('.sdf'));
         console.log(`  ✓ SDF directory exists with ${files.length} files`);
@@ -67,6 +67,14 @@ async function testSDFPipeline() {
             if (fs.existsSync(filePath)) {
                 const stats = fs.statSync(filePath);
                 console.log(`  ✓ ${file} exists (${stats.size} bytes)`);
+                
+                // Validate SDF content
+                const content = fs.readFileSync(filePath, 'utf8');
+                if (content.includes('RDKit') && content.includes('$$$$')) {
+                    console.log(`    ✓ Valid SDF format`);
+                } else {
+                    console.log(`    ✗ Invalid SDF format`);
+                }
             } else {
                 console.log(`  ✗ ${file} missing`);
             }

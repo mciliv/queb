@@ -149,7 +149,7 @@ describe('health-check.js', () => {
       process.env = originalEnv;
     });
 
-    test('should use environment variables when available', () => {
+    test('should use environment variables when available', async () => {
       process.env.DB_HOST = 'test-host';
       process.env.DB_PORT = '5433';
       process.env.DB_NAME = 'test_db';
@@ -159,6 +159,9 @@ describe('health-check.js', () => {
       // Re-require the module to pick up new env vars
       delete require.cache[require.resolve('../../../database/scripts/health-check.js')];
       const { checkDatabaseHealth } = require('../../../database/scripts/health-check.js');
+
+      // Call the function to trigger Client constructor
+      await checkDatabaseHealth();
 
       // The config should be used in the Client constructor
       expect(require('pg').Client).toHaveBeenCalledWith({

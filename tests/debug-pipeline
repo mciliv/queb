@@ -15,7 +15,6 @@ npm list --depth=0 | grep -E "(openai|express|cors|livereload)" || {
 
 # Clean processes and ports
 pkill -f "node.*server.js" 2>/dev/null || true
-pkill -f "nodemon" 2>/dev/null || true
 lsof -ti:35730 | xargs kill -9 2>/dev/null || true
 lsof -ti:35729 | xargs kill -9 2>/dev/null || true
 

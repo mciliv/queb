@@ -7,7 +7,7 @@
       "request": "launch",
       "program": "${file}",
       "cwd": "${workspaceFolder}",
-      "internalConsoleOptions": "openOnSessionStart",
+      "internalConsoleOptions": "neverOpen",
       "presentation": {
         "hidden": false,
         "group": "",
@@ -25,7 +25,8 @@
       "env": {
         "NODE_ENV": "development",
         "NODEBUG": "1"
-      }
+      },
+      "internalConsoleOptions": "neverOpen"
     },
     {
       "name": "Debug Current Python Script",
@@ -33,7 +34,8 @@
       "request": "launch", 
       "program": "${file}",
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "neverOpen"
     },
     {
       "name": "Debug Dev Script",
@@ -46,7 +48,8 @@
       "env": {
         "NODE_ENV": "development"
       },
-      "args": ["--no-debug"]
+      "args": ["--no-debug"],
+      "internalConsoleOptions": "neverOpen"
     }
   ],
 }

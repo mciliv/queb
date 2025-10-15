@@ -57,7 +57,7 @@ describe('Visual Interface Tests', () => {
   test('should load the molecular analysis interface', async () => {
     // Check that the main app elements are present
     const title = await page.title();
-    expect(title).toContain('Structuralizer');
+    expect(title).toMatch(/Structural|Materials|Analysis/);
     
     // Take screenshot of loaded interface
     const screenshotPath = path.join(__dirname, '../screenshots/interface_loaded.png');

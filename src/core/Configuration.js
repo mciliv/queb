@@ -1,48 +1,21 @@
-/**
- * Unified Configuration System
- * 
- * This module applies the "Deep Modules" principle by providing a simple interface
- * that hides the complexity of environment variable management, validation, and defaults.
- * 
- * Philosophy: "The best modules are those whose interfaces are much simpler than 
- * their implementations" - John Ousterhout
- */
-
 const path = require('path');
+const tomlConfig = require('../../config');
 
 class Configuration {
   constructor() {
     this._config = null;
     this._initialized = false;
-    this._loadEnvironment();
   }
 
-  /**
-   * Load environment variables with fallback hierarchy
-   * This method hides the complexity of multiple .env file loading
-   */
-  _loadEnvironment() {
-    try {
-      // Load dotenv with multiple file support
-      require('dotenv').config({ path: '.env.defaults', override: false });
-      require('dotenv').config({ path: '.env', override: true });
-      require('dotenv').config({ path: '.env.local', override: true });
-      
-      this._initialized = true;
-    } catch (error) {
-      console.warn('⚠️ Environment loading failed, using defaults:', error.message);
-      this._initialized = true;
-    }
-  }
-
-  /**
-   * Get configuration with type safety and validation
-   * Deep module: complex validation logic hidden behind simple interface
-   */
-  _buildConfig() {
+  _buildConfigWithTypeSafetyAndValidation() {
     if (this._config) return this._config;
+    if (!(tomlConfig && typeof tomlConfig.getConfig === 'function')) {
+      throw new Error('Configuration error: TOML-based configuration is required but not found. Ensure config/config.toml exists.');
+    }
 
+    const cfg = tomlConfig.getConfig();
     this._config = {
+<<<<<<< Updated upstream
       // Environment
       nodeEnv: this._getString('NODE_ENV', 'development'),
       port: this._getNumber('PORT', 8080),
@@ -104,47 +77,44 @@ class Configuration {
         enableDebug: this._getBoolean('DEBUG', false),
         enableScreenshots: this._getBoolean('ENABLE_ERROR_SCREENSHOTS', false)
       }
+=======
+      nodeEnv: cfg.environment?.nodeEnv ?? 'development',
+      port: cfg.server?.port ?? 8080,
+      openai: cfg.openai ?? {},
+      database: cfg.database ?? {},
+      payments: cfg.payments ?? {},
+      cloud: cfg.cloud ?? {},
+      ssl: cfg.ssl ?? {},
+      development: Object.assign({
+        isTest: (cfg.environment?.nodeEnv === 'test')
+      }, cfg.development || {}),
+      enableAllFeatures: cfg.enableAllFeatures === true || (cfg.development && cfg.development.enableAllFeatures === true) || (cfg.features && cfg.features.enableAll === true)
+>>>>>>> Stashed changes
     };
 
+    // Consolidation logic: If enableAllFeatures is true, override individual service enables
+    const enableAllFeatures = this._config.enableAllFeatures === true;
+    if (enableAllFeatures) {
+      if (this._config.database) this._config.database.enabled = true;
+      if (this._config.payments) this._config.payments.enabled = true;
+    }
+    // Mark as initialized once config is built
+    this._initialized = true;
     return this._config;
   }
 
-  /**
-   * Type-safe configuration getters
-   * These methods encapsulate parsing and validation logic
-   */
-  _getString(key, defaultValue = undefined) {
-    const value = process.env[key];
-    if (value === undefined) return defaultValue;
-    return value.trim();
-  }
-
-  _getNumber(key, defaultValue = undefined) {
-    const value = process.env[key];
-    if (value === undefined) return defaultValue;
-    const parsed = parseInt(value, 10);
-    if (isNaN(parsed)) {
-      console.warn(`⚠️ Invalid number for ${key}: ${value}, using default: ${defaultValue}`);
-      return defaultValue;
-    }
-    return parsed;
-  }
-
-  _getBoolean(key, defaultValue = false) {
-    const value = process.env[key];
-    if (value === undefined) return defaultValue;
-    return value.toLowerCase() === 'true';
-  }
-
-  /**
-   * Public Interface - Simple methods that hide complexity
-   */
+  // Env-parsing helpers removed: TOML is the single source of truth
 
   get(path = null) {
-    const config = this._buildConfig();
+    const config = this.getConfig();
     if (!path) return config;
     
     return path.split('.').reduce((obj, key) => obj?.[key], config);
+  }
+
+  // Public single source of truth for configuration
+  getConfig() {
+    return this._buildConfigWithTypeSafetyAndValidation();
   }
 
   isProduction() {
@@ -178,58 +148,52 @@ class Configuration {
     return this.get('database');
   }
 
-  /**
-   * Validation with clear error messages
-   * Deep module: complex validation logic with simple interface
-   */
   validate() {
-    const config = this._buildConfig();
-    const errors = [];
+    const config = this._buildConfigWithTypeSafetyAndValidation();
+    const validationErrors = [];
 
-    // Production validations
-    if (this.isProduction()) {
-      if (!config.openai.apiKey) {
-        errors.push('OPENAI_API_KEY is required in production');
+    const isProductionEnvironment = this.isProduction();
+    if (isProductionEnvironment) {
+      const openAIKeyMissing = !config.openai.apiKey;
+      if (openAIKeyMissing) {
+        validationErrors.push('OPENAI_API_KEY is required in production');
       }
       
-      if (config.database.enabled && !config.database.password) {
-        errors.push('DB_PASSWORD is required when database is enabled in production');
+      const databasePasswordRequiredButMissing = config.database.enabled && !config.database.password;
+      if (databasePasswordRequiredButMissing) {
+        validationErrors.push('DB_PASSWORD is required when database is enabled in production');
       }
     }
 
-    // Port validations
-    if (config.port < 1 || config.port > 65535) {
-      errors.push(`Invalid PORT: ${config.port}. Must be between 1 and 65535`);
+    const portIsInvalid = config.port < 1 || config.port > 65535;
+    if (portIsInvalid) {
+      validationErrors.push(`Invalid PORT: ${config.port}. Must be between 1 and 65535`);
     }
 
-    if (errors.length > 0) {
-      const message = 'Configuration validation failed:\n' + errors.map(e => `  - ${e}`).join('\n');
-      throw new Error(message);
+    const hasValidationErrors = validationErrors.length > 0;
+    if (hasValidationErrors) {
+      const errorMessage = 'Configuration validation failed:\n' + validationErrors.map(e => `  - ${e}`).join('\n');
+      throw new Error(errorMessage);
     }
 
     return true;
   }
 
-  /**
-   * Debug information for troubleshooting
-   */
   getDebugInfo() {
-    const config = this._buildConfig();
+    const config = this._buildConfigWithTypeSafetyAndValidation();
     return {
       nodeEnv: config.nodeEnv,
       port: config.port,
       hasOpenAIKey: !!config.openai.apiKey,
       databaseEnabled: config.database.enabled,
       paymentsEnabled: config.payments.enabled,
+      allFeaturesEnabled: !!config.enableAllFeatures,
       isServerless: this.isServerless(),
       initialized: this._initialized
     };
   }
 }
 
-// Export singleton instance
-const configuration = new Configuration();
+const configurationSingleton = new Configuration();
 
-module.exports = configuration;
-
-
+module.exports = configurationSingleton;

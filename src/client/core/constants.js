@@ -32,3 +32,11 @@ const configData = {
 export const TEST_MOLECULES = configData.TEST_MOLECULES;
 export const SMILES_NAME_MAP = configData.SMILES_NAME_MAP;
 export const PRESET_VISUAL_TESTS = configData.PRESET_VISUAL_TESTS;
+
+export const MOLECULE_SUGGESTIONS = [
+  'caffeine', 'glucose', 'water', 'ethanol', 'acetaminophen', 'aspirin',
+  'vitamin C', 'vitamin D', 'insulin', 'dopamine', 'serotonin', 'adrenaline',
+  'cholesterol', 'testosterone', 'estrogen', 'THC', 'nicotine', 'morphine',
+  'penicillin', 'ibuprofen', 'sodium chloride', 'carbon dioxide', 'methane',
+  'benzene', 'toluene', 'acetone', 'formaldehyde', 'ammonia', 'hydrogen peroxide'
+];

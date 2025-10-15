@@ -9,6 +9,7 @@
  */
 
 const configuration = require('./Configuration');
+const ExternalScriptTrigger = require('./ExternalScriptTrigger');
 
 class ErrorHandler {
   constructor() {
@@ -16,13 +17,40 @@ class ErrorHandler {
     this.errorCounts = new Map();
     this.lastErrors = new Map();
     this.initialized = false;
+    this.scriptTrigger = new ExternalScriptTrigger({
+      enabled: configuration.get('externalScripts.enabled', true),
+      scripts: configuration.get('externalScripts.scripts', [
+        {
+          name: 'ai-script',
+          path: '~/Code/ai',
+          enabled: true,
+          priority: 1,
+          timeout: 30000,
+          retries: 2
+        }
+      ]),
+      minSeverity: configuration.get('externalScripts.minSeverity', 'medium'),
+      logger: this.logger
+    });
   }
 
   /**
    * Initialize error handler with logger
    */
   initialize(logger = console) {
-    this.logger = logger;
+    // Ensure logger has all required methods
+    const bind = (obj, method, fallback) => {
+      const fn = obj && typeof obj[method] === 'function' ? obj[method] : fallback;
+      return typeof fn === 'function' ? fn.bind(obj) : fallback.bind(console);
+    };
+
+    this.logger = {
+      log: bind(logger, 'log', console.log),
+      info: bind(logger, 'info', console.info || console.log),
+      warn: bind(logger, 'warn', console.warn || console.log),
+      error: bind(logger, 'error', console.error || console.log),
+      debug: bind(logger, 'debug', console.debug || console.log)
+    };
     this.initialized = true;
     
     // Set up global error handlers in non-test environments
@@ -35,7 +63,7 @@ class ErrorHandler {
    * Handle application errors with context and recovery
    * Deep module: complex error processing behind simple interface
    */
-  handle(error, context = {}) {
+  async handle(error, context = {}) {
     if (!this.initialized) {
       this.initialize();
     }
@@ -52,13 +80,27 @@ class ErrorHandler {
     // Attempt recovery if possible
     const recovery = this._attemptRecovery(errorInfo);
     
+    // Trigger external scripts for appropriate errors
+    let scriptResponse = null;
+    if (this.scriptTrigger && this.scriptTrigger.shouldTriggerScripts(errorInfo)) {
+      try {
+        scriptResponse = await this.scriptTrigger.executeScripts(errorInfo);
+        if (scriptResponse && scriptResponse.primarySuccess) {
+          this.logger.info('🤖 External script provided suggestions for error resolution');
+        }
+      } catch (scriptError) {
+        this.logger.warn('⚠️ External script execution failed:', scriptError.message);
+      }
+    }
+    
     return {
       message: userMessage,
       code: errorInfo.code,
       recoverable: recovery.possible,
       recovery: recovery.action,
       timestamp: errorInfo.timestamp,
-      context: context.userFacing ? errorInfo.context : undefined
+      context: context.userFacing ? errorInfo.context : undefined,
+      externalScripts: scriptResponse
     };
   }
 

@@ -1,21 +1,77 @@
-# Molecular configuration files
-frontend/config/molecular-config.json
+**/prompts/**
 
-# Build outputs
+# Build outputs and generated files
+src/client/dist/
 frontend/dist/
+dist/
+build/
+bundle.js
+bundle.css
+*.map
+
+# Dependencies
 node_modules/
+s*/node_modules/
 
-# Logs
-logs/
-*.log
+# Data files and SDF files
+src/backend/sdf_files/
+sdf_files/
+*.sdf
+*.jpg
+*.png
 
-# Test artifacts
-test/results/
-test/screenshots/
-
-# Certificates
+# Certificates and credentials
+certs/
+config/certs/
 backend/api/certs/
+*.pem
+*.key
+token.json
+credentials.json
+.env
 
-# Python cache
+# Python cache and virtual environments
 __pycache__/
 *.pyc
+.venv/
+
+# IDE and system files
+.DS_Store
+.idea/
+.vscode/settings.json
+.*.sw?
+
+# Backup files
+*.backup
+*.bak
+
+# Deployment artifacts
+deploy-temp/
+*.production.js
+
+# Database seeds
+seed_?/
+
+# Chrome profiles
+.chrome-profile/
+
+# Claude cache
+.claude/
+
+# Package lock files (usually auto-generated)
+package-lock.json
+
+# Configuration files that are working
+config/molecular-config.json
+config/project.js
+frontend/config/molecular-config.json
+
+# Documentation that's stable
+MCP_ENHANCEMENT_GUIDE.md
+MCP_INTEGRATION.md
+tests/VISUAL_TEST_REFACTORING.md
+
+# Working test files that are stable
+tests/suites/visual/
+tests/reporters/
+tests/scripts/

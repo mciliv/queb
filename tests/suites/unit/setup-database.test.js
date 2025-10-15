@@ -180,8 +180,13 @@ describe('setup-database.js', () => {
         .mockRejectedValueOnce(new Error('Postgres connection failed'))
         .mockRejectedValueOnce(new Error('Admin connection failed'));
       mockClient.end.mockResolvedValueOnce();
-      execSync.mockImplementationOnce(() => {
-        throw new Error('createdb failed');
+      
+      // Mock execSync to throw error for createdb command
+      execSync.mockImplementation((command) => {
+        if (command.includes('createdb')) {
+          throw new Error('createdb failed');
+        }
+        return 'success';
       });
 
       await setupDatabase();

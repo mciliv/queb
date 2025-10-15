@@ -8,7 +8,8 @@ const STATIC_FILES = [
   '/manifest.json',
   '/assets/style.css',
   '/assets/favicon.svg',
-  '/dist/bundle.js'
+  '/dist/bundle.js',
+  '/dist/bundle.css'
 ];
 
 // Install event - cache static assets
@@ -105,6 +106,9 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+    // Send response to prevent runtime.lastError
+    event.ports[0]?.postMessage({ success: true });
+    return;
   }
 
   if (event.data && event.data.type === 'CLEAR_CACHE') {
@@ -115,6 +119,16 @@ self.addEventListener('message', (event) => {
           return caches.delete(cacheName);
         })
       );
+    }).then(() => {
+      // Send response to prevent runtime.lastError
+      event.ports[0]?.postMessage({ success: true });
+    }).catch((error) => {
+      // Send error response
+      event.ports[0]?.postMessage({ success: false, error: error.message });
     });
+    return;
   }
+
+  // Send default response for any other messages
+  event.ports[0]?.postMessage({ success: true, type: 'unknown' });
 });

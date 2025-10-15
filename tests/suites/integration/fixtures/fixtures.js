@@ -2,9 +2,20 @@
 const fs = require("fs");
 const path = require("path");
 
-// Load molecular configuration from centralized config
-const projectConfig = require("../../../../config/project");
-const molecularConfig = require("../../../../config/molecular-config.json");
+// Mock configuration for tests
+const projectConfig = {
+  molecular: {
+    testMode: true,
+    timeout: 30000
+  }
+};
+
+const molecularConfig = {
+  testMolecules: {
+    water: { smiles: "O", name: "Water" },
+    ethanol: { smiles: "CCO", name: "Ethanol" }
+  }
+};
 
 // ==================== TEST FIXTURES ====================
 
@@ -140,13 +151,13 @@ const MOCK_IMAGES = {
   // 1x1 pixel images for testing
   blackSquare: {
     base64:
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
     description: "1x1 black pixel",
   },
 
   whiteSquare: {
     base64:
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
     description: "1x1 white pixel",
   },
 

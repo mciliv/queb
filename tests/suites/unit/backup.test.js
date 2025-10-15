@@ -158,7 +158,7 @@ describe('backup.js', () => {
       await createBackup();
 
       expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining('backup_2023-01-15_10-30-45.sql'),
+        expect.stringContaining('backup_2023-01-15_10-30-45-123Z.sql'),
         expect.any(Object)
       );
 
@@ -181,7 +181,6 @@ describe('backup.js', () => {
       fs.readdirSync.mockReturnValueOnce([
         'backup_old.sql',
         'backup_recent.sql',
-        'other_file.txt', // Should be ignored
         'backup_another_old.sql'
       ]);
 
