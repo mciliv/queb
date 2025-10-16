@@ -16,49 +16,25 @@ const log = {
   error: (msg) => console.log(`\x1b[31m❌ ${msg}\x1b[0m`)
 };
 
-<<<<<<< Updated upstream
 function getDbConfig() {
   return {
     host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-=======
-// Database configuration - read dynamically to support test environment
-function getDbConfig() {
-  return {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT) || 5432,
->>>>>>> Stashed changes
+    port: parseInt(process.env.DB_PORT, 10) || 5432,
     database: process.env.DB_NAME || 'mol_users',
     user: process.env.DB_USER || 'mol_user',
     password: process.env.DB_PASSWORD
   };
 }
 
-<<<<<<< Updated upstream
-function getBackupDir() {
-  return process.env.BACKUP_DIR || './backups';
-}
-
-function getBackupFilePath(now = new Date()) {
-  const backupDir = getBackupDir();
-  const timestamp = now.toISOString()
-    .replace(/[:.]/g, '-')
-    .replace('T', '_')
-    .split('.')[0];
-  return path.join(backupDir, `backup_${timestamp}.sql`);
-=======
 // Backup configuration - read dynamically
 function getBackupConfig() {
   const backupDir = process.env.BACKUP_DIR || './backups';
   const timestamp = new Date().toISOString()
     .replace(/[:.]/g, '-')
     .replace('T', '_')
-    .split('.')[0]; // Format: YYYY-MM-DD_HH-MM-SS
-
+    .split('.')[0];
   const backupFile = path.join(backupDir, `backup_${timestamp}.sql`);
-  
   return { backupDir, backupFile, timestamp };
->>>>>>> Stashed changes
 }
 
 async function createBackup() {
@@ -67,17 +43,12 @@ async function createBackup() {
   log.info('Starting PostgreSQL backup...');
 
   try {
-    const dbConfig = getDbConfig();
-    const backupDir = getBackupDir();
-    const backupFile = getBackupFilePath();
-    // Create backup directory if it doesn't exist
     if (!fs.existsSync(backupDir)) {
       fs.mkdirSync(backupDir, { recursive: true });
     }
 
-    // Perform backup using pg_dump
     log.info(`Creating backup: ${backupFile}`);
-    
+
     const pgDumpCommand = [
       'pg_dump',
       `-h ${dbConfig.host}`,
@@ -87,22 +58,19 @@ async function createBackup() {
       `-f "${backupFile}"`
     ].join(' ');
 
-    // Set password environment variable for pg_dump
-    const env = { 
-      ...process.env, 
-      PGPASSWORD: dbConfig.password 
+    const env = {
+      ...process.env,
+      PGPASSWORD: dbConfig.password
     };
 
-    execSync(pgDumpCommand, { 
+    execSync(pgDumpCommand, {
       env,
       stdio: 'inherit'
     });
 
     log.info(`✅ Backup completed: ${backupFile}`);
 
-    // Clean up old backups (keep last 7 days)
     await cleanupOldBackups();
-
   } catch (error) {
     log.error(`Backup failed: ${error.message}`);
     process.exit(1);
@@ -112,7 +80,9 @@ async function createBackup() {
 async function cleanupOldBackups() {
   const { backupDir } = getBackupConfig();
   try {
-    const backupDir = getBackupDir();
+    if (!fs.existsSync(backupDir)) {
+      return;
+    }
     const files = fs.readdirSync(backupDir);
     const backupFiles = files.filter(file => file.startsWith('backup_') && file.endsWith('.sql'));
     

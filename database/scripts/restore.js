@@ -17,14 +17,10 @@ const log = {
   error: (msg) => console.log(`\x1b[31m❌ ${msg}\x1b[0m`)
 };
 
-<<<<<<< Updated upstream
-=======
-// Database configuration - read dynamically to support test environment
->>>>>>> Stashed changes
 function getDbConfig() {
   return {
     host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
+    port: parseInt(process.env.DB_PORT, 10) || 5432,
     database: process.env.DB_NAME || 'mol_users',
     user: process.env.DB_USER || 'mol_user',
     password: process.env.DB_PASSWORD

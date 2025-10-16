@@ -120,7 +120,7 @@ describe("Background Integration Tests", () => {
 
   describe("File System Operations", () => {
     it("should create sdf_files directory if missing", async () => {
-      const sdfDir = path.join(__dirname, "../..", "test", "sdf_files");
+      const sdfDir = path.join(__dirname, "../..", "sdf_files");
 
       // Remove directory if it exists (cleanup from previous tests)
       if (fs.existsSync(sdfDir)) {
