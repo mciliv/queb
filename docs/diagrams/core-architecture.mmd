@@ -1,0 +1,14 @@
+flowchart TB
+  subgraph Core
+    CFG[Configuration<br/>env loading<br/>validation<br/>type-safe getters]
+    ERR[ErrorHandler<br/>classify<br/>message<br/>recovery]
+    PENG[PromptEngine<br/>templates<br/>validation<br/>repair]
+    MAS[MolecularAnalysisService<br/>text/image analysis<br/>enrichment<br/>structures]
+  end
+
+  %% Dependencies
+  MAS --> PENG
+  MAS --> ERR
+  MAS --> CFG
+  PENG --> ERR
+  ERR --> CFG

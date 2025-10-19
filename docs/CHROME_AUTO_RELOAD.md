@@ -181,6 +181,8 @@ flowchart LR
   CDP -.executes.-> BA
 ```
 
+![Chrome auto-reload architecture](./diagrams/chrome-auto-reload.svg)
+
 ## API Reference
 
 ### DevServer Class

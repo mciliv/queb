@@ -48,6 +48,8 @@ flowchart TB
   ERR --> CFG
 ```
 
+![Core architecture](../../docs/diagrams/core-architecture.svg)
+
 ### Configuration.js
 **Purpose**: Unified configuration management with validation and type safety
 
