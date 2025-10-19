@@ -166,17 +166,19 @@ new DevServer({
 
 ## Architecture
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  File Watcher   │───▶│   DevServer     │───▶│   Chrome CDP    │
-│  (src/*)        │    │  (Smart Logic)  │    │  (Auto-reload)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Change Category │    │ Reload Strategy │    │ Browser Action  │
-│ frontend/backend│    │ soft/page/hard  │    │ refresh/reload  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+```mermaid
+flowchart LR
+  %% High-level pipeline
+  FW[File Watcher (src/*)] --> DS[DevServer (Smart Logic)] --> CDP[Chrome CDP (Auto-reload)]
+
+  %% Classification and actions
+  CC[Change Category<br/>frontend/backend/config/mixed] --> RS[Reload Strategy<br/>soft/page/hard/full]
+  RS --> BA[Browser Action<br/>refresh/reload/cache clear]
+
+  %% Information flow
+  FW -.detects changes.-> CC
+  DS -.decides strategy.-> RS
+  CDP -.executes.-> BA
 ```
 
 ## API Reference
