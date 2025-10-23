@@ -3,14 +3,14 @@ name = "util"
 version = "0.1.5"
 description = "Python & Shell utilities for app development"
 authors = ["M <refits.minxes0h@icloud.com>"]
-license = "UNLICENSE"
 readme = "README.md"
-packages = [{include = "util", from = "."}]
+packages = [{include = "python"}]
 
 [tool.poetry.dependencies]
 python = ">=3.12"
 python-magic = "^0.4.27"
 pyyaml = "^6.0"
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
