@@ -338,19 +338,71 @@ app.get('/api/config', (req, res) => {
 });
 
 // ==================== ERROR LOGGING ENDPOINT ====================
+// Rate limiter for log endpoint (prevent spam)
+const logRateLimiter = (() => {
+  const requests = new Map();
+  const WINDOW_MS = 60000; // 1 minute
+  const MAX_REQUESTS = 50; // 50 requests per minute per IP
+
+  setInterval(() => {
+    // Clean up old entries every minute
+    const now = Date.now();
+    for (const [ip, data] of requests.entries()) {
+      if (now - data.windowStart > WINDOW_MS) {
+        requests.delete(ip);
+      }
+    }
+  }, WINDOW_MS);
+
+  return (ip) => {
+    const now = Date.now();
+    const clientData = requests.get(ip);
+
+    if (!clientData) {
+      requests.set(ip, { count: 1, windowStart: now });
+      return { allowed: true, remaining: MAX_REQUESTS - 1 };
+    }
+
+    if (now - clientData.windowStart > WINDOW_MS) {
+      // Reset window
+      requests.set(ip, { count: 1, windowStart: now });
+      return { allowed: true, remaining: MAX_REQUESTS - 1 };
+    }
+
+    if (clientData.count >= MAX_REQUESTS) {
+      return { allowed: false, remaining: 0, retryAfter: WINDOW_MS - (now - clientData.windowStart) };
+    }
+
+    clientData.count++;
+    return { allowed: true, remaining: MAX_REQUESTS - clientData.count };
+  };
+})();
+
 app.post('/api/log-error', (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  const rateLimitResult = logRateLimiter(ip);
+
+  if (!rateLimitResult.allowed) {
+    return res.status(429).json({
+      error: 'Too many log requests',
+      retryAfter: Math.ceil(rateLimitResult.retryAfter / 1000)
+    });
+  }
+
   const payload = req.body || {};
   const type = (payload.type || 'log').toLowerCase();
   const label = type === 'error' ? '❌ FRONTEND ERROR' : type === 'warn' ? '⚠️ FRONTEND WARN' : 'ℹ️ FRONTEND LOG';
-  const logger = type === 'error' ? console.error : type === 'warn' ? console.warn : console.log;
+  const loggerFunc = type === 'error' ? console.error : type === 'warn' ? console.warn : console.log;
 
   const timestamp = payload.timestamp || new Date().toISOString();
   const source = payload.source || '-';
   const userAgent = req.get('User-Agent') || '-';
-  const ip = req.ip || req.connection.remoteAddress || '-';
-  logger(`${label}: "${payload.message}" ts=${timestamp} src=${source} ua=${userAgent} ip=${ip}`);
+  loggerFunc(`${label}: "${payload.message}" ts=${timestamp} src=${source} ua=${userAgent} ip=${ip}`);
 
-  res.status(200).json({ status: 'logged' });
+  res.status(200).json({
+    status: 'logged',
+    remaining: rateLimitResult.remaining
+  });
 });
 
 // User data now stored in PostgreSQL instead of in-memory

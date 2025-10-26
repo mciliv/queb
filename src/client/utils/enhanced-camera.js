@@ -1,5 +1,6 @@
 // Enhanced Camera APIs for PWA
 // Provides better camera access with fallbacks and advanced features
+import logger from '../core/logger.js';
 
 class EnhancedCamera {
   constructor() {
@@ -68,8 +69,8 @@ class EnhancedCamera {
         ...capabilities
       };
     } catch (error) {
-      console.error('Enhanced camera request failed:', error);
-      
+      logger.warn('Enhanced camera request failed, using fallback', { error: error.message });
+
       // Fallback to basic constraints
       const fallbackConstraints = {
         video: {
@@ -145,7 +146,7 @@ class EnhancedCamera {
         this.settings = this.videoTrack.getSettings();
         return this.settings;
       } catch (error) {
-        console.warn('Failed to apply camera settings:', error);
+        logger.warn('Failed to apply camera settings', { error: error.message });
         return this.settings;
       }
     }

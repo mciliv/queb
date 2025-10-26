@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import logger from '../core/logger.js';
 
 // Use same-origin for all API calls to avoid port/protocol mismatches
 const getApiBase = () => '';
@@ -200,7 +201,7 @@ export const useApi = () => {
         ? imageData.slice(5, imageData.indexOf(';'))
         : 'base64';
       // Structured, safe debug info (no base64 dump)
-      console.log('AnalyzeImage payload summary:', {
+      logger.debug('AnalyzeImage payload summary:', {
         type: previewType,
         hasCoords: typeof x === 'number' && typeof y === 'number',
         coords: typeof x === 'number' && typeof y === 'number' ? { x: payload.x, y: payload.y } : null,

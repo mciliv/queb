@@ -17,19 +17,70 @@ const PaymentSection = () => {
   useEffect(() => {
     if (config.enabled && window.Stripe) {
       // Initialize Stripe
-      // TODO: Add Stripe initialization
+      const stripe = window.Stripe(config.publishableKey);
+      const elements = stripe.elements();
+      const card = elements.create('card', {
+        style: {
+          base: {
+            fontSize: '16px',
+            color: '#1a1a1a',
+            '::placeholder': {
+              color: '#999'
+            }
+          }
+        }
+      });
+      card.mount('#card-element');
+      setCardElement({ stripe, card });
     }
-  }, [config.enabled]);
+  }, [config.enabled, config.publishableKey]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!config.enabled || isLoading) return;
+    if (!config.enabled || isLoading || !cardElement) return;
 
     setIsLoading(true);
     setError('');
 
     try {
-      // TODO: Implement payment setup
+      // Create payment method with Stripe
+      const { stripe, card } = cardElement;
+      const { paymentMethod, error: stripeError } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: card,
+      });
+
+      if (stripeError) {
+        setError(stripeError.message);
+        return;
+      }
+
+      // Get device info for token generation
+      const deviceInfo = navigator.userAgent;
+
+      // Setup payment method with backend
+      const response = await fetch('/api/setup-payment-method', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          payment_method: paymentMethod.id,
+          device_info: deviceInfo,
+          name: userName
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Payment setup failed');
+        return;
+      }
+
+      // Store device token for future requests
+      if (data.device_token) {
+        localStorage.setItem('device_token', data.device_token);
+      }
+
       setIsPaymentSetup(true);
     } catch (err) {
       setError('Payment setup failed. Please try again.');
