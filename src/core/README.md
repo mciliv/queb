@@ -29,6 +29,27 @@ Core modules are designed to be reusable across different parts of the applicati
 
 ## Module Overview
 
+### Architecture Diagram
+
+```mermaid
+flowchart TB
+  subgraph Core
+    CFG[Configuration]\n- env loading\n- validation\n- type-safe getters
+    ERR[ErrorHandler]\n- classify\n- message\n- recovery
+    PENG[PromptEngine]\n- templates\n- validation\n- repair
+    MAS[MolecularAnalysisService]\n- text/image analysis\n- enrichment\n- structures
+  end
+
+  %% Dependencies
+  MAS --> PENG
+  MAS --> ERR
+  MAS --> CFG
+  PENG --> ERR
+  ERR --> CFG
+```
+
+![Core architecture](../../docs/diagrams/core-architecture.svg)
+
 ### Configuration.js
 **Purpose**: Unified configuration management with validation and type safety
 
