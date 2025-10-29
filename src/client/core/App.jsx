@@ -115,6 +115,13 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
          </button>
         )}
       </div>
+      <button 
+        className="btn-primary primary-cta"
+        onClick={handleSubmit}
+        disabled={isProcessing}
+      >
+        Generate
+      </button>
       
       {displayError && (
         <div id="input-error" className="error-text" role="alert">
@@ -159,6 +166,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
           <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8"/>
           <circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
         </svg>
+        <span className="mode-label">Live</span>
         {!isMobile && (
           <span className="mode-btn-shortcut">
             {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧C' : 'Ctrl+Shift+C'}
@@ -176,6 +184,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
           <circle cx="9" cy="9" r="2"/>
           <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
         </svg>
+        <span className="mode-label">Gallery</span>
         {!isMobile && (
           <span className="mode-btn-shortcut">
             {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧P' : 'Ctrl+Shift+P'}
@@ -192,6 +201,7 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
         </svg>
+        <span className="mode-label">Link</span>
         {!isMobile && (
           <span className="mode-btn-shortcut">
             {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧L' : 'Ctrl+Shift+L'}
@@ -436,7 +446,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
   );
 };
 
-const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, onAnalysisComplete }) => {
+const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, onAnalysisComplete, setOpenPickerRef }) => {
   const fileInputRef = useRef(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -544,6 +554,16 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
     }
   };
 
+  // expose an opener function to parent (for bottom CTA)
+  useEffect(() => {
+    if (setOpenPickerRef) {
+      setOpenPickerRef(() => () => {
+        try { fileInputRef.current && fileInputRef.current.click(); } catch (_) {}
+      });
+      return () => setOpenPickerRef(null);
+    }
+  }, [setOpenPickerRef]);
+
   // Mobile: Simple button interface
   if (isMobile) {
     return (
@@ -608,12 +628,13 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
   );
 };
 
-const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
+const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete, setFocusRef }) => {
   const [imageUrl, setImageUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const { checkPaymentRequired } = usePayment();
   const { analyzeImage } = useApi();
+  const urlInputRef = useRef(null);
 
   const validateUrl = (url) => {
     try {
@@ -742,6 +763,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
         onDrop={handleDrop}
       >
         <input
+          ref={urlInputRef}
           type="url"
           placeholder="Enter or drag image URL..."
           value={imageUrl}
@@ -1319,18 +1341,21 @@ function App() {
   return (
     <PaymentProvider config={PAYMENT_CONFIG}>
       <div className="app">
-        {/* Settings gear icon in top right - OUTSIDE main to avoid conflicts */}
-        <button
-          onClick={() => {
-            logger.debug('Settings button clicked', { showSettings });
-            setShowSettings(!showSettings);
-          }}
-          className="settings-btn"
-          title="Settings"
-        >
-          ⚙️
-        </button>
-        
+        {/* Top App Bar with title and settings */}
+        <header className="topbar">
+          <div className="topbar-title">Object</div>
+          <button
+            onClick={() => {
+              logger.debug('Settings button clicked', { showSettings });
+              setShowSettings(!showSettings);
+            }}
+            className="settings-btn"
+            title="Settings"
+          >
+            ⚙️
+          </button>
+        </header>
+
         {/* Settings Modal - OUTSIDE main for proper positioning */}
         {showSettings && (
           <div className="settings-modal">
@@ -1400,12 +1425,14 @@ function App() {
             />
 
             {cameraMode && (
-              <CameraSection
-                isProcessing={isProcessing}
-                setIsProcessing={setIsProcessing}
-                setCurrentAnalysisType={() => {}}
-                onAnalysisComplete={handleAnalysisComplete}
-              />
+              <div ref={cameraContainerRef}>
+                <CameraSection
+                  isProcessing={isProcessing}
+                  setIsProcessing={setIsProcessing}
+                  setCurrentAnalysisType={() => {}}
+                  onAnalysisComplete={handleAnalysisComplete}
+                />
+              </div>
             )}
 
             {photoMode && (
@@ -1414,6 +1441,7 @@ function App() {
                 setIsProcessing={setIsProcessing}
                 setCurrentAnalysisType={() => {}}
                 onAnalysisComplete={handleAnalysisComplete}
+                setOpenPickerRef={(fn) => { photoPickerOpenRef.current = fn; }}
               />
             )}
 
@@ -1422,6 +1450,7 @@ function App() {
                 isProcessing={isProcessing}
                 setIsProcessing={setIsProcessing}
                 onAnalysisComplete={handleAnalysisComplete}
+                setFocusRef={(fn) => { linkFocusRef.current = fn; }}
               />
             )}
           </div>
@@ -1438,6 +1467,23 @@ function App() {
               />
             ))}
           </div>
+        </div>
+        {/* Bottom mobile CTA */}
+        <div className="bottom-cta">
+          <button
+            className="btn-primary bottom-cta-btn"
+            onClick={() => {
+              if (cameraMode) {
+                try { cameraContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
+              } else if (photoMode) {
+                try { photoPickerOpenRef.current && photoPickerOpenRef.current(); } catch (_) {}
+              } else if (linkMode) {
+                try { linkFocusRef.current && linkFocusRef.current(); } catch (_) {}
+              }
+            }}
+          >
+            {cameraMode ? 'Capture' : photoMode ? 'Choose Photo' : linkMode ? 'Paste Link' : 'Get Started'}
+          </button>
         </div>
       </div>
     </PaymentProvider>
