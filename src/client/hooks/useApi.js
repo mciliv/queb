@@ -1,31 +1,65 @@
+/**
+ * useApi Hook - Centralized API client for all backend communication
+ * 
+ * This custom React hook provides a clean interface for making API calls
+ * with built-in features like caching, retry logic, and error handling.
+ * It abstracts away the complexity of network requests and provides
+ * consistent behavior across the application.
+ * 
+ * Key features:
+ * - Request caching to avoid redundant API calls
+ * - Automatic retry with exponential backoff
+ * - Request deduplication (prevents duplicate concurrent requests)
+ * - Loading and error state management
+ * - Timeout handling
+ * - Type-safe API methods for each endpoint
+ * 
+ * Usage:
+ * const api = useApi();
+ * const result = await api.structuralizeText('coffee', 'database');
+ */
+
 import { useState, useCallback, useRef } from 'react';
 
 // Use same-origin for all API calls to avoid port/protocol mismatches
+// This ensures the API works correctly in both development and production
 const getApiBase = () => '';
 
 const API_BASE = getApiBase();
 
-// Default timeout and retry settings
-const DEFAULT_TIMEOUT = 30000; // 30 seconds
-const DEFAULT_RETRIES = 2;
-const RETRY_DELAY = 1000; // 1 second
+// Configuration constants
+const DEFAULT_TIMEOUT = 30000;     // 30 seconds - reasonable for AI processing
+const DEFAULT_RETRIES = 2;         // Retry failed requests twice
+const RETRY_DELAY = 1000;          // 1 second initial delay between retries
+const CACHE_DURATION = 300000;     // 5 minutes default cache
+const MAX_CACHE_SIZE = 100;        // Prevent memory leaks
 
 export const useApi = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(null); // Full error object with diagnostics
   const requestCacheRef = useRef(new Map());
   const pendingRequestsRef = useRef(new Map());
 
+  /**
+   * Core API call function with caching, retry, and error handling
+   * 
+   * @param {string} endpoint - API endpoint path (e.g., '/api/structuralize')
+   * @param {Object} options - Fetch options plus custom settings
+   * @param {number} retryCount - Current retry attempt (used internally)
+   * @returns {Promise<any>} - API response data
+   * @throws {Error} - Network errors or API errors
+   */
   const apiCall = useCallback(async (endpoint, options = {}, retryCount = 0) => {
     const maxRetries = options.maxRetries || DEFAULT_RETRIES;
     const timeout = options.timeout || DEFAULT_TIMEOUT;
     const cacheKey = `${endpoint}:${JSON.stringify(options.body || {})}`;
     const enableCaching = options.enableCaching !== false; // Default to true
 
-    // Check cache first for GET requests or explicitly cached requests
+    // Check cache first to avoid unnecessary API calls
+    // Cache is used for GET requests or when explicitly enabled for POST
     if (enableCaching && (options.method !== 'POST' || options.cachePost)) {
       const cached = requestCacheRef.current.get(cacheKey);
-      if (cached && Date.now() - cached.timestamp < (options.cacheDuration || 300000)) { // 5 min default
+      if (cached && Date.now() - cached.timestamp < (options.cacheDuration || CACHE_DURATION)) {
         return cached.data;
       }
     }
@@ -59,19 +93,35 @@ export const useApi = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API call failed: ${response.status} ${response.statusText}`);
+        console.log('[useApi] Error response from server:', errorData);
+        const errorObj = {
+          message: errorData.error || `API call failed: ${response.status} ${response.statusText}`,
+          code: errorData.code,
+          recoverable: errorData.recoverable,
+          recovery: errorData.recovery,
+          timestamp: errorData.timestamp,
+          stack: errorData.stack,
+          context: errorData.context,
+          originalMessage: errorData.originalMessage
+        };
+        console.log('[useApi] Constructed error object:', errorObj);
+        const err = new Error(errorObj.message);
+        err.details = errorObj;
+        throw err;
       }
 
       const data = await response.json();
       
-      // Cache successful responses
+      // Cache successful responses for performance
       if (enableCaching) {
         requestCacheRef.current.set(cacheKey, {
           data,
           timestamp: Date.now()
         });
-        // Limit cache size to prevent memory leaks
-        if (requestCacheRef.current.size > 100) {
+        
+        // Implement LRU cache eviction to prevent memory leaks
+        // Remove oldest entry when cache exceeds size limit
+        if (requestCacheRef.current.size > MAX_CACHE_SIZE) {
           const firstKey = requestCacheRef.current.keys().next().value;
           requestCacheRef.current.delete(firstKey);
         }
@@ -103,7 +153,7 @@ export const useApi = () => {
         return apiCall(endpoint, options, retryCount + 1);
       }
 
-      // Report image structuralization failures to backend logger (fire-and-forget)
+      // Report image structuralization failures to backend logger (fire-and-forget). Why?
       try {
         const isImageStructuralization = typeof endpoint === 'string' && (
           endpoint.includes('structures-from-image') ||
@@ -135,8 +185,15 @@ export const useApi = () => {
         // ignore reporter failures
       }
 
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      const errorObj = {
+        message: errorMessage,
+        recoverable: shouldRetry,
+        timestamp: new Date().toISOString()
+      };
+      setError(errorObj);
+      const error = new Error(errorMessage);
+      error.details = errorObj;
+      throw error;
     } finally {
       setLoading(false);
       pendingRequestsRef.current.delete(cacheKey);
@@ -155,21 +212,56 @@ export const useApi = () => {
     }
   }, []);
 
-  const structuralizeText = useCallback(async (text, lookupMode = 'database') => {
+  /**
+   * Chemical compounds from object specified by text
+   * 
+   * Takes any text description (e.g., "coffee", "aspirin", "plastic bottle")
+   * and returns the chemical compounds present in that object.
+   *
+   * @param {string} text - Object/material description to analyze
+   * @param {string} lookupMode - Analysis mode: 'GPT-5' (AI)
+   * @returns {Promise<{object: string, chemicals: Array}>} Analysis results
+   * 
+   * @example
+   * const result = await structuralizeText('coffee', 'database');
+   * // Returns: { object: 'coffee', chemicals: [{name: 'Caffeine', sdfPath: '...'}] }
+   */
+  const structuralizeText = useCallback(async (text, lookupMode = 'GPT-5') => {
     if (!text || !text.trim()) {
       throw new Error('Text input is required');
     }
 
-    return apiCall('/structuralize', {
+    const result = await apiCall('/api/structuralize', {
       method: 'POST',
-      body: JSON.stringify({ object: text, lookupMode }),
+      body: JSON.stringify({ text, lookupMode }),
       maxRetries: 2,
       timeout: 30000,
-      cachePost: true,
-      cacheDuration: 600000, // 10 minutes for text analysis
+      cachePost: true,              // Cache results to avoid re-analyzing same text
+      cacheDuration: 600000,        // 10 minutes - chemical data doesn't change often
     });
+    
+    console.log('✅ Analysis result:', result);
+    return result;
   }, [apiCall]);
 
+  /**
+   * Analyze image to identify object and its chemical compounds
+   * 
+   * Uses AI vision to identify what's in the image (especially at click coordinates)
+   * then analyzes the chemical composition of the identified object.
+   * 
+   * @param {string} imageData - Base64 encoded image or data URL
+   * @param {number} x - X coordinate where user clicked
+   * @param {number} y - Y coordinate where user clicked  
+   * @param {number} cropMiddleX - Center X of crop region
+   * @param {number} cropMiddleY - Center Y of crop region
+   * @param {number} cropSize - Size of square crop region
+   * @returns {Promise<{object: string, chemicals: Array}>} Analysis results
+   * 
+   * @example
+   * const result = await structuralizeImage(base64Image, 150, 200);
+   * // AI identifies object at coordinates and returns its chemicals
+   */
   const structuralizeImage = useCallback(async (
     imageData,
     x,
@@ -187,8 +279,11 @@ export const useApi = () => {
       ? imageData.split(',')[1]
       : imageData;
 
+    // Clamp coordinates to reasonable bounds to prevent errors
     const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
     const payload = { imageBase64: base64 };
+    
+    // Add coordinates if provided (helps AI focus on specific area)
     if (typeof x === 'number') payload.x = clamp(Math.round(x), 0, 1000);
     if (typeof y === 'number') payload.y = clamp(Math.round(y), 0, 1000);
     if (typeof cropMiddleX === 'number') payload.cropMiddleX = clamp(Math.round(cropMiddleX), 0, 1000);
@@ -211,7 +306,7 @@ export const useApi = () => {
       });
     } catch (_) {}
 
-    return apiCall('/structuralize', {
+    return apiCall('/api/structuralize-image', {
       method: 'POST',
       body: JSON.stringify(payload),
       maxRetries: 1,
@@ -224,7 +319,7 @@ export const useApi = () => {
       throw new Error('SMILES array is required');
     }
 
-    return apiCall('/generate-sdfs', {
+    return apiCall('/api/generate-sdfs', {
       method: 'POST',
       body: JSON.stringify({ 
         smiles: smilesArray,
@@ -242,7 +337,7 @@ export const useApi = () => {
     if (typeof name !== 'string' || name.trim().length === 0) {
       throw new Error('Valid name is required');
     }
-    return apiCall('/name-to-sdf', {
+    return apiCall('/api/name-to-sdf', {
       method: 'POST',
       body: JSON.stringify({ name, overwrite }),
       maxRetries: 1,
@@ -280,23 +375,6 @@ export const useApi = () => {
     analyzeImage: structuralizeImage,
     generateSDFs,
     nameToSdf,
-    // FoodDB methods for input methods to call
-    listFoods: useCallback(async (limit = 25) => {
-      const params = new URLSearchParams({ limit: String(limit) });
-      return apiCall(`/api/fooddb/foods?${params.toString()}`, { method: 'GET' });
-    }, [apiCall]),
-    searchFoods: useCallback(async (query) => {
-      const q = typeof query === 'string' ? query.trim() : '';
-      const params = new URLSearchParams({ q });
-      return apiCall(`/api/fooddb/search?${params.toString()}`, { method: 'GET' });
-    }, [apiCall]),
-    getFood: useCallback(async (id) => {
-      return apiCall(`/api/fooddb/foods/${encodeURIComponent(String(id))}`, { method: 'GET' });
-    }, [apiCall]),
-    getFoodCompounds: useCallback(async (id, name = null) => {
-      const params = name ? `?name=${encodeURIComponent(name)}` : '';
-      return apiCall(`/api/fooddb/foods/${encodeURIComponent(String(id))}/compounds${params}`, { method: 'GET' });
-    }, [apiCall]),
     clearError,
     clearCache,
     testConnection,

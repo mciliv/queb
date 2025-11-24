@@ -1,602 +1,434 @@
-const configuration = require('../../core/Configuration');
-const errorHandler = require('../../core/ErrorHandler');
-const logger = require('../services/file-logger');
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+const { createContainer } = require('../../core/services');
 
-errorHandler.initialize(logger);
+/**
+ * Create and configure Express application with injected services
+ * @param {ServiceContainer} container - Configured DI container
+ * @returns {express.Application} Configured Express app
+ */
+async function createApp(container) {
+  const app = express();
 
-const validateConfigurationOrExit = () => {
-  try {
-    configuration.validate();
-    if (logger && logger.info) {
-      logger.info('✅ Configuration validated successfully');
+  // Get core services
+  const config = await container.get('config');
+  const logger = await container.get('logger');
+  const errorHandler = await container.get('errorHandler');
+
+  // Middleware
+  app.use(cors());
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+  // Define serveIndexHtml function for dynamic HTML serving
+  const distPath = path.join(__dirname, '..', '..', 'client', 'dist');
+  const serveIndexHtml = (req, res) => {
+    try {
+      const indexPath = path.join(distPath, 'index.html');
+      let htmlContent = fs.readFileSync(indexPath, 'utf8');
+
+      // Dynamic token replacement for SEO
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const cacheBust = Date.now();
+
+      htmlContent = htmlContent
+        .replace(/\{\{TITLE\}\}/g, 'Queb - Molecular Analysis')
+        .replace(/\{\{DESCRIPTION\}\}/g, '3D visualization of chemical contents by camera or text input.')
+        .replace(/\{\{CANONICAL\}\}/g, `${baseUrl}${req.path}`)
+        .replace(/\{\{OG_IMAGE\}\}/g, '/images/favicon.svg')
+        .replace(/\{\{CACHE_BUST\}\}/g, cacheBust);
+
+      res.type('html').send(htmlContent);
+    } catch (error) {
+      logger.error('Failed to serve index.html:', error);
+      res.status(500).send('Server error');
     }
-  } catch (error) {
-    const handled = errorHandler.handle(error, { category: 'configuration', critical: true });
-    if (logger && logger.error) {
-      logger.error('❌ Configuration validation failed:', handled.message);
-    } else {
-      console.error('❌ Configuration validation failed:', handled.message);
-    }
-    
-    // Don't exit in test environment
-    if (configuration.isTest()) {
-      if (logger && logger.warn) {
-        logger.warn('⚠️ Skipping process exit in test environment');
-      } else {
-        console.warn('⚠️ Skipping process exit in test environment');
-      }
-      return;
-    }
-    
-    process.exit(1);
-  }
-};
-
-const validateTestsOrExit = async () => {
-  // Skip test validation in test environment to avoid recursion
-  if (configuration.isTest()) {
-    logger.info('⚠️ Skipping test gate in test environment');
-    return;
-  }
-
-  // Skip test validation if explicitly disabled
-  if (process.env.SKIP_TEST_GATE === 'true') {
-    logger.warn('⚠️ Test gate disabled via SKIP_TEST_GATE environment variable');
-    return;
-  }
-
-  // Skip test validation if we're running as part of a test (jest, mocha, etc.)
-  if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID || process.env.MOCHA_RUNNING) {
-    logger.info('⚠️ Skipping test gate - running in test context');
-    return;
-  }
-
-  try {
-    logger.info('🧪 Running test gate before server startup...');
-    const { runTests } = require('../../../scripts/test-gate');
-    await runTests();
-    logger.info('✅ Test gate passed - server startup approved');
-  } catch (error) {
-    logger.error('❌ Test gate failed:', error.message);
-    logger.error('🚫 Server startup blocked due to failing tests');
-    logger.error('💡 Fix all tests or set SKIP_TEST_GATE=true to bypass');
-    process.exit(1);
-  }
-};
-
-// Run test gate before configuration validation (before other initialization)
-// Temporarily disabled to allow app startup
-// validateTestsOrExit().then(() => {
-//   validateConfigurationOrExit();
-// }).catch((error) => {
-//   console.error('❌ Test gate execution failed:', error.message);
-//   process.exit(1);
-// });
-
-// Skip test gate for now and just validate configuration
-validateConfigurationOrExit();
-
-const log = {
-  info: (msg, meta = {}) => logger.info(msg, meta),
-  success: (msg, meta = {}) => logger.success(msg, meta),
-  warning: (msg, meta = {}) => logger.warn(msg, meta),
-  error: (msg, meta = {}) => logger.error(msg, meta),
-};
-
-
-const express = require("express");
-const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
-let fetchLib = null;
-try { fetchLib = require('node-fetch'); } catch (_) { fetchLib = null; }
-const HttpsServer = require("./https-server");
-const { chemicals } = require("../services/Structuralizer");
-const MolecularProcessor = require("../services/molecular-processor");
-const { resolveName } = require("../services/name-resolver");
-
-const { captureErrorScreenshot } = require("../utils/error-screenshot");
-
-
-let proxy = null;
-if (configuration.isDevelopment()) {
-  try {
-    proxy = require('http-proxy-middleware');
-  } catch (error) {
-    log.warning('⚠️ http-proxy-middleware not available - install with: npm install http-proxy-middleware');
-  }
-}
-
-let UserService = null;
-try {
-  UserService = require("../services/user-service");
-} catch (error) {
-  log.warning('⚠️ UserService not available - running without user management');
-}
-const {
-  ImageMoleculeSchema,
-  TextMoleculeSchema,
-  SdfGenerationSchema,
-} = require("../schemas/schemas");
-
-const { setupDatabase } = require('../services/database');
-const setupPaymentRoutes = require('../routes/payment');
-const setupMolecularRoutes = require('../routes/molecular');
-
-
-const app = express();
-const DEFAULT_PORT = 8080;
-const HTTPS_PORT = configuration.get('ssl.httpsPort');
-const HTTP_PORT = configuration.get('port');
-const PORT = configuration.get('port');
-
-const logServerInitialization = () => {
-  logger.startup('Server initialization started');
-  logger.info('Configuration loaded', configuration.getDebugInfo());
-};
-
-logServerInitialization();
-
-const molecularProcessor = new MolecularProcessor();
-let userService = null;
-
-const initializeDatabase = async () => {
-  const userServiceIsUnavailable = !userService;
-  
-  if (userServiceIsUnavailable) {
-    logger.warn('User service not available - running without persistent user storage');
-    return;
-  }
-
-  try {
-    await userService.initializeTables();
-    logger.success('Database initialized successfully');
-  } catch (error) {
-    logger.error('Database initialization failed', { error: error.message });
-    logger.warn('Server will continue but user data will not persist');
-  }
-};
-
-
-app.use(cors());
-app.use(express.json({ limit: "50mb" }));
-
-// Hide Express server header for security
-app.disable('x-powered-by');
-
-const createRequestLoggingMiddleware = () => (req, res, next) => {
-  const requestStartTime = Date.now();
-
-  const logIncomingRequest = () => {
-    logger.info(`Incoming request: ${req.method} ${req.url}`, {
-      method: req.method,
-      url: req.url,
-      ip: req.ip || req.connection.remoteAddress,
-      userAgent: req.get('User-Agent')
-    });
   };
 
-  const logCompletedRequest = () => {
-    const responseTimeInMilliseconds = Date.now() - requestStartTime;
-    logger.info(`Request completed: ${req.method} ${req.url}`, {
-      method: req.method,
-      url: req.url,
-      status: res.statusCode,
-      responseTime: `${responseTimeInMilliseconds}ms`,
-      ip: req.ip || req.connection.remoteAddress
-    });
-  };
+  // Root route serves the frontend with token replacement (must be BEFORE static middleware)
+  app.get('/', serveIndexHtml);
 
-  logIncomingRequest();
-  res.on('finish', logCompletedRequest);
-  next();
-};
+  // Serve static files from public directory (images, manifest, etc)
+  const publicPath = path.join(__dirname, '..', '..', '..', 'public');
+  app.use(express.static(publicPath));
 
-app.use(createRequestLoggingMiddleware());
+  // Serve /assets from client assets directory (CSS, icons)
+  const assetsPath = path.join(__dirname, '..', '..', 'client', 'assets');
+  app.use('/assets', express.static(assetsPath));
 
-// Memory monitoring middleware
-const createMemoryMonitoringMiddleware = () => (req, res, next) => {
-  const memBefore = process.memoryUsage();
-  
-  res.on('finish', () => {
-    const memAfter = process.memoryUsage();
-    const memIncrease = memAfter.heapUsed - memBefore.heapUsed;
+  // Serve /dist from client dist directory (bundle.js, bundle.css, etc)
+  app.use('/dist', express.static(distPath));
+
+  // Serve other dist files at root (bundle.js, bundle.css without /dist prefix)
+  // index: false prevents this from serving index.html
+  app.use(express.static(distPath, { index: false }));
+
+  // Request logging middleware
+  app.use((req, res, next) => {
+    const start = Date.now();
+    const originalSend = res.send;
     
-    // Log if memory increase is significant (> 10MB)
-    if (memIncrease > 10 * 1024 * 1024) {
-      logger.warn(`High memory usage detected: ${Math.round(memIncrease/1024/1024)}MB increase for ${req.method} ${req.url}`);
-    }
-    
-    // Force garbage collection if memory usage is high
-    if (memAfter.heapUsed > 300 * 1024 * 1024 && global.gc) {
-      global.gc();
-      logger.info('Forced garbage collection due to high memory usage');
-    }
-  });
-  
-  next();
-};
-
-app.use(createMemoryMonitoringMiddleware());
-
-const createHealthCheckEndpoint = () => (req, res) => {
-  const memUsage = process.memoryUsage();
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '1.0.0',
-    memory: {
-      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
-      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
-      external: Math.round(memUsage.external / 1024 / 1024),
-      rss: Math.round(memUsage.rss / 1024 / 1024)
-    }
-  });
-};
-
-const createConfigurationEndpoint = () => (req, res) => {
-  try {
-    res.json({
-      payments: configuration.getPaymentConfig(),
-      environment: configuration.get('nodeEnv'),
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    const handled = errorHandler.handleValidationError(error, { endpoint: '/api/config' });
-    res.status(500).json({ error: handled.message });
-  }
-};
-
-const createFrontendErrorLoggingEndpoint = () => (req, res) => {
-  const payload = req.body || {};
-  const logType = (payload.type || 'info').toLowerCase();
-
-  const timestamp = payload.timestamp || new Date().toISOString();
-  const source = payload.source || '-';
-  const userAgent = req.get('User-Agent') || '-';
-  const ipAddress = req.ip || req.connection.remoteAddress || '-';
-  const meta = { ts: timestamp, src: source, ua: userAgent, ip: ipAddress };
-  if (logType === 'error') {
-    logger.error(`FRONTEND: ${payload.message}`, meta);
-  } else if (logType === 'warn' || logType === 'warning') {
-    logger.warn(`FRONTEND: ${payload.message}`, meta);
-  } else if (logType === 'debug') {
-    logger.debug(`FRONTEND: ${payload.message}`, meta);
-  } else {
-    logger.info(`FRONTEND: ${payload.message}`, meta);
-  }
-  res.status(200).json({ status: 'logged' });
-};
-
-<<<<<<< Updated upstream
-// User data now stored in PostgreSQL instead of in-memory
-// Database schema will be created by the database setup script
-
-
-
-// Image analysis route
-app.post("/image-molecules", async (req, res) => {
-  try {
-    // Validate input schema
-    const validation = ImageMoleculeSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        error: "Invalid input data",
-        details: validation.error.issues,
-      });
-    }
-
-    const {
-      imageBase64,
-      croppedImageBase64,
-      x,
-      y,
-      cropMiddleX,
-      cropMiddleY,
-      cropSize,
-    } = req.body;
-
-    if (!imageBase64) {
-      return res.status(400).json({ error: "No image data provided" });
-    }
-
-    const result = await structuralizer.structuralize({
-      object: "", // Let image detection determine the object
-      imageBase64,
-      x,
-      y
-    });
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Deprecated aliases (kept for compatibility): prefer /structuralize-*
-app.post("/object-molecules", async (req, res) => {
-  try {
-    // Validate input schema
-    const validation = TextMoleculeSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        error: "Invalid input data",
-        details: validation.error.issues,
-      });
-    }
-
-    const { object } = req.body;
-
-    if (!object) {
-      return res.status(400).json({ error: "No object description provided" });
-    }
-
-    const result = await structuralizer.structuralizeText(object);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Text analysis route (alias for backward compatibility)
-app.post("/analyze-text", async (req, res) => {
-  try {
-    // Validate input schema
-    const validation = TextMoleculeSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        error: "Invalid input data",
-        details: validation.error.issues,
-      });
-    }
-
-    const { object } = req.body;
-
-    if (!object) {
-      return res.status(400).json({ error: "No object description provided" });
-    }
-
-    const result = await structuralizer.structuralizeText(object);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Staged flow: Stage 1 — return only object specification
-app.post("/specify-object", async (req, res) => {
-  try {
-    const payload = req.body || {};
-    const result = await structuralizer.specifyObject(payload);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Staged flow: Stage 2 — resolve components DB-first, then LLM-assisted
-app.post("/resolve-components", async (req, res) => {
-  try {
-    const { object } = req.body || {};
-    if (!object || typeof object !== 'string' || object.trim().length === 0) {
-      return res.status(400).json({ error: "Invalid object: non-empty string required" });
-    }
-    const out = await structuralizer.resolveComponents(object);
-    res.json(out);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// SDF generation route
-app.post("/generate-sdfs", async (req, res) => {
-  try {
-    // Validate input schema
-    const validation = SdfGenerationSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        error: "Invalid input data",
-        details: validation.error.issues,
-      });
-    }
-
-    const { smiles, overwrite = false } = req.body;
-
-    if (!smiles || !Array.isArray(smiles)) {
-      return res.status(400).json({ error: "smiles array is required" });
-    }
-
-    const result = await molecularProcessor.processSmiles(smiles, overwrite);
-=======
-app.get('/health', createHealthCheckEndpoint());
-app.get('/api/config', createConfigurationEndpoint());
-app.post('/api/log-error', createFrontendErrorLoggingEndpoint());
->>>>>>> Stashed changes
-
-// Memory management endpoint
-app.post('/api/cleanup', (req, res) => {
-  const memBefore = process.memoryUsage();
-  
-  if (global.gc) {
-    global.gc();
-    const memAfter = process.memoryUsage();
-    const freed = memBefore.heapUsed - memAfter.heapUsed;
-    
-    res.json({
-      success: true,
-      memoryFreed: Math.round(freed / 1024 / 1024),
-      memoryBefore: Math.round(memBefore.heapUsed / 1024 / 1024),
-      memoryAfter: Math.round(memAfter.heapUsed / 1024 / 1024)
-    });
-  } else {
-    res.status(400).json({
-      success: false,
-      error: 'Garbage collection not available (start server with --expose-gc)'
-    });
-  }
-});
-
-app.use('/api', setupPaymentRoutes(userService));
-app.use('/', setupMolecularRoutes(chemicals, molecularProcessor, resolveName));
-
-const getSDFFilesDirectory = () => {
-  const isTestEnvironment = process.env.NODE_ENV === "test";
-  const sdfDirectory = isTestEnvironment ? "tests/sdf_files" : "server/sdf_files";
-  return path.join(__dirname, "..", "..", sdfDirectory);
-};
-
-app.use("/dist", express.static(path.join(__dirname, "..", "..", "client", "dist")));
-app.use("/assets", express.static(path.join(__dirname, "..", "..", "client", "assets")));
-app.use(express.static(path.join(__dirname, "..", "..", "public")));
-app.use("/components", express.static(path.join(__dirname, "..", "..", "client", "components")));
-app.use("/sdf_files", express.static(getSDFFilesDirectory()));
-
-
-
-const createUnifiedErrorHandlingMiddleware = () => async (error, req, res, next) => {
-  const errorContext = {
-    method: req.method,
-    url: req.url,
-    userAgent: req.get('User-Agent'),
-    ip: req.ip
-  };
-
-  const handledError = await errorHandler.handle(error, errorContext);
-
-  const shouldCaptureErrorScreenshot = configuration.isDevelopment() && configuration.get('development.enableScreenshots');
-  if (shouldCaptureErrorScreenshot) {
-    captureErrorScreenshot(error, errorContext).catch(() => {});
-  }
-
-  const errorStatusCode = error.status || error.statusCode || 500;
-  const errorResponse = {
-    error: handledError.message,
-    code: handledError.code,
-    timestamp: handledError.timestamp,
-    ...(configuration.isDevelopment() && { details: error.message }),
-    ...(handledError.externalScripts && { externalScriptSuggestions: handledError.externalScripts })
-  };
-  
-  res.status(errorStatusCode).json(errorResponse);
-};
-
-app.use(createUnifiedErrorHandlingMiddleware());
-
-
-
-logger.info('Environment', { NODE_ENV: configuration.get('nodeEnv') });
-logger.info('Setting up frontend routes');
-
-const serveIndexHtmlWithDynamicTokenReplacement = (req, res) => {
-  try {
-    const indexHtmlFilePath = path.join(__dirname, "..", "..", "client", "core", "index.html");
-    let htmlContent = fs.readFileSync(indexHtmlFilePath, "utf8");
-
-    const requestHost = req.get('host') || 'localhost';
-    const requestProtocol = req.protocol || 'http';
-    const fullBaseUrl = `${requestProtocol}://${requestHost}`;
-    const cacheBustingTimestamp = Date.now();
-
-    const templateTokenReplacements = {
-      '{{TITLE}}': 'Materials',
-      '{{DESCRIPTION}}': '3D visualization of chemical contents by camera or text input.',
-      '{{CANONICAL}}': `${fullBaseUrl}/`,
-      '{{OG_IMAGE}}': '/assets/favicon.svg',
-      '{{CACHE_BUST}}': cacheBustingTimestamp
+    res.send = function(data) {
+      res.send = originalSend;
+      const duration = Date.now() - start;
+      logger.info(`${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
+      return res.send(data);
     };
-
-    htmlContent = htmlContent.replace(/\{\{TITLE\}\}|\{\{DESCRIPTION\}\}|\{\{CANONICAL\}\}|\{\{OG_IMAGE\}\}|\{\{CACHE_BUST\}\}/g, (match) => templateTokenReplacements[match] || '');
-
-    res.type('html').send(htmlContent);
-  } catch (error) {
-    res.sendFile(path.join(__dirname, "..", "..", "client", "core", "index.html"));
-  }
-};
-
-const serveManifestJsonWithCacheBusting = (req, res) => {
-  try {
-    const manifestJsonFilePath = path.join(__dirname, "..", "..", "..", "public", "manifest.json");
-    let manifestContent = fs.readFileSync(manifestJsonFilePath, "utf8");
-    const cacheBustingTimestamp = Date.now();
     
-    manifestContent = manifestContent.replace(/\{\{CACHE_BUST\}\}/g, cacheBustingTimestamp);
-    res.type('json').send(manifestContent);
+    next();
+  });
+  
+  // Health check
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'ok', 
+      environment: config.get('nodeEnv'),
+      version: process.env.npm_package_version || '1.0.0'
+    });
+  });
+  
+  await setupChemicalPredictionRoutes(app, container);
+
+  // Setup user routes if database is enabled
+  if (config.get('database.enabled')) {
+    await setupUserRoutes(app, container);
+  }
+
+  // SPA catch-all - serve index.html for non-API, non-file requests
+  app.get('*', (req, res, next) => {
+    // Skip if it's an API route or file request
+    if (req.path.startsWith('/api/') ||
+        req.path.startsWith('/sdf_files/') ||
+        req.path.includes('.')) {
+      return next();
+    }
+
+    serveIndexHtml(req, res); // For SPA client-side routing
+  });
+
+  // Error handling middleware
+  app.use(async (err, req, res, next) => {
+    // If error already has structured properties (from ErrorHandler), use them
+    // Otherwise, handle the raw error
+    let handled;
+    if (err.recoverable !== undefined && err.recovery !== undefined) {
+      handled = {
+        message: err.message,
+        code: err.code,
+        recoverable: err.recoverable,
+        recovery: err.recovery,
+        timestamp: err.timestamp,
+        context: err.context
+      };
+    } else {
+      handled = await errorHandler.handle(err, {
+        path: req.path,
+        method: req.method,
+        ip: req.ip
+      });
+    }
+
+    logger.error(`API Error: ${handled.message}`, {
+      error: handled,
+      request: {
+        path: req.path,
+        method: req.method,
+        body: req.body
+      }
+    });
+
+    const isDev = process.env.NODE_ENV === 'dev';
+
+    res.status(500).json({
+      error: handled.message || 'Internal server error',
+      code: handled.code,
+      recoverable: handled.recoverable,
+      recovery: handled.recovery,
+      timestamp: handled.timestamp,
+      ...(isDev && {
+        stack: err.stack,
+        context: handled.context,
+        originalMessage: err.message
+      })
+    });
+  });
+
+  // Final 404 handler for API routes and files not found
+  app.use((req, res) => {
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    res.status(404).send('Not found');
+  });
+  
+  return app;
+}
+
+async function setupChemicalPredictionRoutes(app, container) {
+  const structuralizer = await container.get('structuralizer');
+  const molecularProcessor = await container.get('molecularProcessor');
+  const logger = await container.get('logger');
+
+  app.post('/api/structuralize', async (req, res, next) => {
+    try {
+      const { text, lookupMode = 'GPT-5' } = req.body;
+
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({
+          error: 'Missing or invalid "text" parameter'
+        });
+      }
+
+      if (typeof lookupMode !== 'string') {
+        return res.status(400).json({
+          error: 'Invalid "lookupMode" parameter'
+        });
+      }
+
+      logger.info(`Text prediction request: "${text}" (mode: ${lookupMode})`);
+
+      const result = await structuralizer.chemicals({
+        object: text.trim(),
+        lookupMode
+      });
+
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post('/api/structuralize-image', async (req, res, next) => {
+    try {
+      const { imageBase64, x, y } = req.body;
+      
+      if (!imageBase64) {
+        return res.status(400).json({ 
+          error: 'Missing imageBase64 parameter' 
+        });
+      }
+      
+      logger.info('Image prediction request', {
+        hasCoordinates: x !== undefined && y !== undefined
+      });
+      
+      const result = await structuralizer.chemicals({
+        imageBase64,
+        x,
+        y
+      });
+      
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // SDF generation endpoint
+  app.post('/api/generate-sdfs', async (req, res, next) => {
+    try {
+      const { smiles, overwrite = false } = req.body;
+      
+      if (!Array.isArray(smiles) || smiles.length === 0) {
+        return res.status(400).json({ 
+          error: 'SMILES array required' 
+        });
+      }
+      
+      logger.info(`SDF generation request for ${smiles.length} molecules`);
+      
+      const result = await molecularProcessor.processSmiles(smiles, overwrite);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post('/api/name-to-sdf', async (req, res, next) => {
+    try {
+      const { name, overwrite = false } = req.body;
+
+      if (!name || typeof name !== 'string') {
+        return res.status(400).json({
+          error: 'Chemical name required'
+        });
+      }
+
+      logger.info(`Name to SDF request: "${name}"`);
+
+      const result = await molecularProcessor.generateSDFByName(name, overwrite);
+
+      if (!result) {
+        return res.status(404).json({
+          error: `Could not find chemical: ${name}`
+        });
+      }
+
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Test data endpoint
+  app.get('/api/test-data/:testName', async (req, res, next) => {
+    try {
+      const { testName } = req.params;
+      const testDataPath = path.join(__dirname, '..', '..', '..', 'tests', 'fixtures', 'visual-test-data', `${testName}.json`);
+
+      if (!fs.existsSync(testDataPath)) {
+        return res.status(404).json({
+          error: `Test data not found: ${testName}`
+        });
+      }
+
+      const testData = JSON.parse(fs.readFileSync(testDataPath, 'utf8'));
+      res.json(testData);
+    } catch (error) {
+      next(error);
+    }
+  });
+}
+
+/**
+ * Setup user management routes
+ */
+async function setupUserRoutes(app, container) {
+  const userService = await container.get('userService');
+  const logger = await container.get('logger');
+  
+  // Create/update user
+  app.post('/api/user', async (req, res, next) => {
+    try {
+      const { deviceToken, ...userData } = req.body;
+      
+      if (!deviceToken) {
+        return res.status(400).json({ 
+          error: 'Device token required' 
+        });
+      }
+      
+      let user = await userService.getUserByDeviceToken(deviceToken);
+      
+      if (user) {
+        // Update existing user
+        await userService.updateUser(deviceToken, userData);
+        user = await userService.getUserByDeviceToken(deviceToken);
+        logger.info('User updated', { userId: user.id });
+      } else {
+        user = await userService.createUser({ deviceToken, ...userData });
+        logger.info('User created', { userId: user.id });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Get user
+  app.get('/api/user/:deviceToken', async (req, res, next) => {
+    try {
+      const { deviceToken } = req.params;
+      const user = await userService.getUserByDeviceToken(deviceToken);
+      
+      if (!user) {
+        return res.status(404).json({ 
+          error: 'User not found' 
+        });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      next(error);
+    }
+  });
+}
+
+async function startServer(container) {
+  const config = await container.get('config');
+  const logger = await container.get('logger');
+  
+
+  try {
+    // Validate configuration (silent on success)
+    config.validate();
+
+    // CRITICAL: Validate OPENAI_API_KEY for local development
+    if (!config.isProduction() && !config.get('openai.apiKey')) {
+      logger.error('❌ OPENAI_API_KEY not found in environment');
+      logger.error('   Create .env file in project root with:');
+      logger.error('   OPENAI_API_KEY=sk-your-key-here');
+      throw new Error('OPENAI_API_KEY required for local development - check .env file');
+    }
+
+    // Initialize database if enabled
+    if (config.get('database.enabled')) {
+      const database = await container.get('database');
+      if (database && database.initialize) {
+        await database.initialize();
+      }
+    }
+    
+    // Create Express app
+    const app = await createApp(container);
+    
+    // Start HTTP server
+    const port = config.get('port') || 8080;
+    const server = app.listen(port, () => {
+      logger.info('Server configuration:', {
+        environment: config.get('nodeEnv'),
+        databaseEnabled: config.get('database.enabled'),
+        port
+      });
+    });
+    
+    // Start HTTPS server if configured
+    if (config.get('ssl.certPath') && config.get('ssl.keyPath')) {
+      const HttpsServer = require('./https-server');
+      const httpsServer = new HttpsServer(app);
+      const httpsPort = config.get('ssl.httpsPort') || 3001;
+      
+      httpsServer.start(httpsPort);
+      logger.info(`🔒 HTTPS server running on port ${httpsPort}`);
+    }
+    
+    // Graceful shutdown
+    process.on('SIGTERM', async () => {
+      logger.info('SIGTERM received, shutting down gracefully...');
+      
+      server.close(() => {
+        logger.info('HTTP server closed');
+      });
+      
+      // Cleanup services
+      const database = await container.get('database');
+      if (database && database.close) {
+        await database.close();
+        logger.info('Database connections closed');
+      }
+      
+      process.exit(0);
+    });
+    
+    return server;
   } catch (error) {
-    res.status(500).send('Error serving manifest');
+    logger.error('❌ Server startup failed:', error);
+    process.exit(1);
   }
+}
+
+// If this file is run directly, start the server
+if (require.main === module) {
+  const container = createContainer();
+  startServer(container).catch(console.error);
+}
+
+// Export for testing
+module.exports = {
+  createApp,
+  startServer,
+  setupMolecularRoutes: setupChemicalPredictionRoutes,
 };
-
-app.get("/manifest.json", serveManifestJsonWithCacheBusting);
-app.get("/", serveIndexHtmlWithDynamicTokenReplacement);
-
-
-const serveRobotsTxt = (req, res) => {
-  const hostName = req.get('host') || 'localhost';
-  res.type('text/plain');
-  res.send(`User-agent: *
-Allow: /
-
-Sitemap: https://${hostName}/sitemap.xml
-`);
-};
-
-const serveSitemapXml = (req, res) => {
-  const hostName = req.get('host') || 'localhost';
-  res.type('application/xml');
-  res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://${hostName}/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-</urlset>
-`);
-};
-
-app.get("/robots.txt", serveRobotsTxt);
-app.get("/sitemap.xml", serveSitemapXml);
-
-const shouldSkipSPACatchAll = (requestUrl) => {
-  const isApiRoute = requestUrl.startsWith("/api/");
-  const isAssetRoute = requestUrl.startsWith("/assets/");
-  const isDistRoute = requestUrl.startsWith("/dist/");
-  const isComponentRoute = requestUrl.startsWith("/components/");
-  const isSDFFileRoute = requestUrl.startsWith("/sdf_files/");
-  const isFileRequest = requestUrl.includes(".");
-  
-  return isApiRoute || isAssetRoute || isDistRoute || isComponentRoute || isSDFFileRoute || isFileRequest;
-};
-
-const createSPACatchAllRoute = () => (req, res, next) => {
-  if (shouldSkipSPACatchAll(req.url)) {
-    return next();
-  }
-  serveIndexHtmlWithDynamicTokenReplacement(req, res);
-};
-
-app.get("*", createSPACatchAllRoute());
-
-const createChromeDevToolsFilterMiddleware = () => (req, res, next) => {
-  const isChromeDevToolsDiscoveryRequest = req.url.includes(".well-known/appspecific/com.chrome.devtools");
-  
-  if (!isChromeDevToolsDiscoveryRequest) {
-    log.info(`Incoming request: ${req.method} ${req.url}`);
-  }
-
-  const isChromeDevToolsJsonRequest = req.url === "/.well-known/appspecific/com.chrome.devtools.json";
-  if (isChromeDevToolsJsonRequest) {
-    return res.status(404).json({ error: "Not found" });
-  }
-
-  next();
-};
-
-app.use(createChromeDevToolsFilterMiddleware());
-
-const { startServers } = require('../services/server-startup');
-
-startServers(app, configuration, initializeDatabase);
-
-module.exports = app;
-module.exports.main = app;
-module.exports.molecularAnalysis = app;
