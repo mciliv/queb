@@ -1,22 +1,50 @@
-const PUBCHEM_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
-<<<<<<< Updated upstream
-const OPSIN_BASE = 'https://opsin.ch.cam.ac.uk/opsin';
-const CACTUS_BASE = 'https://cactus.nci.nih.gov/chemical/structure';
-const CHEMBL_BASE = 'https://www.ebi.ac.uk/chembl/api/data';
-=======
-const logger = console;
->>>>>>> Stashed changes
+/**
+ * name-resolver.js - Chemical name to structure resolution service
+ * 
+ * This service converts chemical names (like "aspirin" or "caffeine") into
+ * structured data including SMILES notation, IUPAC names, and molecular formulas.
+ * It uses multiple chemical databases as fallbacks to ensure reliable resolution.
+ * 
+ * Database priority order:
+ * 1. PubChem - Primary source, most comprehensive
+ * 2. OPSIN - Fast systematic name parser
+ * 3. NCI CACTUS - Good for common names
+ * 4. ChEMBL - Pharmaceutical compounds
+ * 
+ * Features:
+ * - Intelligent caching with TTL and memory limits
+ * - Automatic fallback between services
+ * - Fuzzy name matching for common variations
+ * - SDF file download capabilities
+ */
 
-// Enhanced caching with TTL and size limits
+// Chemical database API endpoints
+const PUBCHEM_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
+const OPSIN_BASE = 'https://opsin.ch.cam.ac.uk/opsin';           // Systematic name parser
+const CACTUS_BASE = 'https://cactus.nci.nih.gov/chemical/structure'; // Common names
+const CHEMBL_BASE = 'https://www.ebi.ac.uk/chembl/api/data';     // Drug database
+const logger = console;
+
+// Enhanced caching configuration with memory management
 const CACHE_CONFIG = {
-  TTL_MS: parseInt(process.env.PUBCHEM_CACHE_TTL_MS) || 1800000, // 30 minutes (reduced from 1 hour)
-  MAX_SIZE: parseInt(process.env.PUBCHEM_MAX_CACHE_SIZE) || 500, // Reduced from 1000
-  CLEANUP_INTERVAL_MS: parseInt(process.env.PUBCHEM_CACHE_CLEANUP_INTERVAL_MS) || 120000, // 2 minutes (reduced from 5 minutes)
-  MAX_MEMORY_MB: parseInt(process.env.PUBCHEM_MAX_CACHE_MEMORY_MB) || 50 // 50MB memory limit for cache
+  TTL_MS: parseInt(process.env.PUBCHEM_CACHE_TTL_MS) || 1800000,              // 30 minutes - chemical data is stable
+  MAX_SIZE: parseInt(process.env.PUBCHEM_MAX_CACHE_SIZE) || 500,              // Max entries to prevent unbounded growth
+  CLEANUP_INTERVAL_MS: parseInt(process.env.PUBCHEM_CACHE_CLEANUP_INTERVAL_MS) || 120000, // 2 min cleanup cycle
+  MAX_MEMORY_MB: parseInt(process.env.PUBCHEM_MAX_CACHE_MEMORY_MB) || 50      // 50MB limit for cache memory
 };
 
-// Cache with metadata for TTL and LRU
-const namePropsCache = new Map(); // key: lowercased name -> { value: { smiles, title, iupac }, timestamp: number, accessCount: number }
+/**
+ * Main cache for resolved chemical names
+ * 
+ * Structure: Map<string, CacheEntry>
+ * Key: Lowercase chemical name (e.g., "aspirin", "caffeine")
+ * Value: {
+ *   value: { smiles, title, iupac, formula, cid },  // Chemical data
+ *   timestamp: number,                               // When cached (for TTL)
+ *   accessCount: number                              // For LRU eviction
+ * }
+ */
+const namePropsCache = new Map();
 
 // Periodic cache cleanup
 let cleanupInterval = null;
@@ -88,18 +116,30 @@ function cleanupCache(cache) {
   }
 }
 
+/**
+ * Get value from cache with TTL check and access count update
+ * @param {Map} cache - Cache map to query
+ * @param {string} key - Cache key
+ * @returns {Object|null} Cached value or null if expired/missing
+ */
 function getCacheValue(cache, key) {
   const data = cache.get(key);
   if (data && Date.now() - data.timestamp < CACHE_CONFIG.TTL_MS) {
-    data.accessCount++;
+    data.accessCount++;  // Track usage for LRU eviction
     return data.value;
   }
   if (data) {
-    cache.delete(key); // Expired
+    cache.delete(key);   // Remove expired entries
   }
   return null;
 }
 
+/**
+ * Store value in cache with metadata
+ * @param {Map} cache - Cache map to update
+ * @param {string} key - Cache key
+ * @param {Object} value - Data to cache
+ */
 function setCacheValue(cache, key, value) {
   cache.set(key, { value, timestamp: Date.now(), accessCount: 1 });
 }
@@ -304,7 +344,12 @@ async function resolveViaChEMBL(name) {
 }
 
 
-async function resolveName(name) {
+/**
+ * DEPRECATED: Simple version of resolveName - use the main resolveName function below
+ * This appears to be an older implementation that should be removed
+ * @deprecated
+ */
+async function resolveNameSimple(name) {
   // Returns { smiles, title, iupac } best-effort
   if (!name || typeof name !== 'string') {
     throw new PubChemError('Invalid name: must be a non-empty string');
@@ -395,7 +440,32 @@ async function downloadSDFBySmiles(smiles) {
   }
 }
 
-<<<<<<< Updated upstream
+/**
+ * Resolve chemical name to structured data (SMILES, CID, IUPAC name)
+ * 
+ * This is the main entry point for converting chemical names to molecular data.
+ * It attempts multiple resolution strategies:
+ * 1. Cache lookup for previously resolved names
+ * 2. PubChem CID lookup then properties fetch
+ * 3. Direct PubChem properties query by name
+ * 4. Alternative resolvers (OPSIN, CACTUS) if enabled
+ * 
+ * @param {string} name - Chemical name to resolve (e.g., "aspirin", "caffeine", "C8H10N4O2")
+ * @returns {Promise<Object>} Resolved chemical data
+ * @returns {string|null} returns.cid - PubChem Compound ID
+ * @returns {string|null} returns.smiles - SMILES notation for 3D structure generation
+ * @returns {string|null} returns.title - Preferred chemical name/title
+ * @returns {string|null} returns.iupac - IUPAC systematic name
+ * 
+ * @example
+ * const result = await resolveName('aspirin');
+ * // Returns: {
+ * //   cid: '2244',
+ * //   smiles: 'CC(=O)OC1=CC=CC=C1C(=O)O',
+ * //   title: 'Aspirin',
+ * //   iupac: '2-acetyloxybenzoic acid'
+ * // }
+ */
 async function resolveName(name) {
   // Returns { cid, smiles, title, iupac } best-effort
   if (!name || typeof name !== 'string') {
@@ -436,8 +506,8 @@ async function resolveName(name) {
 
   // If still unresolved, try alternative resolvers depending on configuration
   try {
-    const configuration = require('../../core/Configuration');
-    const chemCfg = configuration.get('chem') || { primary: 'pubchem', enableAlternates: false };
+    const services = require('../../core/services');
+    const chemCfg = services.config.get('chem') || { primary: 'pubchem', enableAlternates: false };
     if (!smiles && chemCfg.enableAlternates) {
       const altOpsin = await resolveViaOPSIN(name);
       if (altOpsin && altOpsin.smiles) {
@@ -476,20 +546,38 @@ async function resolveName(name) {
   return result;
 }
 
-=======
->>>>>>> Stashed changes
+async function getPropertiesByCID(cid) {
+  // Returns { smiles, title, iupac } for a given CID
+  if (!cid || typeof cid !== 'number') {
+    return { smiles: null, title: null, iupac: null };
+  }
+  
+  try {
+    const url = `${PUBCHEM_BASE}/compound/cid/${cid}/property/IsomericSMILES,IUPACName,Title/JSON`;
+    const data = await fetchJson(url);
+    const props = data?.PropertyTable?.Properties?.[0] || {};
+    
+    return {
+      smiles: props.IsomericSMILES || null,
+      title: props.Title || null,
+      iupac: props.IUPACName || null
+    };
+  } catch (error) {
+    logger.warn(`Failed to get properties for CID ${cid}:`, error.message);
+    return { smiles: null, title: null, iupac: null };
+  }
+}
+
 module.exports = {
   resolveName,
   downloadSDFBySmiles,
-<<<<<<< Updated upstream
   resolveCIDBySmiles,
   resolveViaOPSIN,
   resolveViaCACTUS,
   resolveViaChEMBL,
-=======
+  getPropertiesByCID,
   startCleanupInterval,
   stopCleanupInterval,
->>>>>>> Stashed changes
 };
 
 

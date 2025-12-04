@@ -8,30 +8,12 @@
  * This module reduces that complexity by providing consistent error handling patterns.
  */
 
-const configuration = require('./Configuration');
-const ExternalScriptTrigger = require('./ExternalScriptTrigger');
-
 class ErrorHandler {
   constructor() {
     this.logger = null;
     this.errorCounts = new Map();
     this.lastErrors = new Map();
     this.initialized = false;
-    this.scriptTrigger = new ExternalScriptTrigger({
-      enabled: configuration.get('externalScripts.enabled', true),
-      scripts: configuration.get('externalScripts.scripts', [
-        {
-          name: 'ai-script',
-          path: '~/Code/ai',
-          enabled: true,
-          priority: 1,
-          timeout: 30000,
-          retries: 2
-        }
-      ]),
-      minSeverity: configuration.get('externalScripts.minSeverity', 'medium'),
-      logger: this.logger
-    });
   }
 
   /**
@@ -54,7 +36,8 @@ class ErrorHandler {
     this.initialized = true;
     
     // Set up global error handlers in non-test environments
-    if (!configuration.isTest()) {
+    const isTest = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
+    if (!isTest) {
       this._setupGlobalHandlers();
     }
   }
@@ -80,27 +63,13 @@ class ErrorHandler {
     // Attempt recovery if possible
     const recovery = this._attemptRecovery(errorInfo);
     
-    // Trigger external scripts for appropriate errors
-    let scriptResponse = null;
-    if (this.scriptTrigger && this.scriptTrigger.shouldTriggerScripts(errorInfo)) {
-      try {
-        scriptResponse = await this.scriptTrigger.executeScripts(errorInfo);
-        if (scriptResponse && scriptResponse.primarySuccess) {
-          this.logger.info('🤖 External script provided suggestions for error resolution');
-        }
-      } catch (scriptError) {
-        this.logger.warn('⚠️ External script execution failed:', scriptError.message);
-      }
-    }
-    
     return {
       message: userMessage,
       code: errorInfo.code,
       recoverable: recovery.possible,
       recovery: recovery.action,
       timestamp: errorInfo.timestamp,
-      context: context.userFacing ? errorInfo.context : undefined,
-      externalScripts: scriptResponse
+      context: context.userFacing ? errorInfo.context : undefined
     };
   }
 
@@ -400,7 +369,8 @@ class ErrorHandler {
     }
 
     // Include stack trace for development
-    if (configuration.isDevelopment() && errorInfo.stack) {
+    const isDev = process.env.NODE_ENV === 'development';
+    if (isDev && errorInfo.stack) {
       this.logger.debug('Stack trace:', errorInfo.stack);
     }
   }
@@ -426,7 +396,10 @@ class ErrorHandler {
   _generateErrorId(error, context) {
     const timestamp = Date.now();
     const contextKey = context.category || 'unknown';
-    const errorKey = (error?.message || error || 'unknown').substring(0, 20);
+    const errorMessage = error?.message || error || 'unknown';
+    const errorKey = typeof errorMessage === 'string' 
+      ? errorMessage.substring(0, 20) 
+      : String(errorMessage).substring(0, 20);
     return `${contextKey}_${errorKey.replace(/\W/g, '_')}_${timestamp}`;
   }
 
@@ -482,9 +455,6 @@ class ErrorHandler {
   }
 }
 
-// Export singleton instance
-const errorHandler = new ErrorHandler();
-
-module.exports = errorHandler;
+module.exports = ErrorHandler;
 
 

@@ -34,7 +34,7 @@ async function runSingleTabMolecularTests() {
         '--remote-debugging-port=9223' // Different port to avoid conflicts
       ],
       slowMo: 500,
-      userDataDir: './test/single-tab-chrome' // Dedicated profile
+      userDataDir: './.tmp/single-tab-chrome' // Dedicated profile
     });
 
     // Use the first (and likely only) page

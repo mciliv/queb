@@ -94,7 +94,7 @@ class SeamlessTabManager {
         '--no-default-browser-check',
         '--disable-infobars',
         `--remote-debugging-port=${this.debuggingPort}`,
-        '--user-data-dir=./test/seamless-chrome-profile'
+        '--user-data-dir=./.tmp/seamless-chrome-profile'
       ],
       slowMo: 100,
       devtools: false // No devtools popup

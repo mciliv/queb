@@ -1,6 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
-import logger from '../core/logger.js';
+/**
+ * MoleculeViewer.jsx - 3D molecular structure visualization component
+ * 
+ * This component renders interactive 3D molecular structures using 3Dmol.js.
+ * It handles loading SDF (Structure Data Format) files from the server and
+ * displays them as rotatable, zoomable 3D models.
+ * 
+ * Features:
+ * - Automatic SDF file loading from server
+ * - Fallback to SMILES rendering if SDF unavailable
+ * - Smart caching to prevent flashing during updates
+ * - Ionic compound visualization (like NaCl)
+ * - Error handling with multiple fallback strategies
+ */
 
+import React, { useState, useEffect, useRef } from 'react';
+import logger from '../logger.js';
+
+/**
+ * MoleculeViewer Component
+ * 
+ * @param {Object} props
+ * @param {Object} props.molecularData - Molecular data to visualize
+ * @param {string} props.molecularData.name - Chemical name (e.g., "Caffeine")
+ * @param {string} props.molecularData.smiles - SMILES notation (fallback if no SDF)
+ * @param {string} props.molecularData.sdfData - SDF file path or data
+ * @param {string} [props.molecularData.formula] - Chemical formula for display
+ */
 const MoleculeViewer = ({ molecularData }) => {
   const ref = useRef(null);
   const mountRef = useRef(null); // Dedicated imperative mount to avoid React DOM conflicts
@@ -94,20 +119,22 @@ const MoleculeViewer = ({ molecularData }) => {
               }
             } catch (_) {}
           }
-          // Use sphere representation with proper element colors
-          // For ionic compounds like NaCl, show individual atoms clearly
+          // Configure 3D visualization style
+          // Use sphere representation for clear atom visibility
           viewer.setStyle({}, { 
             sphere: { 
-              scale: 0.8
+              scale: 0.8    // Slightly smaller spheres for better bond visibility
             } 
           });
-          // Ensure proper element-based coloring
-          viewer.setStyle({element: 'Na'}, { sphere: { color: 'purple', scale: 0.8 } });
-          viewer.setStyle({element: 'Cl'}, { sphere: { color: 'green', scale: 0.8 } });
-          viewer.setStyle({element: 'H'}, { sphere: { color: 'white', scale: 0.6 } });
-          viewer.setStyle({element: 'O'}, { sphere: { color: 'red', scale: 0.8 } });
-          viewer.setStyle({element: 'C'}, { sphere: { color: 'gray', scale: 0.8 } });
-          viewer.setStyle({element: 'N'}, { sphere: { color: 'blue', scale: 0.8 } });
+          
+          // Apply standard element colors (CPK coloring scheme)
+          // These colors are universally recognized in chemistry:
+          viewer.setStyle({element: 'Na'}, { sphere: { color: 'purple', scale: 0.8 } });  // Sodium - purple
+          viewer.setStyle({element: 'Cl'}, { sphere: { color: 'green', scale: 0.8 } });   // Chlorine - green
+          viewer.setStyle({element: 'H'}, { sphere: { color: 'white', scale: 0.6 } });    // Hydrogen - white (smaller)
+          viewer.setStyle({element: 'O'}, { sphere: { color: 'red', scale: 0.8 } });      // Oxygen - red
+          viewer.setStyle({element: 'C'}, { sphere: { color: 'gray', scale: 0.8 } });     // Carbon - gray
+          viewer.setStyle({element: 'N'}, { sphere: { color: 'blue', scale: 0.8 } });     // Nitrogen - blue
           if (typeof viewer.resize === 'function') viewer.resize();
           if (typeof viewer.zoomTo === 'function') viewer.zoomTo();
           if (typeof viewer.zoom === 'function') {

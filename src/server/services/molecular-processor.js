@@ -1,15 +1,44 @@
+/**
+ * molecular-processor.js - Handles 3D molecular structure generation
+ * 
+ * This service converts chemical representations (SMILES notation, chemical names)
+ * into 3D structure files (SDF format) that can be visualized in the browser.
+ * It acts as a bridge between chemical data and 3D visualization.
+ * 
+ * Key responsibilities:
+ * - Convert SMILES notation to 3D structures using RDKit (Python)
+ * - Generate SDF files from chemical names via PubChem lookup
+ * - Cache generated files to avoid redundant processing
+ * - Handle fallback to PubChem when local generation fails
+ */
+
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const fsPromises = require("fs").promises;
 const { resolveName, downloadSDFBySmiles } = require("./name-resolver");
 
+/**
+ * MolecularProcessor - Main class for molecular structure generation
+ * 
+ * This class manages the conversion of chemical data into 3D structure files
+ * that can be rendered by 3Dmol.js in the frontend. It uses a multi-step
+ * approach with fallbacks to ensure reliable structure generation.
+ * 
+ * Processing pipeline:
+ * 1. Check if SDF file already exists (cached)
+ * 2. Try generating with RDKit (Python subprocess)
+ * 3. If RDKit fails, download from PubChem as fallback // Make this step 2, or tell me that it's less effective
+ * 4. Store generated files for future use
+ */
 class MolecularProcessor {
+  /**
+   * Initialize the molecular processor with SDF storage directory
+   * @param {string} [sdfDir] - Custom directory for SDF files (defaults to public/sdf_files)
+   */
   constructor(sdfDir) {
     if (!sdfDir) {
-      sdfDir = process.env.NODE_ENV === 'test'
-        ? 'tests/sdf_files'
-        : 'server/sdf_files';
+      sdfDir = process.env.NODE_ENV === 'test' ? 'tests/sdf_files' : 'public/sdf_files';
     }
     this.sdfDir = path.join(__dirname, "..", "..", sdfDir);
     this.ensureSdfDirectory();
@@ -31,7 +60,6 @@ class MolecularProcessor {
 
     for (const smiles of smilesArray) {
       try {
-        // Basic SMILES validation
         if (!this.isValidSmiles(smiles)) {
           results.skipped.push(`${smiles.substring(0, 50)}... (invalid format)`);
           continue;
@@ -134,7 +162,7 @@ class MolecularProcessor {
 
   async generateSmilesSDF(chemical) {
     // First try local Python generator to satisfy unit tests expectations
-    const pythonScript = path.join(__dirname, "..", "python", "sdf.py");
+    const pythonScript = path.join(__dirname, "python", "sdf.py");
     const args = [pythonScript, chemical, "--dir", this.sdfDir];
     const spawnOptions = { stdio: "pipe" };
     const { spawn } = require("child_process");

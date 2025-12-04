@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
-import { usePayment } from './ui/PaymentContext';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApi } from '../hooks/useApi';
 
-const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
+const LinkSection = ({ isProcessing, setIsProcessing, onPredictionComplete }) => {
   const [imageUrl, setImageUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
-  const { checkPaymentRequired } = usePayment();
   const { analyzeImage } = useApi();
+  const urlInputRef = useRef(null);
+
+  // Auto-focus the URL input when component mounts
+  useEffect(() => {
+    if (urlInputRef.current) {
+      urlInputRef.current.focus();
+    }
+  }, []);
 
   const validateUrl = (url) => {
     try {
@@ -27,17 +33,14 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
       return;
     }
 
-    if (checkPaymentRequired()) {
-      return;
-    }
 
     setIsProcessing(true);
     setUrlError('');
     
     try {
       const result = await analyzeImage(imageUrl);
-      if (onAnalysisComplete) {
-        onAnalysisComplete(result);
+      if (onPredictionComplete) {
+        onPredictionComplete(result);
       }
       setImageUrl('');
       } catch (error) {
@@ -69,7 +72,6 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
     if (dt.files && dt.files.length > 0) {
       const file = dt.files[0];
       if (file && file.type && file.type.startsWith('image/')) {
-        if (checkPaymentRequired()) return;
         setIsProcessing(true);
         setUrlError('');
         try {
@@ -78,7 +80,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
             try {
               const dataUrl = ev.target.result;
               const result = await analyzeImage(dataUrl);
-              if (onAnalysisComplete) onAnalysisComplete(result);
+              if (onPredictionComplete) onPredictionComplete(result);
               setImageUrl('');
             } catch (err) {
               console.error('File drop structuralization failed:', err);
@@ -108,13 +110,12 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
         return;
       }
 
-      if (checkPaymentRequired()) return;
 
       setIsProcessing(true);
       setUrlError('');
       try {
         const result = await analyzeImage(url);
-        if (onAnalysisComplete) onAnalysisComplete(result);
+        if (onPredictionComplete) onPredictionComplete(result);
         setImageUrl('');
       } catch (error) {
         console.error('URL drop structuralization failed:', error);
@@ -134,6 +135,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete }) => {
         onDrop={handleDrop}
       >
         <input
+          ref={urlInputRef}
           type="url"
           placeholder="Enter or drag image URL..."
           value={imageUrl}

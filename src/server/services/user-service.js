@@ -14,7 +14,6 @@ class UserService {
         CREATE TABLE IF NOT EXISTS users (
           id SERIAL PRIMARY KEY,
           device_token VARCHAR(255) UNIQUE NOT NULL,
-          payment_method_id VARCHAR(255),
           device_info JSONB,
           name VARCHAR(255),
           usage INTEGER DEFAULT 0,
@@ -47,16 +46,15 @@ class UserService {
     try {
       const {
         deviceToken,
-        paymentMethodId,
         deviceInfo,
         name
       } = userData;
 
       const result = await client.query(`
-        INSERT INTO users (device_token, payment_method_id, device_info, name)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO users (device_token, device_info, name)
+        VALUES ($1, $2, $3)
         RETURNING *;
-      `, [deviceToken, paymentMethodId, deviceInfo, name]);
+      `, [deviceToken, deviceInfo, name]);
 
 
       return result.rows[0];
@@ -105,7 +103,6 @@ class UserService {
     const client = await this.pool.connect();
     try {
       const {
-        paymentMethodId,
         deviceInfo,
         name
       } = updateData;
@@ -114,10 +111,6 @@ class UserService {
       const values = [];
       let paramCount = 0;
 
-      if (paymentMethodId !== undefined) {
-        updates.push(`payment_method_id = $${++paramCount}`);
-        values.push(paymentMethodId);
-      }
       
       if (deviceInfo !== undefined) {
         updates.push(`device_info = $${++paramCount}`);

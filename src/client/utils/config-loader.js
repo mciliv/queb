@@ -1,5 +1,5 @@
 // Configuration loader utility
-import { PAYMENT_CONFIG, APP_CONFIG } from '../config/app-config.js';
+import { APP_CONFIG } from '../config/app-config.js';
 import { VALIDATION_PATTERNS } from '../config/validation-patterns.js';
 
 /**
@@ -7,9 +7,6 @@ import { VALIDATION_PATTERNS } from '../config/validation-patterns.js';
  * Provides a single point of access for all application configurations
  */
 export const ConfigLoader = {
-  // Payment configuration
-  getPaymentConfig: () => PAYMENT_CONFIG,
-  
   // App configuration
   getAppConfig: () => APP_CONFIG,
   
@@ -18,11 +15,10 @@ export const ConfigLoader = {
   
   // Combined getter for convenience
   getAllConfigs: () => ({
-    payment: PAYMENT_CONFIG,
     app: APP_CONFIG,
     validation: VALIDATION_PATTERNS
   })
 };
 
 // Direct exports for backward compatibility
-export { PAYMENT_CONFIG, APP_CONFIG, VALIDATION_PATTERNS };
+export { APP_CONFIG, VALIDATION_PATTERNS };

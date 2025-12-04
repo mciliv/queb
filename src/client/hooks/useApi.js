@@ -214,32 +214,31 @@ export const useApi = () => {
 
   /**
    * Chemical compounds from object specified by text
-   * 
+   *
    * Takes any text description (e.g., "coffee", "aspirin", "plastic bottle")
    * and returns the chemical compounds present in that object.
    *
    * @param {string} text - Object/material description to analyze
    * @param {string} lookupMode - Analysis mode: 'GPT-5' (AI)
    * @returns {Promise<{object: string, chemicals: Array}>} Analysis results
-   * 
+   *
    * @example
    * const result = await structuralizeText('coffee', 'database');
    * // Returns: { object: 'coffee', chemicals: [{name: 'Caffeine', sdfPath: '...'}] }
    */
   const structuralizeText = useCallback(async (text, lookupMode = 'GPT-5') => {
-    if (!text || !text.trim()) {
-      throw new Error('Text input is required');
-    }
+    // Always trim to remove whitespace
+    const trimmedText = text.trim();
 
     const result = await apiCall('/api/structuralize', {
       method: 'POST',
-      body: JSON.stringify({ text, lookupMode }),
+      body: JSON.stringify({ text: trimmedText, lookupMode }),
       maxRetries: 2,
       timeout: 30000,
       cachePost: true,              // Cache results to avoid re-analyzing same text
       cacheDuration: 600000,        // 10 minutes - chemical data doesn't change often
     });
-    
+
     console.log('✅ Analysis result:', result);
     return result;
   }, [apiCall]);

@@ -1,0 +1,106 @@
+#!/usr/bin/env zsh
+set -eo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+start() {
+  kill_port 8080
+  node "$PROJECT_ROOT/src/server/api/server.js"
+}
+
+kill_port() {
+  local port="${1:-8080}"
+  if lsof -ti:$port >/dev/null 2>&1; then
+    lsof -ti:$port | xargs kill -9 2>/dev/null || true
+  fi
+}
+
+deploy() {
+  local env="${1:-dev}"
+  if [[ "$env" != "dev" && "$env" != "prod" ]]; then
+    echo "Usage: ./run deploy [dev|prod]" >&2
+    echo "  dev  - Deploy to dev.queb.space" >&2
+    echo "  prod - Deploy to queb.space" >&2
+    return 1
+  fi
+  "$PROJECT_ROOT/deploy/deploy.sh" "$env"
+}
+
+build() { node "$PROJECT_ROOT/src/client/build-frontend.js"; }
+
+debug() {
+  kill_port 8080
+  node --inspect "$PROJECT_ROOT/src/server/api/server.js"
+}
+
+debug-brk() {
+  kill_port 8080
+  node --inspect-brk "$PROJECT_ROOT/src/server/api/server.js"
+}
+
+browser() {
+  kill_port 8080
+  node "$PROJECT_ROOT/src/server/api/server.js" &
+  sleep 3 # make next line run when server.js has run to appropriate point instead
+  open "http://localhost:8080"
+  wait
+}
+
+test-inject() {
+  local test_case="${1:-coffee}"
+  kill_port 8080
+  node "$PROJECT_ROOT/src/server/api/server.js" &
+  local server_pid=$!
+  sleep 4
+  if ! curl -s "http://localhost:8080/health" > /dev/null; then
+    echo "❌ Server failed to start"
+    kill $server_pid 2>/dev/null || true
+    exit 1
+  fi
+  
+  node "$PROJECT_ROOT/scripts/inject-test.js" "$test_case"
+  open "http://localhost:8080"
+  wait $server_pid
+}
+
+test-dev() {
+  local test_case="${1:-coffee}"
+  kill_port 8080
+  AUTO_TEST_INJECT="$test_case" node "$PROJECT_ROOT/src/server/api/server.js" &
+  local server_pid=$!
+  
+  sleep 3
+  open "http://localhost:8080"
+  wait $server_pid
+}
+
+help() {
+  echo "Usage: ./run COMMAND [ARGS...]"
+  echo ""
+  echo "Available commands:"
+  echo "  start          Start the server (default)"
+  echo "  debug          Start server in debug mode"
+  echo "  debug-brk      Start server in debug mode with breakpoint"
+  echo "  browser        Start server and open browser"
+  echo "  test-inject    Start server and inject test case via HTTP"
+  echo "  test-dev       Development mode with auto-injection"
+  echo "  build          Build the frontend"
+  echo "  deploy [env]   Deploy to dev or prod"
+  echo "  dev            Open dev environment"
+  echo ""
+  echo "Test injection examples:"
+  echo "  ./run test-inject coffee     # Inject coffee analysis"
+  echo "  ./run test-inject saltwater  # Inject salt water analysis" 
+  echo "  ./run test-dev apple         # Auto-inject apple on startup"
+  echo ""
+  echo "Available test cases:"
+  echo "  coffee, saltwater, aspirin, apple, wine, egg"
+}
+
+CMD="${1:-start}"
+if [[ "$CMD" == "-h" || "$CMD" == "--help" ]]; then
+  help
+  exit 0
+fi
+shift || true
+"$CMD" "$@"

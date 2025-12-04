@@ -1,0 +1,23 @@
+{
+  "testName": "saltwater",
+  "timestamp": "2025-10-23T09:05:59.605Z",
+  "object": "salt water",
+  "chemicals": [
+    {
+      "name": "sodium chloride",
+      "sdfPath": null,
+      "status": "lookup_required",
+      "sdfUrl": null
+    },
+    {
+      "name": "water",
+      "sdfPath": null,
+      "status": "lookup_required",
+      "sdfUrl": null
+    }
+  ],
+  "metadata": {
+    "totalMolecules": 2,
+    "successfulSdfs": 0
+  }
+}

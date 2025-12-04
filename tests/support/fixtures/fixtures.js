@@ -2,8 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 
-// Load molecular configuration from centralized config
-const projectConfig = require("../../../config/project");
+// Load molecular configuration
 const molecularConfig = require("../../../config/molecular-config.json");
 
 // ==================== TEST FIXTURES ====================

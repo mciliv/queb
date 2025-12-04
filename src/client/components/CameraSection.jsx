@@ -1,21 +1,50 @@
+/**
+ * CameraSection.jsx - Live camera analysis component
+ * 
+ * This component enables real-time molecular analysis using the device camera.
+ * Users can click on objects in the camera feed to analyze their chemical composition.
+ * The component handles camera permissions, capture, and crop visualization.
+ * 
+ * Key features:
+ * - Multi-camera support (standard + wide angle)
+ * - Click-to-analyze with visual feedback
+ * - Smart cropping around click point (25% of image)
+ * - Fallback to uploaded photos if camera unavailable
+ * - Responsive design for mobile and desktop
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
-import { usePayment } from './ui/PaymentContext';
 import { useApi } from '../hooks/useApi';
 
+/**
+ * CameraSection Component
+ * 
+ * @param {Object} props
+ * @param {boolean} props.isProcessing - Global processing state
+ * @param {Function} props.setIsProcessing - Update processing state
+ * @param {Function} props.setCurrentAnalysisType - Track analysis type for UI
+ * @param {Function} props.onAnalysisComplete - Callback when analysis finishes
+ */
 const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, onAnalysisComplete }) => {
-  const videoRef = useRef(null);
-  const wideVideoRef = useRef(null);
+  // Video element refs
+  const videoRef = useRef(null);              // Main camera video element
+  const wideVideoRef = useRef(null);          // Wide-angle camera (if available)
+  
+  // Camera state
   const [hasPermission, setHasPermission] = useState(false);
   const [permissionMessage, setPermissionMessage] = useState('');
   const [showSwitchCamera, setShowSwitchCamera] = useState(false);
-  const [stream, setStream] = useState(null);
-  const [wideStream, setWideStream] = useState(null);
+  const [stream, setStream] = useState(null);           // MediaStream for main camera
+  const [wideStream, setWideStream] = useState(null);   // MediaStream for wide camera
   const [availableCameras, setAvailableCameras] = useState([]);
   const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
-  const [clickPosition, setClickPosition] = useState(null);
-  const [showOutline, setShowOutline] = useState(false);
-  const outlineTimeoutRef = useRef(null);
-  const { checkPaymentRequired } = usePayment();
+  
+  // Click analysis state
+  const [clickPosition, setClickPosition] = useState(null);  // Where user clicked
+  const [showOutline, setShowOutline] = useState(false);     // Show crop outline
+  const outlineTimeoutRef = useRef(null);                    // Timer for outline
+  
+  // External hooks
   const { analyzeImage } = useApi();
 
   useEffect(() => {
@@ -33,23 +62,27 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
     };
   }, []);
 
+  /**
+   * Request camera permissions and initialize video streams
+   * Attempts to get both standard and wide-angle cameras if available
+   */
   const requestCameraAccess = async () => {
     try {
-      // Get all available cameras
+      // Enumerate all video input devices
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
       setAvailableCameras(videoDevices);
       setShowSwitchCamera(videoDevices.length > 1);
       
-      // Start with standard camera
+      // Request standard camera with optimal settings
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
-          facingMode: 'environment',
-          width: { ideal: 1920 },
+          facingMode: 'environment',      // Prefer rear camera on mobile
+          width: { ideal: 1920 },         // Full HD for better analysis
           height: { ideal: 1080 },
-          aspectRatio: { ideal: 16/9 }
+          aspectRatio: { ideal: 16/9 }    // Standard widescreen
         },
-        audio: false 
+        audio: false                      // No audio needed
       });
       
       if (videoRef.current) {
@@ -89,16 +122,21 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, 
     }
   };
 
+  /**
+   * Handle click on camera feed to analyze object at that location
+   * Captures frame, calculates crop region, and sends for analysis
+   * 
+   * @param {MouseEvent|TouchEvent} e - Click/touch event with coordinates
+   */
   const handleCameraClick = async (e) => {
+    // Check permissions first
     if (!hasPermission) {
       await requestCameraAccess();
       return;
     }
+    
+    // Validate state
     if (!videoRef.current || isProcessing) return;
-
-    if (checkPaymentRequired()) {
-      return;
-    }
 
     setIsProcessing(true);
     setCurrentAnalysisType('camera');

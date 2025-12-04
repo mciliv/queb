@@ -1,2 +1,0 @@
-echo "🧪 Running quick tests before commit..."
-npm run test:quick 

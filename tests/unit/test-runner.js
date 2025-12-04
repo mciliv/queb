@@ -104,13 +104,9 @@ class ComponentTestRunner {
     const path = require('path');
     
     const requiredFiles = [
-      'src/client/core/index.html',
-      'src/client/core/app.js',
-      'frontend/components/camera.js',
-      'frontend/components/camera-handler.js',
-      'frontend/components/ui-utils.js',
-      'backend/api/server.js',
-      'backend/services/molecular-processor.js'
+      'src/client/index.html',
+      'src/client/components/App.jsx',
+      'src/server/api/server.js'
     ];
     
     let allFilesExist = true;

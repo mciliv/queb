@@ -33,7 +33,6 @@ class PromptEngine {
     });
   }
 
-<<<<<<< Updated upstream
   /**
    * Get chemical analysis examples based on context
    */
@@ -45,7 +44,8 @@ GUIDANCE:
 - Do not guess: if uncertain or ambiguous, set "smiles": null.
 - Output JSON only; no commentary.
 - Focus on characteristic constituents (major first, then minor).`;
-=======
+  }
+
   _loadPromptFile(filename) {
     const filePath = path.join(__dirname, 'prompts', filename);
     try {
@@ -55,7 +55,6 @@ GUIDANCE:
       // If missing, return empty string to avoid runtime failure
       return '';
     }
->>>>>>> Stashed changes
   }
 
   /**
@@ -111,33 +110,7 @@ GUIDANCE:
     return /^[A-Za-z0-9\[\]()=+\-#@\\/.]+$/.test(cleaned);
   }
 
-<<<<<<< Updated upstream
-  /**
-   * Get context-specific examples
-   */
-  _getContextExamples(objectType) {
-    const contexts = {
-      beverage: `
-Beverage guidance:
-- Identify typical constituents for the beverage.
-- Verify identities against PubChem/ChEBI; prefer PubChem IsomericSMILES.`,
-      
-      food: `
-Food guidance:
-- Identify characteristic small molecules (sugars, acids, etc.).
-- Verify against PubChem/ChEBI; return SMILES or null if uncertain.`,
-      
-      material: `
-Material guidance:
-- Identify representative units/ions for the material.
-- Verify against PubChem/ChEBI; prefer canonical SMILES.`
-    };
-
-    return contexts[objectType] || '';
-  }
-=======
   // _getContextExamples removed: prompts now live in plain text files
->>>>>>> Stashed changes
 
   /**
    * PUBLIC INTERFACE - Simple methods hiding complexity

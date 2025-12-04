@@ -177,7 +177,6 @@ async function testConnection() {
   }
 }
 
-// Create .env file for local development
 function createEnvFile() {
   log.info('Creating .env file for local development...');
 
@@ -190,12 +189,6 @@ DB_PORT=${defaultConfig.port}
 DB_NAME=${defaultConfig.database}
 DB_USER=${defaultConfig.user}
 DB_PASSWORD=${defaultConfig.password}
-
-# Development settings
-NODE_ENV=development
-OPENAI_API_KEY=your_openai_api_key_here
-STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key_here
-STRIPE_SECRET_KEY=your_stripe_secret_key_here
 `;
 
     fs.writeFileSync(envFile, envContent);

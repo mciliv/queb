@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { useAppController } from '../core/AppController';
+import { useAppController } from '../AppController';
 import { isMobileDevice } from '../utils/device.js';
 
 const cameraSvg = `
@@ -55,3 +55,5 @@ const ModeSelector = () => (
 );
 
 export default memo(ModeSelector);
+
+

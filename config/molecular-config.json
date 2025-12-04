@@ -22,5 +22,6 @@
       "label": "Apple",
       "smilesList": ["O", "CC(=O)O"]
     }
-  ]
+  ],
+  "DEFAULT_INPUT": "cacao"
 }

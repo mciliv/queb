@@ -6,7 +6,7 @@
  */
 
 // Mock logger to avoid console spam during tests
-jest.mock('../../../src/client/core/logger.js', () => ({
+jest.mock('../../../src/client/logger.js', () => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
@@ -18,7 +18,7 @@ const {
   KEYBOARD_SHORTCUTS,
   createKeyboardHandler,
   validateAllShortcutsConfigured
-} = require('../../../src/client/core/keyboard-shortcuts.js');
+} = require('../../../src/client/keyboard-shortcuts.js');
 
 describe('Keyboard Shortcuts Functionality Tests', () => {
   let mockActions;

@@ -1,6 +1,6 @@
 // Service Worker for Molecular Analysis PWA
-const CACHE_NAME = 'mol-analysis-v1';
-const STATIC_CACHE = 'mol-analysis-static-v1';
+const CACHE_NAME = 'mol-analysis-v2';
+const STATIC_CACHE = 'mol-analysis-static-v2';
 
 // Files to cache immediately
 const STATIC_FILES = [

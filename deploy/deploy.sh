@@ -44,25 +44,24 @@ wait $BUILD_PID
 
 # Fast deployment
 if [ "$ENV" = "dev" ]; then
-  # Deploy to dev service (no promotion = faster)
-  gcloud app deploy app-dev.yaml --no-promote --quiet --no-cache &
+  gcloud app deploy app-dev.yaml --quiet --no-cache &
 else
-  # Deploy to production
   gcloud app deploy app.yaml --quiet --no-cache &
 fi
 DEPLOY_PID=$!
 
-# Upload static files in parallel
+gcloud app deploy deploy/dispatch.yaml --quiet &
+DISPATCH_PID=$!
+
 BUCKET_NAME="${PROJECT_ID}-static"
 gsutil -m -q cp -r src/client/dist/* gs://${BUCKET_NAME}/ &
 STATIC_PID=$!
 
-# Wait for both operations
 wait $DEPLOY_PID
+wait $DISPATCH_PID
 wait $STATIC_PID
 
-# Cleanup
-[ -f "package-appengine.json" ] && git checkout package.json 2>/dev/null || true
+[ -f "package-appengine.json" ] && git checkout package.json
 
 echo -e "${GREEN}✅ Deployment complete!${NC}"
 

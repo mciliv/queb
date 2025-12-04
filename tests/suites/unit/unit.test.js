@@ -52,17 +52,18 @@ jest.mock("puppeteer", () => ({
   connect: jest.fn()
 }));
 
-// Mock screenshot service to avoid puppeteer issues during tests
-jest.mock("../../../src/server/services/file-logger", () => {
-  return jest.fn().mockImplementation(() => ({
-    captureApp: jest.fn().mockResolvedValue({ success: true, filename: 'mock.png' }),
-    captureWithInput: jest.fn().mockResolvedValue({ success: true, filename: 'mock.png' }),
-    captureAnalysis: jest.fn().mockResolvedValue({ success: true, filename: 'mock.png' }),
-    listScreenshots: jest.fn().mockResolvedValue(['mock1.png', 'mock2.png']),
-    getScreenshotPath: jest.fn().mockResolvedValue('/path/to/mock.png'),
-    cleanupOldScreenshots: jest.fn().mockResolvedValue({ cleaned: 2 })
-  }));
-});
+// Mock file-logger to avoid file system operations during tests
+jest.mock("../../../src/server/services/file-logger", () => ({
+  startup: jest.fn(),
+  shutdown: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  success: jest.fn(),
+  debug: jest.fn(),
+  log: jest.fn(),
+  websocket: jest.fn()
+}));
 
 // Mock child_process
 jest.mock("child_process", () => ({
@@ -132,8 +133,8 @@ const APP_VALIDATION_RULES = {
   
   // Performance benchmarks
   performance: {
-    textAnalysis: { maxTime: 15000, expectedResponse: 'smiles' },
-    imageAnalysis: { maxTime: 20000, expectedResponse: 'molecules' },
+    textPrediction: { maxTime: 15000, expectedResponse: 'smiles' },
+    imagePrediction: { maxTime: 20000, expectedResponse: 'molecules' },
     sdfGeneration: { maxTime: 5000, expectedResponse: 'files' },
     pageLoad: { maxTime: 3000, criticalResources: ['style.css', 'bundle.js'] }
   }
@@ -189,7 +190,7 @@ describe("Unit Tests - Core App Validation", () => {
   });
 
   describe("Structuralizer", () => {
-    test("should construct and expose analysis methods", () => {
+    test("should construct and expose prediction methods", () => {
       expect(typeof atomPredictor.structuralizeText).toBe("function");
       expect(typeof atomPredictor.structuralizeImage).toBe("function");
     });
@@ -359,7 +360,7 @@ describe("Unit Tests - Core App Validation", () => {
       });
 
       test("should extract JSON from mixed content", () => {
-        const mixedContent = `Here's the analysis: {"object": "ethanol", "chemicals": [{"name": "Ethanol", "smiles": "CCO"}]} and some extra text.`;
+        const mixedContent = `Here's the prediction: {"object": "ethanol", "chemicals": [{"name": "Ethanol", "smiles": "CCO"}]} and some extra text.`;
       const result = require("../../../src/core/PromptEngine").repairJSON(mixedContent);
         expect(result.object).toBe("ethanol");
         expect(result.chemicals[0].smiles).toBe("CCO");

@@ -2,7 +2,7 @@
 
 const { spawn } = require('child_process');
 const path = require('path');
-const logger = require('../services/logger') || console;
+const logger = require('../services/file-logger') || console;
 
 // Configuration with environment-specific defaults
 const CONFIG = {
@@ -247,66 +247,6 @@ async function convertNamesToSmiles(payload, llmClient = null) {
         { label: 'openeye', fn: () => convertNameToSmilesOpenEye(name) },
         { label: 'rdkit', fn: () => convertNameToSmilesRDKit(name) }
       ];
-<<<<<<< Updated upstream
-      
-      for (const methodInfo of methods) {
-        if (!smiles) {
-          try {
-            const result = await methodInfo.fn();
-            if (result) {
-              smiles = result;
-              method = methodInfo.name;
-              break;
-            }
-          } catch (error) {
-            console.warn(`${methodInfo.name} conversion failed for ${name}:`, error.message);
-          }
-        }
-      }
-
-      // Database fallback with error handling (PubChem first, then alternates via name-resolver)
-      if (!smiles) {
-        try {
-          let resolveNameFn = null;
-          let getPropertiesByCIDFn = null;
-          try {
-            const mod = require('../services/name-resolver');
-            resolveNameFn = typeof mod?.resolveName === 'function' ? mod.resolveName : null;
-            getPropertiesByCIDFn = typeof mod?.getPropertiesByCID === 'function' ? mod.getPropertiesByCID : null;
-          } catch (resolverError) {
-            console.warn(`Resolver module unavailable for ${name}:`, resolverError.message);
-          }
-
-          if (cid && getPropertiesByCIDFn) {
-            try {
-              const props = await getPropertiesByCIDFn(cid);
-              const found = props?.smiles || null;
-              if (found) {
-                smiles = found;
-                method = 'pubchem_cid';
-              }
-            } catch (cidError) {
-              console.warn(`PubChem CID lookup failed for ${name} (CID: ${cid}):`, cidError.message);
-            }
-          }
-          
-          if (!smiles && resolveNameFn) {
-            try {
-              const res = await resolveNameFn(name);
-              if (res) {
-                cid = res?.cid || cid;
-                if (res?.smiles) {
-                  smiles = res.smiles;
-                  method = 'pubchem_name';
-                }
-              }
-            } catch (nameError) {
-              console.warn(`PubChem name lookup failed for ${name}:`, nameError.message);
-            }
-          }
-        } catch (resolverGeneralError) {
-          console.warn(`Resolver lookup general error for ${name}:`, resolverGeneralError.message);
-=======
  
       for (const attempt of attempts) {
         if (smiles) break;
@@ -320,7 +260,6 @@ async function convertNamesToSmiles(payload, llmClient = null) {
         } catch (err) {
           errors.push(`${attempt.label}: ${err.message}`);
           logger.warn(`${attempt.label} conversion failed for "${name}":`, err.message);
->>>>>>> Stashed changes
         }
       }
  
@@ -340,7 +279,6 @@ async function convertNamesToSmiles(payload, llmClient = null) {
             model: process.env.OPENAI_MODEL || process.env.OPENAI_DEFAULT_MODEL || 'gpt-4o',
             messages: [{ role: 'user', content: prompt }],
             max_tokens: 500,
-            temperature: 0.1,
             response_format: { type: 'json_object' },
           });
  

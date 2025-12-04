@@ -2,54 +2,57 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Current Shell Script",
-      "type": "bashdb",
-      "request": "launch",
-      "program": "${file}",
-      "cwd": "${workspaceFolder}",
-      "internalConsoleOptions": "neverOpen",
-      "presentation": {
-        "hidden": false,
-        "group": "",
-        "order": 1
-      }
-    },
-    {
-      "name": "Debug Current Node Script",
       "type": "node",
       "request": "launch",
-      "program": "${file}",
-      "console": "integratedTerminal",
+      "name": "Start Server",
+      "program": "${workspaceFolder}/src/server/api/server.js",
       "skipFiles": ["<node_internals>/**"],
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "NODE_ENV": "development",
-        "NODEBUG": "1"
-      },
-      "internalConsoleOptions": "neverOpen"
-    },
-    {
-      "name": "Debug Current Python Script",
-      "type": "debugpy",
-      "request": "launch", 
-      "program": "${file}",
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
-      "internalConsoleOptions": "neverOpen"
+      "envFile": "${workspaceFolder}/.env"
     },
     {
-      "name": "Debug Dev Script",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/../web/dev",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
+      "name": "Debug Server",
+      "program": "${workspaceFolder}/src/server/api/server.js",
       "skipFiles": ["<node_internals>/**"],
-      "env": {
-        "NODE_ENV": "development"
-      },
-      "args": ["--no-debug"],
-      "internalConsoleOptions": "neverOpen"
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Tests",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test:debug", "--", "${file}"],
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Current Test File",
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "args": ["${file}", "--runInBand", "--no-coverage"],
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Process",
+      "port": 9229,
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Smart Attach",
+      "processId": "${command:PickProcess}",
+      "skipFiles": ["<node_internals>/**"],
+      "restart": true
     }
-  ],
+  ]
 }

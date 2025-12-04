@@ -1,20 +1,20 @@
 {
   "name": "queb",
   "version": "1.0.0",
-  "description": "Molecular analysis app - queb",
+  "description": "Chemical contents prediction",
   "main": "src/server/api/server.js",
   "dependencies": {
     "@google-cloud/secret-manager": "^6.1.0",
-    "commander": "^14.0.1",
+    "@modelcontextprotocol/sdk": "^1.22.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "esbuild": "^0.25.8",
     "express": "^4.21.2",
-    "http-proxy-middleware": "^3.0.5",
     "lodash": "^4.17.21",
-    "multer": "^1.4.5-lts.1",
     "node-fetch": "^3.3.2",
     "openai": "^4.100.0",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "toml": "^3.0.0",
@@ -22,7 +22,7 @@
     "zod": "^3.25.67"
   },
   "optionalDependencies": {
-    "pg": "^8.13.1"
+    "pg": "8.13.1"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
@@ -31,14 +31,10 @@
     "@babel/preset-react": "^7.27.1",
     "@mermaid-js/mermaid-cli": "^11.12.0",
     "babel-jest": "^29.7.0",
-    "chokidar": "^4.0.3",
-    "concurrently": "^9.2.1",
     "jest": "^29.7.0",
-    "jest-environment-jsdom": "^30.2.0",
     "jest-fetch-mock": "^3.0.3",
     "jsdom": "^27.0.0",
     "puppeteer": "^24.16.0",
-    "rimraf": "^6.0.1",
     "supertest": "^7.0.0"
   },
   "repository": {
@@ -47,21 +43,31 @@
   },
   "license": "MIT",
   "scripts": {
-    "test": "jest --config tests/jest.config.js",
-    "test:quick": "jest --config tests/jest.config.js tests/suites/unit/keyboard-shortcuts.test.js",
-    "test:integration": "jest --config tests/jest.config.js --testMatch='**/suites/integration/*.test.js'",
-    "dev": "node scripts/dev-chrome.js",
-    "dev:server": "node --max-old-space-size=1024 --expose-gc src/server/api/server.js",
-    "dev:chrome": "node scripts/dev-chrome.js",
-    "dev:full": "npx concurrently \"npm run dev:server\" \"npm run build:watch\"",
+    "prepare": "git config core.hooksPath hooks",
     "start": "node src/server/api/server.js",
+    "debug": "node --inspect src/server/api/server.js",
+    "debug-brk": "node --inspect-brk src/server/api/server.js",
     "build": "node src/client/build-frontend.js",
     "build:watch": "node src/client/build-frontend.js --watch",
-    "clean": "node scripts/cleanup-processes.js",
-    "status": "node scripts/check-status.js", 
+    "gcp-build": "node src/client/build-frontend.js",
+    "vercel-build": "node src/client/build-frontend.js",
+    "test": "jest --config tests/jest.unit.js",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:unit": "jest --config tests/jest.unit.js",
+    "test:integration": "jest --config tests/jest.integration.js",
+    "test:e2e": "jest --config tests/jest.e2e.js",
+    "test:visual": "jest --config tests/jest.visual.js",
+    "test:visual-mock": "MOCK_MODE=true jest --config tests/jest.visual.js",
+    "test:watch": "jest --config tests/jest.unit.js --watch",
+    "test:coverage": "jest --config tests/jest.unit.js --coverage",
+    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
+    "test:ci": "npm run test:unit -- --ci --reporters=default --reporters=jest-junit",
+    "setup:db": "node database/setup/setup-database.js",
+    "cleanup:logs": "node scripts/cleanup-logs.js",
+    "check:env": "node scripts/check-env.js",
+    "validate:env": "node scripts/validate-env.js",
     "deploy": "node scripts/deploy.js",
-    "setup-aliases": "node scripts/setup-aliases.js",
-    "lint": "eslint src --ext .js,.jsx",
-    "lint:fix": "eslint src --ext .js,.jsx --fix"
+    "deploy:dev": "bash deploy/deploy.sh dev",
+    "deploy:prod": "bash deploy/deploy.sh prod"
   }
 }

@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { usePayment } from './ui/PaymentContext';
 import { useApi } from '../hooks/useApi';
 import { isMobileDevice } from '../utils/device.js';
 
@@ -7,7 +6,6 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
   const fileInputRef = useRef(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
-  const { checkPaymentRequired } = usePayment();
   const { analyzeImage } = useApi();
   const isMobile = isMobileDevice();
 
@@ -15,9 +13,6 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, o
     const file = event.target.files[0];
     if (!file) return;
 
-    if (checkPaymentRequired()) {
-      return;
-    }
 
     setIsProcessing(true);
     setCurrentAnalysisType('photo');

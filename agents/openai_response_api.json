@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OpenAI Chat Completions API Response Contract",
+  "description": "Contract defining the structure of OpenAI API responses for the /api/structuralize endpoint",
+  "type": "object",
+  "properties": {
+    "choices": {
+      "type": "array",
+      "description": "Array of completion choices",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "object",
+            "properties": {
+              "content": {
+                "type": "string",
+                "description": "JSON string containing the molecular analysis result",
+                "pattern": "^\\s*\\{.*\\}\\s*$"
+              },
+              "role": {
+                "type": "string",
+                "enum": ["assistant", "user", "system"],
+                "default": "assistant"
+              }
+            },
+            "required": ["content"],
+            "additionalProperties": false
+          },
+          "finish_reason": {
+            "type": "string",
+            "enum": ["stop", "length", "content_filter"],
+            "description": "Reason why the completion finished"
+          },
+          "index": {
+            "type": "integer",
+            "description": "Index of the choice in the choices array"
+          }
+        },
+        "required": ["message"],
+        "additionalProperties": true
+      }
+    },
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the completion"
+    },
+    "object": {
+      "type": "string",
+      "enum": ["chat.completion"],
+      "description": "Object type identifier"
+    },
+    "created": {
+      "type": "integer",
+      "description": "Unix timestamp of when the completion was created"
+    },
+    "model": {
+      "type": "string",
+      "description": "Model used for the completion"
+    },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "prompt_tokens": {
+          "type": "integer",
+          "description": "Number of tokens in the prompt"
+        },
+        "completion_tokens": {
+          "type": "integer",
+          "description": "Number of tokens in the completion"
+        },
+        "total_tokens": {
+          "type": "integer",
+          "description": "Total number of tokens used"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["choices"],
+  "additionalProperties": true,
+  "examples": [
+    {
+      "choices": [
+        {
+          "message": {
+            "content": "{\"object\": \"coffee\", \"chemicals\": [{\"name\": \"Caffeine\", \"smiles\": \"CN1C=NC2=C1C(=O)N(C(=O)N2C)C\"}]}",
+            "role": "assistant"
+          },
+          "finish_reason": "stop",
+          "index": 0
+        }
+      ],
+      "id": "chatcmpl-123",
+      "object": "chat.completion",
+      "created": 1677652288,
+      "model": "gpt-4o-mini",
+      "usage": {
+        "prompt_tokens": 100,
+        "completion_tokens": 50,
+        "total_tokens": 150
+      }
+    }
+  ],
+  "parsedContentSchema": {
+    "description": "Schema for the parsed JSON content within message.content",
+    "type": "object",
+    "properties": {
+      "object": {
+        "type": "string",
+        "description": "Name of the object being analyzed",
+        "minLength": 1
+      },
+      "chemicals": {
+        "type": "array",
+        "description": "Array of chemical compounds found in the object",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the chemical compound"
+            },
+            "smiles": {
+              "type": "string",
+              "description": "SMILES notation of the chemical structure",
+              "pattern": "^[A-Za-z0-9@+\\-\\[\\]()=#$:.,]+$"
+            },
+            "sdfPath": {
+              "type": "string",
+              "description": "Optional path to pre-computed SDF file",
+              "format": "uri"
+            }
+          },
+          "required": ["name"],
+          "additionalProperties": true
+        }
+      },
+      "molecules": {
+        "type": "array",
+        "description": "Alternative field name for chemicals (for backward compatibility)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "smiles": {
+              "type": "string"
+            },
+            "sdfPath": {
+              "type": "string"
+            }
+          },
+          "required": ["name"],
+          "additionalProperties": true
+        }
+      }
+    },
+    "required": ["object"],
+    "additionalProperties": true
+  }
+}

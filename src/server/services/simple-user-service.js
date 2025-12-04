@@ -13,7 +13,7 @@ class SimpleUserService {
   }
 
   async createUser(userData) {
-    const { deviceToken, paymentMethodId, deviceInfo, name } = userData;
+    const { deviceToken, deviceInfo, name } = userData;
     
     if (this.users.has(deviceToken)) {
       throw new Error('Device token already exists');
@@ -22,7 +22,6 @@ class SimpleUserService {
     const user = {
       id: this.users.size + 1,
       device_token: deviceToken,
-      payment_method_id: paymentMethodId,
       device_info: deviceInfo,
       name: name || null,
       usage: 0,

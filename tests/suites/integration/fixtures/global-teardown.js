@@ -6,8 +6,8 @@ module.exports = async () => {
   const fs = require('fs');
   const path = require('path');
   const ROOT = path.resolve(__dirname, '../../..');
-  const TEST_DIR = path.join(ROOT, 'test');
-  
+  const TMP_DIR = path.join(ROOT, '.tmp');
+
   try {
     // Kill any test servers on common ports
     execSync('lsof -ti:8080 | xargs kill -9 2>/dev/null || true', { stdio: 'ignore' });
@@ -15,22 +15,22 @@ module.exports = async () => {
   } catch (e) {
     // Ignore errors - ports may not be in use
   }
-  
+
   // Clear any global timers
   if (global.testCleanupRegistry) {
     await global.testCleanupRegistry.cleanup();
   }
-  
+
   // Remove any Chrome userDataDir left by tests
   try {
-    if (fs.existsSync(TEST_DIR)) {
-      for (const name of fs.readdirSync(TEST_DIR)) {
+    if (fs.existsSync(TMP_DIR)) {
+      for (const name of fs.readdirSync(TMP_DIR)) {
         if (
           name.startsWith('chrome-molecular-profile-') ||
           name === 'seamless-chrome-profile' ||
           name === 'single-tab-chrome'
         ) {
-          const fullPath = path.join(TEST_DIR, name);
+          const fullPath = path.join(TMP_DIR, name);
           try { fs.rmSync(fullPath, { recursive: true, force: true }); } catch (_) {}
         }
       }

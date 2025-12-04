@@ -17,7 +17,7 @@ const log = {
 // Register with cleanup system if available
 let cleanupRegistry = null;
 try {
-  cleanupRegistry = require('../../test/fixtures/cleanup-registry');
+  cleanupRegistry = require('../../tests/support/fixtures/cleanup-registry');
 } catch (e) {
   // Cleanup registry not available in production
 }

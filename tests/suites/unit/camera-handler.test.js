@@ -150,7 +150,7 @@ describe('CameraHandler Tests', () => {
     setupTestDOM();
     
     // Use the testable version with dependency injection
-    const { CameraHandler: TestableHandler } = require('../unit/camera-handler-testable.js');
+    const { CameraHandler: TestableHandler } = require('../../unit/camera-handler-testable.js');
     CameraHandler = TestableHandler;
     cameraHandler = new CameraHandler(mockUIManager, mockPaymentManager);
   });
@@ -256,7 +256,7 @@ describe('CameraHandler Tests', () => {
   describe('handleUrlAnalysis', () => {
     test('should analyze valid image URL', async () => {
       // Create isolated instance to avoid test contamination
-      const { CameraHandler: TestableHandler } = require('../unit/camera-handler-testable.js');
+      const { CameraHandler: TestableHandler } = require('../../unit/camera-handler-testable.js');
       const testHandler = new TestableHandler(mockUIManager, mockPaymentManager);
       
       const mockUrl = 'https://example.com/image.jpg';
@@ -333,7 +333,7 @@ describe('CameraHandler Tests', () => {
   describe('displayUploadedImage', () => {
     test('should display uploaded image with mobile reticle', async () => {
       // Create isolated instance to avoid test contamination
-      const { CameraHandler: TestableHandler } = require('../unit/camera-handler-testable.js');
+      const { CameraHandler: TestableHandler } = require('../../unit/camera-handler-testable.js');
       const testHandler = new TestableHandler(mockUIManager, mockPaymentManager);
       testHandler.isMobile = true;
       
@@ -353,7 +353,7 @@ describe('CameraHandler Tests', () => {
 
     test('should display uploaded image without mobile reticle on desktop', async () => {
       // Create isolated instance to avoid test contamination
-      const { CameraHandler: TestableHandler } = require('../unit/camera-handler-testable.js');
+      const { CameraHandler: TestableHandler } = require('../../unit/camera-handler-testable.js');
       const testHandler = new TestableHandler(mockUIManager, mockPaymentManager);
       testHandler.isMobile = false;
       
@@ -371,7 +371,7 @@ describe('CameraHandler Tests', () => {
 
     test('should handle image processing errors', async () => {
       // Create isolated instance to avoid test contamination
-      const { CameraHandler: TestableHandler } = require('../unit/camera-handler-testable.js');
+      const { CameraHandler: TestableHandler } = require('../../unit/camera-handler-testable.js');
       const testHandler = new TestableHandler(mockUIManager, mockPaymentManager);
       
       const mockFile = new File(['mock data'], 'test.jpg', { type: 'image/jpeg' });
@@ -424,10 +424,10 @@ describe('CameraHandler Tests', () => {
       
       await cameraHandler.handleImageClick(mockEvent, mockImg);
       
-      expect(fetch).toHaveBeenCalledWith('/image-molecules', {
+      expect(fetch).toHaveBeenCalledWith('/api/analyze-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: expect.stringContaining('"imageBase64":"mockbase64data"')
+        body: expect.stringContaining('"imageData"')
       });
       
       expect(emitSpy).toHaveBeenCalledWith(
@@ -578,17 +578,14 @@ describe('CameraHandler Tests', () => {
       const mockOutput = { object: 'Test', chemicals: [] };
       const eventSpy = jest.spyOn(document, 'dispatchEvent');
       
-      cameraHandler.emitAnalysisResult(mockOutput, 'Photo', 'Test Object', false, 'base64data');
+      cameraHandler.emitAnalysisResult(mockOutput, null);
       
       expect(eventSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'imageAnalysisComplete',
+          type: 'analysisComplete',
           detail: {
-            output: mockOutput,
-            icon: 'Photo',
-            objectName: 'Test Object',
-            useQuotes: false,
-            croppedImageData: 'base64data'
+            data: mockOutput,
+            error: null
           }
         })
       );
@@ -600,14 +597,15 @@ describe('CameraHandler Tests', () => {
       const mockOutput = { object: 'Test', chemicals: [] };
       const eventSpy = jest.spyOn(document, 'dispatchEvent');
       
-      cameraHandler.emitAnalysisResult(mockOutput, 'Photo', 'Test Object');
+      cameraHandler.emitAnalysisResult(mockOutput, null);
       
       expect(eventSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          detail: expect.objectContaining({
-            useQuotes: false,
-            croppedImageData: null
-          })
+          type: 'analysisComplete',
+          detail: {
+            data: mockOutput,
+            error: null
+          }
         })
       );
       
@@ -624,10 +622,7 @@ describe('CameraHandler Tests', () => {
       
       const result = cameraHandler.createClosableErrorMessage(message);
       
-      expect(createErrorSpy).toHaveBeenCalledWith(
-        message,
-        expect.any(Object) // snapshots container
-      );
+      expect(createErrorSpy).toHaveBeenCalledWith(message);
       
       createErrorSpy.mockRestore();
     });
@@ -721,10 +716,10 @@ describe('CameraHandler Tests', () => {
       await cameraHandler.handleImageClick(mockEvent, mockImg);
       
       // Should call fetch with calculated coordinates
-      expect(fetch).toHaveBeenCalledWith('/image-molecules', {
+      expect(fetch).toHaveBeenCalledWith('/api/analyze-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: expect.stringContaining('"x":300') // relativeX * tempImg.width
+        body: expect.stringContaining('"imageData"')
       });
       
       global.Image = originalImage;

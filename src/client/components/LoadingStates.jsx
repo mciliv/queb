@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppController } from '../core/AppController';
+import { useAppController } from '../AppController';
 import '../assets/style.css';
 
 const LoadingStates = () => {

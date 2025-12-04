@@ -4,6 +4,7 @@ service: dev
 env_variables:
   NODE_ENV: development
   GOOGLE_CLOUD_PROJECT: mol-analysis-app
+  OPENAI_API_KEY: "temp-placeholder"
 
 handlers:
 - url: /.*

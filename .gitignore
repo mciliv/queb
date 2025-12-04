@@ -14,6 +14,7 @@ sdf_files
 .venv
 certs/
 .env
+.claude
 
 # Production build artifacts
 dist/
@@ -31,6 +32,11 @@ test/chrome-molecular-profile*/
 test/seamless-chrome-profile/
 test/single-tab-chrome/
 test/chrome-dev-profile/
+tests/chrome-molecular-profile*/
+tests/coverage/
+tests/reports/
+.chrome-profile/
+.tmp/
 .vscode/settings.json
 
 # Logs
@@ -38,3 +44,4 @@ logs/
 
 # Unused root bundle
 bundle.js
+.cursor

@@ -7,7 +7,7 @@ const fs = require('fs');
 async function build() {
   // Output to frontend/dist so server serves /dist/* correctly
   const outdir = path.resolve(__dirname, 'dist');
-  const entry = path.resolve(__dirname, 'core', 'index.jsx');
+  const entry = path.resolve(__dirname, 'index.jsx');
   fs.mkdirSync(outdir, { recursive: true });
 
   const args = process.argv.slice(2);
@@ -58,13 +58,14 @@ async function build() {
 
     if (!quiet) console.log('👀 Frontend watch build started (esbuild)');
   } else {
-    await esbuild.build({
+    const result = await esbuild.build({
       entryPoints: [entry],
       outfile: path.join(outdir, 'bundle.js'),
       bundle: true,
       sourcemap: dev,
-      minify: !dev,
-      treeShaking: !dev,
+      minify: false,
+      treeShaking: true,
+      splitting: false,
       loader: { '.js': 'jsx', '.jsx': 'jsx', '.svg': 'text' },
       assetNames: 'assets/[name]-[hash]',
       define: {
@@ -73,7 +74,8 @@ async function build() {
         'global': 'globalThis'
       },
       platform: 'browser',
-      drop: dev ? [] : ['console', 'debugger'],
+      target: ['es2020'],
+      drop: ['debugger'],
       logLevel: quiet ? 'silent' : 'info',
       external: [
         'config/*', 
@@ -82,10 +84,20 @@ async function build() {
         'config/env.js',
         'backend/*',
         'src/server/*'
-      ]
+      ],
+      metafile: true,
+      legalComments: 'none'
     });
-  
-    if (!quiet) console.log('✅ Frontend built to dist/bundle.js');
+    
+    if (!quiet) {
+      const text = await esbuild.analyzeMetafile(result.metafile, {
+        verbose: false,
+        color: true
+      });
+      console.log('\n📊 Bundle Analysis:');
+      console.log(text);
+      console.log('✅ Frontend built to dist/bundle.js');
+    }
   }
 }
 

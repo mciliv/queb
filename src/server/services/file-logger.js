@@ -68,7 +68,7 @@ class FileLogger {
       if (clearedCount > 0) {
         console.log(`🧹 Cleared ${clearedCount} old log file(s) from previous session`);
         // Also write to the new log file
-        this.writeToFile(this.getLogFile(), this.formatMessage('INFO', `🧹 Cleared ${clearedCount} old log file(s) from previous session`));
+        this.writeToFile(this.getLogFile(), this.formatFileLine('info', `🧹 Cleared ${clearedCount} old log file(s) from previous session`));
       }
     } catch (error) {
       console.warn('⚠️ Failed to clear old logs:', error.message);
@@ -188,4 +188,4 @@ class FileLogger {
   }
 }
 
-module.exports = new FileLogger();
+module.exports = FileLogger;
