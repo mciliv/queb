@@ -42,9 +42,6 @@ async function build() {
       banner: {
         js: `
           // Development mode optimizations
-          if (typeof window !== 'undefined') {
-            console.log('[BUILD] Frontend bundle loaded at:', new Date().toISOString());
-          }
         `
       }
     });

@@ -199,23 +199,23 @@ class Structuralizer {
     if (!this.aiClient) {
       throw new Error('AI prediction requires AI client');
     }
-    
+
     const prompt = this.promptEngine.generateChemicalPrompt(
       objectText,
       { includeReason: true }
     );
-    
+
     const response = await this._callAI({
       messages: [{ role: 'user', content: prompt }],
       temperature: 1
     });
-    
+
     const result = this._parseAIResponse(response);
-    
+
     if (!this.promptEngine.validateResponse('chemical', result)) {
       throw new Error('Invalid chemical response from AI');
     }
-    
+
     return result;
   }
   
@@ -227,12 +227,21 @@ class Structuralizer {
     const model = this.config.get ? this.config.get('openai.model') : 'gpt-4o-mini';
     const timeout = this.config.get ? this.config.get('openai.timeout') : 30000;
 
-    return await Promise.race([
-      this.aiClient.chat.completions.create({ model, ...params }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('AI request timeout')), timeout)
-      )
-    ]);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Structuralizer] _callAI', { model, timeout, paramsKeys: Object.keys(params) });
+    }
+
+    try {
+      // Pass timeout to OpenAI SDK at request level
+      const result = await this.aiClient.chat.completions.create(
+        { model, ...params },
+        { timeout }
+      );
+      return result;
+    } catch (error) {
+      // Pass through original error - don't mask it
+      throw error;
+    }
   }
   
   /**
@@ -255,7 +264,7 @@ class Structuralizer {
       const repaired = this.promptEngine.repairJSON(content);
       if (repaired) return repaired;
 
-      throw new Error(`Failed to parse AI response: ${error.message}`);
+      throw new Error(`AI response parse failed: ${error.message} (response length: ${response?.length || 0})`);
     }
   }
   

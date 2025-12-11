@@ -1,5 +1,10 @@
 # Agents Directory - API Contracts
 
+# ⚠️  WARNING: Do NOT change OPENAI_MODEL unless you have checked OpenAI's current documentation
+# ⚠️  for available models. AI agents cannot provide current model information.
+# ⚠️  Check: https://platform.openai.com/docs/models before editing!
+OPENAI_MODEL=gpt-5
+
 This directory contains API contracts and test utilities that are separate from the main codebase.
 
 ## ⚠️ CRITICAL: OpenAI Response Contract

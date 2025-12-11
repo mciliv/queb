@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const createError = require('http-errors');
 const { createContainer } = require('../../core/services');
 
 /**
@@ -88,6 +89,34 @@ async function createApp(container) {
       version: process.env.npm_package_version || '1.0.0'
     });
   });
+
+  // Frontend error logging endpoint (dev only)
+  app.post('/api/log-error', (req, res) => {
+    const { type, message, timestamp, source, stack, location, url } = req.body;
+    
+    // Log to server logger
+    const logMessage = `[${source || 'frontend'}] ${type || 'error'}: ${message || 'Unknown error'}`;
+    const logData = {
+      type,
+      message,
+      timestamp,
+      source,
+      location,
+      url,
+      stack: stack ? stack.substring(0, 500) : undefined // Truncate long stacks
+    };
+
+    if (type === 'error') {
+      logger.error(logMessage, logData);
+    } else if (type === 'warn') {
+      logger.warn(logMessage, logData);
+    } else {
+      logger.info(logMessage, logData);
+    }
+
+    // Always return success to avoid cluttering console with failed requests
+    res.status(200).json({ received: true });
+  });
   
   await setupChemicalPredictionRoutes(app, container);
 
@@ -108,8 +137,21 @@ async function createApp(container) {
     serveIndexHtml(req, res); // For SPA client-side routing
   });
 
+  // 404 handler - catch unmatched routes and pass to error handler
+  app.use((req, res, next) => {
+    // For API routes, create a 404 error with JSON-friendly message
+    if (req.path.startsWith('/api/')) {
+      return next(createError(404, 'API endpoint not found'));
+    }
+    // For other routes, create a generic 404
+    next(createError(404, 'Not found'));
+  });
+
   // Error handling middleware
   app.use(async (err, req, res, next) => {
+    // Respect HTTP status code from http-errors (defaults to 500)
+    const status = err.status || err.statusCode || 500;
+    
     // If error already has structured properties (from ErrorHandler), use them
     // Otherwise, handle the raw error
     let handled;
@@ -130,37 +172,48 @@ async function createApp(container) {
       });
     }
 
-    logger.error(`API Error: ${handled.message}`, {
-      error: handled,
-      request: {
-        path: req.path,
-        method: req.method,
-        body: req.body
-      }
-    });
+    // Only log errors (not 404s) to avoid noise
+    if (status >= 500) {
+      logger.error(`API Error: ${handled.message}`, {
+        error: handled,
+        request: {
+          path: req.path,
+          method: req.method,
+          body: req.body
+        }
+      });
+    }
 
     const isDev = process.env.NODE_ENV === 'dev';
 
-    res.status(500).json({
-      error: handled.message || 'Internal server error',
-      code: handled.code,
-      recoverable: handled.recoverable,
-      recovery: handled.recovery,
-      timestamp: handled.timestamp,
+    // For API routes, always return JSON
+    if (req.path.startsWith('/api/')) {
+      return res.status(status).json({
+        error: handled.message || err.message || 'Internal server error',
+        code: handled.code,
+        recoverable: handled.recoverable,
+        recovery: handled.recovery,
+        timestamp: handled.timestamp,
+        ...(isDev && {
+          stack: err.stack,
+          context: handled.context,
+          originalMessage: err.message
+        })
+      });
+    }
+
+    // For non-API routes, return appropriate response based on status
+    if (status === 404) {
+      return res.status(404).send('Not found');
+    }
+    
+    res.status(status).json({
+      error: handled.message || err.message || 'Internal server error',
       ...(isDev && {
         stack: err.stack,
-        context: handled.context,
-        originalMessage: err.message
+        context: handled.context
       })
     });
-  });
-
-  // Final 404 handler for API routes and files not found
-  app.use((req, res) => {
-    if (req.path.startsWith('/api/')) {
-      return res.status(404).json({ error: 'API endpoint not found' });
-    }
-    res.status(404).send('Not found');
   });
   
   return app;

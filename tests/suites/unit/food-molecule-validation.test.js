@@ -1,6 +1,6 @@
 // test/unit/food-molecule-validation.test.js - Food-specific molecule validation
 
-const MolecularProcessor = require("../../backend/services/molecular-processor");
+const MolecularProcessor = require("../../../src/server/services/molecular-processor");
 
 // Essential molecules found in common foods with their accurate SMILES
 const FOOD_MOLECULES = {

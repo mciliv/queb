@@ -6,17 +6,49 @@ import logger from '../logger.js';
 import { createKeyboardHandler } from '../keyboard-shortcuts.js';
 import '../assets/style.css';
 
-const isMobileDevice = () => { //Call from diff lib
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-         (window.innerWidth <= 768 && 'ontouchstart' in window);
+const isMobileDevice = () => window.matchMedia('(pointer: coarse) and (hover: none)').matches;
+const isMac = /mac/i.test(navigator.userAgent);
+
+const ErrorBanner = ({ error, onDismiss }) => {
+  if (!error) return null;
+  
+  let errorMessage;
+  if (typeof error === 'string') {
+    errorMessage = error;
+  } else if (error?.message) {
+    errorMessage = error.message;
+  } else if (error?.code) {
+    errorMessage = `Error ${error.code}: ${JSON.stringify(error)}`;
+  } else {
+    errorMessage = `Error: ${JSON.stringify(error)}`;
+  }
+  
+  return (
+    <div className="error-banner">
+      <div className="error-banner-content">
+        <div className="error-banner-header">
+          <span className="error-icon">⚠️</span>
+          <div className="error-message">{errorMessage}</div>
+          {onDismiss && (
+            <button
+              onClick={onDismiss}
+              className="error-dismiss"
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
+  const isDev = process.env.NODE_ENV === 'development';
   const [localError, setLocalError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const inputRef = useRef(null);
-  const lastTriggerTimeRef = useRef(0);
-  const isMac = navigator.userAgent.toLowerCase().includes('mac');
   const keyboardHint = isMac ? '⌘K' : 'Ctrl+K';
 
   useEffect(() => {
@@ -31,23 +63,46 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
     }
   }, []);
 
+  useEffect(() => {
+    if (isDev && inputRef.current) {
+      const isDisabled = inputRef.current.disabled;
+      if (isDisabled) {
+        return;
+      }
+    }
+  }, [isProcessing, isValidating, isDev]);
+
   const handleSubmit = async () => {
+    // Prevent multiple submissions
+    if (isValidating || isProcessing || !value.trim()) {
+      return;
+    }
+
     setIsValidating(true);
     try {
       await onSubmit(value.trim());
       setLocalError('');
     } catch (err) {
-      setLocalError(err.message || 'Structuralization failed. Please try again.');
+      const isDev = process.env.NODE_ENV === 'development';
+      const msg = err.message || err.toString() || 'Unknown error';
+      if (isDev) console.error('[TextInput] Submit error', { err, message: msg, stack: err.stack });
+      setLocalError(`Submit failed: ${msg}`);
     } finally {
       setIsValidating(false);
     }
   };
 
-  const handleKeyDown = async (e) => {
-    if (e.key === 'Enter') {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
       e.stopPropagation();
-      await handleSubmit();
+      
+      // Only submit if input is enabled and has value
+      if (!isProcessing && !isValidating && value?.trim()) {
+        handleSubmit();
+      } else if (isDev) {
+        console.warn('[TextInput] Enter ignored', { isProcessing, isValidating, hasValue: !!value?.trim() });
+      }
     }
   };
 
@@ -62,9 +117,13 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
           type="text"
           placeholder="Specify object..."
           className={`input-base${displayError ? ' input-error' : ''}`}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={value || ''}
+          onChange={(e) => {
+            onChange(e.target.value);
+          }}
           onKeyDown={handleKeyDown}
+          disabled={isProcessing}
+          readOnly={false}
           aria-describedby={displayError ? 'input-error' : undefined}
         />
         {!isMobileDevice() && !value.trim() && (
@@ -76,6 +135,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
             id="object-submit"
             className="btn-icon"
             onClick={handleSubmit}
+            disabled={isValidating || isProcessing}
             aria-label="Structuralize"
           >
             →
@@ -99,31 +159,16 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
   );
 };
 
-const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, linkMode, setLinkMode, lookupMode, setLookupMode }) => {
+const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, linkMode, setLinkMode }) => {
   const isMobile = isMobileDevice();
   
   const handleModeSelect = (mode) => {
-    setCameraMode(false);
-    setPhotoMode(false);
-    if (setLinkMode) setLinkMode(false);
-    
-    switch(mode) {
-      case 'camera':
-        setCameraMode(true);
-        break;
-      case 'photo':
-        setPhotoMode(true);
-        break;
-      case 'link':
-        if (setLinkMode) setLinkMode(true);
-        break;
-    }
+    setCameraMode(mode === 'camera');
+    setPhotoMode(mode === 'photo');
+    if (setLinkMode) setLinkMode(mode === 'link');
   };
 
-
-
   return (
-<<<<<<< HEAD:src/client/core/App.jsx
     <div className="mode-row">
       <button 
         className={`mode-btn${cameraMode ? ' active' : ''}`}
@@ -134,14 +179,9 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
           <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8"/>
           <circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
         </svg>
-        <span className="mode-label">Live</span>
-        {!isMobile && (
-          <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧C' : 'Ctrl+Shift+C'}
-          </span>
-        )}
+        {isMobile && <span className="mode-label">Live</span>}
+        {!isMobile && <span className="mode-btn-shortcut">{isMac ? '⌘⇧C' : 'Ctrl+Shift+C'}</span>}
       </button>
-
       <button 
         className={`mode-btn${photoMode ? ' active' : ''}`}
         onClick={() => handleModeSelect('photo')}
@@ -152,14 +192,9 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
           <circle cx="9" cy="9" r="2"/>
           <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
         </svg>
-        <span className="mode-label">Gallery</span>
-        {!isMobile && (
-          <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧P' : 'Ctrl+Shift+P'}
-          </span>
-        )}
+        {isMobile && <span className="mode-label">Gallery</span>}
+        {!isMobile && <span className="mode-btn-shortcut">{isMac ? '⌘⇧P' : 'Ctrl+Shift+P'}</span>}
       </button>
-
       <button 
         className={`mode-btn${linkMode ? ' active' : ''}`}
         onClick={() => handleModeSelect('link')}
@@ -169,69 +204,10 @@ const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, link
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
         </svg>
-        <span className="mode-label">Link</span>
-        {!isMobile && (
-          <span className="mode-btn-shortcut">
-            {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧L' : 'Ctrl+Shift+L'}
-          </span>
-        )}
+        {isMobile && <span className="mode-label">Link</span>}
+        {!isMobile && <span className="mode-btn-shortcut">{isMac ? '⌘⇧L' : 'Ctrl+Shift+L'}</span>}
       </button>
     </div>
-=======
-    <>
-      <div className="mode-row">
-        <button 
-          className={`mode-btn${cameraMode ? ' active' : ''}`}
-          onClick={() => handleModeSelect('camera')}
-          title={isMobile ? "Capture from camera" : "Capture from camera (⌘⇧C)"}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.8"/>
-            <circle cx="12" cy="12" r="9" stroke="currentColor" fill="none"/>
-          </svg>
-          {!isMobile && (
-            <span className="mode-btn-shortcut">
-              {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧C' : 'Ctrl+Shift+C'}
-            </span>
-          )}
-        </button>
-
-        <button 
-          className={`mode-btn${photoMode ? ' active' : ''}`}
-          onClick={() => handleModeSelect('photo')}
-          title={isMobile ? "Upload image" : "Upload image (⌘⇧P)"}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <circle cx="9" cy="9" r="2"/>
-            <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-          </svg>
-          {!isMobile && (
-            <span className="mode-btn-shortcut">
-              {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧P' : 'Ctrl+Shift+P'}
-            </span>
-          )}
-        </button>
-
-        <button 
-          className={`mode-btn${linkMode ? ' active' : ''}`}
-          onClick={() => handleModeSelect('link')}
-          title={isMobile ? "Enter image link" : "Enter image link (⌥L)"}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-          </svg>
-          {!isMobile && (
-            <span className="mode-btn-shortcut">
-              {navigator.userAgent.toUpperCase().indexOf('MAC') >= 0 ? '⌘⇧L' : 'Ctrl+Shift+L'}
-            </span>
-          )}
-        </button>
-      </div>
-      
-    </>
->>>>>>> 14203e3 (text post method succeeding but not w ui):src/client/components/App.jsx
   );
 };
 
@@ -252,9 +228,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
-      if (outlineTimeoutRef.current) {
-        try { clearTimeout(outlineTimeoutRef.current); } catch (_) {}
-      }
+      if (outlineTimeoutRef.current) clearTimeout(outlineTimeoutRef.current);
     };
   }, []);
 
@@ -276,8 +250,11 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
       setShowSwitchCamera(videoDevices.length > 1);
     } catch (error) {
+      const isDev = process.env.NODE_ENV === 'development';
+      const errorMsg = `Camera access failed: ${error.name || 'Error'} - ${error.message || error.toString()}`;
+      if (isDev) console.error('[CameraSection] Camera access error', { error, name: error.name, message: error.message });
       logger.error('Camera access error:', error);
-      setPermissionMessage('Camera access required to structuralize from camera');
+      setPermissionMessage(errorMsg);
       setHasPermission(false);
     }
   };
@@ -288,7 +265,6 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType
       return;
     }
     if (!videoRef.current || isProcessing) return;
-
 
     setIsProcessing(true);
     setCurrentPredictionType('camera');
@@ -350,21 +326,17 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType
       const croppedImageDataUrl = cropCanvas.toDataURL('image/jpeg', 0.8);
       
       // Show transient outline at the clicked crop region (in container coords)
-      try {
-        const outlineSize = cropSide * scale;
-        const displayCenterX = offsetX + centerX * scale;
-        const displayCenterY = offsetY + centerY * scale;
-        setClickPosition({
-          x: Math.round(displayCenterX - outlineSize / 2),
-          y: Math.round(displayCenterY - outlineSize / 2),
-          size: Math.round(outlineSize)
-        });
-        setShowOutline(true);
-        if (outlineTimeoutRef.current) {
-          try { clearTimeout(outlineTimeoutRef.current); } catch (_) {}
-        }
-        outlineTimeoutRef.current = setTimeout(() => setShowOutline(false), 1000);
-      } catch (_) {}
+      const outlineSize = cropSide * scale;
+      const displayCenterX = offsetX + centerX * scale;
+      const displayCenterY = offsetY + centerY * scale;
+      setClickPosition({
+        x: Math.round(displayCenterX - outlineSize / 2),
+        y: Math.round(displayCenterY - outlineSize / 2),
+        size: Math.round(outlineSize)
+      });
+      setShowOutline(true);
+      if (outlineTimeoutRef.current) clearTimeout(outlineTimeoutRef.current);
+      outlineTimeoutRef.current = setTimeout(() => setShowOutline(false), 1000);
 
       // AB test: 'coords' uses full image + coordinates; 'crop' uses cropped region
       const abVariant = Math.random() < 0.5 ? 'coords' : 'crop';
@@ -386,7 +358,6 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType
           cropSide
         );
       } else {
-        // For cropped case, provide center relative to the crop
         const mid = Math.floor(cropSide / 2);
         logger.debug('Camera click payload summary', {
           variant: 'crop',
@@ -394,20 +365,15 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType
           cropCenter: { mid },
           crop: { size: cropSide }
         });
-        result = await analyzeImage(
-          croppedImageDataUrl,
-          mid,
-          mid,
-          mid,
-          mid,
-          cropSide
-        );
+        result = await analyzeImage(croppedImageDataUrl, mid, mid, mid, mid, cropSide);
       }
-      if (onPredictionComplete) {
-        onPredictionComplete({ ...result, abVariant });
-      }
+      if (onPredictionComplete) onPredictionComplete({ ...result, abVariant });
       } catch (error) {
+        const isDev = process.env.NODE_ENV === 'development';
+        const errorMsg = `Camera analysis failed: ${error.message || error.toString() || 'Unknown error'}`;
+        if (isDev) console.error('[CameraSection] Structuralization error', { error, abVariant, stack: error.stack });
         logger.error('Camera structuralization failed:', error);
+        setError(errorMsg);
     } finally {
       setIsProcessing(false);
     }
@@ -433,6 +399,8 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType
       
       setStream(mediaStream);
     } catch (error) {
+      const isDev = process.env.NODE_ENV === 'development';
+      if (isDev) console.error('[CameraSection] Switch error', { error, newFacingMode, message: error.message });
       logger.error('Camera switch error:', error);
     }
   };
@@ -465,11 +433,7 @@ const CameraSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType
   );
 };
 
-<<<<<<< HEAD:src/client/core/App.jsx
-const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentAnalysisType, onAnalysisComplete, setOpenPickerRef }) => {
-=======
 const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType, onPredictionComplete }) => {
->>>>>>> 14203e3 (text post method succeeding but not w ui):src/client/components/App.jsx
   const fileInputRef = useRef(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -520,6 +484,8 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType,
                 onPredictionComplete(result);
               }
             } catch (innerErr) {
+              const isDev = process.env.NODE_ENV === 'development';
+              if (isDev) console.error('[PhotoSection] Header crop error', { innerErr, w, h, cropSide });
               logger.error('Photo header crop failed:', innerErr);
             } finally {
               setIsProcessing(false);
@@ -534,12 +500,20 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType,
                   onPredictionComplete(result);
                 }
               })
-              .catch((err) => logger.error('Photo structuralization failed:', err))
+              .catch((err) => {
+                const isDev = process.env.NODE_ENV === 'development';
+                if (isDev) console.error('[PhotoSection] Fallback analysis error', { err, message: err.message });
+                logger.error('Photo structuralization failed:', err);
+              })
               .finally(() => setIsProcessing(false));
           };
           img.src = dataUrl;
         } catch (error) {
+          const isDev = process.env.NODE_ENV === 'development';
+          const errorMsg = `File processing failed: ${error.message || error.toString()}`;
+          if (isDev) console.error('[PhotoSection] File processing error', { error, fileName: file.name, fileType: file.type });
           logger.error('File reading or processing failed:', error);
+          setError(errorMsg);
           setIsProcessing(false);
         }
       };
@@ -603,7 +577,6 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType,
             <circle cx="9" cy="9" r="2"/>
             <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
           </svg>
-          
         </button>
       </div>
     );
@@ -636,10 +609,7 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType,
             src={previewUrl}
             alt="Selected"
             className="preview-image"
-            onLoad={() => {
-              // Revoke to release memory after first paint
-              try { URL.revokeObjectURL(previewUrl); } catch (_) {}
-            }}
+            onLoad={() => URL.revokeObjectURL(previewUrl)}
           />
         )}
       </div>
@@ -647,11 +617,7 @@ const PhotoSection = ({ isProcessing, setIsProcessing, setCurrentPredictionType,
   );
 };
 
-<<<<<<< HEAD:src/client/core/App.jsx
-const LinkSection = ({ isProcessing, setIsProcessing, onAnalysisComplete, setFocusRef }) => {
-=======
 const LinkSection = ({ isProcessing, setIsProcessing, onPredictionComplete }) => {
->>>>>>> 14203e3 (text post method succeeding but not w ui):src/client/components/App.jsx
   const [imageUrl, setImageUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
@@ -688,8 +654,11 @@ const LinkSection = ({ isProcessing, setIsProcessing, onPredictionComplete }) =>
       }
       setImageUrl('');
       } catch (error) {
+        const isDev = process.env.NODE_ENV === 'development';
+        const errorMsg = `URL analysis failed: ${error.message || error.toString() || 'Unknown error'}`;
+        if (isDev) console.error('[LinkSection] URL analysis error', { error, url: imageUrl, stack: error.stack });
         logger.error('URL structuralization failed:', error);
-        setUrlError('Failed to structuralize from URL');
+        setUrlError(errorMsg);
     } finally {
       setIsProcessing(false);
     }
@@ -728,8 +697,11 @@ const LinkSection = ({ isProcessing, setIsProcessing, onPredictionComplete }) =>
               if (onPredictionComplete) onPredictionComplete(result);
               setImageUrl('');
             } catch (err) {
+              const isDev = process.env.NODE_ENV === 'development';
+              const errorMsg = `Drop analysis failed: ${err.message || err.toString()}`;
+              if (isDev) console.error('[LinkSection] File drop error', { err, fileName: file.name });
               logger.error('File drop structuralization failed:', err);
-              setUrlError('Failed to structuralize dropped image');
+              setUrlError(errorMsg);
             } finally {
               setIsProcessing(false);
             }
@@ -762,8 +734,11 @@ const LinkSection = ({ isProcessing, setIsProcessing, onPredictionComplete }) =>
         if (onPredictionComplete) onPredictionComplete(result);
         setImageUrl('');
       } catch (error) {
+        const isDev = process.env.NODE_ENV === 'development';
+        const errorMsg = `URL drop analysis failed: ${error.message || error.toString()}`;
+        if (isDev) console.error('[LinkSection] URL drop error', { error, url: dropped });
         logger.error('URL drop structuralization failed:', error);
-        setUrlError('Failed to structuralize from dropped URL');
+        setUrlError(errorMsg);
       } finally {
         setIsProcessing(false);
       }
@@ -808,6 +783,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onPredictionComplete }) =>
 
 // Results Display Components (Bottom Content)
  const MoleculeViewer = ({ molecularData }) => {
+  const isDev = process.env.NODE_ENV === 'development';
   const ref = useRef(null);
   const mountRef = useRef(null); // Dedicated imperative mount to avoid React DOM conflicts
   const [status, setStatus] = useState('loading');
@@ -942,6 +918,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onPredictionComplete }) =>
           }
         }
       } catch (error) {
+        if (isDev) console.error('[MoleculeViewer] Error', { error, molecularData });
         logger.warn(`Molecule load failed for ${molecularData.name}: ${error.message || 'Unknown error'}`);
         setStatus('failed');
       }
@@ -983,11 +960,23 @@ const LinkSection = ({ isProcessing, setIsProcessing, onPredictionComplete }) =>
 };
 
 const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
-  // Render column header and viewers
+  const isDev = process.env.NODE_ENV === 'development';
   
+  if (isDev) {
+    if (!column) {
+      console.error('[MolecularColumn] Column is null/undefined');
+      return null;
+    }
+    if (!column.id) {
+      console.warn('[MolecularColumn] Column missing id', { column });
+    }
+    if (!Array.isArray(column.viewers)) {
+      console.warn('[MolecularColumn] Column.viewers is not an array', { viewers: column.viewers, type: typeof column.viewers });
+    }
+  }
+
   return (
     <div className="column">
-      {/* GUARANTEED VISIBLE HEADER */}
       <div className="column-header">
         <div className="column-meta">
           <div className="column-title">
@@ -1004,22 +993,15 @@ const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
         )}
       </div>
 
-      {/* Failure indicator */}
       {column.failed && (
         <div className="alert-warning">
-          💡 AI failed to analyze - please report this
+          Analysis failed for "{column.query}"
         </div>
       )}
 
-      {false && column.loading && column.viewers.length === 0 && (
-        <div className="analyzing">
-          Analyzing molecules...
-        </div>
-      )}
-
-      {column.viewers.map((mol, idx) => (
-        <MoleculeViewer key={idx} molecularData={mol} />
-      ))}
+      {column.viewers?.map((mol, idx) => {
+        return <MoleculeViewer key={idx} molecularData={mol} />;
+      })}
     </div>
   );
 };
@@ -1081,16 +1063,13 @@ function App() {
           setIsProcessing(true);
           setError('');
           
-          console.log(`🧪 Loading test data: ${testName}`);
-          
           // Fetch test data from server
           const response = await fetch(`/api/test-data/${testName}`);
           if (!response.ok) {
-            throw new Error(`Failed to load test data: ${response.statusText}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText} (endpoint: /api/test-data/${testName})`);
           }
           
           const testData = await response.json();
-          console.log(`📊 Test data loaded:`, testData);
           
           // Set the object input to show what was tested
           setObjectInput(testData.object || '');
@@ -1122,17 +1101,11 @@ function App() {
             setColumns(prev => [...prev, newColumn]);
           }
           
-          console.log(`✅ Test visualization loaded: ${visualizationData.length} molecules`);
-          
-          // Show summary
-          if (testData.metadata) {
-            const { totalMolecules, successfulSdfs } = testData.metadata;
-            console.log(`📈 Success rate: ${successfulSdfs}/${totalMolecules} (${Math.round((successfulSdfs/totalMolecules)*100)}%)`);
-          }
-          
         } catch (error) {
-          console.error(`❌ Failed to load test data:`, error);
-          setError(`Failed to load test data: ${error.message}`);
+          const isDev = process.env.NODE_ENV === 'development';
+          const errorMsg = `Test data load failed: ${error.message || error.toString()} (test: ${testName}, status: ${error.response?.status || 'N/A'})`;
+          if (isDev) console.error('[App] Test data error', { error, testName, response: error.response });
+          setError(errorMsg);
         } finally {
           setIsProcessing(false);
         }
@@ -1178,50 +1151,23 @@ function App() {
 
     const keyboardHandler = createKeyboardHandler(actions);
     
-    // Debug wrapper to help diagnose shortcut issues
-    const debugHandler = (event) => {
-      if ((event.metaKey || event.ctrlKey) && 
-          (event.key.toLowerCase() === 'k' || 
-           (event.shiftKey && ['1', '2', '3'].includes(event.key)))) {
-        logger.info('🎹 Keyboard shortcut attempt:', {
-          key: event.key,
-          metaKey: event.metaKey,
-          ctrlKey: event.ctrlKey,
-          altKey: event.altKey,
-          shiftKey: event.shiftKey,
-          target: event.target.tagName
-        });
-      }
-      return keyboardHandler(event);
-    };
-    
-    document.addEventListener('keydown', debugHandler, { capture: true });
+    document.addEventListener('keydown', keyboardHandler, { capture: true });
 
-    return () => document.removeEventListener('keydown', debugHandler, { capture: true });
+    return () => document.removeEventListener('keydown', keyboardHandler, { capture: true });
   }, [setCameraMode, setPhotoMode, setLinkMode]);
 
-  const handleTextPrediction = useCallback(async (value) => {
-    console.log('[handleTextPrediction] START', { value, lookupMode, columnMode });
+  const updateColumn = useCallback((columnId, updates) => {
+    setColumns(prev => prev.map(col => col.id === columnId ? { ...col, ...updates } : col));
+  }, []);
 
+  const handleTextPrediction = useCallback(async (value) => {
     setIsProcessing(true);
     setError('');
 
-    // Create column based on mode setting
     const columnId = Date.now();
-    const newColumn = {
-      id: columnId,
-      query: value,
-      viewers: [],
-      loading: true,
-      failed: false
-    };
+    const newColumn = { id: columnId, query: value, viewers: [], loading: true, failed: false };
 
-    console.log('[handleTextPrediction] Creating column', { columnId, columnMode });
-    if (columnMode === 'replace') {
-      setColumns([newColumn]); // Replace existing
-    } else {
-      setColumns(prev => [...prev, newColumn]); // Add to existing
-    }
+    setColumns(prev => columnMode === 'replace' ? [newColumn] : [...prev, newColumn]);
 
     try {
       const result = await analyzeText(value, lookupMode);
@@ -1231,14 +1177,17 @@ function App() {
         // Prefer precomputed SDFs with canonical names
         const precomputed = molecules.filter(m => m.sdfPath);
         if (precomputed.length > 0) {
-          const viewers = precomputed.map(m => ({
-            name: m.name || value,
-            sdfData: m.sdfPath.startsWith('file://') ? m.sdfPath : `file://${m.sdfPath}`,
-            smiles: m.smiles
-          }));
-          setColumns(prev => prev.map(col => (
-            col.id === columnId ? { ...col, viewers, loading: false, failed: false } : col
-          )));
+          const viewers = precomputed.map(m => {
+            if (isDev && !m.sdfPath) {
+              console.warn('[handleTextPrediction] Precomputed molecule missing sdfPath', { m });
+            }
+            return {
+              name: m.name || value,
+              sdfData: m.sdfPath.startsWith('file://') ? m.sdfPath : `file://${m.sdfPath}`,
+              smiles: m.smiles
+            };
+          });
+          updateColumn(columnId, { viewers, loading: false, failed: false });
         } else {
           // Legacy path: generate SDFs from SMILES
           const smilesArray = molecules.map(mol => mol.smiles).filter(Boolean);
@@ -1255,111 +1204,113 @@ function App() {
                   smiles: mol.smiles
                 };
               });
-              setColumns(prev => prev.map(col => (
-                col.id === columnId ? { ...col, viewers, loading: false, failed: false } : col
-              )));
+              updateColumn(columnId, { viewers, loading: false, failed: false });
             } catch (sdfError) {
+              const isDev = process.env.NODE_ENV === 'development';
+              const errorDetails = sdfError.details || {};
+              const errorMsg = `generateSDFs() timed out: ${sdfError.message || sdfError.toString() || 'Unknown error'} (endpoint: /api/generate-sdfs, SMILES count: ${smilesArray.length}, input: "${value}")`;
+              if (isDev) console.error('[handleTextPrediction] SDF generation error', { 
+                sdfError, 
+                errorDetails,
+                smilesArray, 
+                columnId,
+                function: 'generateSDFs',
+                endpoint: '/api/generate-sdfs'
+              });
               logger.error('SDF generation failed:', sdfError);
-              setError('Failed to generate molecular structures');
-              setColumns(prev => prev.map(col => (
-                col.id === columnId ? { ...col, loading: false, failed: true } : col
-              )));
+              setError(errorMsg);
+              updateColumn(columnId, { loading: false, failed: true });
             }
           } else {
-            setError('No valid molecules returned by the analyzer.');
-            setColumns(prev => prev.map(col => (
-              col.id === columnId ? { ...col, loading: false, failed: true } : col
-            )));
+            const isDev = process.env.NODE_ENV === 'development';
+            const errorMsg = `No SMILES found in ${molecules.length} molecules from API`;
+            setError(errorMsg);
+            updateColumn(columnId, { loading: false, failed: true });
           }
         }
       } else {
-        // No molecules found is not a failure - it's a valid result
-        // Some objects (like "spark") genuinely have no specific molecules
-        setColumns(prev => prev.map(col => (
-          col.id === columnId ? { ...col, viewers: [], loading: false, failed: false } : col
-        )));
+        updateColumn(columnId, { viewers: [], loading: false, failed: false });
       }
 
       setObjectInput('');
-    } catch (error) {
-      console.error('[handleTextPrediction] ERROR', error);
-      console.log('[handleTextPrediction] Error details', error.details);
+      } catch (error) {
+      const isDev = process.env.NODE_ENV === 'development';
+      const errorDetails = error.details || {};
+      const isTimeout = error.message?.includes('timeout') || error.message?.includes('timed out') || errorDetails.message?.includes('timeout');
+      const failedFunction = errorDetails.endpoint?.includes('generate-sdfs') ? 'generateSDFs()' : 'analyzeText()';
+      const failedEndpoint = errorDetails.endpoint || '/api/structuralize';
+      
+      if (isDev) {
+        console.error('[handleTextPrediction] ERROR', { 
+          error, 
+          errorDetails,
+          value, 
+          lookupMode, 
+          columnId, 
+          failedFunction,
+          failedEndpoint,
+          stack: error.stack 
+        });
+      }
       logger.error('Prediction failed:', error);
-      const errorData = error.details || { message: error.message || 'Prediction failed. Please try again.' };
-      console.log('[handleTextPrediction] Setting error', errorData);
-      setError(errorData);
-      // Mark column as failed
-      setColumns(prev => prev.map(col => (
-        col.id === columnId ? { ...col, loading: false, failed: true } : col
-      )));
+      
+      let errorMessage;
+      if (isTimeout) {
+        errorMessage = `${failedFunction} timed out: ${error.message || errorDetails.message || 'Request timed out'} (endpoint: ${failedEndpoint}, input: "${value}", mode: ${lookupMode})`;
+      } else if (error.details?.message) {
+        errorMessage = `${failedFunction} failed: ${error.details.message} (endpoint: ${failedEndpoint}, input: "${value}")`;
+      } else if (error.message) {
+        errorMessage = `${failedFunction} failed: ${error.message} (endpoint: ${failedEndpoint}, input: "${value}")`;
+      } else if (error.toString) {
+        errorMessage = `${failedFunction} error: ${error.toString()} (endpoint: ${failedEndpoint}, input: "${value}")`;
+      } else {
+        errorMessage = `${failedFunction} unknown error: ${JSON.stringify(error)} (endpoint: ${failedEndpoint}, input: "${value}")`;
+      }
+      
+      setError(errorMessage);
+      updateColumn(columnId, { loading: false, failed: true });
     } finally {
-      console.log('[handleTextPrediction] `FINALLY');
       setIsProcessing(false);
     }
-  }, [isProcessing, analyzeText, generateSDFs, columnMode]);
+  }, [analyzeText, generateSDFs, columnMode, updateColumn]);
 
   const handlePredictionComplete = useCallback(async (result) => {
     const molecules = result?.molecules || result?.chemicals || [];
-    const objectLabel = (result && (result.object || (result.result && result.result.object))) || (cameraMode ? 'Camera capture' : 'Image capture');
-
-    // Create column based on mode setting
+    const objectLabel = result?.object || (cameraMode ? 'Camera capture' : 'Image capture');
     const columnId = Date.now();
-    const newColumn = {
-      id: columnId,
-      query: objectLabel,
-      viewers: [],
-      loading: true,
-      failed: false
-    };
+    const newColumn = { id: columnId, query: objectLabel, viewers: [], loading: true, failed: false };
     
-    if (columnMode === 'replace') {
-      setColumns([newColumn]); // Replace existing
-    } else {
-      setColumns(prev => [...prev, newColumn]); // Add to existing
-    }
+    setColumns(prev => columnMode === 'replace' ? [newColumn] : [...prev, newColumn]);
 
-    if (molecules && molecules.length > 0) {
+    if (molecules?.length > 0) {
       const smilesArray = molecules.map(mol => mol.smiles).filter(Boolean);
-
       if (smilesArray.length > 0) {
         try {
           const sdfResult = await generateSDFs(smilesArray, false);
-
           const smilesToSdf = new Map();
           sdfResult.sdfPaths?.forEach((p, i) => { smilesToSdf.set(smilesArray[i], p); });
-
-          const viewers = molecules.map((mol) => {
-            const sdfPath = smilesToSdf.get(mol.smiles);
-            return {
-              name: mol.name || (mol.smiles && SMILES_NAME_MAP[mol.smiles]) || mol.smiles || objectLabel,
-              sdfData: sdfPath ? `file://${sdfPath}` : null,
-              smiles: mol.smiles
-            };
-          });
-
-          // Update the column with viewers
-          setColumns(prev => prev.map(col => (
-            col.id === columnId ? { ...col, viewers, loading: false, failed: false } : col
-          )));
+          const viewers = molecules.map((mol) => ({
+            name: mol.name || (mol.smiles && SMILES_NAME_MAP[mol.smiles]) || mol.smiles || objectLabel,
+            sdfData: smilesToSdf.get(mol.smiles) ? `file://${smilesToSdf.get(mol.smiles)}` : null,
+            smiles: mol.smiles
+          }));
+          updateColumn(columnId, { viewers, loading: false, failed: false });
         } catch (sdfError) {
+          const isDev = process.env.NODE_ENV === 'development';
+          const errorMsg = `SDF generation failed: ${sdfError.message || sdfError.toString() || 'Unknown error'}`;
+          if (isDev) console.error('[handlePredictionComplete] SDF error', { sdfError, smilesArray, columnId });
           logger.error('SDF generation failed:', sdfError);
-          setColumns(prev => prev.map(col => (
-            col.id === columnId ? { ...col, loading: false, failed: true } : col
-          )));
+          setError(errorMsg);
+          updateColumn(columnId, { loading: false, failed: true });
         }
       } else {
-        setColumns(prev => prev.map(col => (
-          col.id === columnId ? { ...col, loading: false, failed: true } : col
-        )));
+        updateColumn(columnId, { loading: false, failed: true });
       }
     } else {
-      setColumns(prev => prev.map(col => (
-        col.id === columnId ? { ...col, loading: false, failed: true } : col
-      )));
+      updateColumn(columnId, { loading: false, failed: true });
     }
-
     setError('');
-  }, [generateSDFs, cameraMode, columnMode]);
+  }, [generateSDFs, cameraMode, columnMode, updateColumn]);
 
   // Auto-run visual tests - bypass AI and go straight to SDF generation
   useEffect(() => {
@@ -1406,213 +1357,25 @@ function App() {
 
 
   return (
-<<<<<<< HEAD:src/client/core/App.jsx
-    <PaymentProvider config={PAYMENT_CONFIG}>
-      <div className="app">
-        {/* Top App Bar with title and settings */}
-        <header className="topbar">
-          <div className="topbar-title">Object</div>
-          <button
-            onClick={() => {
-              logger.debug('Settings button clicked', { showSettings });
-              setShowSettings(!showSettings);
-            }}
-            className="settings-btn"
-            title="Settings"
-          >
-            ⚙️
-          </button>
-        </header>
-
-        {/* Settings Modal - OUTSIDE main for proper positioning */}
-        {showSettings && (
-          <div className="settings-modal">
-            <h3 className="settings-title">Settings</h3>
-            
-            <div className="settings-field">
-              <label className="label">
-                Column Behavior:
-              </label>
-              <select
-                value={columnMode}
-                onChange={(e) => {
-                  logger.info('Column mode changed', { value: e.target.value });
-                  setColumnMode(e.target.value);
-                }}
-                className="select"
-              >
-                <option value="replace">
-                  Replace (Default) - New analysis displaces previous
-                </option>
-                <option value="accumulate">
-                  Accumulate - Add columns side by side
-                </option>
-              </select>
-=======
     <div className="app">
-        {/* Desktop split-screen layout */}
-        {!isMobileDevice() ? (
-          <div className="split-screen-container">
-            {/* Toggle button for left sidebar */}
-            <button
-              className="sidebar-toggle"
-              onClick={() => setShowLeftSidebar(!showLeftSidebar)}
-              title={showLeftSidebar ? 'Hide sidebar' : 'Show sidebar'}
-              style={{ left: showLeftSidebar ? '400px' : '0' }}
-            >
-              {showLeftSidebar ? '◀' : '▶'}
-            </button>
+      {/* Desktop split-screen layout */}
+      {!isMobileDevice() ? (
+        <div className="split-screen-container">
+          {/* Toggle button for left sidebar */}
+          <button
+            className="sidebar-toggle"
+            onClick={() => setShowLeftSidebar(!showLeftSidebar)}
+            title={showLeftSidebar ? 'Hide sidebar' : 'Show sidebar'}
+            style={{ left: showLeftSidebar ? '400px' : '0' }}
+          >
+            {showLeftSidebar ? '◀' : '▶'}
+          </button>
 
-            {/* Left sidebar with input modes */}
-            <div className={`left-sidebar ${showLeftSidebar ? 'visible' : 'hidden'}`}>
-              <h1 className="app-title">what's in...</h1>
-              
-              <div className="input-section">
-                <TextInput 
-                  value={objectInput}
-                  onChange={setObjectInput}
-                  onSubmit={handleTextPrediction}
-                  isProcessing={isProcessing}
-                  error={error}
-                />
-
-                <ModeSelector
-                  cameraMode={cameraMode}
-                  setCameraMode={setCameraMode}
-                  photoMode={photoMode}
-                  setPhotoMode={setPhotoMode}
-                  linkMode={linkMode}
-                  setLinkMode={setLinkMode}
-                  lookupMode={lookupMode}
-                  setLookupMode={setLookupMode}
-                />
-
-                {cameraMode && (
-                  <CameraSection
-                    isProcessing={isProcessing}
-                    setIsProcessing={setIsProcessing}
-                    setCurrentPredictionType={() => {}}
-                    onPredictionComplete={handlePredictionComplete}
-                  />
-                )}
-
-                {photoMode && (
-                  <PhotoSection
-                    isProcessing={isProcessing}
-                    setIsProcessing={setIsProcessing}
-                    setCurrentPredictionType={() => {}}
-                    onPredictionComplete={handlePredictionComplete}
-                  />
-                )}
-
-                {linkMode && (
-                  <LinkSection
-                    isProcessing={isProcessing}
-                    setIsProcessing={setIsProcessing}
-                    onPredictionComplete={handlePredictionComplete}
-                  />
-                )}
-              </div>
->>>>>>> 14203e3 (text post method succeeding but not w ui):src/client/components/App.jsx
-            </div>
-
-            {/* Right side with molecule viewer and settings */}
-            <div className="right-content">
-              <ErrorBanner error={error} onDismiss={() => setError('')} />
-
-              {/* Settings gear icon in top right */}
-              <button
-                onClick={() => {
-                  logger.debug('Settings button clicked', { showSettings });
-                  setShowSettings(!showSettings);
-                }}
-                className="settings-btn"
-                title="Settings"
-              >
-                ⚙️
-              </button>
-              
-              {/* Settings Modal */}
-              {showSettings && (
-                <div className="settings-modal">
-                  <h3 className="settings-title">Settings</h3>
-                  
-                  <div className="settings-field">
-                    <label className="label">
-                      Column Behavior:
-                    </label>
-                    <select
-                      value={columnMode}
-                      onChange={(e) => {
-                        logger.info('Column mode changed', { value: e.target.value });
-                        setColumnMode(e.target.value);
-                      }}
-                      className="select"
-                    >
-                      <option value="replace">
-                        Replace (Default) - New prediction displaces previous
-                      </option>
-                      <option value="accumulate">
-                        Accumulate - Add columns side by side
-                      </option>
-                    </select>
-                  </div>
-
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="settings-field">
-                      <label className="label">
-                        <input
-                          type="checkbox"
-                          checked={autoVisualMode}
-                          onChange={(e) => setAutoVisualMode(e.target.checked)}
-                          className="checkbox-input"
-                        />
-                        Enable Visual Tests (Dev Mode)
-                      </label>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => setShowSettings(false)}
-                    className="settings-close"
-                  >
-                    Close
-                  </button>
-                </div>
-              )}
-
-              {/* Molecule viewer columns */}
-              <div className="columns">
-                {columns.map(column => (
-                  <MolecularColumn
-                    key={column.id}
-                    column={column}
-                    onRemove={() => removeColumn(column.id)}
-                    showRemove={columnMode === 'accumulate'}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Mobile layout remains unchanged */
-          <div className="main mobile-reordered">
+          {/* Left sidebar with input modes */}
+          <div className={`left-sidebar ${showLeftSidebar ? 'visible' : 'hidden'}`}>
             <h1 className="app-title">what's in...</h1>
-
-            <ErrorBanner error={error} onDismiss={() => setError('')} />
-
-            <div className="columns mobile-top">
-              {columns.map(column => (
-                <MolecularColumn
-                  key={column.id}
-                  column={column}
-                  onRemove={() => removeColumn(column.id)}
-                  showRemove={columnMode === 'accumulate'}
-                />
-              ))}
-            </div>
             
-            <div className="input-section mobile-bottom">
+            <div className="input-section">
               <TextInput 
                 value={objectInput}
                 onChange={setObjectInput}
@@ -1659,15 +1422,108 @@ function App() {
               )}
             </div>
           </div>
-        )}
-<<<<<<< HEAD:src/client/core/App.jsx
-        
-        <div className="main">          
-          <div className="input-section">
+
+          {/* Right side with molecule viewer and settings */}
+          <div className="right-content">
+            <ErrorBanner error={error} onDismiss={() => setError('')} />
+
+            {/* Settings gear icon in top right */}
+            <button
+              onClick={() => {
+                logger.debug('Settings button clicked', { showSettings });
+                setShowSettings(!showSettings);
+              }}
+              className="settings-btn"
+              title="Settings"
+            >
+              ⚙️
+            </button>
+            
+            {/* Settings Modal */}
+            {showSettings && (
+              <div className="settings-modal">
+                <h3 className="settings-title">Settings</h3>
+                
+                <div className="settings-field">
+                  <label className="label">
+                    Column Behavior:
+                  </label>
+                  <select
+                    value={columnMode}
+                    onChange={(e) => {
+                      logger.info('Column mode changed', { value: e.target.value });
+                      setColumnMode(e.target.value);
+                    }}
+                    className="select"
+                  >
+                    <option value="replace">
+                      Replace (Default) - New prediction displaces previous
+                    </option>
+                    <option value="accumulate">
+                      Accumulate - Add columns side by side
+                    </option>
+                  </select>
+                </div>
+
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="settings-field">
+                    <label className="label">
+                      <input
+                        type="checkbox"
+                        checked={autoVisualMode}
+                        onChange={(e) => setAutoVisualMode(e.target.checked)}
+                        className="checkbox-input"
+                      />
+                      Enable Visual Tests (Dev Mode)
+                    </label>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="settings-close"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+
+            {/* Molecule viewer columns */}
+            <div className="columns">
+              {columns.map(column => (
+                <MolecularColumn
+                  key={column.id}
+                  column={column}
+                  onRemove={() => removeColumn(column.id)}
+                  showRemove={columnMode === 'accumulate'}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Mobile layout remains unchanged */
+        <div className="main mobile-reordered">
+          <h1 className="app-title">what's in...</h1>
+
+          <ErrorBanner error={error} onDismiss={() => setError('')} />
+
+          <div className="columns mobile-top">
+            {columns.map(column => (
+              <MolecularColumn
+                key={column.id}
+                column={column}
+                onRemove={() => removeColumn(column.id)}
+                showRemove={columnMode === 'accumulate'}
+              />
+            ))}
+          </div>
+          
+          <div className="input-section mobile-bottom">
             <TextInput 
               value={objectInput}
               onChange={setObjectInput}
-              onSubmit={handleTextAnalysis}
+              onSubmit={handleTextPrediction}
               isProcessing={isProcessing}
               error={error}
             />
@@ -1679,26 +1535,25 @@ function App() {
               setPhotoMode={setPhotoMode}
               linkMode={linkMode}
               setLinkMode={setLinkMode}
+              lookupMode={lookupMode}
+              setLookupMode={setLookupMode}
             />
 
             {cameraMode && (
-              <div ref={cameraContainerRef}>
-                <CameraSection
-                  isProcessing={isProcessing}
-                  setIsProcessing={setIsProcessing}
-                  setCurrentAnalysisType={() => {}}
-                  onAnalysisComplete={handleAnalysisComplete}
-                />
-              </div>
+              <CameraSection
+                isProcessing={isProcessing}
+                setIsProcessing={setIsProcessing}
+                setCurrentPredictionType={() => {}}
+                onPredictionComplete={handlePredictionComplete}
+              />
             )}
 
             {photoMode && (
               <PhotoSection
                 isProcessing={isProcessing}
                 setIsProcessing={setIsProcessing}
-                setCurrentAnalysisType={() => {}}
-                onAnalysisComplete={handleAnalysisComplete}
-                setOpenPickerRef={(fn) => { photoPickerOpenRef.current = fn; }}
+                setCurrentPredictionType={() => {}}
+                onPredictionComplete={handlePredictionComplete}
               />
             )}
 
@@ -1706,47 +1561,13 @@ function App() {
               <LinkSection
                 isProcessing={isProcessing}
                 setIsProcessing={setIsProcessing}
-                onAnalysisComplete={handleAnalysisComplete}
-                setFocusRef={(fn) => { linkFocusRef.current = fn; }}
+                onPredictionComplete={handlePredictionComplete}
               />
             )}
           </div>
-
-
-
-          <div className="columns">
-            {columns.map(column => (
-              <MolecularColumn
-                key={column.id}
-                column={column}
-                onRemove={() => removeColumn(column.id)}
-                showRemove={columnMode === 'accumulate'}
-              />
-            ))}
-          </div>
         </div>
-        {/* Bottom mobile CTA */}
-        <div className="bottom-cta">
-          <button
-            className="btn-primary bottom-cta-btn"
-            onClick={() => {
-              if (cameraMode) {
-                try { cameraContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
-              } else if (photoMode) {
-                try { photoPickerOpenRef.current && photoPickerOpenRef.current(); } catch (_) {}
-              } else if (linkMode) {
-                try { linkFocusRef.current && linkFocusRef.current(); } catch (_) {}
-              }
-            }}
-          >
-            {cameraMode ? 'Capture' : photoMode ? 'Choose Photo' : linkMode ? 'Paste Link' : 'Get Started'}
-          </button>
-        </div>
-      </div>
-    </PaymentProvider>
-=======
+      )}
     </div>
->>>>>>> 14203e3 (text post method succeeding but not w ui):src/client/components/App.jsx
   );
 }
 

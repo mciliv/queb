@@ -66,9 +66,10 @@ const configData = {
   nodeEnv: getString('NODE_ENV', 'development'),
   port: getNumber('PORT', 8080),
 
+  // Do NOT change the model
   openai: {
     apiKey: getString('OPENAI_API_KEY'),
-    model: getString('OPENAI_MODEL', 'gpt-4o-mini'),
+    model: getString('OPENAI_MODEL', 'gpt-5'),
     timeout: getNumber('OPENAI_TIMEOUT', 30000)
   },
 

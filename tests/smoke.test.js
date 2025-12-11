@@ -1,4 +1,3 @@
-// Simple smoke tests - validate basic app functionality
 const fs = require('fs');
 const path = require('path');
 const { APP_VALIDATION_RULES, ValidationHelpers } = require('./support/app-validation-rules');

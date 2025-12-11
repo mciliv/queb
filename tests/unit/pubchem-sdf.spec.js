@@ -55,7 +55,7 @@ describe('PubChem SDF endpoint functions', () => {
 
     beforeAll(() => {
       // Import the setup function and extract the fetchPubchemSdf function
-      setupMolecularRoutes = require('../../../src/server/routes/molecular');
+      setupMolecularRoutes = require('../../src/server/routes/molecular');
       
       // We need to access the fetchPubchemSdf function from the module
       // Since it's not exported, we'll test it through the route setup
@@ -131,7 +131,7 @@ describe('PubChem SDF endpoint functions', () => {
 
     beforeAll(() => {
       // Import the setup function
-      setupMolecularRoutes = require('../../../src/server/routes/molecular');
+      setupMolecularRoutes = require('../../src/server/routes/molecular');
     });
 
     it('should sanitize basic names', () => {
@@ -193,7 +193,7 @@ describe('PubChem SDF endpoint functions', () => {
 
     beforeAll(() => {
       // Import the setup function
-      setupMolecularRoutes = require('../../../src/server/routes/molecular');
+      setupMolecularRoutes = require('../../src/server/routes/molecular');
     });
 
     it('should create directory if it does not exist', () => {

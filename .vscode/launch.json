@@ -13,15 +13,6 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug Server",
-      "program": "${workspaceFolder}/src/server/api/server.js",
-      "skipFiles": ["<node_internals>/**"],
-      "console": "integratedTerminal",
-      "envFile": "${workspaceFolder}/.env"
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "Debug Tests",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "test:debug", "--", "${file}"],
@@ -49,7 +40,7 @@
     {
       "type": "node",
       "request": "attach",
-      "name": "Smart Attach",
+      "name": "Attach",
       "processId": "${command:PickProcess}",
       "skipFiles": ["<node_internals>/**"],
       "restart": true

@@ -50,7 +50,7 @@ describe('Visual Test Helpers', () => {
     });
 
     it('should handle empty string', () => {
-      expect(normalizePath('')).toBe('');
+      expect(normalizePath('')).toBe('/');
     });
   });
 

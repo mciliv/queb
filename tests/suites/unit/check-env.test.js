@@ -108,12 +108,18 @@ describe('check-env.js utilities', () => {
     });
 
     test('should handle timeout', async () => {
-      // Mock fetch to hang indefinitely
-      fetch.mockImplementationOnce(() => new Promise(() => {}));
+      // Mock fetch to respect AbortController signal
+      fetch.mockImplementationOnce((url, options) => {
+        return new Promise((_, reject) => {
+          options?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        });
+      });
 
       const result = await checkUrl('https://example.com', 100); // 100ms timeout
       expect(result).toBe(false);
-    }, 10000); // 10 second timeout for this test
+    }, 5000);
   });
 
   describe('environment detection', () => {

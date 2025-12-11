@@ -28,7 +28,6 @@ const getApiBase = () => '';
 const API_BASE = getApiBase();
 
 // Configuration constants
-const DEFAULT_TIMEOUT = 30000;     // 30 seconds - reasonable for AI processing
 const DEFAULT_RETRIES = 2;         // Retry failed requests twice
 const RETRY_DELAY = 1000;          // 1 second initial delay between retries
 const CACHE_DURATION = 300000;     // 5 minutes default cache
@@ -51,7 +50,6 @@ export const useApi = () => {
    */
   const apiCall = useCallback(async (endpoint, options = {}, retryCount = 0) => {
     const maxRetries = options.maxRetries || DEFAULT_RETRIES;
-    const timeout = options.timeout || DEFAULT_TIMEOUT;
     const cacheKey = `${endpoint}:${JSON.stringify(options.body || {})}`;
     const enableCaching = options.enableCaching !== false; // Default to true
 
@@ -75,25 +73,17 @@ export const useApi = () => {
     const requestPromise = (async () => {
     try {
       const url = `${API_BASE}${endpoint}`;
-      
-      // Create abort controller for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
 
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
           ...options.headers,
         },
-        signal: controller.signal,
         ...options,
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.log('[useApi] Error response from server:', errorData);
         const errorObj = {
           message: errorData.error || `API call failed: ${response.status} ${response.statusText}`,
           code: errorData.code,
@@ -104,7 +94,6 @@ export const useApi = () => {
           context: errorData.context,
           originalMessage: errorData.originalMessage
         };
-        console.log('[useApi] Constructed error object:', errorObj);
         const err = new Error(errorObj.message);
         err.details = errorObj;
         throw err;
@@ -134,16 +123,16 @@ export const useApi = () => {
       let shouldRetry = false;
 
       if (err.name === 'AbortError') {
-        errorMessage = 'Request timed out. Please try again.';
+        errorMessage = `Request aborted (endpoint: ${endpoint}, attempt: ${retryCount + 1}/${maxRetries + 1})`;
         shouldRetry = retryCount < maxRetries;
       } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-        errorMessage = 'Network connection failed. Please check your internet connection.';
+        errorMessage = `Network error: ${err.message} (endpoint: ${endpoint})`;
         shouldRetry = retryCount < maxRetries;
       } else if (err.message.includes('500') || err.message.includes('502') || err.message.includes('503')) {
-        errorMessage = 'Server error. Please try again in a moment.';
+        errorMessage = `Server error ${err.message.match(/\d{3}/)?.[0] || '5xx'}: ${endpoint}`;
         shouldRetry = retryCount < maxRetries;
       } else if (err.message.includes('429')) {
-        errorMessage = 'Rate limit exceeded. Please wait a moment before trying again.';
+        errorMessage = `Rate limit exceeded (endpoint: ${endpoint})`;
         shouldRetry = retryCount < maxRetries;
       }
 
@@ -165,7 +154,7 @@ export const useApi = () => {
             timestamp: new Date().toISOString(),
             type: 'error',
             source: 'frontend',
-            message: `AI failed to analyze image: ${errorMessage}`,
+            message: `Image analysis failed: ${errorMessage} (endpoint: ${endpoint})`,
             endpoint,
           };
           if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
@@ -188,7 +177,11 @@ export const useApi = () => {
       const errorObj = {
         message: errorMessage,
         recoverable: shouldRetry,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        endpoint: endpoint,  // Include endpoint for diagnostics
+        function: endpoint.includes('structuralize') ? 'analyzeText' : 
+                  endpoint.includes('generate-sdfs') ? 'generateSDFs' :
+                  endpoint.includes('structuralize-image') ? 'analyzeImage' : 'unknown'
       };
       setError(errorObj);
       const error = new Error(errorMessage);
@@ -230,16 +223,15 @@ export const useApi = () => {
     // Always trim to remove whitespace
     const trimmedText = text.trim();
 
+    
     const result = await apiCall('/api/structuralize', {
       method: 'POST',
       body: JSON.stringify({ text: trimmedText, lookupMode }),
       maxRetries: 2,
-      timeout: 30000,
       cachePost: true,              // Cache results to avoid re-analyzing same text
       cacheDuration: 600000,        // 10 minutes - chemical data doesn't change often
     });
 
-    console.log('✅ Analysis result:', result);
     return result;
   }, [apiCall]);
 
@@ -289,27 +281,11 @@ export const useApi = () => {
     if (typeof cropMiddleY === 'number') payload.cropMiddleY = clamp(Math.round(cropMiddleY), 0, 1000);
     if (typeof cropSize === 'number') payload.cropSize = clamp(Math.round(cropSize), 10, 500);
 
-    try {
-      const previewType = typeof imageData === 'string' && imageData.startsWith('data:')
-        ? imageData.slice(5, imageData.indexOf(';'))
-        : 'base64';
-      // Structured, safe debug info (no base64 dump)
-      console.log('AnalyzeImage payload summary:', {
-        type: previewType,
-        hasCoords: typeof x === 'number' && typeof y === 'number',
-        coords: typeof x === 'number' && typeof y === 'number' ? { x: payload.x, y: payload.y } : null,
-        hasCrop: typeof cropMiddleX === 'number' && typeof cropMiddleY === 'number' && typeof cropSize === 'number',
-        crop: (typeof cropMiddleX === 'number' && typeof cropMiddleY === 'number' && typeof cropSize === 'number')
-          ? { cx: payload.cropMiddleX, cy: payload.cropMiddleY, size: payload.cropSize }
-          : null
-      });
-    } catch (_) {}
 
     return apiCall('/api/structuralize-image', {
       method: 'POST',
       body: JSON.stringify(payload),
       maxRetries: 1,
-      timeout: 60000,
     });
   }, [apiCall]);
 
@@ -325,7 +301,6 @@ export const useApi = () => {
         overwrite: overwrite
       }),
       maxRetries: 1,
-      timeout: 30000,
       cachePost: !overwrite, // Cache if not overwriting
       cacheDuration: 1800000, // 30 minutes for SDF generation
     });
@@ -340,7 +315,6 @@ export const useApi = () => {
       method: 'POST',
       body: JSON.stringify({ name, overwrite }),
       maxRetries: 1,
-      timeout: 20000,
       cachePost: !overwrite,
       cacheDuration: 1800000,
     });

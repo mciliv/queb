@@ -155,24 +155,15 @@ const setupMolecularRoutes = (chemicals, molecularProcessor, resolveName) => {
    * - recommendedBox: Suggested crop region for images
    */
   router.post("/structuralize", async (req, res) => {
-    // Set timeout to prevent hanging requests (30 seconds)
-    const timeout = setTimeout(() => {
-      if (!res.headersSent) {
-        res.status(408).json({ error: "Request timeout - processing took too long" });
-      }
-    }, 30000);
-
     try {
       // Step 1: Validate request payload
       if (!req.body || (typeof req.body !== 'object')) {
-        clearTimeout(timeout);
         return res.status(400).json({ error: "Invalid payload" });
       }
 
       // Step 2: Check memory usage to prevent server crashes
       const memBefore = process.memoryUsage();
       if (memBefore.heapUsed > 500 * 1024 * 1024) {  // 500MB limit
-        clearTimeout(timeout);
         return res.status(507).json({ error: "Server memory limit exceeded" });
       }
 
@@ -195,12 +186,11 @@ const setupMolecularRoutes = (chemicals, molecularProcessor, resolveName) => {
       } catch (_) {}  // Logging should never break the response
 
       // Step 5: Send successful response
-      clearTimeout(timeout);
       res.json(out);
     } catch (error) {
-      clearTimeout(timeout);
-      console.error('[structuralize] failed:', error?.message || error);
-      res.status(500).json({ error: `Structuralization failed: ${error.message}` });
+      const errorMsg = `Structuralization error: ${error.message || error.toString()} (text: ${req.body?.text?.substring(0, 50) || 'N/A'}, mode: ${req.body?.lookupMode || 'N/A'})`;
+      console.error('[structuralize] failed:', errorMsg, error.stack);
+      res.status(500).json({ error: errorMsg });
     }
   });
 
@@ -280,9 +270,10 @@ const setupMolecularRoutes = (chemicals, molecularProcessor, resolveName) => {
       res.json({ sdfPath, status: 'ok', source: 'pubchem' });
     } catch (error) {
       if (error.message.includes('404') || error.message.includes('NOT_FOUND')) {
-        return res.status(404).json({ error: 'not found from provided identifiers' });
+        return res.status(404).json({ error: `PubChem lookup failed: ${req.body?.name || 'N/A'} not found` });
       }
-      res.status(500).json({ error: error.message || 'fetch failed' });
+      const errorMsg = `PubChem fetch failed: ${error.message || error.toString()} (name: ${req.body?.name?.substring(0, 50) || 'N/A'})`;
+      res.status(500).json({ error: errorMsg });
     }
   });
 
@@ -334,8 +325,9 @@ const setupMolecularRoutes = (chemicals, molecularProcessor, resolveName) => {
         }
       });
     } catch (error) {
-      console.error('[object-molecules] failed:', error?.message || error);
-      res.status(500).json({ error: `Analysis failed: ${error.message}` });
+      const errorMsg = `Object molecules error: ${error.message || error.toString()} (object: ${req.body?.object?.substring(0, 50) || 'N/A'})`;
+      console.error('[object-molecules] failed:', errorMsg, error.stack);
+      res.status(500).json({ error: errorMsg });
     }
   });
 
@@ -354,8 +346,9 @@ const setupMolecularRoutes = (chemicals, molecularProcessor, resolveName) => {
         chemicals: result.chemicals || result.molecules || []
       });
     } catch (error) {
-      console.error('[structures-from-text] failed:', error?.message || error);
-      res.status(500).json({ error: `Analysis failed: ${error.message}` });
+      const errorMsg = `Structures-from-text error: ${error.message || error.toString()} (text: ${req.body?.text?.substring(0, 50) || 'N/A'})`;
+      console.error('[structures-from-text] failed:', errorMsg, error.stack);
+      res.status(500).json({ error: errorMsg });
     }
   });
 

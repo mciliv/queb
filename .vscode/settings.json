@@ -4,7 +4,7 @@
   "debug.console.fontSize": 14,
   "debug.console.historySuggestions": true,
   "debug.internalConsoleOptions": "neverOpen",
-  "debug.javascript.autoAttachFilter": "disabled",
+  "debug.javascript.autoAttachFilter": "smart",
   "debug.openDebug": "neverOpen",
   "debug.console.collapseIdenticalLines": true,
   "debug.console.wordWrap": true,

@@ -47,6 +47,7 @@ export function createKeyboardHandler(actions = {}) {
 
     const targetElement = keyboardEvent.target;
     const userIsTypingInFormField = targetElement.tagName === 'INPUT' || targetElement.tagName === 'TEXTAREA' || targetElement.isContentEditable;
+    // Don't intercept keyboard events when user is typing in form fields (including Enter key)
     if (userIsTypingInFormField) {
       return;
     }

@@ -5,6 +5,13 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 start() {
   kill_port 8080
+  
+  # Check if bundle exists, build if missing
+  if [ ! -f "$PROJECT_ROOT/src/client/dist/bundle.js" ]; then
+    echo "📦 Building frontend bundle..."
+    node "$PROJECT_ROOT/src/client/build-frontend.js" --quiet
+  fi
+  
   node "$PROJECT_ROOT/src/server/api/server.js"
 }
 
@@ -13,6 +20,22 @@ kill_port() {
   if lsof -ti:$port >/dev/null 2>&1; then
     lsof -ti:$port | xargs kill -9 2>/dev/null || true
   fi
+}
+
+wait_for_server() {
+  # Poll health endpoint until server responds or timeout hits
+  local max_attempts=30
+  local attempt=0
+  
+  while [ $attempt -lt $max_attempts ]; do
+    if curl -s "http://localhost:8080/health" > /dev/null 2>&1; then
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    sleep 1
+  done
+  
+  return 1
 }
 
 deploy() {
@@ -26,7 +49,25 @@ deploy() {
   "$PROJECT_ROOT/deploy/deploy.sh" "$env"
 }
 
-build() { node "$PROJECT_ROOT/src/client/build-frontend.js"; }
+build() { 
+  node "$PROJECT_ROOT/src/client/build-frontend.js"
+}
+
+dev() {
+  # Start watch mode in background
+  echo "🔄 Starting frontend watch mode..."
+  node "$PROJECT_ROOT/src/client/build-frontend.js" --watch --quiet &
+  local watch_pid=$!
+  
+  # Start server
+  kill_port 8080
+  node "$PROJECT_ROOT/src/server/api/server.js" &
+  local server_pid=$!
+  
+  # Cleanup on exit
+  trap "kill $watch_pid $server_pid 2>/dev/null || true" EXIT
+  wait $server_pid
+}
 
 debug() {
   kill_port 8080
@@ -74,27 +115,34 @@ test-dev() {
   wait $server_pid
 }
 
-help() {
-  echo "Usage: ./run COMMAND [ARGS...]"
+after-agent-change() {
+  echo "🧪 Running all tests..."
+  if ! npm run test:all; then
+    echo "❌ Tests failed. Not starting server."
+    return 1
+  fi
+
   echo ""
-  echo "Available commands:"
-  echo "  start          Start the server (default)"
-  echo "  debug          Start server in debug mode"
-  echo "  debug-brk      Start server in debug mode with breakpoint"
-  echo "  browser        Start server and open browser"
-  echo "  test-inject    Start server and inject test case via HTTP"
-  echo "  test-dev       Development mode with auto-injection"
-  echo "  build          Build the frontend"
-  echo "  deploy [env]   Deploy to dev or prod"
-  echo "  dev            Open dev environment"
+  echo "✅ All tests passed!"
   echo ""
-  echo "Test injection examples:"
-  echo "  ./run test-inject coffee     # Inject coffee analysis"
-  echo "  ./run test-inject saltwater  # Inject salt water analysis" 
-  echo "  ./run test-dev apple         # Auto-inject apple on startup"
-  echo ""
-  echo "Available test cases:"
-  echo "  coffee, saltwater, aspirin, apple, wine, egg"
+  echo "🚀 Starting server and opening browser..."
+
+  kill_port 8080
+  node "$PROJECT_ROOT/src/server/api/server.js" &
+  local server_pid=$!
+
+  if wait_for_server; then
+    echo "✅ Server is ready"
+    open "http://localhost:8080"
+    echo "🌐 Browser opened at http://localhost:8080"
+    echo ""
+    echo "Press Ctrl+C to stop the server"
+    wait $server_pid
+  else
+    echo "❌ Server failed to start within 30 seconds"
+    kill $server_pid 2>/dev/null || true
+    return 1
+  fi
 }
 
 CMD="${1:-start}"
