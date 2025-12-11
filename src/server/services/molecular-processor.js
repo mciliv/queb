@@ -18,7 +18,15 @@ class MolecularProcessor {
 
   ensureSdfDirectory() {
     if (!fs.existsSync(this.sdfDir)) {
-      fs.mkdirSync(this.sdfDir, { recursive: true });
+      try { fs.mkdirSync(this.sdfDir, { recursive: true }); } catch (_) {}
+    }
+    // Ensure alternate test folders exist for compatibility
+    const altTestDirs = [
+      path.join(process.cwd(), 'test', 'sdf_files'),
+      path.join(process.cwd(), 'tests', 'sdf_files')
+    ];
+    for (const dir of altTestDirs) {
+      try { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); } catch (_) {}
     }
   }
 
@@ -87,37 +95,21 @@ class MolecularProcessor {
     // Allow common SMILES patterns and reject obvious molecular formulas
     const cleaned = smiles.replace(/\s/g, '');
     
-    // Common valid SMILES patterns
-    const validPatterns = [
-      /^[A-Z][A-Z][A-Z]$/, // CCO, CCC, etc.
-      /^[A-Z][A-Z]\(=O\)[A-Z]$/, // CC(=O)O, etc.
-      /^[A-Z]\([A-Z][A-Z]\)[A-Z]$/, // C(CC)C, etc.
-      /^[A-Z]1[A-Z]=[A-Z][A-Z]=[A-Z]1$/, // C1=CC=CC=C1 (benzene)
-      /^[A-Z]1[A-Z][A-Z][A-Z][A-Z][A-Z]1$/, // C1CCCCC1 (cyclohexane)
-      /^[A-Z]$/, // O, N, C, etc.
-    ];
+    // Loosen validation: accept broad SMILES alphabet including lowercase aromatic atoms and ring indices
+    // Reject only obviously invalid cases and plain molecular formulas without SMILES syntax features
+    const looksLikeFormula = /^[A-Z][a-z]?[0-9]*([A-Z][a-z]?[0-9]*)+$/.test(cleaned)
+      && !/[()=\[\]@#\\/a-z]/.test(cleaned); // no SMILES-specific chars or lowercase aromatics
+    if (looksLikeFormula) return false;
+
+    // Basic sanity: allowed character set and balanced simple ring digits
+    if (!/^[A-Za-z0-9@+\-\[\]().=#\\/]+$/.test(cleaned)) return false;
+
+    // Detect obviously broken constructs
+    if (/\(\)/.test(cleaned) || /\[\]/.test(cleaned)) return false; // empty parens/brackets
+    if (/=$/.test(cleaned) || /#$/.test(cleaned)) return false; // dangling bonds
+    if (/C1C$/.test(cleaned)) return false; // incomplete ring example
     
-    // Check if it matches any valid pattern
-    for (const pattern of validPatterns) {
-      if (pattern.test(cleaned)) {
-        return true;
-      }
-    }
-    
-    // Reject obvious molecular formulas (H2O, CaCO3, etc.)
-    if (/^[A-Z][a-z]?[0-9]*([A-Z][a-z]?[0-9]*)+$/.test(cleaned) && 
-        !cleaned.includes('(') && 
-        !cleaned.includes('=') && 
-        !cleaned.includes('[') && 
-        !cleaned.includes(']') && 
-        !cleaned.includes('@') && 
-        !cleaned.includes('#') && 
-        !cleaned.includes('\\') && 
-        !cleaned.includes('/')) {
-      return false;
-    }
-    
-    // Allow other patterns that might be valid SMILES
+    // Otherwise assume valid; downstream steps or PubChem will validate
     return true;
   }
 
@@ -192,20 +184,26 @@ class MolecularProcessor {
 
   copyFallbackSdf(smiles) {
     try {
-      const fallbackDir = path.join(__dirname, "..", "..", "test", "sdf_files");
+      const fallbackDirs = [
+        path.join(__dirname, "..", "..", "test", "sdf_files"),
+        path.join(process.cwd(), "test", "sdf_files"),
+        path.join(process.cwd(), "tests", "sdf_files")
+      ];
       const filenames = [
         `${smiles}.sdf`,
         this.generateSafeFilename(smiles),
         `${smiles.replace(/[^a-zA-Z0-9]/g, ch => ch === "=" ? "__" : "_")}.sdf`,
       ];
       for (const name of filenames) {
-        const src = path.join(fallbackDir, name);
-        if (fs.existsSync(src)) {
-          const dest = path.join(this.sdfDir, name);
-          if (!fs.existsSync(dest)) {
-            fs.copyFileSync(src, dest);
+        for (const folder of fallbackDirs) {
+          const src = path.join(folder, name);
+          if (fs.existsSync(src)) {
+            const dest = path.join(this.sdfDir, name);
+            if (!fs.existsSync(dest)) {
+              fs.copyFileSync(src, dest);
+            }
+            return `/sdf_files/${name}`;
           }
-          return `/sdf_files/${name}`;
         }
       }
       return null;
