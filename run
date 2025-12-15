@@ -1,154 +1,248 @@
-#!/usr/bin/env zsh
-set -eo pipefail
+#!/usr/bin/env node
+'use strict';
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+const { spawn, spawnSync, execSync } = require('child_process');
 
-start() {
-  kill_port 8080
-  
-  # Check if bundle exists, build if missing
-  if [ ! -f "$PROJECT_ROOT/src/client/dist/bundle.js" ]; then
-    echo "📦 Building frontend bundle..."
-    node "$PROJECT_ROOT/src/client/build-frontend.js" --quiet
-  fi
-  
-  node "$PROJECT_ROOT/src/server/api/server.js"
+const PROJECT_ROOT = path.resolve(__dirname);
+
+const SERVER_ENTRY = path.join(PROJECT_ROOT, 'src', 'server', 'api', 'server.js');
+const FRONTEND_BUILD = path.join(PROJECT_ROOT, 'src', 'client', 'build-frontend.js');
+const FRONTEND_BUNDLE = path.join(PROJECT_ROOT, 'src', 'client', 'dist', 'bundle.js');
+const DEPLOY_SCRIPT = path.join(PROJECT_ROOT, 'deploy', 'deploy.sh');
+const INJECT_TEST = path.join(PROJECT_ROOT, 'scripts', 'inject-test.js');
+
+function printHelp() {
+  console.log(`Usage: ./run <command> [args]
+
+Commands:
+  start             Start server (builds frontend bundle if missing)
+  server            Alias for start
+  dev               Watch frontend + run server (both as child processes)
+  debug-brk         Start server with --inspect-brk
+  build             Build frontend bundle
+  browser           Start server and open browser
+  test-inject [x]   Start server, inject test case (default: coffee), open browser
+  test-dev [x]      Start server with AUTO_TEST_INJECT, open browser
+  deploy [dev|prod] Run deploy script (default: dev)
+  after-agent-change Run tests, then start server + open browser
+  -h, --help        Show help
+`);
 }
 
-kill_port() {
-  local port="${1:-8080}"
-  if lsof -ti:$port >/dev/null 2>&1; then
-    lsof -ti:$port | xargs kill -9 2>/dev/null || true
-  fi
+function killPort(port = 8080) {
+  try {
+    const out = execSync(`lsof -ti:${port}`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    if (!out) return;
+    const pids = out.split(/\s+/).filter(Boolean);
+    for (const pid of pids) {
+      try {
+        process.kill(Number(pid), 'SIGKILL');
+      } catch (_) {
+        // best-effort
+      }
+    }
+  } catch (_) {
+    // nothing listening (or lsof not available)
+  }
 }
 
-wait_for_server() {
-  # Poll health endpoint until server responds or timeout hits
-  local max_attempts=30
-  local attempt=0
-  
-  while [ $attempt -lt $max_attempts ]; do
-    if curl -s "http://localhost:8080/health" > /dev/null 2>&1; then
-      return 0
-    fi
-    attempt=$((attempt + 1))
-    sleep 1
-  done
-  
-  return 1
+function runNode(scriptPath, args = [], options = {}) {
+  const nodeArgs = [scriptPath, ...args];
+  return spawn(process.execPath, nodeArgs, {
+    stdio: 'inherit',
+    ...options,
+  });
 }
 
-deploy() {
-  local env="${1:-dev}"
-  if [[ "$env" != "dev" && "$env" != "prod" ]]; then
-    echo "Usage: ./run deploy [dev|prod]" >&2
-    echo "  dev  - Deploy to dev.queb.space" >&2
-    echo "  prod - Deploy to queb.space" >&2
-    return 1
-  fi
-  "$PROJECT_ROOT/deploy/deploy.sh" "$env"
+function runScript(cmd, args = [], options = {}) {
+  return spawn(cmd, args, { stdio: 'inherit', ...options });
 }
 
-build() { 
-  node "$PROJECT_ROOT/src/client/build-frontend.js"
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
-dev() {
-  # Start watch mode in background
-  echo "🔄 Starting frontend watch mode..."
-  node "$PROJECT_ROOT/src/client/build-frontend.js" --watch --quiet &
-  local watch_pid=$!
-  
-  # Start server
-  kill_port 8080
-  node "$PROJECT_ROOT/src/server/api/server.js" &
-  local server_pid=$!
-  
-  # Cleanup on exit
-  trap "kill $watch_pid $server_pid 2>/dev/null || true" EXIT
-  wait $server_pid
+async function waitForServer({ url = 'http://localhost:8080/health', maxAttempts = 30 } = {}) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const ok = await new Promise((resolve) => {
+      const req = http.get(url, (res) => {
+        res.resume();
+        resolve(res.statusCode && res.statusCode >= 200 && res.statusCode < 500);
+      });
+      req.on('error', () => resolve(false));
+      req.setTimeout(1000, () => {
+        req.destroy();
+        resolve(false);
+      });
+    });
+    if (ok) return true;
+    await sleep(1000);
+  }
+  return false;
 }
 
-debug() {
-  kill_port 8080
-  node --inspect "$PROJECT_ROOT/src/server/api/server.js"
+async function cmdStart() {
+  killPort(8080);
+
+  if (!fs.existsSync(FRONTEND_BUNDLE)) {
+    console.log('📦 Building frontend bundle...');
+    const res = spawnSync(process.execPath, [FRONTEND_BUILD, '--quiet'], { stdio: 'inherit' });
+    if (res.status !== 0) process.exit(res.status || 1);
+  }
+
+  const server = runNode(SERVER_ENTRY);
+  server.on('exit', (code) => process.exit(code ?? 0));
 }
 
-debug-brk() {
-  kill_port 8080
-  node --inspect-brk "$PROJECT_ROOT/src/server/api/server.js"
+async function cmdBuild() {
+  const res = spawnSync(process.execPath, [FRONTEND_BUILD], { stdio: 'inherit' });
+  process.exit(res.status || 0);
 }
 
-browser() {
-  kill_port 8080
-  node "$PROJECT_ROOT/src/server/api/server.js" &
-  sleep 3 # make next line run when server.js has run to appropriate point instead
-  open "http://localhost:8080"
-  wait
+async function cmdDev() {
+  console.log('🔄 Starting frontend watch mode...');
+  const watch = runNode(FRONTEND_BUILD, ['--watch', '--quiet']);
+
+  killPort(8080);
+  const server = runNode(SERVER_ENTRY);
+
+  const cleanup = () => {
+    try { watch.kill('SIGTERM'); } catch (_) {}
+    try { server.kill('SIGTERM'); } catch (_) {}
+  };
+
+  process.on('SIGINT', () => { cleanup(); process.exit(130); });
+  process.on('SIGTERM', () => { cleanup(); process.exit(143); });
+  process.on('exit', cleanup);
+
+  server.on('exit', (code) => {
+    cleanup();
+    process.exit(code ?? 0);
+  });
 }
 
-test-inject() {
-  local test_case="${1:-coffee}"
-  kill_port 8080
-  node "$PROJECT_ROOT/src/server/api/server.js" &
-  local server_pid=$!
-  sleep 4
-  if ! curl -s "http://localhost:8080/health" > /dev/null; then
-    echo "❌ Server failed to start"
-    kill $server_pid 2>/dev/null || true
-    exit 1
-  fi
-  
-  node "$PROJECT_ROOT/scripts/inject-test.js" "$test_case"
-  open "http://localhost:8080"
-  wait $server_pid
+async function cmdDebugBrk() {
+  killPort(8080);
+  const server = spawn(process.execPath, ['--inspect-brk', SERVER_ENTRY], { stdio: 'inherit' });
+  server.on('exit', (code) => process.exit(code ?? 0));
 }
 
-test-dev() {
-  local test_case="${1:-coffee}"
-  kill_port 8080
-  AUTO_TEST_INJECT="$test_case" node "$PROJECT_ROOT/src/server/api/server.js" &
-  local server_pid=$!
-  
-  sleep 3
-  open "http://localhost:8080"
-  wait $server_pid
+async function cmdBrowser() {
+  killPort(8080);
+  const server = runNode(SERVER_ENTRY);
+  await sleep(3000);
+  runScript('open', ['http://localhost:8080']);
+  server.on('exit', (code) => process.exit(code ?? 0));
 }
 
-after-agent-change() {
-  echo "🧪 Running all tests..."
-  if ! npm run test:all; then
-    echo "❌ Tests failed. Not starting server."
-    return 1
-  fi
+async function cmdTestInject(testCase = 'coffee') {
+  killPort(8080);
+  const server = runNode(SERVER_ENTRY);
 
-  echo ""
-  echo "✅ All tests passed!"
-  echo ""
-  echo "🚀 Starting server and opening browser..."
+  await sleep(4000);
+  const ok = await waitForServer();
+  if (!ok) {
+    console.error('❌ Server failed to start');
+    try { server.kill('SIGTERM'); } catch (_) {}
+    process.exit(1);
+  }
 
-  kill_port 8080
-  node "$PROJECT_ROOT/src/server/api/server.js" &
-  local server_pid=$!
+  // Preserve original behavior: `node scripts/inject-test.js <testCase>`
+  const res = spawnSync(process.execPath, [INJECT_TEST, testCase], { stdio: 'inherit' });
+  if (res.status && res.status !== 0) process.exit(res.status);
 
-  if wait_for_server; then
-    echo "✅ Server is ready"
-    open "http://localhost:8080"
-    echo "🌐 Browser opened at http://localhost:8080"
-    echo ""
-    echo "Press Ctrl+C to stop the server"
-    wait $server_pid
-  else
-    echo "❌ Server failed to start within 30 seconds"
-    kill $server_pid 2>/dev/null || true
-    return 1
-  fi
+  runScript('open', ['http://localhost:8080']);
+
+  server.on('exit', (code) => process.exit(code ?? 0));
 }
 
-CMD="${1:-start}"
-if [[ "$CMD" == "-h" || "$CMD" == "--help" ]]; then
-  help
-  exit 0
-fi
-shift || true
-"$CMD" "$@"
+async function cmdTestDev(testCase = 'coffee') {
+  killPort(8080);
+  const server = runNode(SERVER_ENTRY, [], {
+    env: { ...process.env, AUTO_TEST_INJECT: testCase },
+  });
+
+  await sleep(3000);
+  runScript('open', ['http://localhost:8080']);
+  server.on('exit', (code) => process.exit(code ?? 0));
+}
+
+async function cmdDeploy(env = 'dev') {
+  if (env !== 'dev' && env !== 'prod') {
+    console.error('Usage: ./run deploy [dev|prod]');
+    console.error('  dev  - Deploy to dev.queb.space');
+    console.error('  prod - Deploy to queb.space');
+    process.exit(1);
+  }
+  const child = runScript(DEPLOY_SCRIPT, [env]);
+  child.on('exit', (code) => process.exit(code ?? 0));
+}
+
+async function cmdAfterAgentChange() {
+  console.log('🧪 Running all tests...');
+  const res = spawnSync('npm', ['run', 'test:all'], { stdio: 'inherit' });
+  if (res.status !== 0) {
+    console.log('❌ Tests failed. Not starting server.');
+    process.exit(res.status || 1);
+  }
+
+  console.log('\n✅ All tests passed!\n');
+  console.log('🚀 Starting server and opening browser...');
+
+  killPort(8080);
+  const server = runNode(SERVER_ENTRY);
+
+  const ok = await waitForServer();
+  if (ok) {
+    console.log('✅ Server is ready');
+    runScript('open', ['http://localhost:8080']);
+    console.log('🌐 Browser opened at http://localhost:8080');
+    console.log('\nPress Ctrl+C to stop the server');
+    server.on('exit', (code) => process.exit(code ?? 0));
+  } else {
+    console.error('❌ Server failed to start within 30 seconds');
+    try { server.kill('SIGTERM'); } catch (_) {}
+    process.exit(1);
+  }
+}
+
+async function main() {
+  const argv = process.argv.slice(2);
+  const cmd = argv[0] || 'start';
+  const args = argv.slice(1);
+
+  if (cmd === '-h' || cmd === '--help') {
+    printHelp();
+    return;
+  }
+
+  const commands = {
+    start: cmdStart,
+    server: cmdStart,
+    build: cmdBuild,
+    dev: cmdDev,
+    'debug-brk': cmdDebugBrk,
+    browser: cmdBrowser,
+    'test-inject': () => cmdTestInject(args[0] || 'coffee'),
+    'test-dev': () => cmdTestDev(args[0] || 'coffee'),
+    deploy: () => cmdDeploy(args[0] || 'dev'),
+    'after-agent-change': cmdAfterAgentChange,
+  };
+
+  const fn = commands[cmd];
+  if (!fn) {
+    console.error(`Unknown command: ${cmd}`);
+    printHelp();
+    process.exit(1);
+  }
+
+  await fn();
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

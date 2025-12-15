@@ -20,7 +20,19 @@ if (!global.__QUEB_ENV_LOADED__) {
 
   // Load .env for local development
   if (!isCloud) {
-    const envPath = path.resolve(process.cwd(), '.env');
+    // Find queb project root (directory containing package.json)
+    const findProjectRoot = () => {
+      let currentDir = __dirname;
+      while (currentDir !== path.dirname(currentDir)) {
+        if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+          return currentDir;
+        }
+        currentDir = path.dirname(currentDir);
+      }
+      return path.resolve(__dirname, '../..'); // Fallback: go up from src/core to queb
+    };
+    const projectRoot = findProjectRoot();
+    const envPath = path.resolve(projectRoot, '.env');
 
     if (fs.existsSync(envPath)) {
       dotenv.config({ path: envPath, override: false });

@@ -1,5 +1,6 @@
 const { createContainer } = require('../../core/services');
 const { createApp, setupChemicalPredictionRoutes } = require('./app');
+const { validateLocalDevEnv } = require('./validate-env');
 
 async function startServer(container) {
   const config = await container.get('config');
@@ -10,13 +11,8 @@ async function startServer(container) {
     // Validate configuration (silent on success)
     config.validate();
 
-    // CRITICAL: Validate OPENAI_API_KEY for local development
-    if (!config.isProduction() && !config.get('openai.apiKey')) {
-      logger.error('❌ OPENAI_API_KEY not found in environment');
-      logger.error('   Create .env file in project root with:');
-      logger.error('   OPENAI_API_KEY=sk-your-key-here');
-      throw new Error('OPENAI_API_KEY required for local development - check .env file');
-    }
+    // Environment validations that are specific to local/dev startup
+    validateLocalDevEnv(config, logger);
 
     // Initialize database if enabled
     if (config.get('database.enabled')) {

@@ -180,7 +180,19 @@ async function testConnection() {
 function createEnvFile() {
   log.info('Creating .env file for local development...');
 
-  const envFile = path.join(process.cwd(), '.env');
+  // Find queb project root (directory containing package.json)
+  const findProjectRoot = () => {
+    let currentDir = __dirname;
+    while (currentDir !== path.dirname(currentDir)) {
+      if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+        return currentDir;
+      }
+      currentDir = path.dirname(currentDir);
+    }
+    return path.resolve(__dirname, '../..'); // Fallback: go up from database/setup to queb
+  };
+  const projectRoot = findProjectRoot();
+  const envFile = path.join(projectRoot, '.env');
 
   if (!fs.existsSync(envFile)) {
     const envContent = `# PostgreSQL Configuration for Local Development

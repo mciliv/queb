@@ -5,7 +5,19 @@ const fs = require('fs');
 const path = require('path');
 
 function validateEnvironment() {
-  const envPath = path.join(process.cwd(), '.env');
+  // Find queb project root (directory containing package.json)
+  const findProjectRoot = () => {
+    let currentDir = __dirname;
+    while (currentDir !== path.dirname(currentDir)) {
+      if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+        return currentDir;
+      }
+      currentDir = path.dirname(currentDir);
+    }
+    return path.resolve(__dirname, '..'); // Fallback: go up from scripts to queb
+  };
+  const projectRoot = findProjectRoot();
+  const envPath = path.join(projectRoot, '.env');
   
   if (!fs.existsSync(envPath)) {
     console.error('❌ .env file not found');
