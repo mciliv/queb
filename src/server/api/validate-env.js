@@ -20,10 +20,8 @@ function validateLocalDevEnv(config, logger) {
 
   if (!openaiModel) {
     errors.push('OPENAI_MODEL is required for local development');
-  } else if (openaiModel && !['gpt-4o', 'gpt-4', 'gpt-3.5-turbo'].includes(openaiModel)) {
-    warnings.push(`OPENAI_MODEL=${openaiModel} may not be supported. Recommended: gpt-4o, gpt-4, or gpt-3.5-turbo`);
   }
-
+  
   // Log warnings (non-fatal)
   if (warnings.length > 0) {
     warnings.forEach(warning => logger.warn(`⚠️  ${warning}`));
