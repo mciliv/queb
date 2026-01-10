@@ -6,11 +6,12 @@
 /**
  * Setup user management routes
  * @param {express.Application} app - Express application instance
- * @param {ServiceContainer} container - Dependency injection container
+ * @param {Object} services - Resolved services
+ * @param {Object} services.logger - Logger service
+ * @param {ServiceContainer} services.container - Dependency injection container
  */
-async function setupUserRoutes(app, container) {
+async function setupUserRoutes(app, { logger, container }) {
   const userService = await container.get('userService');
-  const logger = await container.get('logger');
   
   // Create/update user
   app.post('/api/user', async (req, res, next) => {
@@ -63,6 +64,12 @@ async function setupUserRoutes(app, container) {
 module.exports = {
   setupUserRoutes
 };
+
+
+
+
+
+
 
 
 

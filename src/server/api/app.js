@@ -8,15 +8,16 @@ const createError = require('http-errors');
  * Create and configure Express application with injected services.
  * This file contains the "general app logic": middleware, routes, SPA/static serving, and error handling.
  *
- * @param {ServiceContainer} container - Configured DI container
+ * @param {Object} services - Resolved core services
+ * @param {Object} services.config - Configuration service
+ * @param {Object} services.logger - Logger service
+ * @param {ServiceContainer} services.container - DI container for other services
  * @returns {Promise<express.Application>} Configured Express app
  */
-async function createApp(container) {
+async function createApp({ config, logger, container }) {
   const app = express();
 
-  // Get core services
-  const config = await container.get('config');
-  const logger = await container.get('logger');
+  // Get remaining services
   const errorHandler = await container.get('errorHandler');
 
   // Middleware
@@ -121,12 +122,12 @@ async function createApp(container) {
     res.status(200).json({ received: true });
   });
 
-  await setupChemicalPredictionRoutes(app, container);
+  await setupChemicalPredictionRoutes(app, { logger, container });
 
   // Setup user routes if database is enabled
   if (config.get('database.enabled')) {
     const { setupUserRoutes } = require('./user-routes');
-    await setupUserRoutes(app, container);
+    await setupUserRoutes(app, { config, logger, container });
   }
 
   // SPA catch-all - serve index.html for non-API, non-file requests
@@ -174,19 +175,6 @@ async function createApp(container) {
       });
     }
 
-    // Only log errors (not 404s) to avoid noise
-    if (status >= 500) {
-      logger.error(`API Error: ${handled.message}`, {
-        error: handled,
-        request: {
-          path: req.path,
-          method: req.method,
-          body: req.body,
-        },
-      });
-    }
-
-    const isDev = process.env.NODE_ENV === 'dev';
 
     // For API routes, always return JSON
     if (req.path.startsWith('/api/')) {
@@ -196,7 +184,7 @@ async function createApp(container) {
         recoverable: handled.recoverable,
         recovery: handled.recovery,
         timestamp: handled.timestamp,
-        ...(isDev && {
+        ...(config.isDevelopment() && {
           stack: err.stack,
           context: handled.context,
           originalMessage: err.message,
@@ -211,7 +199,7 @@ async function createApp(container) {
 
     res.status(status).json({
       error: handled.message || err.message || 'Internal server error',
-      ...(isDev && {
+      ...(config.isDevelopment() && {
         stack: err.stack,
         context: handled.context,
       }),
@@ -221,10 +209,9 @@ async function createApp(container) {
   return app;
 }
 
-async function setupChemicalPredictionRoutes(app, container) {
+async function setupChemicalPredictionRoutes(app, { logger, container }) {
   const structuralizer = await container.get('structuralizer');
   const molecularProcessor = await container.get('molecularProcessor');
-  const logger = await container.get('logger');
 
   app.post('/api/structuralize', async (req, res, next) => {
     try {

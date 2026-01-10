@@ -160,25 +160,31 @@ GUIDANCE:
   }
 
   /**
-   * Validate AI response against expected format
-   */
-  validateResponse(promptType, response) {
-    const template = this._templates.get(promptType);
-    if (!template || !template.validation) return true;
-    
-    try {
-      const parsed = typeof response === 'string' ? JSON.parse(response) : response;
-      return template.validation(parsed);
-    } catch (error) {
-      return false;
-    }
-  }
-
-  /**
    * Get available prompt types
    */
   getAvailablePrompts() {
     return Array.from(this._templates.keys());
+  }
+
+  /**
+   * Validate response based on prompt type
+   */
+  validateResponse(promptType, response) {
+    // Support both abbreviated and full prompt type names
+    const typeMap = {
+      'chemical': 'chemical_analysis',
+      'detection': 'object_detection',
+      'name': 'name_resolution'
+    };
+
+    const fullType = typeMap[promptType] || promptType;
+    const template = this._templates.get(fullType);
+
+    if (!template) {
+      throw new Error(`Unknown prompt type: ${promptType}`);
+    }
+
+    return template.validation(response);
   }
 
   /**

@@ -136,14 +136,14 @@ class FileLogger {
     const safeMeta = this.safeSerializeMeta(meta) || {};
     const logFile = this.getLogFile();
 
-    // File: JSONL for easy parsing/ingestion
-    this.writeToFile(logFile, this.formatFileLine(normalizedLevel, message, safeMeta));
-
-    // Console: human-friendly with colors; respect LOG_LEVEL
+    // File: JSONL for easy parsing/ingestion (respect LOG_LEVEL)
     if (this.shouldLog(normalizedLevel)) {
-      const consoleMethod = normalizedLevel === 'error' ? 'error' : normalizedLevel === 'warn' ? 'warn' : 'log';
-      console[consoleMethod](this.formatConsole(normalizedLevel, typeof message === 'string' ? message : String(message), safeMeta));
+      this.writeToFile(logFile, this.formatFileLine(normalizedLevel, message, safeMeta));
     }
+
+    // Console: human-friendly with colors; always log to console for development visibility
+    const consoleMethod = normalizedLevel === 'error' ? 'error' : normalizedLevel === 'warn' ? 'warn' : 'log';
+    console[consoleMethod](this.formatConsole(normalizedLevel, typeof message === 'string' ? message : String(message), safeMeta));
   }
 
   info(message, meta = {}) {

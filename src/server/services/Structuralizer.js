@@ -4,7 +4,7 @@ const path = require('path');
 class Structuralizer {
   constructor(dependencies = {}) {
     // Required dependencies
-    this.aiClient = dependencies.aiClient;
+    this.aiService = dependencies.aiService;
     this.molecularProcessor = dependencies.molecularProcessor;
     this.nameResolver = dependencies.nameResolver;
     this.promptEngine = dependencies.promptEngine;
@@ -23,6 +23,15 @@ class Structuralizer {
     
     // Validate required dependencies
     this._validateDependencies();
+
+    // Utility for pretty-printing responses (for debugging)
+    this._prettyPrint = (obj, label = 'Response') => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Structuralizer] ${label}:`);
+        console.log(JSON.stringify(obj, null, 2));
+      }
+      return obj;
+    };
   }
   
   /**
@@ -54,11 +63,11 @@ class Structuralizer {
       max_tokens: 200
     });
     
-    const result = this._parseAIResponse(response);
-    
-    if (!this.promptEngine.validateResponse('detection', result)) {
+    if (!this.promptEngine.validateResponse('detection', response)) {
       throw new Error('Invalid detection response from AI');
     }
+
+    const result = response;
     
     return result;
   }
@@ -68,6 +77,7 @@ class Structuralizer {
    */
   _validateDependencies() {
     const required = [
+      'aiService',
       'molecularProcessor',
       'nameResolver',
       'promptEngine',
@@ -84,59 +94,39 @@ class Structuralizer {
 
   async chemicals(payload) {
     const startTime = Date.now();
-    
-    try {
-      if (this.cache && this.config.cacheEnabled) {
-        const cacheKey = this._getCacheKey(payload);
-        const cached = await this.cache.get(cacheKey);
-        if (cached) {
-          this.logger.info('Cache hit for prediction', { 
-            object: payload.object,
-            duration: Date.now() - startTime 
-          });
-          return cached;
-        }
-      }
-      
-      const result = await this._performPrediction(payload);
-      
-      if (this.cache && this.config.cacheEnabled && result) {
-        const cacheKey = this._getCacheKey(payload);
-        await this.cache.set(cacheKey, result, 300000); // 5 min TTL
-      }
-      
-      this.logger.info('Prediction completed', {
-        object: result.object,
-        chemicalCount: result.chemicals?.length || 0,
-        duration: Date.now() - startTime
-      });
-      
-      return result;
-    } catch (error) {
-      const handled = await this.errorHandler.handle(error, {
-        operation: 'chemicals',
-        payload
-      });
 
-      this.logger.error('Prediction failed', {
-        error: handled,
-        duration: Date.now() - startTime
-      });
-
-      const err = new Error(handled.message);
-      err.code = handled.code;
-      err.recoverable = handled.recoverable;
-      err.recovery = handled.recovery;
-      err.timestamp = handled.timestamp;
-      err.context = handled.context;
-      throw err;
+    if (this.cache && this.config.cacheEnabled) {
+      const cacheKey = this._getCacheKey(payload);
+      const cached = await this.cache.get(cacheKey);
+      if (cached) {
+        this.logger.info('Cache hit for prediction', {
+          object: payload.object,
+          duration: Date.now() - startTime
+        });
+        return cached;
+      }
     }
+
+    const result = await this._chemicals(payload.object);
+
+    if (this.cache && this.config.cacheEnabled && result) {
+      const cacheKey = this._getCacheKey(payload);
+      await this.cache.set(cacheKey, result, 300000); // 5 min TTL
+    }
+
+    this.logger.info('Prediction completed', {
+      object: result.object,
+      chemicalCount: result.chemicals?.length || 0,
+      duration: Date.now() - startTime
+    });
+
+    return result;
   }
   
   /**
    * @private
    */
-  async _performPrediction(payload) {
+  async _chemicals(payload) {
     const {
       object: inputObject,
       imageBase64,
@@ -149,52 +139,20 @@ class Structuralizer {
     let recommendedBox = null;
     let reason = null;
 
-    const isTestEnv =
-      process.env.NODE_ENV === 'test' ||
-      !!process.env.JEST_WORKER_ID ||
-      (this.config && typeof this.config.isTest === 'function' && this.config.isTest()) ||
-      (this.config && typeof this.config.get === 'function' && this.config.get('development.isTest'));
-    
     // Step 1: Extract object from image if needed
     if (!objectText && imageBase64) {
-      if (!this.aiClient) {
-        throw new Error('Image prediction requires AI client');
-      }
-      
       const detection = await this._detectObjectInImage(imageBase64, x, y);
       objectText = detection.object;
       recommendedBox = detection.recommendedBox;
-    }
-    
-    if (!objectText) {
-      throw new Error('No object specified for prediction');
     }
     
     // Step 2: Analyze using AI
     let predictionResult;
 
     switch (lookupMode) {
-      // Test-only fast path: avoid slow external dependencies (OpenAI, PubChem, RDKit)
-      case 'test':
-        return {
-          object: objectText,
-          chemicals: [],
-          recommendedBox,
-          reason: 'test_stub'
-        };
-
       case 'ai':
       case 'GPT-5':
-        // In tests, never call external AI or structure generation (keeps smoke tests fast/deterministic)
-        if (isTestEnv) {
-          return {
-            object: objectText,
-            chemicals: [],
-            recommendedBox,
-            reason: 'test_stub'
-          };
-        }
-        predictionResult = await this._analyzeWithAI(objectText);
+        predictionResult = await this._chemicals(objectText);
         break;
 
       default:
@@ -202,9 +160,11 @@ class Structuralizer {
     }
     
     // Step 3: Generate 3D structures
+    console.log('[DEBUG] About to call _generateStructures with:', predictionResult.chemicals);
     const molecules = await this._generateStructures(
       predictionResult.chemicals || []
     );
+    console.log('[DEBUG] _generateStructures returned:', molecules);
     
     return {
       object: objectText,
@@ -219,22 +179,17 @@ class Structuralizer {
    */
   // Core AI analysis of the provided object text.
   // aiClient is injected by DI (see ServiceProvider) and sourced from OPENAI_API_KEY.
-  async _analyzeWithAI(objectText) {
-    if (!this.aiClient) {
-      throw new Error('AI prediction requires AI client');
-    }
+  async _chemicals(objectText) {
 
     const prompt = this.promptEngine.generateChemicalPrompt(
       objectText,
       { includeReason: true }
     );
 
-    const response = await this._callAI({
+    const result = await this._callAI({
       messages: [{ role: 'user', content: prompt }],
-      temperature: 1
+      temperature: 1.0  // GPT-5 only supports temperature 1.0
     });
-
-    const result = this._parseAIResponse(response);
 
     if (!this.promptEngine.validateResponse('chemical', result)) {
       throw new Error('Invalid chemical response from AI');
@@ -244,53 +199,13 @@ class Structuralizer {
   }
   
   /**
-   * Call AI service with error handling
+   * Call AI service through the generic OpenAI service
    * @private
    */
   async _callAI(params) {
-    const model = this.config.get ? this.config.get('openai.model') : 'gpt-4o-mini';
-    const timeout = this.config.get ? this.config.get('openai.timeout') : 30000;
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Structuralizer] _callAI', { model, timeout, paramsKeys: Object.keys(params) });
-    }
-
-    try {
-      // Pass timeout to OpenAI SDK at request level
-      const result = await this.aiClient.chat.completions.create(
-        { model, ...params },
-        { timeout }
-      );
-      return result;
-    } catch (error) {
-      // Pass through original error - don't mask it
-      throw error;
-    }
+    return await this.aiService.callAPI(params);
   }
-  
-  /**
-   * Parse AI response
-   * @private
-   */
-  _parseAIResponse(response) {
-    let content = '';
-    
-    try {
-      if (!response?.choices?.[0]) {
-        throw new Error('Invalid AI response structure');
-      }
 
-      const choice = response.choices[0];
-      content = choice.message?.content || choice.text || '';
-
-      return JSON.parse(content);
-    } catch (error) {
-      const repaired = this.promptEngine.repairJSON(content);
-      if (repaired) return repaired;
-
-      throw new Error(`AI response parse failed: ${error.message} (response length: ${response?.length || 0})`);
-    }
-  }
   
   /**
    * Generate 3D structures for molecules

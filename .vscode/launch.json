@@ -1,24 +1,73 @@
 {
   "version": "0.2.0",
   "configurations": [
+    // === DEV ===
     {
       "type": "node",
       "request": "launch",
       "name": "Start Server",
-      "program": "${workspaceFolder}/src/server/api/server.js",
-      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/src/server/api/queb.js",
+      "args": ["--inspect"],
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**",
+        "**/*.test.js",
+        "**/*.spec.js"
+      ],
       "console": "integratedTerminal",
-      "envFile": "${workspaceFolder}/.env"
+      "envFile": "${workspaceFolder}/.env",
+      "smartStep": true,
+      "stopOnEntry": false
     },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug React App in Chrome",
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}/src/client",
+      "sourceMapPathOverrides": {
+        "webpack://_N_E/*": "${workspaceFolder}/*"
+      }
+    },
+    {
+      "type": "chrome",
+      "request": "attach",
+      "name": "Attach to Chrome",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/src/client"
+    },
+    {
+      "name": "Run Dev Environment",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "smartStep": true
+    },
+
+    // === TEST ===
     {
       "type": "node",
       "request": "launch",
       "name": "Debug Tests",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "test:debug", "--", "${file}"],
-      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
       "console": "integratedTerminal",
-      "envFile": "${workspaceFolder}/.env"
+      "envFile": "${workspaceFolder}/.env",
+      "smartStep": true
     },
     {
       "type": "node",
@@ -26,24 +75,47 @@
       "name": "Debug Current Test File",
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "args": ["${file}", "--runInBand", "--no-coverage"],
-      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
       "console": "integratedTerminal",
-      "envFile": "${workspaceFolder}/.env"
+      "envFile": "${workspaceFolder}/.env",
+      "smartStep": true
     },
     {
+      "name": "Run All Tests",
       "type": "node",
-      "request": "attach",
-      "name": "Attach to Process",
-      "port": 9229,
-      "skipFiles": ["<node_internals>/**"]
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test:all"],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "smartStep": true
     },
     {
+      "name": "Run Visual Tests",
       "type": "node",
-      "request": "attach",
-      "name": "Attach",
-      "processId": "${command:PickProcess}",
-      "skipFiles": ["<node_internals>/**"],
-      "restart": true
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test:visual"],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "smartStep": true
     }
+
+    // === PROD ===
+    // (Add production configurations here)
   ]
 }

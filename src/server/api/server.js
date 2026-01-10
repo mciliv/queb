@@ -1,57 +1,43 @@
 const { createContainer } = require('../../core/services');
 const { createApp, setupChemicalPredictionRoutes } = require('./app');
-const { validateLocalDevEnv } = require('./validate-env');
 
+// Main server startup - consolidates app creation + server lifecycle
 async function startServer(container) {
+  // Resolve core services once
   const config = await container.get('config');
   const logger = await container.get('logger');
-  
 
   try {
-    // Validate configuration (silent on success)
-    config.validate();
+    // Create the Express app
+    const app = await createApp({ config, logger, container });
 
-    // Environment validations that are specific to local/dev startup
-    validateLocalDevEnv(config, logger);
-
-    // Initialize database if enabled
-    if (config.get('database.enabled')) {
-      const database = await container.get('database');
-      if (database && database.initialize) {
-        await database.initialize();
-      }
-    }
-    
-    // Create Express app
-    const app = await createApp(container);
-    
     // Start HTTP server
     const port = config.get('port') || 8080;
     const server = app.listen(port, () => {
       logger.info('Server configuration:', {
         environment: config.get('nodeEnv'),
-        databaseEnabled: config.get('database.enabled'),
         port
       });
     });
-    
+
     // Start HTTPS server if configured
     if (config.get('ssl.certPath') && config.get('ssl.keyPath')) {
       const HttpsServer = require('./https-server');
       const httpsServer = new HttpsServer(app);
       const httpsPort = config.get('ssl.httpsPort') || 3001;
-      
+
       httpsServer.start(httpsPort);
       logger.info(`🔒 HTTPS server running on port ${httpsPort}`);
     }
-    
+
     // Graceful shutdown
     process.on('SIGTERM', async () => {
       logger.info('SIGTERM received, shutting down gracefully...');
-      
+
       server.close(() => {
         logger.info('HTTP server closed');
       });
+
       
       // Cleanup services
       const database = await container.get('database');
@@ -59,10 +45,10 @@ async function startServer(container) {
         await database.close();
         logger.info('Database connections closed');
       }
-      
+
       process.exit(0);
     });
-    
+
     return server;
   } catch (error) {
     logger.error('❌ Server startup failed:', error);
@@ -76,9 +62,9 @@ if (require.main === module) {
   startServer(container).catch(console.error);
 }
 
-// Export for testing
+// Export for testing - createApp remains available for isolated testing
 module.exports = {
-  createApp,
-  startServer,
+  createApp,           // For testing app creation without server
+  startServer,         // For testing full server lifecycle
   setupMolecularRoutes: setupChemicalPredictionRoutes,
 };

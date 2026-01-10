@@ -11,10 +11,69 @@ AI-powered molecular analysis that reveals the chemical composition of anything 
 
 ## Quick Start
 
-```
+### 1. Install Dependencies
+```bash
 npm install
-cp .env.example .env   # add OPENAI_API_KEY
+```
+
+### 2. Configure AI Providers
+```bash
+# Copy the example configuration
+cp .env.example .env
+
+# Edit .env and add your API keys:
+# - OPENAI_API_KEY (from https://platform.openai.com/api-keys)
+# - XAI_API_KEY (from https://console.x.ai/)
+```
+
+### 3. Validate Setup (Recommended)
+```bash
+# Validate AI configuration works across all environments
+npm run validate:ai
+```
+
+### 4. Start Development Server
+```bash
 npm start              # http://localhost:8080
+```
+
+### 5. Switch AI Provider (Optional)
+```bash
+# Edit .env file
+AI_PROVIDER=xai    # Switch to xAI/Grok
+AI_PROVIDER=openai # Switch to OpenAI/GPT
+
+# Restart the server
+npm start
+```
+
+### 🔒 Locked-In Configuration
+
+This setup is **environment-agnostic** and works consistently across:
+- **Editors**: Cursor, Neovim, VSCode, any IDE¹
+- **AI Providers**: OpenAI (GPT) or xAI (Grok)
+- **Environments**: Local dev, production, testing
+
+¹ *File ignoring is not synchronized between platforms (.cursorignore, .claudeignore, etc.)*
+
+#### Environment Variables (`.env`)
+
+```bash
+# Choose your AI provider
+AI_PROVIDER=openai    # or 'xai'
+
+# OpenAI (uses 'latest' → automatically newest GPT model)
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=latest  # or specific: gpt-4, gpt-5
+
+# xAI (uses 'latest' → automatically newest Grok model)
+XAI_API_KEY=xai-...
+XAI_MODEL=latest     # or specific: grok-3
+```
+
+#### Validation Command
+```bash
+npm run validate:ai   # Ensures everything works
 ```
 
 See `npm run` for all available scripts.

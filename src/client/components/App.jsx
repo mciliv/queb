@@ -4,45 +4,11 @@ import { PRESET_VISUAL_TESTS, SMILES_NAME_MAP } from '../constants.js';
 import { VALIDATION_PATTERNS, APP_CONFIG } from '../utils/config-loader.js';
 import logger from '../logger.js';
 import { createKeyboardHandler } from '../keyboard-shortcuts.js';
+import ErrorBanner from './ErrorBanner';
 import '../assets/style.css';
 
 const isMobileDevice = () => window.matchMedia('(pointer: coarse) and (hover: none)').matches;
 const isMac = /mac/i.test(navigator.userAgent);
-
-const ErrorBanner = ({ error, onDismiss }) => {
-  if (!error) return null;
-  
-  let errorMessage;
-  if (typeof error === 'string') {
-    errorMessage = error;
-  } else if (error?.message) {
-    errorMessage = error.message;
-  } else if (error?.code) {
-    errorMessage = `Error ${error.code}: ${JSON.stringify(error)}`;
-  } else {
-    errorMessage = `Error: ${JSON.stringify(error)}`;
-  }
-  
-  return (
-    <div className="error-banner">
-      <div className="error-banner-content">
-        <div className="error-banner-header">
-          <span className="error-icon">⚠️</span>
-          <div className="error-message">{errorMessage}</div>
-          {onDismiss && (
-            <button
-              onClick={onDismiss}
-              className="error-dismiss"
-              aria-label="Dismiss error"
-            >
-              ×
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
   const isDev = process.env.NODE_ENV === 'development';
@@ -142,14 +108,7 @@ const TextInput = ({ value, onChange, onSubmit, isProcessing, error }) => {
          </button>
         )}
       </div>
-      <button 
-        className="btn-primary primary-cta"
-        onClick={handleSubmit}
-        disabled={isProcessing}
-      >
-        Generate
-      </button>
-      
+
       {displayError && (
         <div id="input-error" className="error-text" role="alert">
           {displayError}
@@ -894,13 +853,7 @@ const LinkSection = ({ isProcessing, setIsProcessing, onPredictionComplete }) =>
               scale: 0.8
             } 
           });
-          // Ensure proper element-based coloring
-          viewer.setStyle({element: 'Na'}, { sphere: { color: 'purple', scale: 0.8 } });
-          viewer.setStyle({element: 'Cl'}, { sphere: { color: 'green', scale: 0.8 } });
-          viewer.setStyle({element: 'H'}, { sphere: { color: 'white', scale: 0.6 } });
-          viewer.setStyle({element: 'O'}, { sphere: { color: 'red', scale: 0.8 } });
-          viewer.setStyle({element: 'C'}, { sphere: { color: 'gray', scale: 0.8 } });
-          viewer.setStyle({element: 'N'}, { sphere: { color: 'blue', scale: 0.8 } });
+
           // Fit, then back the camera off slightly to avoid being inside
           // very small/degenerate bounding boxes (e.g., single-atom SDFs).
           if (typeof viewer.resize === 'function') viewer.resize();
@@ -1374,53 +1327,53 @@ function App() {
           {/* Left sidebar with input modes */}
           <div className={`left-sidebar ${showLeftSidebar ? 'visible' : 'hidden'}`}>
             <h1 className="app-title">what's in...</h1>
-            
+
             <div className="input-section">
-              <TextInput 
-                value={objectInput}
-                onChange={setObjectInput}
-                onSubmit={handleTextPrediction}
-                isProcessing={isProcessing}
-                error={error}
-              />
-
-              <ModeSelector
-                cameraMode={cameraMode}
-                setCameraMode={setCameraMode}
-                photoMode={photoMode}
-                setPhotoMode={setPhotoMode}
-                linkMode={linkMode}
-                setLinkMode={setLinkMode}
-                lookupMode={lookupMode}
-                setLookupMode={setLookupMode}
-              />
-
-              {cameraMode && (
-                <CameraSection
+                <TextInput 
+                  value={objectInput}
+                  onChange={setObjectInput}
+                  onSubmit={handleTextPrediction}
                   isProcessing={isProcessing}
-                  setIsProcessing={setIsProcessing}
-                  setCurrentPredictionType={() => {}}
-                  onPredictionComplete={handlePredictionComplete}
+                  error={error}
                 />
-              )}
 
-              {photoMode && (
-                <PhotoSection
-                  isProcessing={isProcessing}
-                  setIsProcessing={setIsProcessing}
-                  setCurrentPredictionType={() => {}}
-                  onPredictionComplete={handlePredictionComplete}
+                <ModeSelector
+                  cameraMode={cameraMode}
+                  setCameraMode={setCameraMode}
+                  photoMode={photoMode}
+                  setPhotoMode={setPhotoMode}
+                  linkMode={linkMode}
+                  setLinkMode={setLinkMode}
+                  lookupMode={lookupMode}
+                  setLookupMode={setLookupMode}
                 />
-              )}
 
-              {linkMode && (
-                <LinkSection
-                  isProcessing={isProcessing}
-                  setIsProcessing={setIsProcessing}
-                  onPredictionComplete={handlePredictionComplete}
-                />
-              )}
-            </div>
+                {cameraMode && (
+                  <CameraSection
+                    isProcessing={isProcessing}
+                    setIsProcessing={setIsProcessing}
+                    setCurrentPredictionType={() => {}}
+                    onPredictionComplete={handlePredictionComplete}
+                  />
+                )}
+
+                {photoMode && (
+                  <PhotoSection
+                    isProcessing={isProcessing}
+                    setIsProcessing={setIsProcessing}
+                    setCurrentPredictionType={() => {}}
+                    onPredictionComplete={handlePredictionComplete}
+                  />
+                )}
+
+                {linkMode && (
+                  <LinkSection
+                    isProcessing={isProcessing}
+                    setIsProcessing={setIsProcessing}
+                    onPredictionComplete={handlePredictionComplete}
+                  />
+                )}
+              </div>
           </div>
 
           {/* Right side with molecule viewer and settings */}

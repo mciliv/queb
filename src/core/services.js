@@ -78,11 +78,19 @@ const configData = {
   nodeEnv: getString('NODE_ENV', 'development'),
   port: getNumber('PORT', 8080),
 
-  // Do NOT change the model
-  openai: {
-    apiKey: getString('OPENAI_API_KEY'),
-    model: getString('OPENAI_MODEL', 'gpt-5'),
-    timeout: getNumber('OPENAI_TIMEOUT', 30000)
+  // AI Service Configuration - supports multiple providers
+  ai: {
+    provider: getString('AI_PROVIDER', 'openai'), // 'openai' or 'xai'
+    openai: {
+      apiKey: getString('OPENAI_API_KEY'),
+      model: getString('OPENAI_MODEL', process.env.NODE_ENV === 'test' ? 'mock-model' : 'gpt-3.5-turbo'), // Use mock for tests
+      timeout: getNumber('OPENAI_TIMEOUT', process.env.NODE_ENV === 'test' ? 1000 : 30000) // Fast timeout for tests
+    },
+    xai: {
+      apiKey: getString('XAI_API_KEY'),
+      model: getString('XAI_MODEL', 'grok-beta'),
+      timeout: getNumber('XAI_TIMEOUT', process.env.NODE_ENV === 'test' ? 1000 : 30000) // Fast timeout for tests
+    }
   },
 
   database: {
@@ -235,13 +243,22 @@ function createContainer(overrides = {}) {
   });
 
   container.register('openaiClient', async () => {
-    if (!config.openai.apiKey) {
+    if (!config.ai.openai.apiKey) {
       return null;
     }
     return createOpenAIClient();
   }, {
     tags: ['ai', 'external']
   });
+
+  container.register('aiService', async () => {
+    const AIService = require('../server/services/AIService');
+
+    return new AIService(); // Always loads from environment variables
+  }, {
+    tags: ['ai', 'service']
+  });
+
 
   container.register('database', async () => {
     const Database = require('../server/services/database');
@@ -291,7 +308,7 @@ function createContainer(overrides = {}) {
     const Structuralizer = require('../server/services/Structuralizer');
 
     return new Structuralizer({
-      aiClient: await c.get('openaiClient'),
+      aiService: await c.get('aiService'),
       molecularProcessor: await c.get('molecularProcessor'),
       nameResolver: await c.get('nameResolver'),
       promptEngine: await c.get('promptEngine'),

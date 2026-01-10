@@ -2,61 +2,85 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Current Shell Script",
-      "type": "shell", 
-      "command": "${file}",
-      "args": [],
+      "label": "🚀 Dev Environment",
+      "type": "shell",
+      "command": "npm run dev",
       "group": "build",
       "presentation": {
         "echo": true,
         "reveal": "always",
         "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
+        "panel": "shared"
       },
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
+      "isBackground": true,
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
     },
     {
-      "label": "Run Current Node Script",
-      "type": "shell",
-      "command": "node",
-      "args": ["${file}"],
+      "label": "🔧 Build & Watch",
+      "type": "npm",
+      "script": "build:watch",
       "group": "build",
       "presentation": {
         "echo": true,
         "reveal": "always",
         "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
+        "panel": "shared"
       },
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
+      "isBackground": true,
+      "problemMatcher": "$tsc"
     },
     {
-      "label": "Run Current Python Script",
-      "type": "shell",
-      "command": "python3",
-      "args": ["${file}"],
-      "group": "build", 
+      "label": "🧪 Run All Tests",
+      "type": "npm",
+      "script": "test:all",
+      "group": "test",
       "presentation": {
         "echo": true,
         "reveal": "always",
         "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "👁️ Visual Tests",
+      "type": "npm",
+      "script": "test:visual",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🔍 Check Environment",
+      "type": "npm",
+      "script": "check:env",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🗄️ Setup Database",
+      "type": "npm",
+      "script": "setup:db",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
     }
   ]
 }
+
+
