@@ -65,11 +65,17 @@ GUIDANCE:
     if (!response.object || typeof response.object !== 'string') return false;
     if (!Array.isArray(response.chemicals)) return false;
     
-    return response.chemicals.every(chem => 
-      chem.name && typeof chem.name === 'string' &&
-      chem.smiles && typeof chem.smiles === 'string' &&
-      this._isValidSMILES(chem.smiles)
-    );
+    // SMILES are OPTIONAL because downstream structure generation can resolve by name.
+    // If smiles are present, they must be valid.
+    return response.chemicals.every((chem) => {
+      if (!chem || typeof chem !== 'object') return false;
+      if (!chem.name || typeof chem.name !== 'string') return false;
+
+      if (chem.smiles === null || chem.smiles === undefined || chem.smiles === '') {
+        return true;
+      }
+      return typeof chem.smiles === 'string' && this._isValidSMILES(chem.smiles);
+    });
   }
 
   _validateDetectionResponse(response) {

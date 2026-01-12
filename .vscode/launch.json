@@ -6,8 +6,26 @@
       "type": "node",
       "request": "launch",
       "name": "Start Server",
-      "program": "${workspaceFolder}/src/server/api/queb.js",
-      "args": ["--inspect"],
+      "program": "${workspaceFolder}/src/server/api/server.js",
+      "args": [],
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**",
+        "**/*.test.js",
+        "**/*.spec.js"
+      ],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "smartStep": true,
+      "stopOnEntry": false
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Server Startup",
+      "program": "${workspaceFolder}/src/server/api/server.js",
+      "args": [],
       "sourceMaps": true,
       "skipFiles": [
         "<node_internals>/**",

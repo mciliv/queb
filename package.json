@@ -63,6 +63,7 @@
     "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:llm": "npm run test:llm-mocked && npm run test:smoke && npm run test:llm-integration",
     "test:unit": "jest --config tests/jest.unit.js",
+    "test:unit:cacao-regression": "jest --config tests/jest.unit.js --runInBand tests/unit/prompt-engine.test.js tests/unit/structuralizer.test.js",
     "test:integration": "jest --config tests/jest.integration.js",
     "test:e2e": "jest --config tests/jest.e2e.js",
     "test:smoke": "jest --config tests/jest.unit.js --testPathPattern=smoke --testTimeout=60000",

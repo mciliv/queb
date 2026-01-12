@@ -30,6 +30,9 @@ jest.mock("child_process", () => ({
 
 
 describe("Unit Tests", () => {
+  // Some MolecularProcessor tests can be slow (even with mocked child_process)
+  // and get slower under `--detectOpenHandles`. Keep this scoped to this file.
+  jest.setTimeout(30000);
   let molecularProcessor;
 
   beforeEach(() => {

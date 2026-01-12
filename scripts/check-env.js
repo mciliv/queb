@@ -45,19 +45,21 @@ async function checkPort(port) {
  * @returns {Promise<boolean>} - true if URL is accessible, false otherwise
  */
 async function checkUrl(url, timeout = 5000) {
+  const controller = new AbortController();
+  let timeoutId = null;
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
+    timeoutId = setTimeout(() => controller.abort(), timeout);
+
     const response = await fetch(url, {
       signal: controller.signal,
       method: 'HEAD'
     });
-    
-    clearTimeout(timeoutId);
+
     return response.ok;
   } catch (error) {
     return false;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 

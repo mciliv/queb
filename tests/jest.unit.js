@@ -9,7 +9,8 @@ module.exports = {
   // Test match patterns for unit tests
   testMatch: [
     '<rootDir>/tests/suites/unit/**/*.test.js',
-    '<rootDir>/tests/unit/**/*.spec.js'
+    '<rootDir>/tests/unit/**/*.spec.js',
+    '<rootDir>/tests/unit/**/*.test.js'
   ],
   
   // Unit tests should be fast
