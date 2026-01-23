@@ -153,14 +153,8 @@ class Structuralizer {
     // Step 2: Analyze using AI
     let predictionResult;
 
-    switch (lookupMode) {
-      case 'ai':
-        predictionResult = await this._chemicals(objectText);
-        break;
-
-      default:
-        throw new Error(`Unknown lookup mode: ${lookupMode}`);
-    }
+    // Use AI analysis for all lookup modes (simplified)
+    predictionResult = await this._analyzeChemicals(objectText);
     
     // Step 3: Generate 3D structures
     console.log('[DEBUG] About to call _generateStructures with:', predictionResult.chemicals);
@@ -182,7 +176,7 @@ class Structuralizer {
    */
   // Core AI analysis of the provided object text.
   // aiClient is injected by DI (see ServiceProvider) and sourced from OPENAI_API_KEY.
-  async _chemicals(objectText) {
+  async _analyzeChemicals(objectText) {
 
     const prompt = this.promptEngine.generateChemicalPrompt(
       objectText,

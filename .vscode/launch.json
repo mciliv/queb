@@ -142,7 +142,7 @@
       "type": "node",
       "request": "launch",
       "name": "Start Server",
-      "program": "${workspaceFolder}/src/server/api/server.js",
+      "program": "${workspaceFolder}/server.js",
       "args": [],
       "sourceMaps": true,
       "skipFiles": [
