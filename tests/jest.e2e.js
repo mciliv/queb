@@ -1,61 +1,16 @@
-const baseConfig = require('./jest.base');
-
 module.exports = {
-  ...baseConfig,
-  
-  // Display name for this project
-  displayName: 'e2e',
-  
-  // Test match patterns for e2e tests
-  testMatch: [
-    '<rootDir>/tests/suites/e2e/**/*.test.js',
-    '<rootDir>/tests/suites/e2e/**/*.e2e.spec.js'
-  ],
-  
-  // E2E tests need the most time
-  testTimeout: 120000, // 2 minutes
-  
-  // E2E tests should run in jsdom environment
   testEnvironment: 'node',
-  
-  // Setup files specific to e2e tests
-  setupFilesAfterEnv: [
-    ...baseConfig.setupFilesAfterEnv,
-    '<rootDir>/tests/utils/e2e-setup.js'
+  testMatch: [
+    '**/e2e/**/*.js',
+    '**/?(*.)+(e2e|spec|test).js'
   ],
-  
-  // Coverage directory
-  coverageDirectory: '<rootDir>/tests/coverage/e2e',
-  
-  // Don't collect coverage for e2e tests by default
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  transform: {
+    '^.+\\.js$': 'babel-jest'
+  },
+  moduleFileExtensions: ['js', 'json'],
+  testTimeout: 60000, // E2E tests can take longer
   collectCoverage: false,
-  
-  // Detect open handles
-  detectOpenHandles: true,
-  
-  // E2E tests should exit forcefully
-  forceExit: true,
-  
-  // Run e2e tests serially
-  maxWorkers: 1,
-  
-  // E2E test reporters
-  reporters: [
-    'default',
-    ['jest-junit', {
-      outputDirectory: '<rootDir>/tests/reports/e2e',
-      outputName: 'junit.xml',
-      classNameTemplate: '{classname}',
-      titleTemplate: '{title}',
-      ancestorSeparator: ' › ',
-      usePathForSuiteName: true
-    }]
-  ],
-  
-  // Global variables for e2e tests
-  globals: {
-    ...baseConfig.globals,
-    BASE_URL: process.env.BASE_URL || 'http://localhost:8080',
-    HEADLESS: process.env.HEADLESS !== 'false'
-  }
+  globalSetup: '<rootDir>/tests/e2e-setup.js',
+  globalTeardown: '<rootDir>/tests/e2e-teardown.js'
 };

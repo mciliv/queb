@@ -1,47 +1,27 @@
-const baseConfig = require('./jest.base');
-
 module.exports = {
-  ...baseConfig,
-  
-  // Display name for this project
-  displayName: 'unit',
-  
-  // Test match patterns for unit tests
+  testEnvironment: 'node',
   testMatch: [
+<<<<<<< HEAD
     '<rootDir>/tests/suites/unit/**/*.test.js',
     '<rootDir>/tests/unit/**/*.spec.js',
     '<rootDir>/tests/unit/**/*.test.js'
+=======
+    '**/__tests__/**/*.js',
+    '**/?(*.)+(spec|test).js',
+    '!**/integration/**',
+    '!**/e2e/**',
+    '!**/visual/**'
+>>>>>>> 532fb1f (merged in website)
   ],
-  
-  // Unit tests should be fast
-  testTimeout: 10000, // 10 seconds
-  
-  // Coverage disabled for faster test runs (enable when needed)
-  collectCoverage: false,
-  
-  // Coverage directory
-  coverageDirectory: '<rootDir>/tests/coverage/unit',
-  
-  // Don't detect open handles for unit tests (they should be fast)
-  detectOpenHandles: false,
-  
-  // Unit tests specific reporters
-  reporters: (() => {
-    const reporters = ['default'];
-    // jest-junit reporter (optional - only if package is installed)
-    try {
-      require.resolve('jest-junit');
-      reporters.push(['jest-junit', {
-        outputDirectory: '<rootDir>/tests/reports/unit',
-        outputName: 'junit.xml',
-        classNameTemplate: '{classname}',
-        titleTemplate: '{title}',
-        ancestorSeparator: ' › ',
-        usePathForSuiteName: true
-      }]);
-    } catch (e) {
-      // jest-junit not installed, skip it
-    }
-    return reporters;
-  })()
+  collectCoverageFrom: [
+    'src/**/*.js',
+    '!src/**/*.test.js',
+    '!src/**/*.spec.js'
+  ],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  transform: {
+    '^.+\\.js$': 'babel-jest'
+  },
+  moduleFileExtensions: ['js', 'json'],
+  testTimeout: 10000
 };

@@ -4,7 +4,7 @@
  * Test script to demonstrate the unified AI service working with both OpenAI and xAI
  */
 
-const UnifiedAIService = require('./src/server/services/UnifiedAIService');
+const UnifiedAIService = require('./src/server/services/agents/AIService');
 
 async function testUnifiedAIService() {
   console.log('🧪 Testing Unified AI Service\n');
@@ -21,11 +21,12 @@ async function testUnifiedAIService() {
   // Test OpenAI (mock mode for demo)
   console.log('1️⃣ Testing OpenAI Provider (mock mode):');
   try {
-    const openAIService = new UnifiedAIService({
-      provider: 'openai',
-      model: 'mock-model', // Use mock for testing
-      apiKey: 'test-key'
-    });
+    // Set environment variables for testing
+    process.env.AI_PROVIDER = 'openai';
+    process.env.OPENAI_API_KEY = 'test-key';
+    process.env.NODE_ENV = 'test'; // This enables mock model
+
+    const openAIService = new UnifiedAIService();
 
     console.log(`   Provider: ${openAIService.getProvider()}`);
     console.log(`   Model: ${openAIService.getModel()}`);
@@ -41,11 +42,12 @@ async function testUnifiedAIService() {
   // Test xAI (mock mode for demo)
   console.log('2️⃣ Testing xAI Provider (mock mode):');
   try {
-    const xaiService = new UnifiedAIService({
-      provider: 'xai',
-      model: 'mock-model', // Use mock for testing
-      apiKey: 'test-key'
-    });
+    // Set environment variables for testing
+    process.env.AI_PROVIDER = 'xai';
+    process.env.XAI_API_KEY = 'test-key';
+    process.env.NODE_ENV = 'test'; // This enables mock model
+
+    const xaiService = new UnifiedAIService();
 
     console.log(`   Provider: ${xaiService.getProvider()}`);
     console.log(`   Model: ${xaiService.getModel()}`);
@@ -61,18 +63,17 @@ async function testUnifiedAIService() {
   // Test provider switching
   console.log('3️⃣ Testing Provider Switching:');
   try {
-    const service = new UnifiedAIService({
-      provider: 'openai',
-      model: 'mock-model',
-      apiKey: 'test-key'
-    });
+    // Set environment variables for testing
+    process.env.AI_PROVIDER = 'openai';
+    process.env.OPENAI_API_KEY = 'test-key';
+    process.env.XAI_API_KEY = 'test-key';
+    process.env.NODE_ENV = 'test'; // This enables mock model
+
+    const service = new UnifiedAIService();
 
     console.log(`   Initial provider: ${service.getProvider()}`);
 
-    service.switchProvider('xai', {
-      model: 'mock-model',
-      apiKey: 'test-key'
-    });
+    service.switchProvider('xai');
 
     console.log(`   Switched to provider: ${service.getProvider()}`);
 

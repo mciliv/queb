@@ -1,0 +1,39 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@uptodate-ai/mcp-context7"
+      ],
+      "description": "Access up-to-date documentation for chemical libraries and dependencies (React, OpenAI, etc.)"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/m/queb"
+      ],
+      "description": "Read/write access to project files for advanced file operations"
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://mol_user:mol_password@localhost:5432/mol_users"
+      ],
+      "description": "Direct access to PostgreSQL database for schema inspection and queries"
+    }
+  }
+}
+
+
+
+
+
+
+
+
+

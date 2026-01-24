@@ -36,12 +36,17 @@ async function createApp({ config, logger, container }) {
       const baseUrl = `${req.protocol}://${req.get('host')}`;
       const cacheBust = Date.now();
 
+      // Check if error screenshots are enabled
+      const enableScreenshots = config.get('development.enableScreenshots') || false;
+
       htmlContent = htmlContent
         .replace(/\{\{TITLE\}\}/g, 'Queb - Molecular Analysis')
         .replace(/\{\{DESCRIPTION\}\}/g, '3D visualization of chemical contents by camera or text input.')
         .replace(/\{\{CANONICAL\}\}/g, `${baseUrl}${req.path}`)
         .replace(/\{\{OG_IMAGE\}\}/g, '/images/favicon.svg')
-        .replace(/\{\{CACHE_BUST\}\}/g, cacheBust);
+        .replace(/\{\{CACHE_BUST\}\}/g, cacheBust)
+        .replace(/\{\{SCREENSHOT_SCRIPT\}\}/g, enableScreenshots ?
+          '<script src="/js/error-screenshot.js"></script>' : '');
 
       res.type('html').send(htmlContent);
     } catch (error) {
@@ -95,34 +100,27 @@ async function createApp({ config, logger, container }) {
   app.get('/health', healthHandler);
 
   // Frontend error logging endpoint (dev only)
-  app.post('/api/log-error', (req, res) => {
-    const { type, message, timestamp, source, stack, location, url } = req.body;
-
-    // Log to server logger
-    const logMessage = `[${source || 'frontend'}] ${type || 'error'}: ${message || 'Unknown error'}`;
-    const logData = {
-      type,
-      message,
-      timestamp,
-      source,
-      location,
-      url,
-      stack: stack ? stack.substring(0, 500) : undefined, // Truncate long stacks
-    };
-
-    if (type === 'error') {
-      logger.error(logMessage, logData);
-    } else if (type === 'warn') {
-      logger.warn(logMessage, logData);
-    } else {
-      logger.info(logMessage, logData);
+  // THIN CONTROLLER: HTTP ↔ Domain translation only. No domain logic, no infra coupling.
+  app.post('/api/log-error', async (req, res) => {
+    try {
+      // ONE DOMAIN CALL: All domain logic abstracted into use-case
+      await container.get('logErrorUseCase').execute(req.body);
+      res.status(200).json({ received: true });
+    } catch (error) {
+      // HTTP error handling only - domain errors translated here
+      res.status(500).json({ error: 'Failed to log error' });
     }
-
-    // Always return success to avoid cluttering console with failed requests
-    res.status(200).json({ received: true });
   });
 
   await setupChemicalPredictionRoutes(app, { logger, container });
+
+  // Setup hotel routes (secure video hosting and request card)
+  const { setupHotelRoutes } = require('../routes/hotel');
+  setupHotelRoutes(app, { logger });
+
+  // Setup chemical analysis routes (AI-powered compound analysis)
+  const { setupChemicalAnalysisRoutes } = require('../routes/chemical-analysis');
+  setupChemicalAnalysisRoutes(app, { logger, container });
 
   // Setup user routes if database is enabled
   if (config.get('database.enabled')) {
@@ -132,8 +130,9 @@ async function createApp({ config, logger, container }) {
 
   // SPA catch-all - serve index.html for non-API, non-file requests
   app.get('*', (req, res, next) => {
-    // Skip if it's an API route or file request
-    if (req.path.startsWith('/api/') || req.path.startsWith('/sdf_files/') || req.path.includes('.')) {
+    // Skip if it's an API route, hotel route, or file request
+    if (req.path.startsWith('/api/') || req.path.startsWith('/hotel/') ||
+        req.path.startsWith('/sdf_files/') || req.path.includes('.')) {
       return next();
     }
 

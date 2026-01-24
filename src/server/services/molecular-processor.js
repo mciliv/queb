@@ -17,6 +17,7 @@ const path = require("path");
 const crypto = require("crypto");
 const fsPromises = require("fs").promises;
 const { resolveName, downloadSDFBySmiles } = require("./name-resolver");
+const { warn, error } = require("../../core/logger");
 
 /**
  * MolecularProcessor - Main class for molecular structure generation
@@ -93,13 +94,21 @@ class MolecularProcessor {
     return null;
   }
 
-  // Basic SMILES format validation (not length-based)
+  // Basic SMILES format validation with length limits
   isValidSmiles(smiles) {
     if (!smiles || typeof smiles !== 'string') return false;
     if (smiles.trim() === '' || smiles === 'N/A') return false;
-    
-    // Allow common SMILES patterns and reject obvious molecular formulas
+
     const cleaned = smiles.replace(/\s/g, '');
+
+    // Check length limits - very long SMILES can cause processing issues
+    if (cleaned.length > 200) {
+      warn(`SMILES too long (${cleaned.length} chars), may fail processing`, {
+        smilesLength: cleaned.length,
+        smilesPrefix: cleaned.substring(0, 50)
+      });
+      return false; // Reject very long SMILES to prevent processing failures
+    }
     
     // Common valid SMILES patterns (allow lowercase for aromatic atoms)
     const validPatterns = [
@@ -166,18 +175,29 @@ class MolecularProcessor {
     const args = [pythonScript, chemical, "--dir", this.sdfDir];
     const spawnOptions = { stdio: "pipe" };
     const { spawn } = require("child_process");
-    
+
+    let stderrOutput = '';
     const exited = await new Promise((resolve) => {
       try {
         const child = spawn("python", args, spawnOptions);
         child.stdout && child.stdout.on("data", () => {});
-        child.stderr && child.stderr.on("data", () => {});
+        child.stderr && child.stderr.on("data", (data) => {
+          stderrOutput += data.toString();
+        });
         child.on("close", (code) => resolve(code));
         child.on("error", () => resolve(1));
       } catch (_) {
         resolve(1);
       }
     });
+
+    // Log stderr if there was an error
+    if (exited !== 0 && stderrOutput) {
+      error(`Python SDF generation failed`, {
+        smilesPrefix: chemical.substring(0, 50),
+        stderr: stderrOutput
+      });
+    }
     
     if (exited === 0) {
       // The Python helper may succeed but choose a different filename format
@@ -197,11 +217,16 @@ class MolecularProcessor {
       const dest = path.join(this.sdfDir, filename);
       await fsPromises.writeFile(dest, sdf, "utf8");
       return `/sdf_files/${filename}`;
-    } catch (_) {
+    } catch (error) {
       const fallbackPath = this.copyFallbackSdf(chemical);
       if (fallbackPath) return fallbackPath;
-      // Match unit test expectation
-      throw new Error("SMILES generation failed");
+      // Match unit test expectation but provide more context
+      const errorMsg = `SMILES generation failed for: ${chemical.substring(0, 50)}${chemical.length > 50 ? '...' : ''}`;
+      error(errorMsg, error, {
+        smilesPrefix: chemical.substring(0, 50),
+        smilesLength: chemical.length
+      });
+      throw new Error(errorMsg);
     }
   }
 

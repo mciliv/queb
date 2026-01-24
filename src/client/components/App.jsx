@@ -928,6 +928,10 @@ const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
     }
   }
 
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.jsx:915',message:'MolecularColumn render',data:{query:column?.query,viewerCount:Array.isArray(column?.viewers)?column.viewers.length:null,failed:!!column?.failed},timestamp:Date.now(),sessionId:'debug-display-names',runId:'names-issue',hypothesisId:'H1,H2,H3'})}).catch(()=>{});
+  // #endregion
+
   return (
     <div className="column">
       <div className="column-header">
@@ -1125,6 +1129,10 @@ function App() {
     try {
       const result = await analyzeText(value, lookupMode);
       const molecules = result.molecules || result.chemicals || [];
+
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.jsx:1127',message:'handleTextPrediction received result',data:{input:value,lookupMode:lookupMode,hasResult:!!result,moleculeCount:Array.isArray(molecules)?molecules.length:null,smilesCount:Array.isArray(molecules)?molecules.filter(m=>!!m?.smiles).length:null,sdfPathCount:Array.isArray(molecules)?molecules.filter(m=>!!m?.sdfPath).length:null},timestamp:Date.now(),sessionId:'debug-display-names',runId:'names-issue',hypothesisId:'H1,H3'})}).catch(()=>{});
+      // #endregion
 
       if (molecules && molecules.length > 0) {
         // Prefer precomputed SDFs with canonical names

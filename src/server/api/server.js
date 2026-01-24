@@ -1,9 +1,7 @@
 const { createContainer } = require('../../core/services');
 const { createApp, setupChemicalPredictionRoutes } = require('./app');
 
-// Main server startup - consolidates app creation + server lifecycle
 async function startServer(container) {
-  // Resolve core services once
   const config = await container.get('config');
   const logger = await container.get('logger');
 
@@ -11,24 +9,7 @@ async function startServer(container) {
     // Create the Express app
     const app = await createApp({ config, logger, container });
 
-    // Start HTTP server
-    const port = config.get('port') || 8080;
-    const server = app.listen(port, () => {
-      logger.info('Server configuration:', {
-        environment: config.get('nodeEnv'),
-        port
-      });
-    });
-
-    // Start HTTPS server if configured
-    if (config.get('ssl.certPath') && config.get('ssl.keyPath')) {
-      const HttpsServer = require('./https-server');
-      const httpsServer = new HttpsServer(app);
-      const httpsPort = config.get('ssl.httpsPort') || 3001;
-
-      httpsServer.start(httpsPort);
-      logger.info(`🔒 HTTPS server running on port ${httpsPort}`);
-    }
+    const server = httpServers(app);
 
     // Graceful shutdown
     process.on('SIGTERM', async () => {
@@ -53,6 +34,26 @@ async function startServer(container) {
   } catch (error) {
     logger.error('❌ Server startup failed:', error);
     process.exit(1);
+  }
+
+  function httpServers(app) {
+    const port = config.get('port') || 8080;
+    const server = app.listen(port, () => {
+      logger.info('Server configuration:', {
+        environment: config.get('nodeEnv'),
+        port
+      });
+    });
+
+    if (config.get('ssl.certPath') && config.get('ssl.keyPath')) {
+      const HttpsServer = require('./https-server');
+      const httpsServer = new HttpsServer(app);
+      const httpsPort = config.get('ssl.httpsPort') || 3001;
+
+      httpsServer.start(httpsPort);
+      logger.info(`🔒 HTTPS server running on port ${httpsPort}`);
+    }
+    return server;
   }
 }
 

@@ -1,47 +1,28 @@
-token.json
-credentials.json
-seed_?/
-__pycache__/
+node_modules/
+.env
 .DS_Store
 .idea
 *.log
-*.backup
-.*.sw?
-node_modules/
-s*/node_modules/
-sdf_files
-*.jpg
-.venv
-certs/
-.env
-.claude
 
-# Production build artifacts
-dist/
-build/
-deploy-temp/
-*.production.js
-
-# Debug files (excluded from production)
-debug-output/
-debug-logs/
-*.debug.log
-
-# Test artifacts
-test/chrome-molecular-profile*/
-test/seamless-chrome-profile/
-test/single-tab-chrome/
-test/chrome-dev-profile/
-tests/chrome-molecular-profile*/
-tests/coverage/
-tests/reports/
-.chrome-profile/
-.tmp/
-.vscode/settings.json
-
-# Logs
+# Keep legacy files ignored (can be removed later)
+src/
+tests/
+database/
+deploy/
+scripts/
+docs/
+examples/
+agents/
+utils/
+markdown/
+hooks/
 logs/
+config/
+babel.config.js
+app.yaml
+app-dev.yaml
+.tmp
+public/sdf_files/
 
-# Unused root bundle
-bundle.js
-.cursor
+# Chrome profile and cache
+.chrome-profile/

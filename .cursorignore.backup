@@ -1,6 +1,6 @@
-# Exclude .env files (but allow .env.example)
-**/.env
-!**/.env.example
+*
+
+**/prompts/**
 
 # Build outputs and generated files
 src/client/dist/
@@ -35,6 +35,8 @@ backend/api/certs/
 *.key
 token.json
 credentials.json
+/.env
+!.env.example
 
 # Python cache and virtual environments
 __pycache__/
@@ -71,3 +73,4 @@ package-lock.json
 config/molecular-config.json
 config/project.js
 frontend/config/molecular-config.json
+

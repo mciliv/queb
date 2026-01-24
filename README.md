@@ -1,3 +1,29 @@
+# Chemical Analyzer
+
+Display chemicals contained in specified/identified object
+
+## Setup
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Set up your OpenAI API key:**
+   Copy `env.example` to `.env` and add your API key:
+   ```bash
+   cp env.example .env
+   # Edit .env and add your OpenAI API key
+   ```
+
+3. **Run the app:**
+   ```bash
+   npm start
+   ```
+
+4. **Open your browser:**
+   Visit `http://localhost:3000`
+
 # 🚀 Queb AI Setup - Environment-Agnostic Configuration
 
 This guide ensures Queb's AI configuration works consistently across **any editor** (Cursor, Neovim, VSCode) and **any AI provider** (OpenAI, xAI).
@@ -64,6 +90,15 @@ npm run validate:ai
 ✅ Provider switching functional
 🚀 Ready to use with Cursor, Neovim, or any editor!
 ```
+
+## 🔄 Environment Variable Migration
+
+**✅ COMPLETE**: The project now uses `.env` files exclusively for configuration.
+
+- **Before**: Environment variables were passed inline: `AI_PROVIDER=openai OPENAI_API_KEY=... ./run start`
+- **After**: All variables are loaded from `.env` file automatically: `./run start`
+
+This provides better security, version control safety, and consistency across development environments.
 
 ## 🔄 Provider Switching
 
@@ -171,3 +206,57 @@ NODE_ENV=production
 ---
 
 **Status**: ✅ **LOCKED IN** - Works across all editors and AI providers!
+## How It Works
+
+- Enter text like "coffee", "water", "aspirin", or "chocolate"
+- The app uses AI to analyze what chemical compounds might be present
+- Results show identified chemicals with their SMILES notation
+
+## API
+
+### POST /api/analyze
+Analyzes text for chemical compounds.
+
+**Request:**
+```json
+{
+  "text": "coffee"
+}
+```
+
+**Response:**
+```json
+{
+  "object": "coffee",
+  "chemicals": [
+    {
+      "name": "Caffeine",
+      "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+    }
+  ],
+  "reason": "Coffee contains caffeine and various acids"
+}
+```
+
+## Development
+
+This is a simplified, single-developer-friendly version of the original complex application. Key simplifications:
+
+- ✅ Single Express server file
+- ✅ Basic HTML/CSS/JS frontend
+- ✅ Direct OpenAI API integration
+- ✅ No complex build tools
+- ✅ No database dependencies
+- ✅ No testing frameworks
+- ✅ No deployment complexity
+
+## File Structure
+
+```
+/
+├── server.js          # Main server file
+├── public/
+│   └── index.html     # Frontend
+├── package.json       # Dependencies
+└── .env              # Environment variables
+```

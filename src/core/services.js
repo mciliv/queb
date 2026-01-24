@@ -1,13 +1,70 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
+const { log, warn, error } = require('./logger');
 
 // ===== Environment Loading =====
-// CRITICAL: Always load .env for local development
-// Production deployments should use proper env vars, but local dev MUST have .env
+// CRITICAL: Load environment variables from SHELL ENVIRONMENT first, then .env file for local development
+// Shell environment variables ALWAYS take priority over .env file variables
+// Production deployments should use proper env vars, but local dev can use .env as fallback
 if (!global.__QUEB_ENV_LOADED__) {
+  loadEnvironmentVariables();
+  global.__QUEB_ENV_LOADED__ = true;
+}
+
+/**
+ * Load environment variables from shell environment and .env file for local development.
+ * This function is extracted for testability and clarity.
+ *
+ * Environment Variable Loading Strategy:
+ * 1. Always prioritize shell environment variables (from system/shell)
+ * 2. For local development: load .env file as fallback (does NOT override shell vars)
+ * 3. For production/cloud: rely on shell environment variables only
+ * 4. Warn about missing critical environment variables
+ */
+function loadEnvironmentVariables() {
   // Detect if running in cloud/production environment
-  const isCloud = !!(
+  const isCloudEnvironment = detectCloudEnvironment();
+
+  if (isCloudEnvironment) {
+    log('🏭 Running in production/cloud environment - using SHELL ENVIRONMENT variables only');
+    return;
+  }
+
+  // Load .env for local development (shell environment variables take priority)
+  log('🏠 Running in local development - SHELL ENVIRONMENT takes priority, .env file provides fallbacks');
+  const envFilePath = findEnvFilePath();
+
+  if (!fs.existsSync(envFilePath)) {
+    warn('⚠️  .env file not found', { envFilePath });
+    warn('   Create .env file with required variables:');
+    warn('   OPENAI_API_KEY=sk-...');
+    warn('   OPENAI_MODEL=gpt-4');
+    warn('   See .env.example for full list');
+    return;
+  }
+
+  log('📄 Loading environment variables', { envFilePath });
+  const result = dotenv.config({ path: envFilePath, override: false });
+
+  if (result.error) {
+    error('❌ Error loading .env file', result.error);
+    return;
+  }
+
+  // Load hotel admin key if file exists
+  loadHotelAdminKey();
+
+  // Validate critical environment variables after loading
+  validateCriticalEnvironmentVariables();
+}
+
+/**
+ * Detect if the application is running in a cloud/production environment.
+ * @returns {boolean} true if running in cloud/production, false for local development
+ */
+function detectCloudEnvironment() {
+  return !!(
     process.env.GAE_APPLICATION ||           // Google App Engine
     process.env.GOOGLE_CLOUD_PROJECT ||      // GCP
     process.env.K_SERVICE ||                 // Cloud Run
@@ -15,44 +72,90 @@ if (!global.__QUEB_ENV_LOADED__) {
     process.env.AWS_EXECUTION_ENV ||         // AWS Lambda
     process.env.VERCEL ||                    // Vercel
     process.env.NETLIFY ||                   // Netlify
-    process.env.NODE_ENV === 'production'    // Explicit prod
+    process.env.NODE_ENV === 'production'    // Explicit production
   );
+}
 
-  // Load .env for local development
-  if (!isCloud) {
-    // Find queb project root (directory containing package.json)
-    const findProjectRoot = () => {
-      let currentDir = __dirname;
-      while (currentDir !== path.dirname(currentDir)) {
-        if (fs.existsSync(path.join(currentDir, 'package.json'))) {
-          return currentDir;
-        }
-        currentDir = path.dirname(currentDir);
-      }
-      return path.resolve(__dirname, '../..'); // Fallback: go up from src/core to queb
-    };
-    const projectRoot = findProjectRoot();
-    const envPath = path.resolve(projectRoot, '.env');
+/**
+ * Find the path to the .env file by locating the project root.
+ * @returns {string} Absolute path to .env file
+ */
+function findEnvFilePath() {
+  const projectRoot = findProjectRoot();
+  return path.resolve(projectRoot, '.env');
+}
 
-    if (fs.existsSync(envPath)) {
-      dotenv.config({ path: envPath, override: false });
+/**
+ * Load hotel admin key from file into environment variable.
+ */
+function loadHotelAdminKey() {
+  const projectRoot = findProjectRoot();
+  const keyFilePath = path.resolve(projectRoot, '.hotel_admin_key');
 
-      // Warn if required env vars missing after load
-      if (!process.env.OPENAI_API_KEY) {
-        console.warn('⚠️  OPENAI_API_KEY not found in .env');
+  if (fs.existsSync(keyFilePath)) {
+    try {
+      const keyContent = fs.readFileSync(keyFilePath, 'utf8').trim();
+      // Skip comment lines and extract the key
+      const lines = keyContent.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
+      const key = lines[0]?.trim();
+
+      if (key) {
+        process.env.HOTEL_ADMIN_KEY = key;
+        log('🔑 Loaded hotel admin key from file');
+      } else {
+        warn('⚠️  Hotel admin key file exists but contains no valid key');
       }
-      if (!process.env.OPENAI_MODEL) {
-        console.warn('⚠️  OPENAI_MODEL not found in .env');
-      }
-    } else {
-      console.warn('⚠️  .env file not found at:', envPath);
-      console.warn('   Create .env file with:');
-      console.warn('   OPENAI_API_KEY=sk-...');
-      console.warn('   OPENAI_MODEL=gpt-X');
+    } catch (error) {
+      error('❌ Error reading hotel admin key file', error);
+    }
+  }
+}
+
+/**
+ * Find the project root directory (directory containing package.json).
+ * @returns {string} Absolute path to project root
+ */
+function findProjectRoot() {
+  let currentDir = __dirname;
+  const root = path.parse(__dirname).root;
+
+  while (currentDir !== root) {
+    if (fs.existsSync(path.join(currentDir, 'package.json'))) {
+      return currentDir;
+    }
+    currentDir = path.dirname(currentDir);
+  }
+
+  // Fallback: assume we're in src/core and go up two levels
+  return path.resolve(__dirname, '../..');
+}
+
+/**
+ * Validate that critical environment variables are present after loading.
+ */
+function validateCriticalEnvironmentVariables() {
+  const criticalVars = [
+    { key: 'OPENAI_API_KEY', description: 'OpenAI API key for AI services' },
+    { key: 'OPENAI_MODEL', description: 'OpenAI model name (e.g., gpt-4)' }
+  ];
+
+  let missingVars = [];
+
+  for (const { key, description } of criticalVars) {
+    if (!process.env[key]) {
+      missingVars.push({ key, description });
     }
   }
 
-  global.__QUEB_ENV_LOADED__ = true;
+  if (missingVars.length > 0) {
+    warn('⚠️  Missing critical environment variables in .env', { missingVars });
+    for (const { key, description } of missingVars) {
+      warn(`   - ${key}: ${description}`);
+    }
+    warn('   Add these to your .env file');
+  } else {
+    log('✅ All critical environment variables loaded successfully');
+  }
 }
 
 // ===== Helpers =====
@@ -211,6 +314,7 @@ function createOpenAIClient() {
 const ServiceContainer = require('./ServiceContainer');
 const PromptEngine = require('./PromptEngine');
 const ErrorHandler = require('./ErrorHandler');
+const ScreenshotService = require('../server/services/screenshot-service');
 
 function createContainer(overrides = {}) {
   const MolecularPredictionService = require('./MolecularPredictionService');
@@ -238,6 +342,19 @@ function createContainer(overrides = {}) {
     tags: ['core']
   });
 
+  container.register('screenshotService', async (c) => {
+    const logger = await c.get('logger');
+    const config = await c.get('config');
+
+    return new ScreenshotService({
+      logger,
+      config,
+      screenshotDir: 'logs/screenshots'
+    });
+  }, {
+    tags: ['debugging', 'screenshots']
+  });
+
   container.register('promptEngine', () => PromptEngine, {
     tags: ['core', 'ai']
   });
@@ -252,7 +369,7 @@ function createContainer(overrides = {}) {
   });
 
   container.register('aiService', async () => {
-    const AIService = require('../server/services/AIService');
+    const AIService = require('../server/services/agents/AIService');
 
     return new AIService(); // Always loads from environment variables
   }, {
@@ -316,6 +433,41 @@ function createContainer(overrides = {}) {
       logger: await c.get('logger'),
       config: await c.get('config')
     });
+  });
+
+  // ===== Logging Services =====
+  // PORT: Abstract interface for logging (domain depends on this)
+  container.register('logErrorPort', async (c) => {
+    const LogErrorPort = require('../server/services/ports/log-error-port');
+    // PORT CONTRACT: Domain only knows the interface, not implementation
+    return LogErrorPort; // Return the class, not instance (ports are abstract)
+  }, {
+    tags: ['ports', 'logging']
+  });
+
+  // ADAPTER: Concrete implementation of LogErrorPort using FileLogger
+  container.register('fileLoggerAdapter', async (c) => {
+    const FileLoggerAdapter = require('../server/services/adapters/file-logger-adapter');
+    const fileLogger = await c.get('logger'); // Inject the FileLogger instance
+
+    // ADAPTER PATTERN: Wraps infrastructure (FileLogger) to match domain contract (LogErrorPort)
+    return new FileLoggerAdapter(fileLogger);
+  }, {
+    tags: ['adapters', 'logging', 'infrastructure']
+  });
+
+  // USE-CASE: Domain logic orchestrator that depends on ports
+  container.register('logErrorUseCase', async (c) => {
+    const LogErrorUseCase = require('../server/services/log-error-use-case');
+
+    // DEPENDENCY INJECTION: Use-case gets port implementation (could be swapped)
+    const logErrorPort = await c.get('fileLoggerAdapter'); // Could be any LogErrorPort implementation
+    const screenshotService = await c.get('screenshotService'); // Optional screenshot service
+
+    // USE-CASE PATTERN: Domain logic with injected infrastructure dependencies
+    return new LogErrorUseCase({ logErrorPort, screenshotService });
+  }, {
+    tags: ['use-cases', 'logging', 'domain']
   });
 
   container.register('molecularPredictionService', async (c) => {
@@ -389,5 +541,11 @@ module.exports = {
   config,
   createOpenAIClient,
   createContainer,
-  createTestContainer
+  createTestContainer,
+  // Environment loading functions (exported for testing)
+  loadEnvironmentVariables,
+  detectCloudEnvironment,
+  findEnvFilePath,
+  findProjectRoot,
+  validateCriticalEnvironmentVariables
 };
