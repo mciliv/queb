@@ -1,12 +1,32 @@
+#!/usr/bin/env node
+
 const express = require('express');
 const cors = require('cors');
 const AIService = require('./src/server/services/agents/AIService');
 const path = require('path');
 const fs = require('fs');
 
+// CLI argument parsing for configuration
+const args = process.argv.slice(2);
+const parsedArgs = {};
+
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
+  if (arg.startsWith('--')) {
+    const [key, value] = arg.slice(2).split('=');
+    parsedArgs[key] = value || true;
+  }
+}
+
+// Extract parameters
+const port = parsedArgs.port ? parseInt(parsedArgs.port) : (process.env.PORT || 8080);
+const testMode = parsedArgs.test;
+const devMode = parsedArgs.dev;
+
+// Store configuration globally for endpoints to use
+global.serverConfig = { testMode, devMode, port };
+
 const app = express();
-// PORT: Keep at 8080 unless explicitly overridden - this matches the original app configuration
-const PORT = process.env.PORT || 8080;
 
 // Lazy initialization of AI Service (unified SDK abstraction)
 // Trade-off evaluated: Keeping lazy init for dev/demo flexibility.
@@ -114,7 +134,58 @@ Example for "coffee":
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    config: global.serverConfig
+  });
+});
+
+// Test endpoints
+app.get('/api/test', (req, res) => {
+  console.log('🧪 Running tests via endpoint...');
+  const { spawn } = require('child_process');
+
+  const testProcess = spawn('node', ['test-runner.js'], {
+    cwd: process.cwd()
+  });
+
+  let output = '';
+  let errorOutput = '';
+
+  testProcess.stdout.on('data', (data) => {
+    output += data.toString();
+  });
+
+  testProcess.stderr.on('data', (data) => {
+    errorOutput += data.toString();
+  });
+
+  testProcess.on('close', (code) => {
+    res.json({
+      success: code === 0,
+      code,
+      output,
+      error: errorOutput
+    });
+  });
+});
+
+app.get('/api/test/:file', (req, res) => {
+  const testFile = req.params.file;
+  console.log(`🧪 Running specific test: ${testFile}`);
+
+  try {
+    // Try to run the test file directly
+    require(`./${testFile}`);
+    res.json({ success: true, message: `Test ${testFile} completed` });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: error.stack
+    });
+  }
 });
 
 // Serve the main HTML page (React client) with basic template replacement

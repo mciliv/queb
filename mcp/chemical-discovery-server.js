@@ -43,6 +43,22 @@ async function fetchJSON(url) {
 }
 
 /**
+ * Fetch SDF content from PubChem
+ */
+async function fetchSDFContent(name, recordType = '3d') {
+  const fetch = (await import('node-fetch')).default;
+  const encoded = encodeURIComponent(name);
+  const url = `${PUBCHEM_BASE}/rest/pug/compound/name/${encoded}/SDF?record_type=${recordType}`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  return await response.text();
+}
+
+/**
  * Search NCBI Taxonomy for organism name → taxonomy ID
  */
 async function findTaxonomyId(organismName) {
@@ -240,6 +256,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['name'],
         },
       },
+      {
+        name: 'get_3d_structure_data',
+        description: 'Get the actual 3D structure data (SDF format) for a chemical compound. Returns the SDF file content that can be used to display 3D molecular structures.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+              description: 'Chemical compound name (e.g., "caffeine", "aspirin", "glucose")',
+            },
+            record_type: {
+              type: 'string',
+              description: 'Record type: "3d" for 3D coordinates (default), "2d" for 2D',
+              enum: ['3d', '2d'],
+              default: '3d',
+            },
+          },
+          required: ['name'],
+        },
+      },
     ],
   };
 });
@@ -414,6 +450,59 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+      }
+
+      case 'get_3d_structure_data': {
+        try {
+          const recordType = args.record_type || '3d';
+          const sdfContent = await fetchSDFContent(args.name, recordType);
+          
+          // Get compound metadata for context
+          const compound = await findCompoundByName(args.name);
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  name: args.name,
+                  format: 'sdf',
+                  record_type: recordType,
+                  sdf_content: sdfContent,
+                  metadata: compound || null,
+                  note: 'Use the sdf_content field to display the 3D structure. The SDF format is compatible with most molecular viewers.',
+                }, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          if (error.message.includes('404') || error.message.includes('NOT_FOUND')) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    error: `3D structure not found for: ${args.name}`,
+                    suggestion: 'Try common chemical names like "caffeine", "aspirin", or "glucose"',
+                  }, null, 2),
+                },
+              ],
+              isError: true,
+            };
+          }
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: `Failed to fetch 3D structure: ${error.message}`,
+                }, null, 2),
+              },
+            ],
+            isError: true,
+          };
+        }
       }
 
       default:

@@ -36,17 +36,12 @@ async function createApp({ config, logger, container }) {
       const baseUrl = `${req.protocol}://${req.get('host')}`;
       const cacheBust = Date.now();
 
-      // Check if error screenshots are enabled
-      const enableScreenshots = config.get('development.enableScreenshots') || false;
-
       htmlContent = htmlContent
         .replace(/\{\{TITLE\}\}/g, 'Queb - Molecular Analysis')
         .replace(/\{\{DESCRIPTION\}\}/g, '3D visualization of chemical contents by camera or text input.')
         .replace(/\{\{CANONICAL\}\}/g, `${baseUrl}${req.path}`)
         .replace(/\{\{OG_IMAGE\}\}/g, '/images/favicon.svg')
-        .replace(/\{\{CACHE_BUST\}\}/g, cacheBust)
-        .replace(/\{\{SCREENSHOT_SCRIPT\}\}/g, enableScreenshots ?
-          '<script src="/js/error-screenshot.js"></script>' : '');
+        .replace(/\{\{CACHE_BUST\}\}/g, cacheBust);
 
       res.type('html').send(htmlContent);
     } catch (error) {
@@ -97,10 +92,12 @@ async function createApp({ config, logger, container }) {
     });
   };
   app.get('/api/health', healthHandler);
+
   app.get('/health', healthHandler);
 
   // Frontend error logging endpoint (dev only)
   // THIN CONTROLLER: HTTP ↔ Domain translation only. No domain logic, no infra coupling.
+  // NOTE: Use Cursor's builtin automatic screenshots for error debugging and reproduction
   app.post('/api/log-error', async (req, res) => {
     try {
       // ONE DOMAIN CALL: All domain logic abstracted into use-case
@@ -113,6 +110,7 @@ async function createApp({ config, logger, container }) {
   });
 
   await setupChemicalPredictionRoutes(app, { logger, container });
+  await setupDatabaseRecommendationRoutes(app, { logger, container });
 
   // Setup hotel routes (secure video hosting and request card)
   const { setupHotelRoutes } = require('../routes/hotel');
@@ -338,6 +336,76 @@ async function setupChemicalPredictionRoutes(app, { logger, container }) {
     }
   });
 
+  // 3D structure endpoint - returns SDF data for AI display
+  app.get('/api/3d-structure/:name', async (req, res, next) => {
+    try {
+      const { name } = req.params;
+      const recordType = req.query.record_type || '3d';
+
+      if (!name || typeof name !== 'string') {
+        return res.status(400).json({
+          error: 'Chemical name is required',
+        });
+      }
+
+      logger.info(`3D structure request: "${name}" (type: ${recordType})`);
+
+      // Fetch SDF from PubChem
+      const encoded = encodeURIComponent(name);
+      const pubchemUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encoded}/SDF?record_type=${recordType}`;
+      
+      const fetch = (await import('node-fetch')).default;
+      const response = await fetch(pubchemUrl);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return res.status(404).json({
+            error: `3D structure not found for: ${name}`,
+            suggestion: 'Try common chemical names like "caffeine", "aspirin", or "glucose"',
+          });
+        }
+        throw new Error(`PubChem API error: ${response.status} ${response.statusText}`);
+      }
+
+      const sdfContent = await response.text();
+
+      // Get compound metadata for context
+      const metadataUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encoded}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName/JSON`;
+      let metadata = null;
+      try {
+        const metaResponse = await fetch(metadataUrl);
+        if (metaResponse.ok) {
+          const metaData = await metaResponse.json();
+          const props = metaData?.PropertyTable?.Properties?.[0];
+          if (props) {
+            metadata = {
+              cid: props.CID,
+              formula: props.MolecularFormula,
+              molecularWeight: props.MolecularWeight,
+              smiles: props.CanonicalSMILES,
+              iupacName: props.IUPACName,
+            };
+          }
+        }
+      } catch (_) {
+        // Metadata fetch is optional, continue without it
+      }
+
+      // Return SDF content with metadata
+      res.set('Content-Type', 'application/json');
+      res.json({
+        name: name,
+        format: 'sdf',
+        record_type: recordType,
+        sdf_content: sdfContent,
+        metadata: metadata,
+        note: 'Use the sdf_content field to display the 3D structure. The SDF format is compatible with most molecular viewers.',
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Test data endpoint
   app.get('/api/test-data/:testName', async (req, res, next) => {
     try {
@@ -367,9 +435,74 @@ async function setupChemicalPredictionRoutes(app, { logger, container }) {
   });
 }
 
+async function setupDatabaseRecommendationRoutes(app, { logger, container }) {
+  const DatabaseRecommender = require('../services/database-recommender');
+  const aiService = await container.get('aiService');
+  const nameResolver = require('../services/name-resolver');
+
+  const recommender = new DatabaseRecommender({
+    logger,
+    aiService,
+    nameResolver,
+  });
+
+  /**
+   * Use AI to select best database and query for chemical contents
+   * POST /api/find-chemical-contents
+   * Body: { item: "coffee" }
+   * Returns: { item, selectedDatabase, chemicals, metadata, queryInfo }
+   */
+  app.post('/api/find-chemical-contents', async (req, res, next) => {
+    try {
+      const { item } = req.body;
+
+      if (!item || typeof item !== 'string') {
+        return res.status(400).json({
+          error: 'Missing or invalid "item" parameter',
+        });
+      }
+
+      logger.info(`Chemical contents search request: "${item}"`);
+
+      const result = await recommender.findChemicalContents(item);
+
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * Recommend optimal database(s) for searching contents of an item (legacy endpoint)
+   * POST /api/recommend-database
+   * Body: { item: "coffee" }
+   * Returns: { item, analysis, recommendations, databases }
+   */
+  app.post('/api/recommend-database', async (req, res, next) => {
+    try {
+      const { item } = req.body;
+
+      if (!item || typeof item !== 'string') {
+        return res.status(400).json({
+          error: 'Missing or invalid "item" parameter',
+        });
+      }
+
+      logger.info(`Database recommendation request: "${item}"`);
+
+      const result = await recommender.recommendDatabase(item);
+
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+}
+
 module.exports = {
   createApp,
   setupChemicalPredictionRoutes,
+  setupDatabaseRecommendationRoutes,
 };
 
 

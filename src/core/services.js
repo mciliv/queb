@@ -314,7 +314,6 @@ function createOpenAIClient() {
 const ServiceContainer = require('./ServiceContainer');
 const PromptEngine = require('./PromptEngine');
 const ErrorHandler = require('./ErrorHandler');
-const ScreenshotService = require('../server/services/screenshot-service');
 
 function createContainer(overrides = {}) {
   const MolecularPredictionService = require('./MolecularPredictionService');
@@ -340,19 +339,6 @@ function createContainer(overrides = {}) {
     return handler;
   }, {
     tags: ['core']
-  });
-
-  container.register('screenshotService', async (c) => {
-    const logger = await c.get('logger');
-    const config = await c.get('config');
-
-    return new ScreenshotService({
-      logger,
-      config,
-      screenshotDir: 'logs/screenshots'
-    });
-  }, {
-    tags: ['debugging', 'screenshots']
   });
 
   container.register('promptEngine', () => PromptEngine, {
@@ -462,10 +448,9 @@ function createContainer(overrides = {}) {
 
     // DEPENDENCY INJECTION: Use-case gets port implementation (could be swapped)
     const logErrorPort = await c.get('fileLoggerAdapter'); // Could be any LogErrorPort implementation
-    const screenshotService = await c.get('screenshotService'); // Optional screenshot service
 
     // USE-CASE PATTERN: Domain logic with injected infrastructure dependencies
-    return new LogErrorUseCase({ logErrorPort, screenshotService });
+    return new LogErrorUseCase({ logErrorPort });
   }, {
     tags: ['use-cases', 'logging', 'domain']
   });

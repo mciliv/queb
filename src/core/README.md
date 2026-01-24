@@ -34,10 +34,10 @@ Core modules are designed to be reusable across different parts of the applicati
 ```mermaid
 flowchart TB
   subgraph Core
-    CFG[Configuration]\n- env loading\n- validation\n- type-safe getters
-    ERR[ErrorHandler]\n- classify\n- message\n- recovery
-    PENG[PromptEngine]\n- templates\n- validation\n- repair
-    MAS[MolecularAnalysisService]\n- text/image analysis\n- enrichment\n- structures
+    CFG[Configuration<br/>env loading<br/>validation<br/>type-safe getters]
+    ERR[ErrorHandler<br/>classify<br/>message<br/>recovery]
+    PENG[PromptEngine<br/>templates<br/>validation<br/>repair]
+    MAS[MolecularAnalysisService<br/>text/image analysis<br/>enrichment<br/>structures]
   end
 
   %% Dependencies
@@ -48,7 +48,29 @@ flowchart TB
   ERR --> CFG
 ```
 
-![Core architecture](../../docs/diagrams/core-architecture.svg)
+<details>
+<summary><em>View diagram source code</em></summary>
+
+```text
+flowchart TB
+  subgraph Core
+    CFG[Configuration<br/>env loading<br/>validation<br/>type-safe getters]
+    ERR[ErrorHandler<br/>classify<br/>message<br/>recovery]
+    PENG[PromptEngine<br/>templates<br/>validation<br/>repair]
+    MAS[MolecularAnalysisService<br/>text/image analysis<br/>enrichment<br/>structures]
+  end
+
+  %% Dependencies
+  MAS --> PENG
+  MAS --> ERR
+  MAS --> CFG
+  PENG --> ERR
+  ERR --> CFG
+```
+
+_Diagram source also available in [`docs/diagrams/core-architecture.mmd`](../../docs/diagrams/core-architecture.mmd)_
+
+</details>
 
 ### Configuration.js
 **Purpose**: Unified configuration management with validation and type safety
