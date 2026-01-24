@@ -9,7 +9,7 @@ const fs = require('fs');
 require('dotenv').config();
 
 // Import essential services
-const AIService = require('./src/server/services/agents/AIService');
+const AIService = require('../chat/AIService');
 const Structuralizer = require('./src/server/services/Structuralizer');
 const MolecularProcessor = require('./src/server/services/molecular-processor');
 const { resolveName } = require('./src/server/services/name-resolver');
@@ -101,7 +101,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// POST /api/structuralize - Text analysis (used by frontend)
 app.post('/api/structuralize', async (req, res) => {
   try {
     const { text, lookupMode = 'GPT-5' } = req.body;
@@ -129,7 +128,6 @@ app.post('/api/structuralize', async (req, res) => {
   }
 });
 
-// POST /api/structuralize-image - Image analysis (used by frontend)
 app.post('/api/structuralize-image', async (req, res) => {
   try {
     const { imageBase64, x, y } = req.body;
@@ -160,7 +158,6 @@ app.post('/api/structuralize-image', async (req, res) => {
   }
 });
 
-// POST /api/generate-sdfs - Generate 3D structures (used by frontend)
 app.post('/api/generate-sdfs', async (req, res) => {
   try {
     const { smiles, overwrite = false } = req.body;
