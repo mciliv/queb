@@ -1,0 +1,76 @@
+*
+
+**/prompts/**
+
+# Build outputs and generated files
+src/client/dist/
+frontend/dist/
+dist/
+build/
+bundle.js
+bundle.css
+*.map
+
+# Dependencies
+node_modules/
+s*/node_modules/
+
+# Data files and SDF files
+src/backend/sdf_files/
+sdf_files/
+*.sdf
+
+# Ignore large image files in specific data directories only
+# (Don't block Cursor's screenshot directories)
+public/images/**/*.jpg
+public/images/**/*.png
+public/sdf_files/**/*.jpg
+public/sdf_files/**/*.png
+
+# Certificates and credentials
+certs/
+config/certs/
+backend/api/certs/
+*.pem
+*.key
+token.json
+credentials.json
+/.env
+!.env.example
+
+# Python cache and virtual environments
+__pycache__/
+*.pyc
+.venv/
+
+# IDE and system files
+.DS_Store
+.idea/
+# Don't ignore .vscode/settings.json - Cursor needs it for configuration
+.*.sw?
+
+# Backup files
+*.backup
+*.bak
+
+# Deployment artifacts
+deploy-temp/
+*.production.js
+
+# Database seeds
+seed_?/
+
+# Chrome profiles
+.chrome-profile/
+
+# Claude cache
+.claude/
+
+# Package lock files (usually auto-generated)
+package-lock.json
+
+# Configuration files that are working
+config/molecular-config.json
+config/project.js
+frontend/config/molecular-config.json
+

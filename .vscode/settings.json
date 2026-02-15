@@ -1,0 +1,37 @@
+{
+  "debug.console.acceptSuggestionOnEnter": "on",
+  "debug.console.closeOnEnd": true,
+  "debug.console.fontSize": 14,
+  "debug.console.historySuggestions": true,
+  "debug.internalConsoleOptions": "neverOpen",
+  "debug.javascript.autoAttachFilter": "smart",
+  "debug.openDebug": "neverOpen",
+  "debug.console.collapseIdenticalLines": true,
+  "debug.console.wordWrap": true,
+  "debug.terminal.clearBeforeReusing": true,
+  "debug.focusEditorOnBreak": true,
+  "debug.showBreakpointsInOverviewRuler": true,
+  "debug.allowBreakpointsEverywhere": true,
+  
+  // Recommended extensions for shell debugging
+  "extensions.recommendations": [
+    "rogalmic.bash-debug",
+    "formulahendry.code-runner"
+  ],
+  
+  // Shell file associations
+  "files.associations": {
+    "∀*": "shellscript"
+  },
+
+  // UI Layout settings to fix overlay issues
+  "workbench.commandPalette.history": 50,
+  "workbench.quickOpen.closeOnFocusOut": true,
+  "workbench.quickOpen.preserveInput": false,
+  "workbench.activityBar.location": "default",
+  "workbench.sideBar.location": "left",
+  "workbench.statusBar.visible": true,
+  "window.zoomLevel": 0,
+  "workbench.tree.indent": 8,
+  "workbench.list.smoothScrolling": true
+}

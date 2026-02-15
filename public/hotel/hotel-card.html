@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Request Card</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      background: #0f172a;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .input-section {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid #334155;
+    }
+
+    .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #64748b;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group {
+      flex: 1;
+    }
+
+    .form-group.full-width {
+      flex: 1 1 100%;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #e2e8f0;
+      font-size: 13px;
+    }
+
+    .form-group select,
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      font-size: 15px;
+      background: #0f172a;
+      color: #f8fafc;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .form-group select:focus,
+    .form-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .form-group select option {
+      background: #1e293b;
+      color: #f8fafc;
+    }
+
+    .form-group input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .form-group input[type="number"]::-webkit-outer-spin-button,
+    .form-group input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Output Card */
+    .output-section {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-radius: 16px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .output-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #f59e0b, #d97706, #f59e0b);
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px dashed #d97706;
+    }
+
+    .output-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #92400e;
+      font-weight: 700;
+    }
+
+    .language-badge {
+      background: #92400e;
+      color: #fef3c7;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .output-text {
+      font-size: 26px;
+      line-height: 1.6;
+      color: #78350f;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .output-body {
+      padding: 20px 0;
+      min-height: 150px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .romanized-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #92400e;
+      text-align: center;
+      opacity: 0.9;
+      direction: ltr;
+      unicode-bidi: plaintext;
+    }
+
+    .romanized-text.hidden {
+      display: none;
+    }
+
+    /* RTL support */
+    .output-text.rtl {
+      direction: rtl;
+    }
+
+    .output-footer {
+      text-align: center;
+      padding-top: 16px;
+      border-top: 2px dashed #d97706;
+    }
+
+    .output-footer p {
+      font-size: 11px;
+      color: #92400e;
+      font-style: italic;
+    }
+
+    .instructions {
+      text-align: center;
+      margin-top: 20px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    @media (max-width: 500px) {
+      .form-row {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .output-text {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🏨 Hotel Request Card</h1>
+      <p>Select your preferences, then show the card below to hotel staff</p>
+    </div>
+
+    <div class="input-section">
+      <div class="section-title">Your Preferences</div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="beds"># of Beds</label>
+          <input type="number" id="beds" value="1" min="1" max="10">
+        </div>
+        <div class="form-group">
+          <label for="smoking">Smoking</label>
+          <select id="smoking">
+            <option value="non-smoking">Non-smoking</option>
+            <option value="smoking">Smoking allowed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="optimization">Optimize for</label>
+          <select id="optimization">
+            <option value="cheapest">Cheapest</option>
+            <option value="best-rated">Best rated</option>
+            <option value="closest">Closest</option>
+            <option value="luxury">Luxury</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="language">Output Language</label>
+          <select id="language">
+            <option value="zh-CN">🇨🇳 简体中文</option>
+            <option value="zh-TW">🇹🇼 繁體中文</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="ja">🇯🇵 日本語</option>
+            <option value="ko">🇰🇷 한국어</option>
+            <option value="ar">🇸🇦 العربية</option>
+            <option value="hi">🇮🇳 हिन्दी</option>
+            <option value="pt">🇧🇷 Português</option>
+            <option value="ru">🇷🇺 Русский</option>
+            <option value="it">🇮🇹 Italiano</option>
+            <option value="th">🇹🇭 ไทย</option>
+            <option value="vi">🇻🇳 Tiếng Việt</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="output-section">
+      <div class="output-header">
+        <span class="output-label">Show this to hotel staff</span>
+        <span class="language-badge" id="languageBadge">简体中文</span>
+      </div>
+      <div class="output-body">
+        <div class="output-text" id="outputText">
+          我想要1张床的禁烟房间，请给我最便宜的选项。
+        </div>
+        <div class="romanized-text" id="romanizedText">
+          Wǒ xiǎng yào 1 zhāng chuáng de jìn yān fángjiān, qǐng gěi wǒ zuì piányi de xuǎnxiàng.
+        </div>
+      </div>
+      <div class="output-footer">
+        <p>Point to this card when speaking with hotel staff</p>
+      </div>
+    </div>
+
+    <p class="instructions">Change the options above to update the message</p>
+  </div>
+
+  <script>
+    const translations = {
+      'zh-CN': {
+        name: '简体中文',
+        bed: '床',
+        beds: '床',
+        nonSmoking: '禁烟',
+        smoking: '可吸烟',
+        cheapest: '最便宜的',
+        bestRated: '评价最好的',
+        closest: '最近的',
+        luxury: '豪华的',
+        romanized: {
+          'non-smoking': 'jìn yān',
+          smoking: 'kě xī yān',
+          cheapest: 'zuì piányi de',
+          'best-rated': 'píngjià zuì hǎo de',
+          closest: 'zuì jìn de',
+          luxury: 'háohuá de'
+        },
+        template: (beds, bedWord, smoking, optimization) =>
+          `我想要${beds}张${bedWord}的${smoking}房间，请给我${optimization}选项。`,
+        romanizedTemplate: (beds, smokingRoman, optimizationRoman) =>
+          `Wǒ xiǎng yào ${beds} zhāng chuáng de ${smokingRoman} fángjiān, qǐng gěi wǒ ${optimizationRoman} xuǎnxiàng.`
+      },
+      'zh-TW': {
+        name: '繁體中文',
+        bed: '床',
+        beds: '床',
+        nonSmoking: '禁菸',
+        smoking: '可吸菸',
+        cheapest: '最便宜的',
+        bestRated: '評價最好的',
+        closest: '最近的',
+        luxury: '豪華的',
+        romanized: {
+          'non-smoking': 'jìn yān',
+          smoking: 'kě xī yān',
+          cheapest: 'zuì piányi de',
+          'best-rated': 'píngjià zuì hǎo de',
+          closest: 'zuì jìn de',
+          luxury: 'háohuá de'
+        },
+        template: (beds, bedWord, smoking, optimization) =>
+          `我想要${beds}張${bedWord}的${smoking}房間，請給我${optimization}選項。`,
+        romanizedTemplate: (beds, smokingRoman, optimizationRoman) =>
+          `Wǒ xiǎng yào ${beds} zhāng chuáng de ${smokingRoman} fángjiān, qǐng gěi wǒ ${optimizationRoman} xuǎnxiàng.`
+      },
+      'en': {
+        name: 'English',
+        bed: 'bed',
+        beds: 'beds',
+        nonSmoking: 'non-smoking',
+        smoking: 'smoking',
+        cheapest: 'cheapest',
+        bestRated: 'best rated',
+        closest: 'closest',
+        luxury: 'luxury',
+        template: (beds, bedWord, smoking, optimization) =>
+          `I would like a ${smoking} room with ${beds} ${bedWord}. Please give me the ${optimization} option.`
+      },
+      'es': {
+        name: 'Español',
+        bed: 'cama',
+        beds: 'camas',
+        nonSmoking: 'para no fumadores',
+        smoking: 'para fumadores',
+        cheapest: 'más barata',
+        bestRated: 'mejor valorada',
+        closest: 'más cercana',
+        luxury: 'de lujo',
+        template: (beds, bedWord, smoking, optimization) =>
+          `Quisiera una habitación ${smoking} con ${beds} ${bedWord}. Por favor, déme la opción ${optimization}.`
+      },
+      'fr': {
+        name: 'Français',
+        bed: 'lit',
+        beds: 'lits',
+        nonSmoking: 'non-fumeur',
+        smoking: 'fumeur',
+        cheapest: 'la moins chère',
+        bestRated: 'la mieux notée',
+        closest: 'la plus proche',
+        luxury: 'de luxe',
+        template: (beds, bedWord, smoking, optimization) =>
+          `Je voudrais une chambre ${smoking} avec ${beds} ${bedWord}. Donnez-moi l'option ${optimization}, s'il vous plaît.`
+      },
+      'de': {
+        name: 'Deutsch',
+        bed: 'Bett',
+        beds: 'Betten',
+        nonSmoking: 'Nichtraucher',
+        smoking: 'Raucher',
+        cheapest: 'günstigste',
+        bestRated: 'bestbewertete',
+        closest: 'nächstgelegene',
+        luxury: 'Luxus',
+        template: (beds, bedWord, smoking, optimization) =>
+          `Ich möchte ein ${smoking}zimmer mit ${beds} ${bedWord}. Bitte geben Sie mir die ${optimization} Option.`
+      },
+      'ja': {
+        name: '日本語',
+        bed: 'ベッド',
+        beds: 'ベッド',
+        nonSmoking: '禁煙',
+        smoking: '喫煙可',
+        cheapest: '一番安い',
+        bestRated: '一番評価の高い',
+        closest: '一番近い',
+        luxury: '高級な',
+        romanized: {
+          'non-smoking': 'kinen',
+          smoking: 'kitsuen kanou',
+          cheapest: 'ichiban yasui',
+          'best-rated': 'hyoka ga ichiban takai',
+          closest: 'ichiban chikai',
+          luxury: 'koko na'
+        },
+        template: (beds, bedWord, smoking, optimization) =>
+          `${beds}${bedWord}の${smoking}部屋をお願いします。${optimization}オプションをください。`,
+        romanizedTemplate: (beds, smokingRoman, optimizationRoman) =>
+          `${beds} beddo no ${smokingRoman} heya o onegai shimasu. ${optimizationRoman} opushon o kudasai.`
+      },
+      'ko': {
+        name: '한국어',
+        bed: '침대',
+        beds: '침대',
+        nonSmoking: '금연',
+        smoking: '흡연 가능',
+        cheapest: '가장 저렴한',
+        bestRated: '가장 평가 좋은',
+        closest: '가장 가까운',
+        luxury: '고급',
+        romanized: {
+          'non-smoking': 'geumyeon',
+          smoking: 'heupyeon ganeung',
+          cheapest: 'gajang jeoryeomhan',
+          'best-rated': 'gajang pyeongga joeun',
+          closest: 'gajang gakkaun',
+          luxury: 'gogeup'
+        },
+        template: (beds, bedWord, smoking, optimization) =>
+          `${beds}${bedWord} ${smoking} 객실을 원합니다. ${optimization} 옵션으로 주세요.`,
+        romanizedTemplate: (beds, smokingRoman, optimizationRoman) =>
+          `${beds}gae chimdae-ui ${smokingRoman} gaeksil-eul wonhamnida. ${optimizationRoman} opsyeon-euro juseyo.`
+      },
+      'ar': {
+        name: 'العربية',
+        bed: 'سرير',
+        beds: 'أسرة',
+        nonSmoking: 'لغير المدخنين',
+        smoking: 'للمدخنين',
+        cheapest: 'الأرخص',
+        bestRated: 'الأفضل تقييماً',
+        closest: 'الأقرب',
+        luxury: 'الفاخرة',
+        romanized: {
+          'non-smoking': 'li-ghayr al-mudakhkhinin',
+          smoking: 'lil-mudakhkhinin',
+          cheapest: 'al-arkhas',
+          'best-rated': 'al-afdal taqyiiman',
+          closest: 'al-aqrab',
+          luxury: 'al-fakhira'
+        },
+        template: (beds, bedWord, smoking, optimization) =>
+          `أريد غرفة ${smoking} مع ${beds} ${bedWord}. أعطني الخيار ${optimization} من فضلك.`,
+        romanizedTemplate: (beds, smokingRoman, optimizationRoman) =>
+          `Uridu ghurfatan ${smokingRoman} ma'a ${beds} sarir. A'tini al-khiyar ${optimizationRoman}, min fadlak.`
+      },
+      'hi': {
+        name: 'हिन्दी',
+        bed: 'बिस्तर',
+        beds: 'बिस्तर',
+        nonSmoking: 'धूम्रपान-मुक्त',
+        smoking: 'धूम्रपान अनुमत',
+        cheapest: 'सबसे सस्ता',
+        bestRated: 'सबसे अच्छी रेटिंग वाला',
+        closest: 'सबसे नज़दीकी',
+        luxury: 'लक्ज़री',
+        romanized: {
+          'non-smoking': 'dhumrapan-mukt',
+          smoking: 'dhumrapan anumati',
+          cheapest: 'sabse sasta',
+          'best-rated': 'sabse acchi rating wala',
+          closest: 'sabse nazdeeki',
+          luxury: 'lakzari'
+        },
+        template: (beds, bedWord, smoking, optimization) =>
+          `मुझे ${beds} ${bedWord} वाला ${smoking} कमरा चाहिए। कृपया ${optimization} विकल्प दीजिए।`,
+        romanizedTemplate: (beds, smokingRoman, optimizationRoman) =>
+          `Mujhe ${beds} bistar wala ${smokingRoman} kamra chahiye. Kripya ${optimizationRoman} vikalp dijiye.`
+      },
+      'pt': {
+        name: 'Português',
+        bed: 'cama',
+        beds: 'camas',
+        nonSmoking: 'para não fumantes',
+        smoking: 'para fumantes',
+        cheapest: 'mais barata',
+        bestRated: 'melhor avaliada',
+        closest: 'mais próxima',
+        luxury: 'de luxo',
+        template: (beds, bedWord, smoking, optimization) =>
+          `Gostaria de um quarto ${smoking} com ${beds} ${bedWord}. Por favor, me dê a opção ${optimization}.`
+      },
+      'ru': {
+        name: 'Русский',
+        bed: 'кровать',
+        beds: 'кровати',
+        nonSmoking: 'для некурящих',
+        smoking: 'для курящих',
+        cheapest: 'самый дешевый',
+        bestRated: 'с лучшим рейтингом',
+        closest: 'ближайший',
+        luxury: 'люкс',
+        romanized: {
+          bed: "krovat'",
+          beds: 'krovati',
+          'non-smoking': 'dlya nekuryashchikh',
+          smoking: 'dlya kuryashchikh',
+          cheapest: 'samyy deshevyy',
+          'best-rated': 's luchshim reytingom',
+          closest: 'blizhayshiy',
+          luxury: 'lyuks'
+        },
+        template: (beds, bedWord, smoking, optimization) =>
+          `Мне нужен номер ${smoking} с ${beds} ${bedWord}. Пожалуйста, дайте мне ${optimization} вариант.`,
+        romanizedTemplate: (beds, bedWordRoman, smokingRoman, optimizationRoman) =>
+          `Mne nuzhen nomer ${smokingRoman} s ${beds} ${bedWordRoman}. Pozhaluysta, dayte mne ${optimizationRoman} variant.`
+      },
+      'it': {
+        name: 'Italiano',
+        bed: 'letto',
+        beds: 'letti',
+        nonSmoking: 'non fumatori',
+        smoking: 'fumatori',
+        cheapest: 'più economica',
+        bestRated: 'meglio valutata',
+        closest: 'più vicina',
+        luxury: 'di lusso',
+        template: (beds, bedWord, smoking, optimization) =>
+          `Vorrei una camera ${smoking} con ${beds} ${bedWord}. Per favore, datemi l'opzione ${optimization}.`
+      },
+      'th': {
+        name: 'ไทย',
+        bed: 'เตียง',
+        beds: 'เตียง',
+        nonSmoking: 'ห้องปลอดบุหรี่',
+        smoking: 'ห้องสูบบุหรี่ได้',
+        cheapest: 'ถูกที่สุด',
+        bestRated: 'ที่ได้รับการจัดอันดับดีที่สุด',
+        closest: 'ใกล้ที่สุด',
+        luxury: 'หรูหรา',
+        romanized: {
+          bed: 'tiang',
+          beds: 'tiang',
+          'non-smoking': 'mai suup buri',
+          smoking: 'suup buri dai',
+          cheapest: 'thuk thi sut',
+          'best-rated': 'khanen di thi sut',
+          closest: 'glai thi sut',
+          luxury: 'ru-ra'
+        },
+        template: (beds, bedWord, smoking, optimization) =>
+          `ฉันต้องการ${smoking} ${beds} ${bedWord} กรุณาให้ตัวเลือก${optimization}`,
+        romanizedTemplate: (beds, bedWordRoman, smokingRoman, optimizationRoman) =>
+          `Chan tongkan hong ${smokingRoman} mi ${beds} ${bedWordRoman}. Karuna hai tua lueak ${optimizationRoman}.`
+      },
+      'vi': {
+        name: 'Tiếng Việt',
+        bed: 'giường',
+        beds: 'giường',
+        nonSmoking: 'không hút thuốc',
+        smoking: 'được hút thuốc',
+        cheapest: 'rẻ nhất',
+        bestRated: 'được đánh giá cao nhất',
+        closest: 'gần nhất',
+        luxury: 'sang trọng',
+        template: (beds, bedWord, smoking, optimization) =>
+          `Tôi muốn phòng ${smoking} với ${beds} ${bedWord}. Xin cho tôi lựa chọn ${optimization}.`
+      }
+    };
+
+    function updateOutput() {
+      const beds = parseInt(document.getElementById('beds').value) || 1;
+      const smoking = document.getElementById('smoking').value;
+      const optimization = document.getElementById('optimization').value;
+      const lang = document.getElementById('language').value;
+
+      const t = translations[lang];
+      const bedWord = beds === 1 ? t.bed : t.beds;
+      const smokingText = smoking === 'non-smoking' ? t.nonSmoking : t.smoking;
+
+      let optimizationText;
+      switch (optimization) {
+        case 'cheapest': optimizationText = t.cheapest; break;
+        case 'best-rated': optimizationText = t.bestRated; break;
+        case 'closest': optimizationText = t.closest; break;
+        case 'luxury': optimizationText = t.luxury; break;
+        default: optimizationText = t.cheapest;
+      }
+
+      const outputText = t.template(beds, bedWord, smokingText, optimizationText);
+      
+      const outputEl = document.getElementById('outputText');
+      outputEl.textContent = outputText;
+
+      // Romanized line (for languages that provide it)
+      const romanizedEl = document.getElementById('romanizedText');
+      if (t.romanizedTemplate && t.romanized) {
+        const romanSmoking = t.romanized[smoking];
+        const romanOptimization = t.romanized[optimization];
+        if (lang === 'ru' || lang === 'th') {
+          const romanBedWord = beds === 1 ? t.romanized.bed : t.romanized.beds;
+          romanizedEl.textContent = t.romanizedTemplate(beds, romanBedWord, romanSmoking, romanOptimization);
+        } else {
+          romanizedEl.textContent = t.romanizedTemplate(beds, romanSmoking, romanOptimization);
+        }
+        romanizedEl.classList.remove('hidden');
+      } else {
+        romanizedEl.textContent = '';
+        romanizedEl.classList.add('hidden');
+      }
+      
+      // Set appropriate direction for RTL languages
+      outputEl.className = 'output-text';
+      if (lang === 'ar') {
+        outputEl.classList.add('rtl');
+      }
+
+      document.getElementById('languageBadge').textContent = t.name;
+    }
+
+    // Event listeners
+    document.getElementById('beds').addEventListener('input', updateOutput);
+    document.getElementById('smoking').addEventListener('change', updateOutput);
+    document.getElementById('optimization').addEventListener('change', updateOutput);
+    document.getElementById('language').addEventListener('change', updateOutput);
+
+    // Initialize
+    updateOutput();
+  </script>
+</body>
+</html>

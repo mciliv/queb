@@ -1,0 +1,28 @@
+node_modules/
+.env
+.DS_Store
+.idea
+*.log
+
+# Keep legacy files ignored (can be removed later)
+src/
+tests/
+database/
+deploy/
+scripts/
+docs/
+examples/
+agents/
+utils/
+markdown/
+hooks/
+logs/
+config/
+babel.config.js
+app.yaml
+app-dev.yaml
+.tmp
+public/sdf_files/
+
+# Chrome profile and cache
+.chrome-profile/

@@ -1,0 +1,91 @@
+[
+  // Debug Shortcuts
+  {
+    "key": "cmd+shift+s",
+    "command": "workbench.action.debug.start",
+    "args": {
+      "name": "Start Server"
+    },
+    "when": "workspaceFolder && !inDebugMode"
+  },
+  {
+    "key": "cmd+shift+t",
+    "command": "workbench.action.debug.start",
+    "args": {
+      "name": "Debug Current Test File"
+    },
+    "when": "workspaceFolder && resourceExtname == .test.js && !inDebugMode"
+  },
+  {
+    "key": "cmd+shift+c",
+    "command": "workbench.action.debug.start",
+    "args": {
+      "name": "Debug React App in Chrome"
+    },
+    "when": "workspaceFolder && !inDebugMode"
+  },
+
+  // Launch.json Task Runners (Cmd+Shift+Alt+Key)
+  {
+    "key": "cmd+shift+alt+d",
+    "command": "workbench.action.debug.start",
+    "args": {
+      "name": "Run Dev Environment"
+    },
+    "when": "workspaceFolder"
+  },
+  {
+    "key": "cmd+shift+alt+t",
+    "command": "workbench.action.debug.start",
+    "args": {
+      "name": "Run All Tests"
+    },
+    "when": "workspaceFolder"
+  },
+  {
+    "key": "cmd+shift+alt+v",
+    "command": "workbench.action.debug.start",
+    "args": {
+      "name": "Run Visual Tests"
+    },
+    "when": "workspaceFolder"
+  },
+
+  // Task Shortcuts (Cmd+Alt+Key)
+  {
+    "key": "cmd+alt+d",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🚀 Dev Environment",
+    "when": "workspaceFolder"
+  },
+  {
+    "key": "cmd+alt+b",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🔧 Build & Watch",
+    "when": "workspaceFolder"
+  },
+  {
+    "key": "cmd+alt+t",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🧪 Run All Tests",
+    "when": "workspaceFolder"
+  },
+  {
+    "key": "cmd+alt+v",
+    "command": "workbench.action.tasks.runTask",
+    "args": "👁️ Visual Tests",
+    "when": "workspaceFolder"
+  },
+  {
+    "key": "cmd+alt+e",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🔍 Check Environment",
+    "when": "workspaceFolder"
+  },
+  {
+    "key": "cmd+alt+s",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🗄️ Setup Database",
+    "when": "workspaceFolder"
+  }
+]

@@ -1,0 +1,139 @@
+// Organize from top to bottom: test, dev, local, prod
+{
+  "version": "0.2.0",
+  "configurations": [
+    // === TEST ===
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Tests",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test:debug", "--", "${file}"],
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "smartStep": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Current Test File",
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "args": ["${file}", "--runInBand", "--no-coverage"],
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "smartStep": true
+    },
+    {
+      "name": "Run All Tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test:all"],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "smartStep": true
+    },
+    {
+      "name": "Run Visual Tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test:visual"],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "smartStep": true
+    },
+
+    // === DEV ===
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Start Server",
+      "program": "${workspaceFolder}/src/server/api/server.js",
+      "args": [],
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**",
+        "**/*.test.js",
+        "**/*.spec.js"
+      ],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "smartStep": true,
+      "stopOnEntry": false
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Server Startup",
+      "program": "${workspaceFolder}/src/server/api/server.js",
+      "args": [],
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**",
+        "**/*.test.js",
+        "**/*.spec.js"
+      ],
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "smartStep": true,
+      "stopOnEntry": false
+    },
+    {
+      "name": "Run Dev Environment",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "smartStep": true
+    },
+
+    // === LOCAL ===
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug React App in Chrome",
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}/src/client"
+    },
+    {
+      "type": "chrome",
+      "request": "attach",
+      "name": "Attach to Chrome",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/src/client"
+    }
+
+    // === PROD ===
+    // Intentionally omitted for now.
+  ]
+}

@@ -1,0 +1,289 @@
+{
+  "title": "Chemical Database Resources",
+  "description": "Reference to various chemical databases and their APIs for molecular data retrieval",
+  "version": "1.0.0",
+  "databases": [
+    {
+      "name": "PubChem",
+      "provider": "NCBI (National Center for Biotechnology Information)",
+      "description": "Comprehensive database of chemical molecules and their activities in biological systems",
+      "baseUrl": "https://pubchem.ncbi.nlm.nih.gov",
+      "apiVersion": "REST PUG (Power User Gateway)",
+      "endpoints": {
+        "compound_by_name": {
+          "pattern": "/rest/pug/compound/name/{name}/JSON",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/aspirin/JSON",
+          "description": "Retrieve compound information by chemical name"
+        },
+        "compound_by_cid": {
+          "pattern": "/rest/pug/compound/cid/{cid}/JSON",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2244/JSON",
+          "description": "Retrieve compound by PubChem Compound ID (CID)"
+        },
+        "sdf_by_name_3d": {
+          "pattern": "/rest/pug/compound/name/{name}/SDF?record_type=3d",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/caffeine/SDF?record_type=3d",
+          "description": "Get 3D structure in SDF format by name"
+        },
+        "sdf_by_cid_3d": {
+          "pattern": "/rest/pug/compound/cid/{cid}/SDF?record_type=3d",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2519/SDF?record_type=3d",
+          "description": "Get 3D structure in SDF format by CID"
+        },
+        "smiles_by_name": {
+          "pattern": "/rest/pug/compound/name/{name}/property/CanonicalSMILES/JSON",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/glucose/property/CanonicalSMILES/JSON",
+          "description": "Get canonical SMILES notation"
+        },
+        "properties": {
+          "pattern": "/rest/pug/compound/name/{name}/property/{properties}/JSON",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/caffeine/property/MolecularFormula,MolecularWeight,CanonicalSMILES/JSON",
+          "description": "Get multiple properties (MolecularFormula, MolecularWeight, etc.)"
+        },
+        "search_by_smiles": {
+          "pattern": "/rest/pug/compound/smiles/{smiles}/cids/JSON",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/CC(=O)OC1=CC=CC=C1C(=O)O/cids/JSON",
+          "description": "Find compounds matching SMILES structure"
+        }
+      },
+      "documentation": "https://pubchem.ncbi.nlm.nih.gov/docs/pug-rest",
+      "rateLimit": "5 requests per second, 400 requests per minute",
+      "features": [
+        "140+ million compounds",
+        "3D structure data",
+        "Bioassay data",
+        "Patent information",
+        "Literature references",
+        "No authentication required"
+      ]
+    },
+    {
+      "name": "ChemSpider",
+      "provider": "Royal Society of Chemistry",
+      "description": "Chemical structure database with integration to various data sources",
+      "baseUrl": "https://api.rsc.org/compounds/v1",
+      "apiVersion": "v1",
+      "authentication": "API Key required (free registration)",
+      "endpoints": {
+        "search_by_name": {
+          "pattern": "/filter/name",
+          "method": "POST",
+          "description": "Search compounds by chemical name"
+        },
+        "search_by_formula": {
+          "pattern": "/filter/formula",
+          "method": "POST",
+          "description": "Search by molecular formula"
+        },
+        "search_by_mass": {
+          "pattern": "/filter/mass",
+          "method": "POST",
+          "description": "Search by molecular mass range"
+        },
+        "record_details": {
+          "pattern": "/records/{id}/details",
+          "method": "GET",
+          "description": "Get detailed compound information"
+        },
+        "mol_file": {
+          "pattern": "/records/{id}/mol",
+          "method": "GET",
+          "description": "Get MOL file representation"
+        }
+      },
+      "documentation": "https://developer.rsc.org/compounds-v1/apis",
+      "features": [
+        "120+ million structures",
+        "Curated by experts",
+        "Integration with RSC literature",
+        "Spectral data",
+        "Requires API key"
+      ]
+    },
+    {
+      "name": "ChEBI",
+      "provider": "EMBL-EBI (European Bioinformatics Institute)",
+      "description": "Chemical Entities of Biological Interest - dictionary of molecular entities focused on small chemical compounds",
+      "baseUrl": "https://www.ebi.ac.uk/chebi",
+      "endpoints": {
+        "entity_by_id": {
+          "pattern": "/searchId.do?chebiId={id}",
+          "example": "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:27732",
+          "description": "Get entity by ChEBI ID"
+        },
+        "search_by_name": {
+          "pattern": "/searchFreeText.do?searchString={name}",
+          "example": "https://www.ebi.ac.uk/chebi/searchFreeText.do?searchString=caffeine",
+          "description": "Free text search"
+        },
+        "web_services": {
+          "pattern": "/webServices.do",
+          "description": "SOAP web services for programmatic access"
+        }
+      },
+      "documentation": "https://www.ebi.ac.uk/chebi/webServices.do",
+      "features": [
+        "Focused on biologically relevant compounds",
+        "Ontology-based classification",
+        "Manual curation",
+        "Integration with biological databases",
+        "Free access"
+      ]
+    },
+    {
+      "name": "ChEMBL",
+      "provider": "EMBL-EBI",
+      "description": "Database of bioactive drug-like small molecules with drug discovery information",
+      "baseUrl": "https://www.ebi.ac.uk/chembl/api/data",
+      "apiVersion": "v29",
+      "endpoints": {
+        "molecule_by_chembl_id": {
+          "pattern": "/molecule/{chembl_id}.json",
+          "example": "https://www.ebi.ac.uk/chembl/api/data/molecule/CHEMBL25.json",
+          "description": "Get molecule by ChEMBL ID"
+        },
+        "search_molecules": {
+          "pattern": "/molecule/search.json?q={query}",
+          "example": "https://www.ebi.ac.uk/chembl/api/data/molecule/search.json?q=aspirin",
+          "description": "Search molecules"
+        },
+        "molecule_by_smiles": {
+          "pattern": "/molecule/smiles/{smiles}.json",
+          "example": "https://www.ebi.ac.uk/chembl/api/data/molecule/smiles/CC(=O)Oc1ccccc1C(=O)O.json",
+          "description": "Find molecule by SMILES"
+        },
+        "bioactivity_data": {
+          "pattern": "/activity.json?molecule_chembl_id={id}",
+          "description": "Get bioactivity data for a molecule"
+        }
+      },
+      "documentation": "https://chembl.gitbook.io/chembl-interface-documentation/web-services/chembl-data-web-services",
+      "features": [
+        "2.4+ million compounds",
+        "Bioactivity data from literature",
+        "Drug discovery focus",
+        "Target information",
+        "Free REST API"
+      ]
+    },
+    {
+      "name": "ZINC",
+      "provider": "UCSF (University of California San Francisco)",
+      "description": "Free database of commercially-available compounds for virtual screening",
+      "baseUrl": "https://zinc.docking.org",
+      "endpoints": {
+        "substance_search": {
+          "pattern": "/substances/search/?q={query}",
+          "description": "Search substances"
+        },
+        "download_sdf": {
+          "pattern": "/substances/{zinc_id}.sdf",
+          "description": "Download SDF file"
+        },
+        "api_search": {
+          "pattern": "/api/search",
+          "description": "API-based search"
+        }
+      },
+      "documentation": "https://zinc.docking.org/api",
+      "features": [
+        "750+ million purchasable compounds",
+        "Virtual screening ready",
+        "3D conformers",
+        "Vendor information",
+        "Free access"
+      ]
+    },
+    {
+      "name": "DrugBank",
+      "provider": "DrugBank",
+      "description": "Comprehensive database combining detailed drug data with drug target information",
+      "baseUrl": "https://go.drugbank.com/releases",
+      "apiVersion": "Latest",
+      "authentication": "API Key required (commercial or academic license)",
+      "endpoints": {
+        "drug_by_id": {
+          "pattern": "/drugs/{drugbank_id}",
+          "description": "Get drug information by DrugBank ID"
+        },
+        "search": {
+          "pattern": "/drugs?q={query}",
+          "description": "Search drugs"
+        }
+      },
+      "documentation": "https://docs.drugbank.com/",
+      "features": [
+        "14,000+ drug entries",
+        "Target, pathway, interaction data",
+        "FDA approval information",
+        "Clinical trial data",
+        "Requires license for API access"
+      ]
+    },
+    {
+      "name": "PDB (Protein Data Bank)",
+      "provider": "RCSB PDB",
+      "description": "Repository for 3D structural data of biological macromolecules",
+      "baseUrl": "https://data.rcsb.org/rest/v1",
+      "endpoints": {
+        "entry": {
+          "pattern": "/core/entry/{pdb_id}",
+          "example": "https://data.rcsb.org/rest/v1/core/entry/1abc",
+          "description": "Get entry metadata"
+        },
+        "ligand": {
+          "pattern": "/core/chemcomp/{ligand_id}",
+          "example": "https://data.rcsb.org/rest/v1/core/chemcomp/ATP",
+          "description": "Get chemical component (ligand) information"
+        },
+        "search": {
+          "pattern": "/query",
+          "method": "POST",
+          "description": "Advanced search with JSON query"
+        }
+      },
+      "documentation": "https://data.rcsb.org/",
+      "features": [
+        "200,000+ structures",
+        "Protein-ligand complexes",
+        "3D coordinates",
+        "Experimental data",
+        "Free access"
+      ]
+    }
+  ],
+  "usage_examples": {
+    "fetch_pubchem_3d_structure": {
+      "description": "Retrieve 3D SDF structure from PubChem by compound name",
+      "code": "curl 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/caffeine/SDF?record_type=3d'"
+    },
+    "get_compound_properties": {
+      "description": "Get molecular properties from PubChem",
+      "code": "curl 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/aspirin/property/MolecularFormula,MolecularWeight,CanonicalSMILES/JSON'"
+    },
+    "search_by_smiles": {
+      "description": "Find compound ID from SMILES notation",
+      "code": "curl 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/CC(C)Cc1ccc(cc1)C(C)C(O)=O/cids/JSON'"
+    }
+  },
+  "integration_notes": {
+    "rate_limiting": "Always implement rate limiting to respect API quotas. PubChem allows 5 req/sec, ChemSpider has different limits.",
+    "caching": "Cache responses to minimize API calls. Chemical data rarely changes.",
+    "error_handling": "Handle 404 (compound not found), 400 (invalid input), and 503 (service unavailable) appropriately.",
+    "fallback_strategy": "Use multiple databases in sequence: PubChem → ChemSpider → ChEBI for best coverage.",
+    "data_formats": "Support SDF, MOL, SMILES, InChI for maximum compatibility."
+  },
+  "queb_integration": {
+    "current": "Queb currently uses PubChem REST API for SDF retrieval",
+    "endpoints_used": [
+      "/rest/pug/compound/name/{name}/SDF?record_type=3d",
+      "/rest/pug/compound/cid/{cid}/SDF?record_type=3d"
+    ],
+    "future_enhancements": [
+      "Add ChemSpider as fallback",
+      "Integrate ChEBI for biological compounds",
+      "Add ChEMBL for drug-like molecules",
+      "Cache compound data locally"
+    ]
+  }
+}

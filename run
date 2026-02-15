@@ -1,0 +1,248 @@
+#!/usr/bin/env node
+'use strict'; //why
+
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+const { spawn, spawnSync, execSync } = require('child_process');
+
+const PROJECT_ROOT = path.resolve(__dirname);
+
+const SERVER_ENTRY = path.join(PROJECT_ROOT, 'src', 'server', 'api', 'server.js');
+const FRONTEND_BUILD = path.join(PROJECT_ROOT, 'src', 'client', 'build-frontend.js');
+const FRONTEND_BUNDLE = path.join(PROJECT_ROOT, 'src', 'client', 'dist', 'bundle.js');
+const DEPLOY_SCRIPT = path.join(PROJECT_ROOT, 'deploy', 'deploy.sh');
+const INJECT_TEST = path.join(PROJECT_ROOT, 'scripts', 'inject-test.js');
+
+function printHelp() {
+  console.log(`Usage: ./run <command> [args]
+
+Commands:
+  start             Start server (builds frontend bundle if missing)
+  server            Alias for start
+  dev               Watch frontend + run server (both as child processes)
+  debug-brk         Start server with --inspect-brk
+  build             Build frontend bundle
+  browser           Start server and open browser
+  test-inject [x]   Start server, inject test case (default: coffee), open browser
+  test-dev [x]      Start server with AUTO_TEST_INJECT, open browser
+  deploy [dev|prod] Run deploy script (default: dev)
+  after-agent-change Run tests, then start server + open browser
+  -h, --help        Show help
+`);
+}
+
+function killPort(port = 8080) {
+  try {
+    const out = execSync(`lsof -ti:${port}`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    if (!out) return;
+    const pids = out.split(/\s+/).filter(Boolean);
+    for (const pid of pids) {
+      try {
+        process.kill(Number(pid), 'SIGKILL');
+      } catch (_) {
+        // best-effort
+      }
+    }
+  } catch (_) {
+    // nothing listening (or lsof not available)
+  }
+}
+
+function runNode(scriptPath, args = [], options = {}) {
+  const nodeArgs = [scriptPath, ...args];
+  return spawn(process.execPath, nodeArgs, {
+    stdio: 'inherit',
+    ...options,
+  });
+}
+
+function runScript(cmd, args = [], options = {}) {
+  return spawn(cmd, args, { stdio: 'inherit', ...options });
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function waitForServer({ url = 'http://localhost:8080/health', maxAttempts = 30 } = {}) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const ok = await new Promise((resolve) => {
+      const req = http.get(url, (res) => {
+        res.resume();
+        resolve(res.statusCode && res.statusCode >= 200 && res.statusCode < 500);
+      });
+      req.on('error', () => resolve(false));
+      req.setTimeout(1000, () => {
+        req.destroy();
+        resolve(false);
+      });
+    });
+    if (ok) return true;
+    await sleep(1000);
+  }
+  return false;
+}
+
+async function cmdStart() {
+  killPort(8080);
+
+  if (!fs.existsSync(FRONTEND_BUNDLE)) {
+    console.log('📦 Building frontend bundle...');
+    const res = spawnSync(process.execPath, [FRONTEND_BUILD, '--quiet'], { stdio: 'inherit' });
+    if (res.status !== 0) process.exit(res.status || 1);
+  }
+
+  const server = runNode(SERVER_ENTRY);
+  server.on('exit', (code) => process.exit(code ?? 0));
+}
+
+async function cmdBuild() {
+  const res = spawnSync(process.execPath, [FRONTEND_BUILD], { stdio: 'inherit' });
+  process.exit(res.status || 0);
+}
+
+async function cmdDev() {
+  console.log('🔄 Starting frontend watch mode...');
+  const watch = runNode(FRONTEND_BUILD, ['--watch', '--quiet']);
+
+  killPort(8080);
+  const server = runNode(SERVER_ENTRY);
+
+  const cleanup = () => {
+    try { watch.kill('SIGTERM'); } catch (_) {}
+    try { server.kill('SIGTERM'); } catch (_) {}
+  };
+
+  process.on('SIGINT', () => { cleanup(); process.exit(130); });
+  process.on('SIGTERM', () => { cleanup(); process.exit(143); });
+  process.on('exit', cleanup);
+
+  server.on('exit', (code) => {
+    cleanup();
+    process.exit(code ?? 0);
+  });
+}
+
+async function cmdDebugBrk() {
+  killPort(8080);
+  const server = spawn(process.execPath, ['--inspect-brk', SERVER_ENTRY], { stdio: 'inherit' });
+  server.on('exit', (code) => process.exit(code ?? 0));
+}
+
+async function cmdBrowser() {
+  killPort(8080);
+  const server = runNode(SERVER_ENTRY);
+  await sleep(3000);
+  runScript('open', ['http://localhost:8080']);
+  server.on('exit', (code) => process.exit(code ?? 0));
+}
+
+async function cmdTestInject(testCase = 'coffee') {
+  killPort(8080);
+  const server = runNode(SERVER_ENTRY);
+
+  await sleep(4000);
+  const ok = await waitForServer();
+  if (!ok) {
+    console.error('❌ Server failed to start');
+    try { server.kill('SIGTERM'); } catch (_) {}
+    process.exit(1);
+  }
+
+  // Preserve original behavior: `node scripts/inject-test.js <testCase>`
+  const res = spawnSync(process.execPath, [INJECT_TEST, testCase], { stdio: 'inherit' });
+  if (res.status && res.status !== 0) process.exit(res.status);
+
+  runScript('open', ['http://localhost:8080']);
+
+  server.on('exit', (code) => process.exit(code ?? 0));
+}
+
+async function cmdTestDev(testCase = 'coffee') {
+  killPort(8080);
+  const server = runNode(SERVER_ENTRY, [], {
+    env: { ...process.env, AUTO_TEST_INJECT: testCase },
+  });
+
+  await sleep(3000);
+  runScript('open', ['http://localhost:8080']);
+  server.on('exit', (code) => process.exit(code ?? 0));
+}
+
+async function cmdDeploy(env = 'dev') {
+  if (env !== 'dev' && env !== 'prod') {
+    console.error('Usage: ./run deploy [dev|prod]');
+    console.error('  dev  - Deploy to dev.queb.space');
+    console.error('  prod - Deploy to queb.space');
+    process.exit(1);
+  }
+  const child = runScript(DEPLOY_SCRIPT, [env]);
+  child.on('exit', (code) => process.exit(code ?? 0));
+}
+
+async function cmdAfterAgentChange() {
+  console.log('🧪 Running all tests...');
+  const res = spawnSync('npm', ['run', 'test:all'], { stdio: 'inherit' });
+  if (res.status !== 0) {
+    console.log('❌ Tests failed. Not starting server.');
+    process.exit(res.status || 1);
+  }
+
+  console.log('\n✅ All tests passed!\n');
+  console.log('🚀 Starting server and opening browser...');
+
+  killPort(8080);
+  const server = runNode(SERVER_ENTRY);
+
+  const ok = await waitForServer();
+  if (ok) {
+    console.log('✅ Server is ready');
+    runScript('open', ['http://localhost:8080']);
+    console.log('🌐 Browser opened at http://localhost:8080');
+    console.log('\nPress Ctrl+C to stop the server');
+    server.on('exit', (code) => process.exit(code ?? 0));
+  } else {
+    console.error('❌ Server failed to start within 30 seconds');
+    try { server.kill('SIGTERM'); } catch (_) {}
+    process.exit(1);
+  }
+}
+
+async function main() {
+  const argv = process.argv.slice(2);
+  const cmd = argv[0] || 'start';
+  const args = argv.slice(1);
+
+  if (cmd === '-h' || cmd === '--help') {
+    printHelp();
+    return;
+  }
+
+  const commands = {
+    start: cmdStart,
+    server: cmdStart,
+    build: cmdBuild,
+    dev: cmdDev,
+    'debug-brk': cmdDebugBrk,
+    browser: cmdBrowser,
+    'test-inject': () => cmdTestInject(args[0] || 'coffee'),
+    'test-dev': () => cmdTestDev(args[0] || 'coffee'),
+    deploy: () => cmdDeploy(args[0] || 'dev'),
+    'after-agent-change': cmdAfterAgentChange,
+  };
+
+  const fn = commands[cmd];
+  if (!fn) {
+    console.error(`Unknown command: ${cmd}`);
+    printHelp();
+    process.exit(1);
+  }
+
+  await fn();
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

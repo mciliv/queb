@@ -1,0 +1,250 @@
+{
+  "title": "PubChem Taxonomy and Organism-Based Chemical Queries",
+  "description": "Access chemicals associated with specific organisms, biological pathways, and systems using PubChem's taxonomy data collections",
+  "version": "1.0.0",
+  "overview": {
+    "description": "PubChem taxonomy data collections provide biological target-based views of chemical data, allowing you to query all chemicals tested against or found in specific organisms without needing to know individual compound names",
+    "scope": "Nearly 9,000 taxa with associated bioassay data and pathway information",
+    "lastUpdated": "2021-11"
+  },
+  "access_methods": {
+    "web_ui": {
+      "description": "Access taxonomy summaries through web browser",
+      "patterns": [
+        {
+          "type": "by_taxonomy_id",
+          "pattern": "https://pubchem.ncbi.nlm.nih.gov/taxonomy/{TAXONOMY_ID}",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/taxonomy/2697049",
+          "organism": "SARS-CoV-2"
+        },
+        {
+          "type": "by_scientific_name",
+          "pattern": "https://pubchem.ncbi.nlm.nih.gov/taxonomy/{Scientific+Name}",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/taxonomy/Oryctolagus+cuniculus",
+          "organism": "Rabbit"
+        },
+        {
+          "type": "by_common_name",
+          "pattern": "https://pubchem.ncbi.nlm.nih.gov/taxonomy/{common_name}",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/taxonomy/rabbit",
+          "organism": "Rabbit"
+        }
+      ]
+    },
+    "pug_view_api": {
+      "description": "Programmatic access via PUG-View REST API",
+      "base_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view",
+      "endpoints": {
+        "taxonomy_summary": {
+          "pattern": "/data/taxonomy/{TAXONOMY_ID}/JSON",
+          "method": "GET",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/2697049/JSON",
+          "description": "Get complete taxonomy summary including all chemicals, bioassays, and pathways",
+          "response_format": "JSON"
+        },
+        "taxonomy_with_heading": {
+          "pattern": "/data/taxonomy/{TAXONOMY_ID}/JSON?heading={HEADING}",
+          "method": "GET",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/9986/JSON?heading=Names+and+Identifiers",
+          "description": "Get specific section of taxonomy data",
+          "available_headings": [
+            "Names+and+Identifiers",
+            "Related+Proteins",
+            "Related+Genes",
+            "Pathways",
+            "Bioassays",
+            "Chemicals"
+          ]
+        },
+        "protein_data": {
+          "pattern": "/data/protein/{PROTEIN_ACCESSION}/JSON",
+          "method": "GET",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/protein/P10828/JSON",
+          "description": "Get protein information and associated compounds"
+        },
+        "gene_data": {
+          "pattern": "/data/gene/{GENE_ID}/JSON",
+          "method": "GET",
+          "example": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/gene/1956/JSON",
+          "description": "Get gene information and associated compounds"
+        }
+      }
+    }
+  },
+  "taxonomy_examples": {
+    "viruses": [
+      {
+        "name": "SARS-CoV-2",
+        "scientific_name": "Severe acute respiratory syndrome coronavirus 2",
+        "taxonomy_id": 2697049,
+        "api_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/2697049/JSON",
+        "use_case": "Antiviral drug research"
+      },
+      {
+        "name": "HIV-1",
+        "scientific_name": "Human immunodeficiency virus 1",
+        "taxonomy_id": 11676,
+        "api_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/11676/JSON",
+        "use_case": "HIV treatment compounds"
+      }
+    ],
+    "model_organisms": [
+      {
+        "name": "Rabbit",
+        "scientific_name": "Oryctolagus cuniculus",
+        "taxonomy_id": 9986,
+        "api_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/9986/JSON",
+        "use_case": "Pharmacology and toxicology testing"
+      },
+      {
+        "name": "Mouse",
+        "scientific_name": "Mus musculus",
+        "taxonomy_id": 10090,
+        "api_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/10090/JSON",
+        "use_case": "Drug testing and disease models"
+      },
+      {
+        "name": "Rat",
+        "scientific_name": "Rattus norvegicus",
+        "taxonomy_id": 10116,
+        "api_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/10116/JSON",
+        "use_case": "Toxicology and pharmacology"
+      },
+      {
+        "name": "Human",
+        "scientific_name": "Homo sapiens",
+        "taxonomy_id": 9606,
+        "api_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/9606/JSON",
+        "use_case": "Human bioassays and drug targets"
+      }
+    ],
+    "bacteria": [
+      {
+        "name": "E. coli",
+        "scientific_name": "Escherichia coli",
+        "taxonomy_id": 562,
+        "api_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/562/JSON",
+        "use_case": "Antibacterial compound screening"
+      },
+      {
+        "name": "Mycobacterium tuberculosis",
+        "scientific_name": "Mycobacterium tuberculosis",
+        "taxonomy_id": 1773,
+        "api_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/1773/JSON",
+        "use_case": "Tuberculosis drug discovery"
+      }
+    ],
+    "fungi": [
+      {
+        "name": "Candida albicans",
+        "scientific_name": "Candida albicans",
+        "taxonomy_id": 5476,
+        "api_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/5476/JSON",
+        "use_case": "Antifungal drug screening"
+      }
+    ],
+    "parasites": [
+      {
+        "name": "Plasmodium falciparum",
+        "scientific_name": "Plasmodium falciparum",
+        "taxonomy_id": 5833,
+        "api_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/5833/JSON",
+        "use_case": "Antimalarial drug discovery"
+      }
+    ]
+  },
+  "data_available": {
+    "chemicals": {
+      "description": "All chemicals tested in bioassays against the organism or involved in the organism's pathways",
+      "types": [
+        "Small molecules tested in whole-organism bioassays",
+        "Compounds tested against specific proteins/genes of the organism",
+        "Pathway metabolites and intermediates"
+      ]
+    },
+    "bioassays": {
+      "description": "Biological experiments archived in PubChem BioAssay",
+      "includes": [
+        "Whole-organism bioactivities (no specific molecular target)",
+        "Target-specific assays (protein/gene targets)",
+        "Phenotypic assays",
+        "Cell-based assays"
+      ]
+    },
+    "pathways": {
+      "description": "Biological pathways associated with the organism",
+      "sources": [
+        "KEGG",
+        "Reactome",
+        "WikiPathways",
+        "BioCyc"
+      ]
+    },
+    "proteins_and_genes": {
+      "description": "Related proteins and genes with bioactivity data",
+      "includes": [
+        "Protein targets",
+        "Gene products",
+        "Drug targets",
+        "Enzymes"
+      ]
+    }
+  },
+  "rate_limits": {
+    "requests_per_second": 5,
+    "requests_per_minute": 400,
+    "max_running_time_per_minute_seconds": 300,
+    "note": "Implement exponential backoff and respect 503 Service Unavailable responses"
+  },
+  "usage_examples": {
+    "get_all_chemicals_for_organism": {
+      "description": "Retrieve all chemicals associated with SARS-CoV-2",
+      "method": "GET",
+      "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/2697049/JSON",
+      "response_includes": [
+        "Chemicals tested in antiviral assays",
+        "Viral protein inhibitors",
+        "Pathway-related compounds"
+      ]
+    },
+    "get_organism_pathways": {
+      "description": "Get pathway information for E. coli",
+      "method": "GET",
+      "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/taxonomy/562/JSON?heading=Pathways",
+      "response_includes": [
+        "Metabolic pathways",
+        "Biosynthesis pathways",
+        "Associated metabolites"
+      ]
+    },
+    "find_taxonomy_id": {
+      "description": "Look up NCBI Taxonomy ID for an organism",
+      "resource": "NCBI Taxonomy Browser",
+      "url": "https://www.ncbi.nlm.nih.gov/taxonomy",
+      "alternative": "Use organism name directly in PubChem URL"
+    }
+  },
+  "integration_with_queb": {
+    "current_state": "Queb queries individual compounds by name or SMILES",
+    "enhancement_opportunity": "Add organism-based querying to get all chemicals for a biological context",
+    "use_cases": [
+      "User enters 'SARS-CoV-2' → Get all tested antiviral compounds",
+      "User enters 'E. coli' → Get all antibacterial compounds tested",
+      "User enters 'Human' → Get all compounds with human bioactivity data"
+    ],
+    "implementation_approach": {
+      "step_1": "Detect if user input is an organism name",
+      "step_2": "Query PubChem taxonomy API with organism name or ID",
+      "step_3": "Extract chemical list from taxonomy summary",
+      "step_4": "Generate 3D structures for the chemicals",
+      "step_5": "Display in molecular viewer with context (bioassay data, pathways)"
+    }
+  },
+  "additional_resources": {
+    "ncbi_taxonomy_browser": "https://www.ncbi.nlm.nih.gov/taxonomy",
+    "pubchem_taxonomy_search": "https://pubchem.ncbi.nlm.nih.gov/taxonomy",
+    "pug_view_docs": "https://pubchem.ncbi.nlm.nih.gov/docs/pug-view",
+    "pug_rest_docs": "https://pubchem.ncbi.nlm.nih.gov/docs/pug-rest",
+    "research_paper": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9177802/"
+  }
+}
