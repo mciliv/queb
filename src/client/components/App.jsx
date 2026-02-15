@@ -846,20 +846,26 @@ const LinkSection = ({ isProcessing, setIsProcessing, onPredictionComplete }) =>
               }
             } catch (_) {}
           }
-          // Use sphere representation with proper element colors
-          // For ionic compounds like NaCl, show individual atoms clearly
-          viewer.setStyle({}, { 
-            sphere: { 
-              scale: 0.8
-            } 
-          });
+          // Ball-and-stick: atoms as small spheres, bonds as cylinders
+          // Prompt: App.jsx MoleculeViewer — chosen over space-fill so users can
+          //         see individual atoms, bond angles, and molecular geometry clearly
+          const atomCount = viewer.getModel()?.selectedAtoms?.({})?.length
+            ?? viewer.selectedAtoms?.({})?.length ?? 999;
 
-          // Fit, then back the camera off slightly to avoid being inside
-          // very small/degenerate bounding boxes (e.g., single-atom SDFs).
+          if (atomCount <= 2) {
+            // Very small molecules (e.g. single ion, diatomic) — use larger spheres
+            viewer.setStyle({}, { sphere: { scale: 0.6 } });
+          } else {
+            viewer.setStyle({}, {
+              stick: { radius: 0.12, colorscheme: 'Jmol' },
+              sphere: { scale: 0.25, colorscheme: 'Jmol' }
+            });
+          }
+
           if (typeof viewer.resize === 'function') viewer.resize();
           if (typeof viewer.zoomTo === 'function') viewer.zoomTo();
           if (typeof viewer.zoom === 'function') {
-            try { viewer.zoom(0.85); } catch (_) {}
+            try { viewer.zoom(0.8); } catch (_) {}
           }
           viewer.render();
           setStatus('loaded');
@@ -927,10 +933,6 @@ const MolecularColumn = ({ column, onRemove, showRemove = true }) => {
       console.warn('[MolecularColumn] Column.viewers is not an array', { viewers: column.viewers, type: typeof column.viewers });
     }
   }
-
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.jsx:915',message:'MolecularColumn render',data:{query:column?.query,viewerCount:Array.isArray(column?.viewers)?column.viewers.length:null,failed:!!column?.failed},timestamp:Date.now(),sessionId:'debug-display-names',runId:'names-issue',hypothesisId:'H1,H2,H3'})}).catch(()=>{});
-  // #endregion
 
   return (
     <div className="column">
@@ -1130,24 +1132,15 @@ function App() {
       const result = await analyzeText(value, lookupMode);
       const molecules = result.molecules || result.chemicals || [];
 
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.jsx:1127',message:'handleTextPrediction received result',data:{input:value,lookupMode:lookupMode,hasResult:!!result,moleculeCount:Array.isArray(molecules)?molecules.length:null,smilesCount:Array.isArray(molecules)?molecules.filter(m=>!!m?.smiles).length:null,sdfPathCount:Array.isArray(molecules)?molecules.filter(m=>!!m?.sdfPath).length:null},timestamp:Date.now(),sessionId:'debug-display-names',runId:'names-issue',hypothesisId:'H1,H3'})}).catch(()=>{});
-      // #endregion
-
       if (molecules && molecules.length > 0) {
         // Prefer precomputed SDFs with canonical names
         const precomputed = molecules.filter(m => m.sdfPath);
         if (precomputed.length > 0) {
-          const viewers = precomputed.map(m => {
-            if (isDev && !m.sdfPath) {
-              console.warn('[handleTextPrediction] Precomputed molecule missing sdfPath', { m });
-            }
-            return {
-              name: m.name || value,
-              sdfData: m.sdfPath.startsWith('file://') ? m.sdfPath : `file://${m.sdfPath}`,
-              smiles: m.smiles
-            };
-          });
+          const viewers = precomputed.map(m => ({
+            name: m.name || value,
+            sdfData: m.sdfPath.startsWith('file://') ? m.sdfPath : `file://${m.sdfPath}`,
+            smiles: m.smiles
+          }));
           updateColumn(columnId, { viewers, loading: false, failed: false });
         } else {
           // Legacy path: generate SDFs from SMILES

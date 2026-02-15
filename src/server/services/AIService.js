@@ -352,10 +352,14 @@ class AIService {
         throw new Error('Invalid @ai-sdk response: missing text field');
       }
 
-      const content = response.text.trim();
+      let content = response.text.trim();
       if (!content) {
         throw new Error('Empty response content from AI');
       }
+
+      // Strip markdown fences if the AI wrapped JSON in ```json ... ```
+      // Prompt: chemical_analysis.txt says "no markdown" but models often ignore this
+      content = content.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
 
       // Try to parse as JSON first
       try {

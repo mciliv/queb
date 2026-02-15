@@ -93,10 +93,6 @@ class Structuralizer {
   
 
   async chemicals(payload) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Structuralizer.js:96',message:'Structuralizer.chemicals called',data:{text:payload.text,lookupMode:payload.lookupMode,containsCacao:payload.text?.toLowerCase().includes('cacao')},timestamp:Date.now(),sessionId:'debug-cacao',runId:'pre-fix',hypothesisId:'A,B,C,D,E'})}).catch(()=>{});
-    // #endregion
-
     const startTime = Date.now();
 
     if (this.cache && this.config.cacheEnabled) {
@@ -111,7 +107,8 @@ class Structuralizer {
       }
     }
 
-    const result = await this._chemicals(payload.object);
+    // Pass full payload so _chemicals can destructure { object, imageBase64, ... }
+    const result = await this._chemicals(payload);
 
     if (this.cache && this.config.cacheEnabled && result) {
       const cacheKey = this._getCacheKey(payload);
@@ -157,11 +154,9 @@ class Structuralizer {
     predictionResult = await this._analyzeChemicals(objectText);
     
     // Step 3: Generate 3D structures
-    console.log('[DEBUG] About to call _generateStructures with:', predictionResult.chemicals);
     const molecules = await this._generateStructures(
       predictionResult.chemicals || []
     );
-    console.log('[DEBUG] _generateStructures returned:', molecules);
     
     return {
       object: objectText,
@@ -184,18 +179,15 @@ class Structuralizer {
     );
 
     const result = await this._callAI({
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        { role: 'system', content: 'You are a chemical analysis API. Always respond with valid JSON only, no markdown, no commentary. Be exhaustive — list every known chemical compound in the substance.' },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 16000,
       temperature: 1.0  // GPT-5 only supports temperature 1.0
     });
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Structuralizer.js:197',message:'Chemical AI result received (pre-validation)',data:{object:result?.object,chemicalCount:Array.isArray(result?.chemicals)?result.chemicals.length:null,missingSmilesCount:Array.isArray(result?.chemicals)?result.chemicals.filter(c=>!c?.smiles).length:null},timestamp:Date.now(),sessionId:'debug-cacao',runId:'post-fix',hypothesisId:'V'})}).catch(()=>{});
-    // #endregion
-
     if (!this.promptEngine.validateResponse('chemical', result)) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Structuralizer.js:203',message:'Chemical response failed validation',data:{hasObject:!!result?.object,chemicalCount:Array.isArray(result?.chemicals)?result.chemicals.length:null,missingSmilesCount:Array.isArray(result?.chemicals)?result.chemicals.filter(c=>!c?.smiles).length:null},timestamp:Date.now(),sessionId:'debug-cacao',runId:'post-fix',hypothesisId:'V'})}).catch(()=>{});
-      // #endregion
       throw new Error('Invalid chemical response from AI');
     }
 
@@ -207,22 +199,10 @@ class Structuralizer {
    * @private
    */
   async _callAI(params) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Structuralizer.js:205',message:'Structuralizer._callAI called',data:{messageCount:params.messages?.length,inputLength:params.input?.length,hasTemperature:'temperature' in params},timestamp:Date.now(),sessionId:'debug-cacao',runId:'pre-fix',hypothesisId:'B,C'})}).catch(()=>{});
-    // #endregion
-
     try {
       const result = await this.aiService.callAPI(params);
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Structuralizer.js:214',message:'Structuralizer._callAI completed',data:{hasResult:!!result,contentLength:result?.content?.length},timestamp:Date.now(),sessionId:'debug-cacao',runId:'pre-fix',hypothesisId:'B,C'})}).catch(()=>{});
-      // #endregion
-
       return result;
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Structuralizer.js:221',message:'Structuralizer._callAI error',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-cacao',runId:'pre-fix',hypothesisId:'B,C'})}).catch(()=>{});
-      // #endregion
       throw error;
     }
   }

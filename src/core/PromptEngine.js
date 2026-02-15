@@ -113,7 +113,8 @@ GUIDANCE:
     if (cleaned === '' || cleaned === 'N/A') return false;
     
     // Basic pattern validation
-    return /^[A-Za-z0-9\[\]()=+\-#@\\/.]+$/.test(cleaned);
+    // Includes % for multi-digit ring closures (e.g. %10), : for atom mapping, * for wildcards
+    return /^[A-Za-z0-9\[\]()=+\-#@\\/.%:*]+$/.test(cleaned);
   }
 
   // _getContextExamples removed: prompts now live in plain text files

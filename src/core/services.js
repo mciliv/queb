@@ -355,7 +355,7 @@ function createContainer(overrides = {}) {
   });
 
   container.register('aiService', async () => {
-    const AIService = require('../../../chat/AIService');
+    const AIService = require('../server/services/AIService');
 
     return new AIService(); // Always loads from environment variables
   }, {

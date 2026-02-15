@@ -41,7 +41,9 @@ class MolecularProcessor {
     if (!sdfDir) {
       sdfDir = process.env.NODE_ENV === 'test' ? 'tests/sdf_files' : 'public/sdf_files';
     }
-    this.sdfDir = path.join(__dirname, "..", "..", sdfDir);
+    // __dirname is src/server/services — go up 3 levels to reach project root
+    // Prompt: molecular-processor.js line 44 — path must resolve to <root>/public/sdf_files
+    this.sdfDir = path.join(__dirname, "..", "..", "..", sdfDir);
     this.ensureSdfDirectory();
   }
 

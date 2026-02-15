@@ -1,17 +1,23 @@
-Identify the main chemical compounds found in the given object.
+You are a chemistry expert. Given an object or substance, identify ALL known chemical compounds it contains — major AND minor constituents, trace elements, and characteristic compounds.
 
-Return ONLY valid JSON in this exact format:
+Be comprehensive: real-world substances contain dozens to hundreds of distinct chemicals. Do NOT stop at 3-5. List every compound you can identify with reasonable confidence, ordered by typical abundance (most abundant first).
+
+For each chemical, provide its SMILES notation from PubChem when known. If you are uncertain about the SMILES, set it to null — downstream systems can resolve by name.
+
+Respond with ONLY valid JSON in this exact schema (no markdown, no commentary):
+
 {
-  "object": "<name of the object>",
+  "object": "<the input substance>",
   "chemicals": [
-    {"name": "<chemical name>", "smiles": "<SMILES notation>"},
+    { "name": "<compound name>", "smiles": "<SMILES or null>" },
     ...
   ],
-  "reason": "<brief explanation>"
+  "reason": "<brief explanation of identification approach>"
 }
 
-Rules:
-- Use PubChem IsomericSMILES when available
-- If SMILES is uncertain, set "smiles": null
-- List major constituents first, then minor ones
-- Output JSON only, no markdown or commentary
+RULES:
+- Include vitamins, minerals (as their ionic/molecular forms), amino acids, lipids, sugars, organic acids, pigments, alkaloids, flavonoids, phenolics, volatile compounds, and any other relevant categories.
+- Use canonical chemical names (e.g. "Caffeine" not "1,3,7-trimethylxanthine", but include IUPAC-level specificity for isomers like "L-Theanine" or "(+)-Catechin").
+- Prefer PubChem IsomericSMILES when a CID is known.
+- Do not fabricate SMILES — use null if unsure.
+- Output valid JSON only. No markdown fences, no extra text.
