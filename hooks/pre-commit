@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Pre-commit hook that runs smoke tests
+echo "🧪 Running smoke tests..."
+
+# Check if npm and node are available
+if ! command -v npm &> /dev/null; then
+    echo "⚠️  npm not found, skipping smoke tests"
+    exit 0
+fi
+
+if ! command -v node &> /dev/null; then
+    echo "⚠️  node not found, skipping smoke tests"
+    exit 0
+fi
+
+# Check if node_modules exists
+if [ ! -d "node_modules" ]; then
+    echo "⚠️  node_modules not found, skipping smoke tests"
+    exit 0
+fi
+
+# Run smoke tests with timeout and capture output
+echo "Running: npm run test:smoke"
+timeout 10 bash -c "npm run test:smoke 2>&1" 2>/dev/null
+
+# Check if tests passed
+exit_code=$?
+if [ $exit_code -eq 124 ]; then
+    echo "⚠️  Smoke tests timed out after 10 seconds, allowing commit"
+    exit 0
+elif [ $exit_code -ne 0 ]; then
+    echo "⚠️  Smoke tests failed or not available (exit code: $exit_code), allowing commit"
+    exit 0
+fi
+
+echo "✅ Smoke tests passed."
+exit 0

@@ -1,0 +1,209 @@
+# Example GitHub Actions workflow for the refactored test suite
+# Copy this to .github/workflows/test.yml
+
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run unit tests
+      run: npm run test:unit -- --ci --coverage
+      env:
+        CI: true
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./tests/coverage/unit/lcov.info
+        flags: unit
+        name: unit-tests-${{ matrix.node-version }}
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: unit-test-results-${{ matrix.node-version }}
+        path: tests/reports/unit/junit.xml
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Setup test environment
+      run: |
+        cp .env.example .env.test
+        echo "DATABASE_URL=postgresql://postgres:testpass@localhost:5432/testdb" >> .env.test
+    
+    - name: Run integration tests
+      run: npm run test:integration -- --ci
+      env:
+        CI: true
+        NODE_ENV: test
+        TEST_DATABASE_URL: postgresql://postgres:testpass@localhost:5432/testdb
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: integration-test-results
+        path: tests/reports/integration/junit.xml
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        npx playwright install chromium
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Run E2E tests
+      run: |
+        npm start &
+        sleep 10
+        npm run test:e2e -- --ci
+      env:
+        CI: true
+        HEADLESS: true
+        BASE_URL: http://localhost:8080
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: e2e-test-results
+        path: |
+          tests/reports/e2e/junit.xml
+          tests/screenshots/failures/
+    
+    - name: Upload screenshots on failure
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: e2e-failure-screenshots
+        path: tests/screenshots/failures/
+
+  visual-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        npm install -D jest-image-snapshot pixelmatch pngjs
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Run visual regression tests
+      run: |
+        npm start &
+        sleep 10
+        npm run test:visual -- --ci
+      env:
+        CI: true
+        UPDATE_SNAPSHOTS: false
+        VISUAL_REGRESSION_THRESHOLD: 0.01
+    
+    - name: Upload diff images on failure
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: visual-diff-images
+        path: tests/__snapshots__/diff/
+
+  test-summary:
+    needs: [unit-tests, integration-tests, e2e-tests, visual-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Download all test results
+      uses: actions/download-artifact@v3
+    
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: |
+          **/junit.xml
+        check_name: Test Results
+        comment_mode: failures
+    
+    - name: Check test status
+      run: |
+        if [ "${{ needs.unit-tests.result }}" != "success" ] || \
+           [ "${{ needs.integration-tests.result }}" != "success" ] || \
+           [ "${{ needs.e2e-tests.result }}" != "success" ] || \
+           [ "${{ needs.visual-tests.result }}" != "success" ]; then
+          echo "One or more test suites failed"
+          exit 1
+        fi
+        echo "All tests passed!"

@@ -1,0 +1,29 @@
+{
+  "testName": "coffee",
+  "timestamp": "2025-10-23T09:17:53.387Z",
+  "object": "coffee",
+  "chemicals": [
+    {
+      "name": "caffeine",
+      "sdfPath": "/sdf_files/caffeine_mock.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/caffeine_mock.sdf"
+    },
+    {
+      "name": "water",
+      "sdfPath": "/sdf_files/water_mock.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/water_mock.sdf"
+    },
+    {
+      "name": "chlorogenic acid",
+      "sdfPath": "/sdf_files/chlorogenic_acid_mock.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/chlorogenic_acid_mock.sdf"
+    }
+  ],
+  "metadata": {
+    "totalMolecules": 3,
+    "successfulSdfs": 3
+  }
+}

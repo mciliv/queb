@@ -1,0 +1,22 @@
+[server]
+port = 8080
+
+[openai]
+model = "gpt-5"
+timeout = 30000
+
+[database]
+enabled = false
+host = "localhost"
+port = 5432
+name = "mol_users"
+user = "mol_user"
+
+[ssl]
+httpsPort = 3001
+
+
+
+
+
+

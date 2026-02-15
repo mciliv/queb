@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Debug Pipeline Procedure
+# Maximum visibility, comprehensive logging, debug mode
+
+echo "🔍 Debug Pipeline Starting..."
+echo "=============================="
+
+# Check dependencies
+echo "📦 Checking dependencies..."
+npm list --depth=0 | grep -E "(openai|express|cors|livereload)" || {
+    echo "❌ Missing dependencies. Run: npm install"
+    exit 1
+}
+
+# Clean processes and ports
+pkill -f "node.*server.js" 2>/dev/null || true
+lsof -ti:35730 | xargs kill -9 2>/dev/null || true
+lsof -ti:35729 | xargs kill -9 2>/dev/null || true
+
+echo ""
+echo "🔧 Starting debug mode with:"
+echo "   • Maximum error visibility"
+echo "   • VS Code debugger attached"  
+echo "   • Live reload active"
+echo "   • All logs visible"
+echo ""
+
+exec ./dev-debug 

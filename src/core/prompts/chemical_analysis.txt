@@ -1,0 +1,17 @@
+Identify the main chemical compounds found in the given object.
+
+Return ONLY valid JSON in this exact format:
+{
+  "object": "<name of the object>",
+  "chemicals": [
+    {"name": "<chemical name>", "smiles": "<SMILES notation>"},
+    ...
+  ],
+  "reason": "<brief explanation>"
+}
+
+Rules:
+- Use PubChem IsomericSMILES when available
+- If SMILES is uncertain, set "smiles": null
+- List major constituents first, then minor ones
+- Output JSON only, no markdown or commentary

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /sdf_files/
+Disallow: /components/
+Disallow: *.log
+
+Sitemap: /sitemap.xml 

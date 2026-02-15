@@ -1,0 +1,7 @@
+flowchart LR
+  FW[File Watcher src/*] --> DS[DevServer Smart Logic] --> CDP[Chrome CDP Auto reload]
+  CC[Change Category frontend/backend/config/mixed] --> RS[Reload Strategy soft/page/hard/full]
+  RS --> BA[Browser Action refresh/reload/cache clear]
+  FW -. detects changes .-> CC
+  DS -. decides strategy .-> RS
+  CDP -. executes .-> BA

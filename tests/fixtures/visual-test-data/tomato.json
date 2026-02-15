@@ -1,0 +1,210 @@
+{
+  "testName": "tomato",
+  "timestamp": "2025-10-31T08:34:00.000Z",
+  "object": "tomato",
+  "chemicals": [
+    {
+      "name": "Lycopene",
+      "sdfPath": "/sdf_files/lycopene.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/lycopene.sdf",
+      "pubchem": {
+        "cid": 446925,
+        "formula": "C40H56",
+        "weight": 536.9,
+        "smiles": "CC(=CCCC(=CC=CC(=CC=CC(=CC=CC=C(C)C=CC=C(C)C=CC=C(C)CCC=C(C)C)C)C)C)C",
+        "inchikey": "OAIJSZIZWZSQBC-GYZMGTAESA-N"
+      }
+    },
+    {
+      "name": "Beta-carotene",
+      "sdfPath": "/sdf_files/beta_carotene.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/beta_carotene.sdf",
+      "pubchem": {
+        "cid": 5280489,
+        "formula": "C40H56",
+        "weight": 536.9,
+        "smiles": "CC1=C(C(CCC1)(C)C)/C=C/C(=C/C=C/C(=C/C=C/C=C(/C=C/C=C(/C=C/C2=C(CCCC2(C)C)C)\\C)\\C)/C)/C",
+        "inchikey": "OENHQHLEOONYIE-JLTXGRSLSA-N"
+      }
+    },
+    {
+      "name": "Ascorbic acid",
+      "sdfPath": "/sdf_files/ascorbic_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/ascorbic_acid.sdf"
+    },
+    {
+      "name": "Citric acid",
+      "sdfPath": "/sdf_files/citric_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/citric_acid.sdf",
+      "pubchem": {
+        "cid": 311,
+        "formula": "C6H8O7",
+        "weight": 192.12,
+        "smiles": "C(C(=O)O)C(CC(=O)O)(C(=O)O)O",
+        "inchikey": "KRKNYBCHXYNGOX-UHFFFAOYSA-N"
+      }
+    },
+    {
+      "name": "Malic acid",
+      "sdfPath": "/sdf_files/malic_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/malic_acid.sdf",
+      "pubchem": {
+        "cid": 525,
+        "formula": "C4H6O5",
+        "weight": 134.09,
+        "smiles": "C(C(C(=O)O)O)C(=O)O",
+        "inchikey": "BJEPYKJPYRNKOW-UHFFFAOYSA-N"
+      }
+    },
+    {
+      "name": "Glutamic acid",
+      "sdfPath": "/sdf_files/glutamic_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/glutamic_acid.sdf",
+      "pubchem": {
+        "cid": 33032,
+        "formula": "C5H9NO4",
+        "weight": 147.13,
+        "smiles": "C(CC(=O)O)C(C(=O)O)N",
+        "inchikey": "WHUUTDBJXJRKMK-VKHMYHEASA-N"
+      }
+    },
+    {
+      "name": "Fructose",
+      "sdfPath": "/sdf_files/fructose.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/fructose.sdf",
+      "pubchem": {
+        "cid": 2723872,
+        "formula": "C6H12O6",
+        "weight": 180.16,
+        "smiles": "C1C(C(C(C(O1)(CO)O)O)O)O",
+        "inchikey": "LKDRXBCSQODPBY-VRPWFDPXSA-N"
+      }
+    },
+    {
+      "name": "Glucose",
+      "sdfPath": "/sdf_files/glucose.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/glucose.sdf",
+      "pubchem": {
+        "cid": 5793,
+        "formula": "C6H12O6",
+        "weight": 180.16,
+        "smiles": "C(C1C(C(C(C(O1)O)O)O)O)O",
+        "inchikey": "WQZGKKKJIJFFOK-GASJEMHNSA-N"
+      }
+    },
+    {
+      "name": "Water",
+      "sdfPath": "/sdf_files/water.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/water.sdf"
+    },
+    {
+      "name": "Quercetin",
+      "sdfPath": "/sdf_files/quercetin.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/quercetin.sdf"
+    },
+    {
+      "name": "Kaempferol",
+      "sdfPath": "/sdf_files/kaempferol.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/kaempferol.sdf"
+    },
+    {
+      "name": "Naringenin",
+      "sdfPath": "/sdf_files/naringenin.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/naringenin.sdf"
+    },
+    {
+      "name": "Chlorogenic acid",
+      "sdfPath": "/sdf_files/chlorogenic_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/chlorogenic_acid.sdf"
+    },
+    {
+      "name": "Caffeic acid",
+      "sdfPath": "/sdf_files/caffeic_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/caffeic_acid.sdf"
+    },
+    {
+      "name": "Ferulic acid",
+      "sdfPath": "/sdf_files/ferulic_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/ferulic_acid.sdf"
+    },
+    {
+      "name": "Alpha-tocopherol",
+      "sdfPath": "/sdf_files/alpha_tocopherol.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/alpha_tocopherol.sdf"
+    },
+    {
+      "name": "Lutein",
+      "sdfPath": "/sdf_files/lutein.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/lutein.sdf"
+    },
+    {
+      "name": "Zeaxanthin",
+      "sdfPath": "/sdf_files/zeaxanthin.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/zeaxanthin.sdf"
+    },
+    {
+      "name": "Phytoene",
+      "sdfPath": "/sdf_files/phytoene.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/phytoene.sdf"
+    },
+    {
+      "name": "Phytofluene",
+      "sdfPath": "/sdf_files/phytofluene.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/phytofluene.sdf"
+    },
+    {
+      "name": "Linoleic acid",
+      "sdfPath": "/sdf_files/linoleic_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/linoleic_acid.sdf"
+    },
+    {
+      "name": "Oleic acid",
+      "sdfPath": "/sdf_files/oleic_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/oleic_acid.sdf"
+    },
+    {
+      "name": "Palmitic acid",
+      "sdfPath": "/sdf_files/palmitic_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/palmitic_acid.sdf"
+    },
+    {
+      "name": "Stearic acid",
+      "sdfPath": "/sdf_files/stearic_acid.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/stearic_acid.sdf"
+    },
+    {
+      "name": "Tomatine",
+      "sdfPath": "/sdf_files/tomatine.sdf",
+      "status": "ok",
+      "sdfUrl": "/sdf_files/tomatine.sdf"
+    }
+  ],
+  "metadata": {
+    "totalMolecules": 25,
+    "successfulSdfs": 25
+  }
+}

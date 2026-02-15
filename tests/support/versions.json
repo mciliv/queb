@@ -1,0 +1,276 @@
+{
+  "versions": {
+    "v0.0.0-c588-c37e3275": {
+      "name": "v0.0.0-c588-c37e3275",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:32.145Z",
+      "description": "Add systematic version management with diff comparison system",
+      "ports": {
+        "http": 3450,
+        "https": 3451,
+        "debug": 9275,
+        "chrome": 9345,
+        "test": 3452
+      },
+      "testResults": {},
+      "auto": true,
+      "versionType": "minor",
+      "useCommitNumber": false,
+      "useSemantic": false
+    },
+    "c588-c37e327": {
+      "name": "c588-c37e327",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:41.315Z",
+      "description": "Add systematic version management with diff comparison system",
+      "ports": {
+        "http": 3210,
+        "https": 3211,
+        "debug": 9251,
+        "chrome": 9321,
+        "test": 3212
+      },
+      "testResults": {},
+      "auto": true,
+      "fromHistory": true,
+      "historyIndex": 0,
+      "versionType": "minor"
+    },
+    "c587-9927074": {
+      "name": "c587-9927074",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:41.740Z",
+      "description": "Add parallel version testing using existing high port infrastructure",
+      "ports": {
+        "http": 3080,
+        "https": 3081,
+        "debug": 9238,
+        "chrome": 9308,
+        "test": 3082
+      },
+      "testResults": {},
+      "auto": true,
+      "fromHistory": true,
+      "historyIndex": 1,
+      "versionType": "minor"
+    },
+    "c586-58eb0d9": {
+      "name": "c586-58eb0d9",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:42.530Z",
+      "description": "Fix React app styling and DOM errors",
+      "ports": {
+        "http": 3600,
+        "https": 3601,
+        "debug": 9240,
+        "chrome": 9310,
+        "test": 3602
+      },
+      "testResults": {},
+      "auto": true,
+      "fromHistory": true,
+      "historyIndex": 2,
+      "versionType": "patch"
+    },
+    "c576-9780c75": {
+      "name": "c576-9780c75",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:43.806Z",
+      "description": "feat: programmatic name→SMILES via PubChem (endpoint /name-to-smiles and AtomPredictor helper)",
+      "ports": {
+        "http": 3410,
+        "https": 3411,
+        "debug": 9271,
+        "chrome": 9341,
+        "test": 3412
+      },
+      "testResults": {},
+      "auto": true,
+      "majorVersion": true,
+      "versionType": "minor"
+    },
+    "c567-f4506fc": {
+      "name": "c567-f4506fc",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:44.858Z",
+      "description": "feat: names-only → SDF pipeline (PubChem CID SDF preferred, fallback to SMILES→RDKit) and wire into analyzeText",
+      "ports": {
+        "http": 3760,
+        "https": 3761,
+        "debug": 9256,
+        "chrome": 9326,
+        "test": 3762
+      },
+      "testResults": {},
+      "auto": true,
+      "majorVersion": true,
+      "versionType": "minor"
+    },
+    "c545-a363691": {
+      "name": "c545-a363691",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:45.827Z",
+      "description": "feature: add modern floating keyboard hint badge",
+      "ports": {
+        "http": 3470,
+        "https": 3471,
+        "debug": 9277,
+        "chrome": 9347,
+        "test": 3472
+      },
+      "testResults": {},
+      "auto": true,
+      "majorVersion": true,
+      "versionType": "minor"
+    },
+    "c544-cd9635e": {
+      "name": "c544-cd9635e",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:46.689Z",
+      "description": "fix: restore Command-K UI hint in placeholder",
+      "ports": {
+        "http": 3380,
+        "https": 3381,
+        "debug": 9268,
+        "chrome": 9338,
+        "test": 3382
+      },
+      "testResults": {},
+      "auto": true,
+      "majorVersion": true,
+      "versionType": "patch"
+    },
+    "c542-4642b24": {
+      "name": "c542-4642b24",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:47.524Z",
+      "description": "feature: add settings with column behavior toggle",
+      "ports": {
+        "http": 3450,
+        "https": 3451,
+        "debug": 9275,
+        "chrome": 9345,
+        "test": 3452
+      },
+      "testResults": {},
+      "auto": true,
+      "majorVersion": true,
+      "versionType": "minor"
+    },
+    "c532-70b718b": {
+      "name": "c532-70b718b",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:48.412Z",
+      "description": "feat: add feedback system for failed analyses",
+      "ports": {
+        "http": 3610,
+        "https": 3611,
+        "debug": 9241,
+        "chrome": 9311,
+        "test": 3612
+      },
+      "testResults": {},
+      "auto": true,
+      "majorVersion": true,
+      "versionType": "minor"
+    },
+    "c517-e6c0787": {
+      "name": "c517-e6c0787",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:49.091Z",
+      "description": "adding columns to right; breaking; visual test w multi-molecule objects",
+      "ports": {
+        "http": 3730,
+        "https": 3731,
+        "debug": 9253,
+        "chrome": 9323,
+        "test": 3732
+      },
+      "testResults": {},
+      "auto": true,
+      "majorVersion": true,
+      "versionType": "major"
+    },
+    "c450-f2bce20": {
+      "name": "c450-f2bce20",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:49.657Z",
+      "description": "feat: Break up monolithic index.html into modular components",
+      "ports": {
+        "http": 3290,
+        "https": 3291,
+        "debug": 9259,
+        "chrome": 9329,
+        "test": 3292
+      },
+      "testResults": {},
+      "auto": true,
+      "majorVersion": true,
+      "versionType": "minor"
+    },
+    "c402-194c41e": {
+      "name": "c402-194c41e",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:50.471Z",
+      "description": "Fix major test issues",
+      "ports": {
+        "http": 3850,
+        "https": 3851,
+        "debug": 9265,
+        "chrome": 9335,
+        "test": 3852
+      },
+      "testResults": {},
+      "auto": true,
+      "majorVersion": true,
+      "versionType": "major"
+    },
+    "c381-13774d6": {
+      "name": "c381-13774d6",
+      "gitCommit": "c37e3275e75fe43d5f93c14789a5e224fac1c0c0",
+      "gitBranch": "main",
+      "gitTag": "no-tags",
+      "timestamp": "2025-08-18T16:45:53.033Z",
+      "description": "Add comprehensive usage guide for UI Context Automation",
+      "ports": {
+        "http": 3840,
+        "https": 3841,
+        "debug": 9264,
+        "chrome": 9334,
+        "test": 3842
+      },
+      "testResults": {},
+      "auto": true,
+      "majorVersion": true,
+      "versionType": "minor"
+    }
+  },
+  "currentVersion": "main",
+  "lastUpdated": "2025-08-18T16:45:53.033Z"
+}

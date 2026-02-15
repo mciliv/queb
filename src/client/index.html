@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="description" content="{{DESCRIPTION}}" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="{{TITLE}}" />
+    <meta property="og:description" content="{{DESCRIPTION}}" />
+    <meta property="og:image" content="{{OG_IMAGE}}" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="{{TITLE}}" />
+    <meta name="twitter:description" content="{{DESCRIPTION}}" />
+
+    <link rel="canonical" href="{{CANONICAL}}" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <title>{{TITLE}}</title>
+    <link rel="stylesheet" href="/assets/style.css?v={{CACHE_BUST}}" />
+    <style>
+      /* Critical paint: ensure full-bleed black on first render */
+      html, body, #root { margin:0; padding:0; background:#000; height:100%; width:100%; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="/dist/bundle.js?v={{CACHE_BUST}}" defer></script>
+    <script>
+
+      // Development/Production Setup - Chrome auto-reload in dev, PWA in production
+      const isDevelopment = window.location.hostname === 'localhost' ||
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.hostname.includes('192.168.') ||
+                           window.location.hostname.includes('172.');
+
+      if (isDevelopment) {
+        // Development mode - Chrome DevTools handles reloading
+        console.log('👨‍💻 Development mode: Chrome auto-reload active');
+
+      } else {
+        // Production: Enable Service Worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js?v={{CACHE_BUST}}')
+              .catch(() => {
+                // Silent failure in production
+              });
+          });
+        }
+      }
+    </script>
+  </body>
+</html>
