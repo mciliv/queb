@@ -1,0 +1,2 @@
+smiles generation failing for cases: "CCCCCCCC/C=C\\CCCCCCCC(=O)O... - SMILES generation failed"
+whenever logging, include link to line

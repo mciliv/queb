@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+require "optparse"
+require "json"
+require_relative "../lib/ingredient_delivery"
+
+options = {
+  limit: 5,
+  ingredients_path: File.expand_path("../data/ingredients.json", __dir__),
+  cities_path: File.expand_path("../data/cities.json", __dir__)
+}
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: ingredient_delivery --city CITY [--limit N]"
+  parser.on("--city CITY", "City name (ex: \"San Francisco\")") { |city| options[:city] = city }
+  parser.on("--lat LAT", Float, "Latitude (ex: 37.77)") { |lat| options[:lat] = lat }
+  parser.on("--lng LNG", Float, "Longitude (ex: -122.41)") { |lng| options[:lng] = lng }
+  parser.on("--limit N", Integer, "Number of results (default: 5)") { |limit| options[:limit] = limit }
+  parser.on("--ingredients PATH", "Path to ingredients JSON data") { |path| options[:ingredients_path] = path }
+  parser.on("--cities PATH", "Path to cities JSON data") { |path| options[:cities_path] = path }
+  parser.on("-h", "--help", "Show help") do
+    puts parser
+    exit 0
+  end
+end.parse!
+
+catalog = IngredientDelivery.load_catalog(data_path: options[:ingredients_path])
+city_index = IngredientDelivery.load_city_index(data_path: options[:cities_path])
+matcher = IngredientDelivery::Matcher.new(catalog: catalog, city_index: city_index)
+
+results =
+  if options[:city]
+    matcher.best_for_city(options[:city], limit: options[:limit])
+  elsif options[:lat] && options[:lng]
+    matcher.best_for_location(lat: options[:lat], lng: options[:lng], limit: options[:limit])
+  else
+    raise ArgumentError, "Provide --city or --lat/--lng to find ingredients."
+  end
+
+puts JSON.pretty_generate(results)

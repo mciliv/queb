@@ -40,7 +40,7 @@ async function createApp({ config, logger, container }) {
         .replace(/\{\{TITLE\}\}/g, 'Queb - Molecular Analysis')
         .replace(/\{\{DESCRIPTION\}\}/g, '3D visualization of chemical contents by camera or text input.')
         .replace(/\{\{CANONICAL\}\}/g, `${baseUrl}${req.path}`)
-        .replace(/\{\{OG_IMAGE\}\}/g, '/images/favicon.svg')
+        .replace(/\{\{OG_IMAGE\}\}/g, '/assets/favicon.svg')
         .replace(/\{\{CACHE_BUST\}\}/g, cacheBust);
 
       res.type('html').send(htmlContent);
@@ -149,9 +149,16 @@ async function createApp({ config, logger, container }) {
 
   // Error handling middleware
   app.use(async (err, req, res, next) => {
-    // Respect HTTP status code from http-errors (defaults to 500)
     const status = err.status || err.statusCode || 500;
 
+    // Don't log 404s for common browser asset requests
+    if (status === 404) {
+      const isAssetRequest = /^\/(favicon\.ico|apple-touch-icon.*\.png|images\/favicon\.svg)$/.test(req.path);
+      if (isAssetRequest) {
+        return res.sendStatus(404);
+      }
+    }
+    
     // If error already has structured properties (from ErrorHandler), use them
     // Otherwise, handle the raw error
     let handled;

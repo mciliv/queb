@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const dotenv = require('dotenv');
+
 const { log, warn, error } = require('./logger');
 
 // ===== Environment Loading =====
@@ -23,39 +23,17 @@ if (!global.__QUEB_ENV_LOADED__) {
  * 4. Warn about missing critical environment variables
  */
 function loadEnvironmentVariables() {
-  // Detect if running in cloud/production environment
-  const isCloudEnvironment = detectCloudEnvironment();
-
-  if (isCloudEnvironment) {
+  const isCloudEnv = detectCloudEnvironment();
+  if (isCloudEnv) {
     log('🏭 Running in production/cloud environment - using SHELL ENVIRONMENT variables only');
-    return;
+  } else {
+    log('🏠 Running in local development - using variables from SHELL ENVIRONMENT');
   }
 
-  // Load .env for local development (shell environment variables take priority)
-  log('🏠 Running in local development - SHELL ENVIRONMENT takes priority, .env file provides fallbacks');
-  const envFilePath = findEnvFilePath();
-
-  if (!fs.existsSync(envFilePath)) {
-    warn('⚠️  .env file not found', { envFilePath });
-    warn('   Create .env file with required variables:');
-    warn('   OPENAI_API_KEY=sk-...');
-    warn('   OPENAI_MODEL=gpt-4');
-    warn('   See .env.example for full list');
-    return;
-  }
-
-  log('📄 Loading environment variables', { envFilePath });
-  const result = dotenv.config({ path: envFilePath, override: false });
-
-  if (result.error) {
-    error('❌ Error loading .env file', result.error);
-    return;
-  }
-
-  // Load hotel admin key if file exists
+  // Load hotel admin key (if it exists)
   loadHotelAdminKey();
 
-  // Validate critical environment variables after loading
+  // Final validation and report
   validateCriticalEnvironmentVariables();
 }
 
@@ -133,29 +111,28 @@ function findProjectRoot() {
 /**
  * Validate that critical environment variables are present after loading.
  */
-function validateCriticalEnvironmentVariables() {
+function validateCriticalEnvironmentVariables(options = {}) {
+  const { quiet = false } = options;
   const criticalVars = [
     { key: 'OPENAI_API_KEY', description: 'OpenAI API key for AI services' },
     { key: 'OPENAI_MODEL', description: 'OpenAI model name (e.g., gpt-4)' }
   ];
 
-  let missingVars = [];
-
-  for (const { key, description } of criticalVars) {
-    if (!process.env[key]) {
-      missingVars.push({ key, description });
-    }
-  }
+  const missingVars = criticalVars.filter(v => !process.env[v.key]);
 
   if (missingVars.length > 0) {
-    warn('⚠️  Missing critical environment variables in .env', { missingVars });
-    for (const { key, description } of missingVars) {
-      warn(`   - ${key}: ${description}`);
+    if (!quiet) {
+      warn('⚠️  Missing critical environment variables.');
+      missingVars.forEach(v => warn(`   - ${v.key}: ${v.description}`));
+      warn('   Please provide them in your shell environment.');
     }
-    warn('   Add these to your .env file');
-  } else {
+    return false;
+  }
+
+  if (!quiet) {
     log('✅ All critical environment variables loaded successfully');
   }
+  return true;
 }
 
 // ===== Helpers =====

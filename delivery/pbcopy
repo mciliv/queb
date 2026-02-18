@@ -1,0 +1,195 @@
+#!/usr/bin/env ruby
+
+require "optparse"
+require "json"
+require_relative "../lib/ingredient_delivery"
+
+options = {
+  limit: 5,
+  ingredients_path: File.expand_path("../data/ingredients.json", __dir__),
+  cities_path: File.expand_path("../data/cities.json", __dir__)
+}
+
+OptionParser.new do |parser|
+  parser.banner = "Usage: ingredient_delivery --city CITY [--limit N]"
+  parser.on("--city CITY", "City name (ex: \"San Francisco\")") { |city| options[:city] = city }
+  parser.on("--lat LAT", Float, "Latitude (ex: 37.77)") { |lat| options[:lat] = lat }
+  parser.on("--lng LNG", Float, "Longitude (ex: -122.41)") { |lng| options[:lng] = lng }
+  parser.on("--limit N", Integer, "Number of results (default: 5)") { |limit| options[:limit] = limit }
+  parser.on("--ingredients PATH", "Path to ingredients JSON data") { |path| options[:ingredients_path] = path }
+  parser.on("--cities PATH", "Path to cities JSON data") { |path| options[:cities_path] = path }
+  parser.on("-h", "--help", "Show help") do
+    puts parser
+    exit 0
+  end
+end.parse!
+
+catalog = IngredientDelivery.load_catalog(data_path: options[:ingredients_path])
+city_index = IngredientDelivery.load_city_index(data_path: options[:cities_path])
+matcher = IngredientDelivery::Matcher.new(catalog: catalog, city_index: city_index)
+
+results =
+  if options[:city]
+    matcher.best_for_city(options[:city], limit: options[:limit])
+  elsif options[:lat] && options[:lng]
+    matcher.best_for_location(lat: options[:lat], lng: options[:lng], limit: options[:limit])
+  else
+    raise ArgumentError, "Provide --city or --lat/--lng to find ingredients."
+  end
+
+puts JSON.pretty_generate(results)
+[
+  { "name": "San Francisco", "lat": 37.7749, "lng": -122.4194 },
+  { "name": "New York", "lat": 40.7128, "lng": -74.006 },
+  { "name": "Chicago", "lat": 41.8781, "lng": -87.6298 },
+  { "name": "Austin", "lat": 30.2672, "lng": -97.7431 },
+  { "name": "Seattle", "lat": 47.6062, "lng": -122.3321 }
+]
+[
+  {
+    "name": "Heirloom Tomatoes",
+    "category": "produce",
+    "supplier": "Bay Farm Co-op",
+    "quality_score": 96,
+    "supplier_rating": 94,
+    "freshness_hours": 8,
+    "lat": 37.7749,
+    "lng": -122.4194
+  },
+  {
+    "name": "Wildflower Honey",
+    "category": "pantry",
+    "supplier": "Sonoma Apiaries",
+    "quality_score": 93,
+    "supplier_rating": 92,
+    "freshness_hours": 24,
+    "lat": 38.2919,
+    "lng": -122.458
+  },
+  {
+    "name": "Grass-Fed Butter",
+    "category": "dairy",
+    "supplier": "Marin Creamery",
+    "quality_score": 95,
+    "supplier_rating": 90,
+    "freshness_hours": 14,
+    "lat": 37.906,
+    "lng": -122.544
+  },
+  {
+    "name": "Baby Spinach",
+    "category": "produce",
+    "supplier": "Hudson Greenhouses",
+    "quality_score": 92,
+    "supplier_rating": 91,
+    "freshness_hours": 10,
+    "lat": 40.9176,
+    "lng": -73.791
+  },
+  {
+    "name": "Artisan Sourdough",
+    "category": "bakery",
+    "supplier": "Brooklyn Oven",
+    "quality_score": 94,
+    "supplier_rating": 95,
+    "freshness_hours": 6,
+    "lat": 40.6782,
+    "lng": -73.9442
+  },
+  {
+    "name": "Aged Parmesan",
+    "category": "dairy",
+    "supplier": "Riverside Cellars",
+    "quality_score": 97,
+    "supplier_rating": 93,
+    "freshness_hours": 48,
+    "lat": 41.8781,
+    "lng": -87.6298
+  },
+  {
+    "name": "Cold-Pressed Olive Oil",
+    "category": "pantry",
+    "supplier": "Hill Country Press",
+    "quality_score": 91,
+    "supplier_rating": 90,
+    "freshness_hours": 36,
+    "lat": 30.2672,
+    "lng": -97.7431
+  },
+  {
+    "name": "Line-Caught Salmon",
+    "category": "seafood",
+    "supplier": "Puget Sound Fisheries",
+    "quality_score": 98,
+    "supplier_rating": 96,
+    "freshness_hours": 5,
+    "lat": 47.6062,
+    "lng": -122.3321
+  },
+  {
+    "name": "Organic Lemons",
+    "category": "produce",
+    "supplier": "Central Valley Orchards",
+    "quality_score": 90,
+    "supplier_rating": 88,
+    "freshness_hours": 18,
+    "lat": 36.7378,
+    "lng": -119.7871
+  },
+  {
+    "name": "Single-Origin Dark Chocolate",
+    "category": "pantry",
+    "supplier": "Mission District Chocolatiers",
+    "quality_score": 95,
+    "supplier_rating": 94,
+    "freshness_hours": 72,
+    "lat": 37.7599,
+    "lng": -122.4148
+  }
+]
+require "json"
+require_relative "ingredient_delivery/catalog"
+require_relative "ingredient_delivery/city_index"
+require_relative "ingredient_delivery/location"
+require_relative "ingredient_delivery/matcher"
+
+module IngredientDelivery
+  def self.load_catalog(data_path:)
+    Catalog.new(data_path: data_path)
+  end
+
+  def self.load_city_index(data_path:)
+    CityIndex.new(data_path: data_path)
+  end
+end
+require "minitest/autorun"
+require_relative "../lib/ingredient_delivery"
+
+class IngredientDeliveryTest < Minitest::Test
+  def setup
+    data_root = File.expand_path("../data", __dir__)
+    @catalog = IngredientDelivery.load_catalog(data_path: File.join(data_root, "ingredients.json"))
+    @city_index = IngredientDelivery.load_city_index(data_path: File.join(data_root, "cities.json"))
+    @matcher = IngredientDelivery::Matcher.new(catalog: @catalog, city_index: @city_index)
+  end
+
+  def test_best_for_city_returns_limited_results
+    results = @matcher.best_for_city("San Francisco", limit: 3)
+
+    assert_equal 3, results.length
+    assert results.all? { |entry| entry[:user_location][:name] == "San Francisco" }
+  end
+
+  def test_results_are_sorted_by_score_desc
+    results = @matcher.best_for_city("Seattle", limit: 5)
+    scores = results.map { |entry| entry[:score] }
+
+    assert_equal scores.sort.reverse, scores
+  end
+
+  def test_best_for_location_includes_delivery_focus
+    results = @matcher.best_for_location(lat: 40.7128, lng: -74.006, limit: 2)
+
+    assert results.all? { |entry| entry[:delivery_focus] == "highest_quality" }
+  end
+end

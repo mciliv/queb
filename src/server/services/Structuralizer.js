@@ -249,7 +249,7 @@ class Structuralizer {
       } catch (error) {
         this.logger.warn('Failed to generate structure', {
           chemical: chemical.name,
-          error: error.message
+          error: error
         });
         
         results.push({

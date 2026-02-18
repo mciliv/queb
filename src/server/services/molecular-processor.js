@@ -173,7 +173,9 @@ class MolecularProcessor {
 
   async generateSmilesSDF(chemical) {
     // First try local Python generator to satisfy unit tests expectations
-    const pythonScript = path.join(__dirname, "python", "sdf.py");
+    // Prompt: fix broken script path used by subprocess spawn()
+    // `__dirname` is `src/server/services`, and the actual script lives at `src/server/sdf.py`.
+    const pythonScript = path.join(__dirname, "..", "sdf.py");
     const args = [pythonScript, chemical, "--dir", this.sdfDir];
     const spawnOptions = { stdio: "pipe" };
     const { spawn } = require("child_process");

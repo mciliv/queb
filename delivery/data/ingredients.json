@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Heirloom Tomatoes",
+    "category": "produce",
+    "supplier": "Bay Farm Co-op",
+    "quality_score": 96,
+    "supplier_rating": 94,
+    "freshness_hours": 8,
+    "lat": 37.7749,
+    "lng": -122.4194
+  },
+  {
+    "name": "Wildflower Honey",
+    "category": "pantry",
+    "supplier": "Sonoma Apiaries",
+    "quality_score": 93,
+    "supplier_rating": 92,
+    "freshness_hours": 24,
+    "lat": 38.2919,
+    "lng": -122.458
+  },
+  {
+    "name": "Grass-Fed Butter",
+    "category": "dairy",
+    "supplier": "Marin Creamery",
+    "quality_score": 95,
+    "supplier_rating": 90,
+    "freshness_hours": 14,
+    "lat": 37.906,
+    "lng": -122.544
+  },
+  {
+    "name": "Baby Spinach",
+    "category": "produce",
+    "supplier": "Hudson Greenhouses",
+    "quality_score": 92,
+    "supplier_rating": 91,
+    "freshness_hours": 10,
+    "lat": 40.9176,
+    "lng": -73.791
+  },
+  {
+    "name": "Artisan Sourdough",
+    "category": "bakery",
+    "supplier": "Brooklyn Oven",
+    "quality_score": 94,
+    "supplier_rating": 95,
+    "freshness_hours": 6,
+    "lat": 40.6782,
+    "lng": -73.9442
+  },
+  {
+    "name": "Aged Parmesan",
+    "category": "dairy",
+    "supplier": "Riverside Cellars",
+    "quality_score": 97,
+    "supplier_rating": 93,
+    "freshness_hours": 48,
+    "lat": 41.8781,
+    "lng": -87.6298
+  },
+  {
+    "name": "Cold-Pressed Olive Oil",
+    "category": "pantry",
+    "supplier": "Hill Country Press",
+    "quality_score": 91,
+    "supplier_rating": 90,
+    "freshness_hours": 36,
+    "lat": 30.2672,
+    "lng": -97.7431
+  },
+  {
+    "name": "Line-Caught Salmon",
+    "category": "seafood",
+    "supplier": "Puget Sound Fisheries",
+    "quality_score": 98,
+    "supplier_rating": 96,
+    "freshness_hours": 5,
+    "lat": 47.6062,
+    "lng": -122.3321
+  },
+  {
+    "name": "Organic Lemons",
+    "category": "produce",
+    "supplier": "Central Valley Orchards",
+    "quality_score": 90,
+    "supplier_rating": 88,
+    "freshness_hours": 18,
+    "lat": 36.7378,
+    "lng": -119.7871
+  },
+  {
+    "name": "Single-Origin Dark Chocolate",
+    "category": "pantry",
+    "supplier": "Mission District Chocolatiers",
+    "quality_score": 95,
+    "supplier_rating": 94,
+    "freshness_hours": 72,
+    "lat": 37.7599,
+    "lng": -122.4148
+  }
+]

@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="36" failures="15" errors="0" time="1.307">
+  <testsuite name="MolecularProcessor" errors="0" failures="14" skipped="0" timestamp="2025-11-18T07:58:51" time="0.291" tests="14">
+    <testcase classname="MolecularProcessor › constructor" name="should initialize with required configuration" time="0.002">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › constructor" name="should throw error when API key is missing" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › processText" name="should extract molecules from text successfully" time="0.005">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › processText" name="should handle empty results gracefully" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › processText" name="should handle API errors appropriately" time="0.001">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › processText" name="should validate input text" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › processText" name="should complete within performance threshold" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › processImage" name="should process image and extract molecules" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › processImage" name="should reject oversized images" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › processImage" name="should validate image format" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › generateSDF" name="should generate SDF file for molecule" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › generateSDF" name="should sanitize molecule names for filenames" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › batchProcess" name="should process multiple items in parallel" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MolecularProcessor › batchProcess" name="should handle partial failures in batch" time="0">
+      <failure>TypeError: The &quot;path&quot; argument must be of type string. Received an instance of Object
+    at Object.join (node:path:1339:7)
+    at new join (/Users/m/Code/projects/queb/src/server/services/molecular-processor.js:43:24)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/molecular-processor.spec.js:32:17)
+    at Promise.then.completed (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/m/Code/projects/queb/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusHook (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:281:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:246:5)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at _runTestsForDescribeBlock (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/m/Code/projects/queb/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/m/Code/projects/queb/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/m/Code/projects/queb/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/m/Code/projects/queb/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="PubChem SDF endpoint functions" errors="0" failures="0" skipped="0" timestamp="2025-11-18T07:58:51" time="0.342" tests="14">
+    <testcase classname="PubChem SDF endpoint functions › fetchPubchemSdf function" name="should fetch SDF data from PubChem API with name" time="0.002">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › fetchPubchemSdf function" name="should fetch SDF data from PubChem API with SMILES" time="0">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › fetchPubchemSdf function" name="should handle HTTP errors from PubChem API" time="0.005">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › fetchPubchemSdf function" name="should handle network errors" time="0">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › sanitizeName function" name="should sanitize basic names" time="0.001">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › sanitizeName function" name="should handle long names with hash truncation" time="0">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › saveSdf function" name="should create directory if it does not exist" time="0">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › saveSdf function" name="should save file with correct path format" time="0">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › Endpoint validation logic" name="should validate request body parameters" time="0.001">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › Endpoint validation logic" name="should handle error responses correctly" time="0">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › URL encoding logic" name="should properly encode special characters in URLs" time="0">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › URL encoding logic" name="should construct correct PubChem API URLs" time="0">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › File path handling" name="should handle different record types in filenames" time="0">
+    </testcase>
+    <testcase classname="PubChem SDF endpoint functions › File path handling" name="should handle SMILES in filenames when name is not provided" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="AI Service" errors="0" failures="1" skipped="0" timestamp="2025-11-18T07:58:51" time="1.192" tests="8">
+    <testcase classname="AI Service › Environment Check" name="should show current environment state" time="0.001">
+    </testcase>
+    <testcase classname="AI Service › Configuration" name="should load AI config with required fields" time="0.001">
+    </testcase>
+    <testcase classname="AI Service › Configuration" name="should have valid model specified" time="0">
+    </testcase>
+    <testcase classname="AI Service › Configuration" name="should have valid timeout" time="0.001">
+    </testcase>
+    <testcase classname="AI Service › Client Creation" name="should create client successfully" time="0">
+    </testcase>
+    <testcase classname="AI Service › Client Creation" name="should create client with proper configuration" time="0">
+    </testcase>
+    <testcase classname="AI Service › Client Functionality" name="should have chat completions API" time="0.001">
+    </testcase>
+    <testcase classname="AI Service › Client Functionality" name="should make successful API call with valid key" time="0.832">
+      <failure>Error: 400 Unsupported parameter: &apos;max_tokens&apos; is not supported with this model. Use &apos;max_completion_tokens&apos; instead.
+    at APIError.generate (/Users/m/Code/projects/queb/node_modules/openai/src/error.ts:72:14)
+    at OpenAI.makeStatusError (/Users/m/Code/projects/queb/node_modules/openai/src/core.ts:462:21)
+    at OpenAI.makeRequest (/Users/m/Code/projects/queb/node_modules/openai/src/core.ts:526:24)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at Object.&lt;anonymous&gt; (/Users/m/Code/projects/queb/tests/__tests__/unit/openai-client.spec.js:81:26)</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

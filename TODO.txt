@@ -1,0 +1,6 @@
+why camera mode not offing
+how to have auto documentation creation for scripts
+how to queue a git push & do for ~/util/
+/api prefixing for routes redundant?
+
+mcp this app st chemical viewing can be done from anywhere
