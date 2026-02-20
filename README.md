@@ -1,164 +1,126 @@
-# Chemical Analyzer
+# Queb — Chemical Structure Analyzer
 
-Display chemical structures contained in objects you specify or identify.
+Point a camera at something, upload a photo, paste a link, or type a name → AI identifies the object and its chemical compounds → Interactive 3D molecular structures appear.
 
-> **Note**: This repository contains all relevant projects in a monorepo structure.
-
-## What It Does
-
-Upload an image, take a photo, enter a link, or describe an object → Get AI-identified molecules → See interactive 3D molecular structures
-
-**Example**: Photo of coffee → Identifies caffeine, water, etc. → Displays 3D molecular models
+**Example**: Photo of coffee → Caffeine, chlorogenic acid, trigonelline → Rotatable 3D models
 
 ## Quick Start
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Set up your API key:**
-   Copy `.env.example` to `.env` and add your OpenAI API key:
-   ```bash
-   cp .env.example .env
-   # Edit .env and add: OPENAI_API_KEY=sk-...
-   ```
-
-3. **Run the app:**
-   ```bash
-   npm start
-   ```
-
-4. **Open your browser:**
-   Visit `http://localhost:8080`
-
-## Input Methods
-
-The app supports four ways to analyze objects:
-
-- **Text**: Type object name (e.g., "coffee", "aspirin", "water")
-- **Camera**: Point camera at objects for real-time analysis
-- **Photo**: Upload images to analyze
-- **Link**: Enter image URL to analyze
-
-All methods identify chemical compounds and display them as interactive 3D molecular structures.
-
-## How It Works
-
-1. **Input**: You provide text, image, photo, or URL
-2. **AI Analysis**: AI identifies the object and its chemical components
-3. **Chemical Lookup**: Names are resolved to molecular structures via PubChem
-4. **3D Generation**: Structures are converted to 3D coordinates
-5. **Visualization**: 3Dmol.js renders interactive molecular structures (rotate, zoom, explore)
-
-## API Endpoints
-
-### POST /api/structuralize
-Analyzes text for chemical compounds.
-
-**Request:**
-```json
-{
-  "text": "coffee",
-  "lookupMode": "GPT-5"
-}
+```bash
+npm install
+cp .env.example .env   # add your API key
+npm start              # http://localhost:8080
 ```
-
-**Response:**
-```json
-{
-  "object": "coffee",
-  "chemicals": [
-    {
-      "name": "Caffeine",
-      "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
-    }
-  ]
-}
-```
-
-### POST /api/structuralize-image
-Analyzes image for chemical compounds.
-
-**Request:**
-```json
-{
-  "imageBase64": "base64-encoded-image",
-  "x": 150,
-  "y": 200
-}
-```
-
-### POST /api/generate-sdfs
-Converts SMILES notation to SDF files for 3D display.
-
-**Request:**
-```json
-{
-  "smiles": ["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"]
-}
-```
-
-## Project Structure
-
-This monorepo contains all relevant projects:
-
-```
-/
-├── server.js              # Main server entry point
-├── package.json           # Dependencies
-├── README.md              # This file
-├── .env.example          # Environment variable template
-├── public/               # Static files
-│   ├── manifest.json
-│   └── sw.js
-├── mcp/                  # Model Context Protocol server
-│   └── chemical-discovery-server.js  # MCP server for chemical discovery
-├── src/
-│   ├── client/           # Frontend React app
-│   │   ├── components/   # UI components
-│   │   ├── hooks/        # React hooks
-│   │   └── assets/       # CSS, icons
-│   └── server/           # Backend services
-│       ├── services/     # Core business logic
-│       └── routes/       # API routes
-└── resources/            # Data files
-    └── chemical-databases.json
-```
-
-## Technology Stack
-
-- **Frontend**: React, 3Dmol.js
-- **Backend**: Node.js, Express
-- **AI**: OpenAI API (GPT-4 Vision)
-- **Chemistry**: PubChem API, SMILES notation, SDF files
-
-## Development
-
-This is a simplified, focused application for analyzing chemical contents and visualizing molecular structures.
-
-Key features:
-- Single Express server file
-- React frontend with 3D visualization
-- Direct AI API integration
-- No database dependencies
-- Simple, clear architecture
 
 ## Environment Variables
 
-Create a `.env` file with:
-
 ```bash
-OPENAI_API_KEY=sk-...your-key-here...
+# Required — choose one provider
 AI_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+
+# or
+AI_PROVIDER=xai
+XAI_API_KEY=xai-...
+
+# Optional
 PORT=8080
+DATABASE_ENABLED=false   # set true + DATABASE_URL to enable user auth
 ```
 
-For xAI support:
-```bash
-AI_PROVIDER=xai
-XAI_API_KEY=xai-...your-key-here...
+## Input Methods
+
+| Mode | How |
+|------|-----|
+| Text | Type an object name ("coffee", "aspirin") |
+| Camera | Live feed — click anything to analyze it |
+| Photo | Upload an image |
+| Link | Paste an image URL or drag one in |
+
+## Architecture
+
 ```
+src/
+├── server/
+│   ├── api/
+│   │   └── server.js          # Entry point (npm start)
+│   │   └── app.js             # Express app + route wiring
+│   │   └── routes/
+│   │       ├── chemical-analysis.js
+│   │       └── hotel.js
+│   └── services/
+│       ├── AIService.js        # @ai-sdk unified wrapper (OpenAI / xAI)
+│       ├── molecular-processor.js  # SDF generation (PubChem → Python/RDKit)
+│       ├── name-resolver.js    # Name → CID → SMILES (PubChem, ChEMBL, CACTUS)
+│       ├── structuralizer.js   # Core prediction pipeline
+│       └── database-recommender.js
+└── client/
+    ├── components/
+    │   ├── App.jsx             # Root component
+    │   ├── CameraSection.jsx
+    │   ├── PhotoSection.jsx
+    │   ├── LinkSection.jsx
+    │   ├── TextInput.jsx
+    │   ├── MoleculeViewer.jsx  # 3Dmol.js wrapper
+    │   └── MolecularColumn.jsx
+    └── hooks/
+        └── useApi.js
+
+core/
+├── services.js        # DI container factory
+├── ServiceContainer.js
+└── PromptEngine.js
+```
+
+**Entry point**: `src/server/api/server.js`
+**DI container**: `src/core/services.js` — ~15 lazily-resolved services
+**AI layer**: `AIService.js` uses Vercel AI SDK (`@ai-sdk/openai`, `@ai-sdk/xai`) — provider is switched via `AI_PROVIDER` env var with no code changes
+**SDF generation**: PubChem download first; falls back to local Python/RDKit subprocess
+**Database**: Optional PostgreSQL (`pg`) for user accounts; app runs fully without it
+
+## API
+
+### POST /api/structuralize
+```json
+{ "text": "coffee", "lookupMode": "GPT-5" }
+→ { "object": "coffee", "chemicals": [{ "name": "Caffeine", "smiles": "...", "sdfPath": "..." }] }
+```
+
+### POST /api/structuralize-image
+```json
+{ "imageBase64": "<base64>", "x": 150, "y": 200 }
+```
+
+### POST /api/generate-sdfs
+```json
+{ "smiles": ["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"] }
+→ { "sdfPaths": ["/sdf_files/caffeine.sdf"] }
+```
+
+### POST /api/find-chemical-contents
+```json
+{ "item": "green tea" }
+→ { "item": "green tea", "selectedDatabase": "...", "chemicals": [...] }
+```
+
+### GET /api/3d-structure/:name
+Returns SDF content + metadata from PubChem for direct 3D display.
+
+## Development
+
+```bash
+npm run dev          # server + frontend watch (requires concurrently)
+npm test             # unit tests
+npm run test:integration
+```
+
+## Tech Stack
+
+- **Frontend**: React 19, 3Dmol.js
+- **Backend**: Node.js, Express
+- **AI**: Vercel AI SDK — OpenAI GPT-4o Vision or xAI Grok
+- **Chemistry**: PubChem REST API, ChEMBL, CACTUS, RDKit (optional)
+- **3D**: SDF files served from `/sdf_files/`, rendered client-side
 
 ## License
 

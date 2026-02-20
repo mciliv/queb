@@ -112,38 +112,68 @@ class MolecularProcessor {
       return false; // Reject very long SMILES to prevent processing failures
     }
     
-    // Common valid SMILES patterns (allow lowercase for aromatic atoms)
-    const validPatterns = [
-      /^[A-Za-z][A-Za-z][A-Za-z]$/, // CCO, CCC, cco, etc.
-      /^[A-Za-z][A-Za-z]\(=O\)[A-Za-z]$/, // CC(=O)O, etc.
-      /^[A-Za-z]\([A-Za-z][A-Za-z]\)[A-Za-z]$/, // C(CC)C, etc.
-      /^[A-Za-z]1[A-Za-z]=[A-Za-z][A-Za-z]=[A-Za-z]1$/, // C1=CC=CC=C1 (benzene)
-      /^[A-Za-z]1[A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z]1$/, // C1CCCCC1 (cyclohexane)
-      /^[A-Za-z]$/, // O, N, C, c, etc.
-      /^[A-Za-z]1[A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z][A-Za-z]1$/, // c1ccc2ccccc2c1 (naphthalene)
-    ];
-    
-    // Check if it matches any valid pattern
-    for (const pattern of validPatterns) {
-      if (pattern.test(cleaned)) {
-        return true;
-      }
-    }
-    
-    // Reject obvious molecular formulas (H2O, CaCO3, etc.)
-    if (/^[A-Z][a-z]?[0-9]*([A-Z][a-z]?[0-9]*)+$/.test(cleaned) && 
-        !cleaned.includes('(') && 
-        !cleaned.includes('=') && 
-        !cleaned.includes('[') && 
-        !cleaned.includes(']') && 
-        !cleaned.includes('@') && 
-        !cleaned.includes('#') && 
-        !cleaned.includes('\\') && 
-        !cleaned.includes('/')) {
+    // SMILES valid character set: atoms, bonds, branches, rings, stereo, charges
+    // Valid atom symbols (organic subset + bracket atoms), bond chars, ring digits
+    if (!/^[A-Za-z0-9\[\]()=#@+\-\\/%.:\*]+$/.test(cleaned)) {
       return false;
     }
-    
-    // Allow other patterns that might be valid SMILES
+
+    // Reject obvious molecular formulas (e.g. H2O, CaCO3) — these are not SMILES.
+    // Requires at least one digit: SMILES like CCO or NaCl don't have counts,
+    // so we only reject formula-shaped strings that include element counts.
+    if (/^[A-Z][a-z]?[0-9]*([A-Z][a-z]?[0-9]*)+$/.test(cleaned) &&
+        /[0-9]/.test(cleaned) &&
+        !/[()=#@+\-\\/\[\]]/.test(cleaned)) {
+      return false;
+    }
+
+    // Must contain at least one organic atom letter
+    if (!/[A-Za-z]/.test(cleaned)) {
+      return false;
+    }
+
+    // Validate that letter sequences outside brackets form valid SMILES atom tokens.
+    // The organic subset allows unbracketed: B, C, N, O, P, S, F, I (single),
+    // Cl, Br (two-char), and aromatic b, c, n, o, p, s.
+    // A string of letters that can't be parsed as these tokens is not SMILES
+    // (e.g. "INVALID", "GLUCOSE" are English words, not SMILES strings).
+    let i = 0;
+    while (i < cleaned.length) {
+      const ch = cleaned[i];
+      if (ch === '[') {
+        // Skip bracketed atom — everything up to matching ]
+        while (i < cleaned.length && cleaned[i] !== ']') i++;
+      } else if (/[A-Za-z]/.test(ch)) {
+        // Two-char atoms
+        const two = cleaned.slice(i, i + 2);
+        if (two === 'Cl' || two === 'Br') {
+          i += 2;
+          continue;
+        }
+        // Single-char organic subset (uppercase and aromatic lowercase)
+        if ('BCNOPSFIbcnops'.includes(ch)) {
+          i++;
+          continue;
+        }
+        // Letter not in organic subset and not in a bracket: invalid
+        return false;
+      }
+      i++;
+    }
+
+    // Balanced parentheses
+    let depth = 0;
+    for (const ch of cleaned) {
+      if (ch === '(') depth++;
+      else if (ch === ')') depth--;
+      if (depth < 0) return false;
+    }
+    if (depth !== 0) return false;
+
+    const openBrackets = (cleaned.match(/\[/g) || []).length;
+    const closeBrackets = (cleaned.match(/\]/g) || []).length;
+    if (openBrackets !== closeBrackets) return false;
+
     return true;
   }
 
@@ -172,19 +202,24 @@ class MolecularProcessor {
   }
 
   async generateSmilesSDF(chemical) {
-    // First try local Python generator to satisfy unit tests expectations
-    // Prompt: fix broken script path used by subprocess spawn()
-    // `__dirname` is `src/server/services`, and the actual script lives at `src/server/sdf.py`.
-    const pythonScript = path.join(__dirname, "..", "sdf.py");
+    // Try PubChem first (curated structures for known compounds)
+    try {
+      const sdf = await downloadSDFBySmiles(chemical);
+      const filename = this.generateSafeFilename(chemical);
+      const dest = path.join(this.sdfDir, filename);
+      await fsPromises.writeFile(dest, sdf, "utf8");
+      return `/sdf_files/${filename}`;
+    } catch (_) {}
+
+    // Fall back to local Python/rdkit for novel or unlisted SMILES
+    const pythonScript = path.join(__dirname, "molecular-docking-research", "sdf.py");
     const args = [pythonScript, chemical, "--dir", this.sdfDir];
-    const spawnOptions = { stdio: "pipe" };
     const { spawn } = require("child_process");
 
     let stderrOutput = '';
     const exited = await new Promise((resolve) => {
       try {
-        const child = spawn("python", args, spawnOptions);
-        child.stdout && child.stdout.on("data", () => {});
+        const child = spawn("python", args, { stdio: "pipe" });
         child.stderr && child.stderr.on("data", (data) => {
           stderrOutput += data.toString();
         });
@@ -195,43 +230,23 @@ class MolecularProcessor {
       }
     });
 
-    // Log stderr if there was an error
     if (exited !== 0 && stderrOutput) {
       error(`Python SDF generation failed`, {
         smilesPrefix: chemical.substring(0, 50),
         stderr: stderrOutput
       });
     }
-    
+
     if (exited === 0) {
-      // The Python helper may succeed but choose a different filename format
-      // (raw SMILES) or even fail silently without creating a file.
-      // Verify on-disk existence using our resolver and only return if found.
       const existing = this.findExistingSdfFile(chemical);
-      if (existing) {
-        return existing;
-      }
-      // Fall through to network fallback if the file wasn't actually created
+      if (existing) return existing;
     }
-    
-    // If python path fails, attempt PubChem download then fallback
-    try {
-      const sdf = await downloadSDFBySmiles(chemical);
-      const filename = this.generateSafeFilename(chemical);
-      const dest = path.join(this.sdfDir, filename);
-      await fsPromises.writeFile(dest, sdf, "utf8");
-      return `/sdf_files/${filename}`;
-    } catch (error) {
-      const fallbackPath = this.copyFallbackSdf(chemical);
-      if (fallbackPath) return fallbackPath;
-      // Match unit test expectation but provide more context
-      const errorMsg = `SMILES generation failed for: ${chemical.substring(0, 50)}${chemical.length > 50 ? '...' : ''}`;
-      error(errorMsg, error, {
-        smilesPrefix: chemical.substring(0, 50),
-        smilesLength: chemical.length
-      });
-      throw new Error(errorMsg);
-    }
+
+    const fallbackPath = this.copyFallbackSdf(chemical);
+    if (fallbackPath) return fallbackPath;
+
+    const errorMsg = `SMILES generation failed for: ${chemical.substring(0, 50)}${chemical.length > 50 ? '...' : ''}`;
+    throw new Error(errorMsg);
   }
 
   copyFallbackSdf(smiles) {

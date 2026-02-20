@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+coverage/
+tests/coverage/
+.chrome-profile/
+.claude/
+.tmp/
+*.map
+bundle.js
+bundle.css
+*.sdf
+public/sdf_files/
+package-lock.json

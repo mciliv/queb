@@ -1,9 +1,7 @@
-Always use the OpenAI developer documentation MCP server if you need to work with the OpenAI API, ChatGPT Apps SDK, Codex, or related docs without me having to explicitly ask.
-Same goes w XAI.
-
-Put principles right at the point of application, but if they occur in multiple areas, then say where they occur and provide at top of the place where they are mentioned
-This is an agile project, so given your capabilities, we should be able to resolve any problems such that legacy code can be deleted
-
-instead of generating a md file, regurgitate my prompt proposed as a refinement to actually improve the code
-
-When writing code, include my prompt at the deepest point for its generated code, but only as an explanation for what the purpose of the code is. For example of a confusing case, if the code is spread in multiple parts comment with name of block otherwise, line #s.
+What can you do to increate code reusability?
+Run app after done with changes
+Only rely on specific naming instead of code comments
+Only do code changes; natural languge you write should be done as comments in the code
+No fallbacks
+Shells scripts should work for zsh & bash
+Create tests for changes

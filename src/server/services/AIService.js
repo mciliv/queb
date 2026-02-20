@@ -193,24 +193,12 @@ class AIService {
    * - Provider switching transparency
    */
   async callAPI(params, options = {}) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'AIService.js:131', message: 'AIService.callAPI called', data: { provider: this.config.provider, model: this._getCurrentProviderConfig().model, messageCount: params.messages?.length, inputLength: params.input?.length }, timestamp: Date.now(), sessionId: 'debug-cacao', runId: 'pre-fix', hypothesisId: 'A,B,C' }) }).catch(() => { });
-    // #endregion
-
     try {
       // CRITICAL: Use ONLY @ai-sdk generateText for complete abstraction
       const result = await this._callWithSDK(params);
       const parsed = this._parseSDKResponse(result);
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'AIService.js:140', message: 'AIService.callAPI completed', data: { hasResult: !!result, hasParsed: !!parsed, contentLength: parsed?.content?.length }, timestamp: Date.now(), sessionId: 'debug-cacao', runId: 'pre-fix', hypothesisId: 'A,B,C' }) }).catch(() => { });
-      // #endregion
-
       return parsed;
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'AIService.js:147', message: 'AIService.callAPI error', data: { error: error.message, provider: this.config.provider }, timestamp: Date.now(), sessionId: 'debug-cacao', runId: 'pre-fix', hypothesisId: 'A,B,C' }) }).catch(() => { });
-      // #endregion
       throw error;
     }
   }
@@ -340,10 +328,6 @@ class AIService {
    * - Unified error handling
    */
   _parseSDKResponse(response) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'AIService.js:217', message: 'AIService._parseResponse called', data: { hasOutputText: !!response?.output_text, hasChoices: !!response?.choices, objectType: response?.object }, timestamp: Date.now(), sessionId: 'debug-cacao', runId: 'pre-fix', hypothesisId: 'B' }) }).catch(() => { });
-    // #endregion
-
     try {
       // CRITICAL: Handle ONLY @ai-sdk generateText response format
       // FORBIDDEN: Do NOT parse raw provider API responses
@@ -364,14 +348,8 @@ class AIService {
       // Try to parse as JSON first
       try {
         const parsedJson = JSON.parse(content);
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'AIService.js:240', message: 'Parsed JSON response', data: { isJson: true, contentLength: content.length }, timestamp: Date.now(), sessionId: 'debug-cacao', runId: 'pre-fix', hypothesisId: 'B' }) }).catch(() => { });
-        // #endregion
         return parsedJson;
       } catch {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'AIService.js:245', message: 'Returning structured response', data: { isJson: false, contentLength: content.length }, timestamp: Date.now(), sessionId: 'debug-cacao', runId: 'pre-fix', hypothesisId: 'B' }) }).catch(() => { });
-        // #endregion
         // Return structured response if not JSON
         return {
           content: content,

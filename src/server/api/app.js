@@ -218,26 +218,16 @@ async function setupChemicalPredictionRoutes(app, { logger, container }) {
   const molecularProcessor = await container.get('molecularProcessor');
 
   app.post('/api/structuralize', async (req, res, next) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:216',message:'structuralize endpoint called',data:{text:req.body?.text,lookupMode:req.body?.lookupMode,hasText:!!req.body?.text},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'A,B,C'})}).catch(()=>{});
-    // #endregion
-
     try {
       const { text, lookupMode = 'GPT-5' } = req.body;
 
       if (!text || typeof text !== 'string') {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:225',message:'structuralize validation failed',data:{text:text,textType:typeof text},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         return res.status(400).json({
           error: 'Missing or invalid "text" parameter',
         });
       }
 
       if (typeof lookupMode !== 'string') {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:235',message:'structuralize lookupMode validation failed',data:{lookupMode:lookupMode,lookupModeType:typeof lookupMode},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         return res.status(400).json({
           error: 'Invalid "lookupMode" parameter',
         });
@@ -245,28 +235,13 @@ async function setupChemicalPredictionRoutes(app, { logger, container }) {
 
       logger.info(`Text prediction request: "${text}" (mode: ${lookupMode})`);
 
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:244',message:'calling structuralizer.chemicals',data:{text:text.trim(),lookupMode:lookupMode},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-
       const result = await structuralizer.chemicals({
         object: text.trim(),
         lookupMode,
       });
 
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:252',message:'structuralizer.chemicals completed',data:{hasResult:!!result,resultKeys:Object.keys(result||{})},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:257',message:'sending response to client',data:{statusCode:200,responseSize:JSON.stringify(result).length},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-
       res.json(result);
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.js:265',message:'structuralize endpoint error',data:{error:error.message,errorType:error.constructor.name},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       next(error);
     }
   });

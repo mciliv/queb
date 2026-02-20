@@ -240,7 +240,6 @@ class ExternalScriptTrigger {
       environment: {
         isDevelopment: process.env.NODE_ENV === 'development',
         isTest: process.env.NODE_ENV === 'test',
-        isProduction: process.env.NODE_ENV === 'production'
       },
       context: errorInfo.context || {}
     };
@@ -293,7 +292,6 @@ class ExternalScriptTrigger {
       ARCH: context.project.arch,
       IS_DEVELOPMENT: context.environment.isDevelopment ? 'true' : 'false',
       IS_TEST: context.environment.isTest ? 'true' : 'false',
-      IS_PRODUCTION: context.environment.isProduction ? 'true' : 'false',
       ERROR_STACK: context.error.stack || '',
       ERROR_CONTEXT: JSON.stringify(context.context)
     };

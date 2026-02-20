@@ -3,7 +3,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 
 describe('SDF Retriever Integration Tests', () => {
-  const SDF_SCRIPT = path.join(__dirname, '../../../src/server/molecular-docking-research/sdf.py');
+  const SDF_SCRIPT = path.join(__dirname, '../../../src/server/sdf.py');
   const TEST_OUTPUT_DIR = path.join(__dirname, '../../temp_sdf_test');
   const BACKEND_SDF_DIR = path.join(__dirname, '../../../src/backend/sdf_files');
   const TEST_SDF_DIR = path.join(__dirname, '../../sdf_files');

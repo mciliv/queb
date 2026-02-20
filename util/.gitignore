@@ -1,0 +1,9 @@
+.*
+*__pycache__*
+token.txt
+credentials.json
+util.egg-info
+logs.log
+*.json
+dist/
+bio.code-workspace

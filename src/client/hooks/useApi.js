@@ -74,10 +74,6 @@ export const useApi = () => {
     try {
       const url = `${API_BASE}${endpoint}`;
 
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useApi.js:74',message:'fetch starting',data:{url:url,method:options.method||'GET',hasBody:!!options.body},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
@@ -85,10 +81,6 @@ export const useApi = () => {
         },
         ...options,
       });
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useApi.js:86',message:'fetch completed',data:{status:response.status,statusText:response.statusText,ok:response.ok},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -231,10 +223,6 @@ export const useApi = () => {
     // Always trim to remove whitespace
     const trimmedText = text.trim();
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useApi.js:222',message:'structuralizeText called',data:{text:trimmedText,lookupMode:lookupMode,textLength:trimmedText.length},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'A,C'})}).catch(()=>{});
-    // #endregion
-
     try {
       const result = await apiCall('/api/structuralize', {
         method: 'POST',
@@ -243,16 +231,8 @@ export const useApi = () => {
         cachePost: true,              // Cache results to avoid re-analyzing same text
         cacheDuration: 600000,        // 10 minutes - chemical data doesn't change often
       });
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useApi.js:235',message:'structuralizeText success',data:{hasResult:!!result,resultKeys:Object.keys(result||{}).join(',')},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'A,C'})}).catch(()=>{});
-      // #endregion
-
       return result;
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/f1225f0b-6c5b-477f-bc5d-1e74641debf9',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useApi.js:242',message:'structuralizeText error',data:{error:error.message,hasDetails:!!error.details},timestamp:Date.now(),sessionId:'debug-load-failed',runId:'pre-fix',hypothesisId:'A,C'})}).catch(()=>{});
-      // #endregion
       throw error;
     }
   }, [apiCall]);

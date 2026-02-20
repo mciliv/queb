@@ -281,16 +281,16 @@ async function fetchText(url, attempt = 0) {
     const resp = await f(url);
     if (!resp.ok) {
       const status = resp.status;
-      if ((status === 429 || status === 500 || status === 502 || status === 503 || status === 504) && attempt < MAX_RETRIES) {
-        await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
+      if ((status === 429 || status === 500 || status === 502 || status === 503 || status === 504) && attempt < RETRY_CONFIG.MAX_RETRIES) {
+        await sleep(RETRY_CONFIG.BASE_DELAY_MS * Math.pow(2, attempt));
         return fetchText(url, attempt + 1);
       }
       throw new Error(`HTTP ${status}`);
     }
     return resp.text();
   } catch (err) {
-    if (attempt < MAX_RETRIES && (err.name === 'FetchError' || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT')) {
-      await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
+    if (attempt < RETRY_CONFIG.MAX_RETRIES && (err.name === 'FetchError' || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT')) {
+      await sleep(RETRY_CONFIG.BASE_DELAY_MS * Math.pow(2, attempt));
       return fetchText(url, attempt + 1);
     }
     throw err;
@@ -479,10 +479,6 @@ async function resolveName(name) {
   const cacheKey = name.toLowerCase();
   if (namePropsCache.has(cacheKey)) return namePropsCache.get(cacheKey);
   
-  try {
-    cid = await resolveNameToCID(name);
-  } catch (_) {}
-
   if (cid) {
     try {
       const p = await getPropertiesByCID(cid);

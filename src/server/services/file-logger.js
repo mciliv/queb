@@ -3,8 +3,7 @@ const path = require('path');
 
 class FileLogger {
   constructor() {
-    // Use a more robust logs directory path that works in serverless environments
-    // Always use the project root for logs, not the current working directory
+    // Use the project root for logs, not the current working directory
     const projectRoot = this.findProjectRoot();
     this.logsDir = process.env.LOGS_DIR || path.join(projectRoot, 'logs');
     this.minimumLevel = (process.env.LOG_LEVEL || 'info').toLowerCase();
@@ -43,7 +42,6 @@ class FileLogger {
         fs.mkdirSync(this.logsDir, { recursive: true });
       }
     } catch (error) {
-      // In serverless environments, fall back to console logging only
       console.warn('⚠️ Could not create logs directory, falling back to console logging:', error.message);
       this.logsDir = null;
     }

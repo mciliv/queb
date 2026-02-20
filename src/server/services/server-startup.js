@@ -109,19 +109,15 @@ const getLocalIPAddress = () => {
 };
 
 const startServers = async (app, configuration, initializeDatabase) => {
-  const cloudConfig = configuration.get('cloud');
-  const isCloudFunction = cloudConfig.isCloudFunction;
-  const isAppEngine = cloudConfig.isAppEngine;
   const isTestMode =
     configuration.get('nodeEnv') === "test" || !!process.env.JEST_WORKER_ID;
   const isIntegrationTest = !!process.env.INTEGRATION_TEST;
-  const isServerless = isCloudFunction || isAppEngine;
 
   // Store server instances for cleanup
   let httpServer;
   let httpsServerInstance;
 
-  if (!isServerless && (!isTestMode || isIntegrationTest)) {
+  if (!isTestMode || isIntegrationTest) {
 
     const startServer = async () => {
       await cleanupPorts();
@@ -270,69 +266,10 @@ const startServers = async (app, configuration, initializeDatabase) => {
     if (initializeDatabase) {
       await initializeDatabase();
     }
-  } else {
-    // Serverless mode
-    try {
-      if (isCloudFunction) {
-        console.log(`Running in Cloud Functions mode`);
-
-        if (process.env.PORT) {
-          const port = process.env.PORT;
-          console.log(`Starting server on port ${port} for Cloud Functions`);
-
-          httpServer = app.listen(port, "0.0.0.0", () => {
-            console.log(`✅ Cloud Functions server started on port ${port}`);
-          });
-
-          httpServer.on('error', (error) => {
-            console.error('❌ Cloud Functions server error:', error);
-            process.exit(1);
-          });
-        }
-      } else if (isAppEngine) {
-        console.log(`Running in App Engine mode`);
-
-        // Initialize OpenAI API key from Secret Manager
-        const secretManager = require('../../cloud/secret-manager');
-        try {
-          const openaiKey = await secretManager.getOpenAIKey();
-          if (!openaiKey) {
-            console.error("OpenAI API key not found in Secret Manager or environment variables");
-            if (process.env.NODE_ENV === "production") {
-              process.exit(1);
-            }
-          } else {
-            process.env.OPENAI_API_KEY = openaiKey;
-            console.log(`✅ OpenAI API key loaded from ${process.env.NODE_ENV === 'production' ? 'Secret Manager' : 'environment'}`);
-          }
-        } catch (error) {
-          console.error("Failed to initialize OpenAI API key:", error.message);
-          if (process.env.NODE_ENV === "production") {
-            process.exit(1);
-          }
-        }
-
-        const port = process.env.PORT || 8080;
-        console.log(`Environment PORT: ${process.env.PORT}`);
-        console.log(`Starting server on port ${port} for App Engine`);
-
-        httpServer = app.listen(port, () => {
-          console.log(`✅ App Engine server started successfully on port ${port}`);
-        });
-
-        httpServer.on('error', (error) => {
-          console.error('❌ App Engine server error:', error);
-          process.exit(1);
-        });
-      }
-    } catch (error) {
-      console.error('❌ Failed to initialize serverless environment:', error);
-      process.exit(1);
-    }
   }
 
   // Graceful shutdown handling
-  if (!isServerless && !isTestMode) {
+  if (!isTestMode) {
     const gracefulShutdown = (signal) => {
       const closeServer = (server, name) => {
         return new Promise((resolve) => {

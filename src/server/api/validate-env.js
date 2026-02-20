@@ -2,9 +2,8 @@
 // Validates required environment variables and configuration
 
 function validateLocalDevEnv(config, logger) {
-  // Only validate in local/dev environments, not in production or test
-  if (config.isProduction() || config.isTest()) {
-    return; // Skip validation in production/test
+  if (config.isTest()) {
+    return;
   }
 
   const errors = [];

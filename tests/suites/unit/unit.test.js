@@ -85,9 +85,10 @@ describe("Unit Tests", () => {
 
       test("should handle invalid SMILES gracefully", async () => {
         const result = await molecularProcessor.processSmiles(["INVALID_SMILES"]);
-        expect(result.errors).toHaveLength(1);
+        expect(result.skipped).toHaveLength(1);
+        expect(result.errors).toHaveLength(0);
         expect(result.sdfPaths).toHaveLength(0);
-        expect(result.errors[0]).toContain("INVALID_SMILES");
+        expect(result.skipped[0]).toContain("INVALID_SMILES");
       });
 
       test("should handle empty SMILES array", async () => {
@@ -300,7 +301,7 @@ describe("Unit Tests", () => {
   describe("Error Handling", () => {
     test("should handle processing errors gracefully", async () => {
       const result = await molecularProcessor.processSmiles(["INVALID_SMILES"]);
-      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.skipped.length).toBeGreaterThan(0);
       expect(result.sdfPaths).toHaveLength(0);
     });
   });

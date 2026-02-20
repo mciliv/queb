@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "1"
+version = "0.1.0"
+description = ""
+authors = ["M <6300735+mciliv@users.noreply.github.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+rdkit = ">=2024.9.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

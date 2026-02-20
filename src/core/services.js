@@ -4,54 +4,14 @@ const path = require('path');
 const { log, warn, error } = require('./logger');
 
 // ===== Environment Loading =====
-// CRITICAL: Load environment variables from SHELL ENVIRONMENT first, then .env file for local development
-// Shell environment variables ALWAYS take priority over .env file variables
-// Production deployments should use proper env vars, but local dev can use .env as fallback
 if (!global.__QUEB_ENV_LOADED__) {
   loadEnvironmentVariables();
   global.__QUEB_ENV_LOADED__ = true;
 }
 
-/**
- * Load environment variables from shell environment and .env file for local development.
- * This function is extracted for testability and clarity.
- *
- * Environment Variable Loading Strategy:
- * 1. Always prioritize shell environment variables (from system/shell)
- * 2. For local development: load .env file as fallback (does NOT override shell vars)
- * 3. For production/cloud: rely on shell environment variables only
- * 4. Warn about missing critical environment variables
- */
 function loadEnvironmentVariables() {
-  const isCloudEnv = detectCloudEnvironment();
-  if (isCloudEnv) {
-    log('🏭 Running in production/cloud environment - using SHELL ENVIRONMENT variables only');
-  } else {
-    log('🏠 Running in local development - using variables from SHELL ENVIRONMENT');
-  }
-
-  // Load hotel admin key (if it exists)
   loadHotelAdminKey();
-
-  // Final validation and report
   validateCriticalEnvironmentVariables();
-}
-
-/**
- * Detect if the application is running in a cloud/production environment.
- * @returns {boolean} true if running in cloud/production, false for local development
- */
-function detectCloudEnvironment() {
-  return !!(
-    process.env.GAE_APPLICATION ||           // Google App Engine
-    process.env.GOOGLE_CLOUD_PROJECT ||      // GCP
-    process.env.K_SERVICE ||                 // Cloud Run
-    process.env.FUNCTION_NAME ||             // Cloud Functions
-    process.env.AWS_EXECUTION_ENV ||         // AWS Lambda
-    process.env.VERCEL ||                    // Vercel
-    process.env.NETLIFY ||                   // Netlify
-    process.env.NODE_ENV === 'production'    // Explicit production
-  );
 }
 
 /**
@@ -190,13 +150,6 @@ const configData = {
     enableAlternates: getBoolean('CHEM_ENABLE_ALTERNATES', false)
   },
 
-  cloud: {
-    isCloudFunction: process.env.FUNCTION_NAME || process.env.FUNCTION_TARGET || process.env.K_SERVICE,
-    isAppEngine: process.env.GAE_APPLICATION || process.env.GOOGLE_CLOUD_PROJECT,
-    project: getString('GOOGLE_CLOUD_PROJECT'),
-    region: getString('REGION', 'us-central1')
-  },
-
   ssl: {
     certPath: getString('SSL_CERT_PATH'),
     keyPath: getString('SSL_KEY_PATH'),
@@ -220,10 +173,6 @@ const config = {
     return path.split('.').reduce((obj, key) => obj?.[key], configData);
   },
 
-  isProduction() {
-    return configData.nodeEnv === 'production';
-  },
-
   isDevelopment() {
     return configData.nodeEnv === 'development';
   },
@@ -232,26 +181,12 @@ const config = {
     return configData.development.isTest;
   },
 
-  isServerless() {
-    return configData.cloud.isCloudFunction || configData.cloud.isAppEngine;
-  },
-
   getDatabaseConfig() {
     return configData.database;
   },
 
   validate() {
     const errors = [];
-
-    if (this.isProduction()) {
-      if (!configData.openai.apiKey) {
-        errors.push('OPENAI_API_KEY is required in production');
-      }
-
-      if (configData.database.enabled && !configData.database.password) {
-        errors.push('DB_PASSWORD is required when database is enabled in production');
-      }
-    }
 
     if (configData.port < 1 || configData.port > 65535) {
       errors.push(`Invalid PORT: ${configData.port}. Must be between 1 and 65535`);
@@ -270,22 +205,10 @@ const config = {
       port: configData.port,
       hasOpenAIKey: !!configData.openai.apiKey,
       databaseEnabled: configData.database.enabled,
-      isServerless: this.isServerless()
+      nodeEnv: configData.nodeEnv
     };
   }
 };
-
-// ===== OpenAI Client Factory =====
-function createOpenAIClient() {
-  const OpenAI = require('openai').default || require('openai');
-  if (!OpenAI) return null;
-
-  return new OpenAI({
-    apiKey: config.openai.apiKey,
-    timeout: config.openai.timeout,
-    maxRetries: 2
-  });
-}
 
 // ===== Dependency Injection Container =====
 const ServiceContainer = require('./ServiceContainer');
@@ -293,7 +216,6 @@ const PromptEngine = require('./PromptEngine');
 const ErrorHandler = require('./ErrorHandler');
 
 function createContainer(overrides = {}) {
-  const MolecularPredictionService = require('./MolecularPredictionService');
   const container = new ServiceContainer();
 
   // ===== Core Services =====
@@ -320,15 +242,6 @@ function createContainer(overrides = {}) {
 
   container.register('promptEngine', () => PromptEngine, {
     tags: ['core', 'ai']
-  });
-
-  container.register('openaiClient', async () => {
-    if (!config.ai.openai.apiKey) {
-      return null;
-    }
-    return createOpenAIClient();
-  }, {
-    tags: ['ai', 'external']
   });
 
   container.register('aiService', async () => {
@@ -432,20 +345,6 @@ function createContainer(overrides = {}) {
     tags: ['use-cases', 'logging', 'domain']
   });
 
-  container.register('molecularPredictionService', async (c) => {
-    const service = new MolecularPredictionService({
-      aiClient: await c.get('openaiClient'),
-      molecularProcessor: await c.get('molecularProcessor'),
-      nameResolver: await c.get('nameResolver'),
-      logger: await c.get('logger')
-    });
-
-    await service.initialize();
-    return service;
-  }, {
-    tags: ['business', 'prediction']
-  });
-
   // ===== Performance Services =====
   container.register('cache', async () => {
     const PerformanceCache = require('../server/services/performance-cache');
@@ -484,16 +383,8 @@ function createTestContainer(mocks = {}) {
         return testConfig[key];
       }),
       getDatabaseConfig: jest.fn(),
-      isProduction: jest.fn(() => false),
       isDevelopment: jest.fn(() => true)
     },
-    openaiClient: {
-      chat: {
-        completions: {
-          create: jest.fn()
-        }
-      }
-    }
   };
 
   return createContainer({ ...defaults, ...mocks });
@@ -501,12 +392,10 @@ function createTestContainer(mocks = {}) {
 
 module.exports = {
   config,
-  createOpenAIClient,
   createContainer,
   createTestContainer,
   // Environment loading functions (exported for testing)
   loadEnvironmentVariables,
-  detectCloudEnvironment,
   findEnvFilePath,
   findProjectRoot,
   validateCriticalEnvironmentVariables

@@ -1,17 +1,10 @@
 module.exports = {
+  rootDir: '..',
   testEnvironment: 'node',
   testMatch: [
-<<<<<<< HEAD
     '<rootDir>/tests/suites/unit/**/*.test.js',
     '<rootDir>/tests/unit/**/*.spec.js',
     '<rootDir>/tests/unit/**/*.test.js'
-=======
-    '**/__tests__/**/*.js',
-    '**/?(*.)+(spec|test).js',
-    '!**/integration/**',
-    '!**/e2e/**',
-    '!**/visual/**'
->>>>>>> 532fb1f (merged in website)
   ],
   collectCoverageFrom: [
     'src/**/*.js',

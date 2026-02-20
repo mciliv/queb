@@ -1,0 +1,283 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+
+// Simple glob matcher for .cursorignore patterns
+function matchesPattern(filePath, pattern) {
+  // Remove leading/trailing slashes and convert to regex
+  const cleanPattern = pattern.replace(/^\/+|\/+$/g, '');
+  
+  // Handle different pattern types
+  if (cleanPattern.endsWith('/*')) {
+    // Directory pattern like "node_modules/*"
+    const dirPattern = cleanPattern.slice(0, -2);
+    return filePath.includes(`/${dirPattern}/`) || filePath.startsWith(`${dirPattern}/`);
+  } else if (cleanPattern.endsWith('/')) {
+    // Directory pattern like "dist/"
+    const dirPattern = cleanPattern.slice(0, -1);
+    return filePath.includes(`/${dirPattern}/`) || filePath.startsWith(`${dirPattern}/`);
+  } else if (cleanPattern.includes('*')) {
+    // Wildcard pattern like "*.json"
+    const regexPattern = cleanPattern
+      .replace(/\./g, '\\.')
+      .replace(/\*/g, '.*');
+    return new RegExp(regexPattern).test(path.basename(filePath));
+  } else {
+    // Exact match
+    return filePath.includes(`/${cleanPattern}`) || 
+           filePath.endsWith(`/${cleanPattern}`) ||
+           filePath === cleanPattern ||
+           path.basename(filePath) === cleanPattern;
+  }
+}
+
+function loadCursorIgnore(projectRoot) {
+  const cursorIgnorePath = path.join(projectRoot, '.cursor', '.cursorignore');
+  const patterns = [];
+  
+  try {
+    if (fs.existsSync(cursorIgnorePath)) {
+      const content = fs.readFileSync(cursorIgnorePath, 'utf8');
+      content.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          patterns.push(trimmed);
+        }
+      });
+    }
+  } catch (error) {
+    console.warn(`Could not read .cursorignore: ${error.message}`);
+  }
+  
+  return patterns;
+}
+
+// Token counting using simple approximation (roughly 4 characters per token)
+function countTokens(text) {
+  // Remove excessive whitespace and normalize
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  // Rough approximation: 4 characters per token for most code/text
+  return Math.ceil(normalized.length / 4);
+}
+
+// File extensions to include in token count
+const INCLUDED_EXTENSIONS = new Set([
+  '.js', '.jsx', '.ts', '.tsx',
+  '.py', '.java', '.cpp', '.c', '.h',
+  '.html', '.htm', '.css', '.scss', '.sass',
+  '.json', '.xml', '.yaml', '.yml',
+  '.md', '.txt', '.mdc',
+  '.sh', '.bash', '.zsh',
+  '.sql', '.env',
+  '.sdf', '.pdb',
+  '.config', '.conf'
+]);
+
+// Directories to exclude
+const EXCLUDED_DIRS = new Set([
+  'node_modules',
+  '.git',
+  '.next',
+  '.cache',
+  'coverage',
+  'dist',
+  'build',
+  'test/chrome-molecular-profile', // Large Chrome cache files
+  'Cache',
+  'GPUCache',
+  'ShaderCache',
+  'DawnGraphiteCache',
+  'DawnWebGPUCache'
+]);
+
+function shouldIncludeFile(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const basename = path.basename(filePath);
+  
+  // Include files with recognized extensions
+  if (INCLUDED_EXTENSIONS.has(ext)) return true;
+  
+  // Include common config files without extensions
+  const configFiles = ['Dockerfile', 'Makefile', 'Procfile', 'LICENSE', 'CHANGELOG'];
+  if (configFiles.includes(basename)) return true;
+  
+  // Include README files
+  if (basename.toUpperCase().startsWith('README')) return true;
+  
+  return false;
+}
+
+function shouldExcludeDir(dirPath) {
+  const dirName = path.basename(dirPath);
+  return EXCLUDED_DIRS.has(dirName);
+}
+
+function walkDirectory(dir, stats = { files: 0, tokens: 0, fileDetails: [] }, cursorIgnorePatterns = [], projectRoot = null) {
+  try {
+    const items = fs.readdirSync(dir);
+    
+    for (const item of items) {
+      const fullPath = path.join(dir, item);
+      const relativePath = projectRoot ? path.relative(projectRoot, fullPath) : fullPath;
+      const stat = fs.statSync(fullPath);
+      
+      // Check if this path matches any .cursorignore pattern
+      const isIgnored = cursorIgnorePatterns.some(pattern => matchesPattern(relativePath, pattern));
+      
+      if (stat.isDirectory()) {
+        if (!shouldExcludeDir(fullPath) && !isIgnored) {
+          walkDirectory(fullPath, stats, cursorIgnorePatterns, projectRoot);
+        }
+      } else if (stat.isFile() && shouldIncludeFile(fullPath) && !isIgnored) {
+        try {
+          const content = fs.readFileSync(fullPath, 'utf8');
+          const tokens = countTokens(content);
+          
+          stats.files++;
+          stats.tokens += tokens;
+          
+          // Store details for largest files
+          stats.fileDetails.push({
+            path: relativePath,
+            tokens,
+            size: stat.size,
+            ignored: false
+          });
+        } catch (error) {
+          console.warn(`Could not read file: ${fullPath} - ${error.message}`);
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`Could not read directory: ${dir} - ${error.message}`);
+  }
+  
+  return stats;
+}
+
+function walkDirectoryAll(dir, stats = { files: 0, tokens: 0, fileDetails: [] }, projectRoot = null) {
+  try {
+    const items = fs.readdirSync(dir);
+    
+    for (const item of items) {
+      const fullPath = path.join(dir, item);
+      const relativePath = projectRoot ? path.relative(projectRoot, fullPath) : fullPath;
+      const stat = fs.statSync(fullPath);
+      
+      if (stat.isDirectory()) {
+        if (!shouldExcludeDir(fullPath)) {
+          walkDirectoryAll(fullPath, stats, projectRoot);
+        }
+      } else if (stat.isFile() && shouldIncludeFile(fullPath)) {
+        try {
+          const content = fs.readFileSync(fullPath, 'utf8');
+          const tokens = countTokens(content);
+          
+          stats.files++;
+          stats.tokens += tokens;
+          
+          // Store details for largest files
+          stats.fileDetails.push({
+            path: relativePath,
+            tokens,
+            size: stat.size,
+            ignored: false
+          });
+        } catch (error) {
+          console.warn(`Could not read file: ${fullPath} - ${error.message}`);
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`Could not read directory: ${dir} - ${error.message}`);
+  }
+  
+  return stats;
+}
+
+function formatNumber(num) {
+  return num.toLocaleString();
+}
+
+function main() {
+  const projectRoot = process.cwd();
+  console.log(`Counting tokens in: ${projectRoot}`);
+  console.log('=====================================\n');
+  
+  // Load .cursorignore patterns
+  const cursorIgnorePatterns = loadCursorIgnore(projectRoot);
+  console.log(`Loaded ${cursorIgnorePatterns.length} .cursorignore patterns:`);
+  cursorIgnorePatterns.forEach(pattern => console.log(`  - ${pattern}`));
+  console.log('');
+  
+  // Count with .cursorignore filtering
+  const filteredStats = walkDirectory(projectRoot, { files: 0, tokens: 0, fileDetails: [] }, cursorIgnorePatterns, projectRoot);
+  
+  // Count everything (no filtering)
+  const allStats = walkDirectoryAll(projectRoot, { files: 0, tokens: 0, fileDetails: [] }, projectRoot);
+  
+  // Sort files by token count (descending)
+  filteredStats.fileDetails.sort((a, b) => b.tokens - a.tokens);
+  allStats.fileDetails.sort((a, b) => b.tokens - a.tokens);
+  
+  // Calculate savings
+  const tokenSavings = allStats.tokens - filteredStats.tokens;
+  const fileSavings = allStats.files - filteredStats.files;
+  const percentSavings = ((tokenSavings / allStats.tokens) * 100).toFixed(1);
+  
+  console.log('=== COMPARISON RESULTS ===');
+  console.log(`Total Files (unfiltered): ${formatNumber(allStats.files)}`);
+  console.log(`Total Files (filtered):   ${formatNumber(filteredStats.files)} (${formatNumber(fileSavings)} files ignored)`);
+  console.log('');
+  console.log(`Total Tokens (unfiltered): ${formatNumber(allStats.tokens)}`);
+  console.log(`Total Tokens (filtered):   ${formatNumber(filteredStats.tokens)} (${formatNumber(tokenSavings)} tokens saved, ${percentSavings}%)`);
+  console.log(`Average Tokens per File:   ${formatNumber(Math.round(filteredStats.tokens / filteredStats.files))}\n`);
+  
+  console.log('Top 20 files by token count (after .cursorignore):');
+  console.log('==================================================');
+  filteredStats.fileDetails.slice(0, 20).forEach((file, i) => {
+    console.log(`${(i + 1).toString().padStart(2)}. ${file.path.padEnd(50)} ${formatNumber(file.tokens).padStart(8)} tokens`);
+  });
+  
+  // Group by file type (filtered results)
+  const byExtension = {};
+  filteredStats.fileDetails.forEach(file => {
+    const ext = path.extname(file.path) || 'no-extension';
+    if (!byExtension[ext]) {
+      byExtension[ext] = { count: 0, tokens: 0 };
+    }
+    byExtension[ext].count++;
+    byExtension[ext].tokens += file.tokens;
+  });
+  
+  console.log('\nToken count by file type (filtered):');
+  console.log('====================================');
+  Object.entries(byExtension)
+    .sort((a, b) => b[1].tokens - a[1].tokens)
+    .forEach(([ext, data]) => {
+      console.log(`${ext.padEnd(12)} ${formatNumber(data.count).padStart(6)} files ${formatNumber(data.tokens).padStart(10)} tokens`);
+    });
+    
+  // Show what was ignored
+  console.log('\nTop ignored files (would have been largest contributors):');
+  console.log('========================================================');
+  const ignoredFiles = [];
+  allStats.fileDetails.forEach(file => {
+    const isInFiltered = filteredStats.fileDetails.some(f => f.path === file.path);
+    if (!isInFiltered) {
+      ignoredFiles.push(file);
+    }
+  });
+  
+  ignoredFiles.sort((a, b) => b.tokens - a.tokens);
+  ignoredFiles.slice(0, 10).forEach((file, i) => {
+    console.log(`${(i + 1).toString().padStart(2)}. ${file.path.padEnd(50)} ${formatNumber(file.tokens).padStart(8)} tokens (ignored)`);
+  });
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = { countTokens, walkDirectory };

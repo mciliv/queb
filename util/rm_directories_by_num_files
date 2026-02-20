@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+find /home/m/cure/data -type d -name "docks_*" | while read dir; do
+  [ "$(find "$dir" -type f | wc -l)" -lt 3 ] && rm -r "$dir"
+done

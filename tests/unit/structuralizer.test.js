@@ -103,10 +103,11 @@ describe('Structuralizer with Dependency Injection', () => {
       // Verify
       expect(result.object).toBe('coffee');
       expect(result.chemicals).toHaveLength(1);
-      // Structuralizer returns the AI result; SDF generation happens via /api/generate-sdfs
       expect(result.chemicals[0]).toEqual({
         name: 'Caffeine',
         smiles: 'CN1C=NC2=C1C(=O)N(C(=O)N2C)C',
+        sdfPath: '/sdf/caffeine.sdf',
+        status: 'ok',
       });
 
       // Verify calls
@@ -114,7 +115,10 @@ describe('Structuralizer with Dependency Injection', () => {
         'coffee',
         { includeReason: true }
       );
-      expect(mocks.molecularProcessor.generateSDF).not.toHaveBeenCalled();
+      expect(mocks.molecularProcessor.generateSDF).toHaveBeenCalledWith(
+        'CN1C=NC2=C1C(=O)N(C(=O)N2C)C',
+        false
+      );
     });
 
     it('should not fail validation when some chemicals have missing SMILES (resolve by name later)', async () => {
@@ -141,7 +145,8 @@ describe('Structuralizer with Dependency Injection', () => {
       expect(result.chemicals).toHaveLength(2);
       expect(result.chemicals[0].name).toBe('Theobromine');
       expect(result.chemicals[1].name).toBe('Caffeine');
-      expect(mocks.molecularProcessor.generateSDF).not.toHaveBeenCalled();
+      // generateSDF called for Theobromine (has SMILES), not for Caffeine (null SMILES)
+      expect(mocks.molecularProcessor.generateSDF).toHaveBeenCalledTimes(1);
     });
 
     it('should use cache when available', async () => {
