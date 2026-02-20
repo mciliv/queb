@@ -1,0 +1,1456 @@
+Epoch 0: Validation mean absolute age difference: 47.841 in 286.5001928806305 seconds
+Epoch 0: Validation mean absolute age difference: 48.614 in 280.83963537216187 seconds
+Epoch 0: Validation mean absolute age difference: 49.505 in 280.5566363334656 seconds
+Epoch 0: Validation mean absolute age difference: 52.061 in 286.3459038734436 seconds
+Epoch 0: Validation mean absolute age difference: 47.414 in 280.8190610408783 seconds
+Starting epoch 1
+Starting epoch 1
+Starting epoch 1
+Starting epoch 1
+Starting epoch 1
+Epoch 0: Validation mean absolute age difference: 49.452 in 300.39104747772217 seconds
+Starting epoch 1
+Epoch 0: Validation mean absolute age difference: 46.985 in 303.5924117565155 seconds
+Starting epoch 1
+Epoch 0: Validation mean absolute age difference: 46.248 in 317.868816614151 seconds
+Starting epoch 1
+Epoch 1: Training mean absolute age difference: 50.752 in 351.05918049812317 seconds
+Epoch 1: Training mean absolute age difference: 43.259 in 358.91727232933044 seconds
+Epoch 1: Training mean absolute age difference: 43.772 in 337.5468690395355 seconds
+Epoch 1: Training mean absolute age difference: 47.110 in 358.9183712005615 seconds
+Epoch 1: Training mean absolute age difference: 49.166 in 358.91743898391724 seconds
+Epoch 1: Training mean absolute age difference: 45.520 in 322.4851129055023 seconds
+Epoch 1: Training mean absolute age difference: 48.983 in 358.9208061695099 seconds
+Epoch 1: Training mean absolute age difference: 43.275 in 358.9334645271301 seconds
+Epoch 1: Validation mean absolute age difference: 42.199 in 318.5965986251831 seconds
+Epoch 1: Validation mean absolute age difference: 43.313 in 318.60700821876526 seconds
+Epoch 1: Validation mean absolute age difference: 45.339 in 320.80547189712524 seconds
+Epoch 1: Validation mean absolute age difference: 47.547 in 321.5550353527069 seconds
+Epoch 1: Validation mean absolute age difference: 40.931 in 332.2934980392456 seconds
+Epoch 1: Validation mean absolute age difference: 44.115 in 340.4022042751312 seconds
+Epoch 1: Validation mean absolute age difference: 43.306 in 345.5142686367035 seconds
+Epoch 1: Validation mean absolute age difference: 41.480 in 355.65297746658325 seconds
+Starting epoch 2
+Starting epoch 2
+Starting epoch 2
+Starting epoch 2
+Starting epoch 2
+Starting epoch 2
+Starting epoch 2
+Starting epoch 2
+Epoch 2: Training mean absolute age difference: 44.551 in 358.13992524147034 seconds
+Epoch 2: Training mean absolute age difference: 40.709 in 358.1407012939453 seconds
+Epoch 2: Training mean absolute age difference: 42.711 in 358.1398334503174 seconds
+Epoch 2: Training mean absolute age difference: 45.847 in 358.1470503807068 seconds
+Epoch 2: Training mean absolute age difference: 41.528 in 358.1397533416748 seconds
+Epoch 2: Training mean absolute age difference: 46.197 in 358.14003586769104 seconds
+Epoch 2: Training mean absolute age difference: 41.314 in 358.14028310775757 seconds
+Epoch 2: Training mean absolute age difference: 44.146 in 358.14717292785645 seconds
+Epoch 2: Validation mean absolute age difference: 42.903 in 311.9234435558319 seconds
+Epoch 2: Validation mean absolute age difference: 41.245 in 318.80707240104675 seconds
+Epoch 2: Validation mean absolute age difference: 46.524 in 321.45807790756226 seconds
+Epoch 2: Validation mean absolute age difference: 44.974 in 330.0439238548279 seconds
+Epoch 2: Validation mean absolute age difference: 39.647 in 335.035936832428 seconds
+Epoch 2: Validation mean absolute age difference: 43.653 in 343.4412124156952 seconds
+Epoch 2: Validation mean absolute age difference: 43.048 in 346.2669515609741 seconds
+Epoch 2: Validation mean absolute age difference: 40.279 in 358.72909808158875 seconds
+Starting epoch 3
+Starting epoch 3
+Starting epoch 3
+Starting epoch 3
+Starting epoch 3
+Starting epoch 3
+Starting epoch 3
+Starting epoch 3
+Epoch 3: Training mean absolute age difference: 39.360 in 358.5146005153656 seconds
+Epoch 3: Training mean absolute age difference: 42.795 in 358.5135474205017 seconds
+Epoch 3: Training mean absolute age difference: 46.598 in 358.5195677280426 seconds
+Epoch 3: Training mean absolute age difference: 42.545 in 358.5141484737396 seconds
+Epoch 3: Training mean absolute age difference: 38.334 in 358.5135817527771 seconds
+Epoch 3: Training mean absolute age difference: 39.826 in 358.514032125473 seconds
+Epoch 3: Training mean absolute age difference: 40.136 in 358.51393938064575 seconds
+Epoch 3: Training mean absolute age difference: 40.535 in 358.5076205730438 seconds
+Epoch 3: Validation mean absolute age difference: 41.432 in 314.9126720428467 seconds
+Epoch 3: Validation mean absolute age difference: 39.399 in 315.50245928764343 seconds
+Epoch 3: Validation mean absolute age difference: 46.434 in 321.5527575016022 seconds
+Epoch 3: Validation mean absolute age difference: 43.744 in 327.78652119636536 seconds
+Epoch 3: Validation mean absolute age difference: 39.250 in 332.23269534111023 seconds
+Epoch 3: Validation mean absolute age difference: 42.929 in 340.24706768989563 seconds
+Epoch 3: Validation mean absolute age difference: 41.344 in 342.55002450942993 seconds
+Epoch 3: Validation mean absolute age difference: 39.287 in 355.23980593681335 seconds
+Starting epoch 4
+Starting epoch 4
+Starting epoch 4
+Starting epoch 4
+Starting epoch 4
+Starting epoch 4
+Starting epoch 4
+Starting epoch 4
+Epoch 4: Training mean absolute age difference: 38.304 in 355.5108366012573 seconds
+Epoch 4: Training mean absolute age difference: 44.321 in 355.51524806022644 seconds
+Epoch 4: Training mean absolute age difference: 44.882 in 355.5106933116913 seconds
+Epoch 4: Training mean absolute age difference: 40.457 in 355.5109622478485 seconds
+Epoch 4: Training mean absolute age difference: 41.561 in 355.50381660461426 seconds
+Epoch 4: Training mean absolute age difference: 43.664 in 355.5158441066742 seconds
+Epoch 4: Training mean absolute age difference: 43.554 in 355.51482248306274 seconds
+Epoch 4: Training mean absolute age difference: 41.028 in 355.5105483531952 seconds
+Epoch 4: Validation mean absolute age difference: 42.358 in 314.846497297287 seconds
+Epoch 4: Validation mean absolute age difference: 46.604 in 318.5729386806488 seconds
+Epoch 4: Validation mean absolute age difference: 39.723 in 319.56691813468933 seconds
+Epoch 4: Validation mean absolute age difference: 43.208 in 328.0587487220764 seconds
+Epoch 4: Validation mean absolute age difference: 38.731 in 333.32048416137695 seconds
+Epoch 4: Validation mean absolute age difference: 40.996 in 343.4717628955841 seconds
+Epoch 4: Validation mean absolute age difference: 42.669 in 344.5136685371399 seconds
+Epoch 4: Validation mean absolute age difference: 39.384 in 353.6001925468445 seconds
+Starting epoch 5
+Starting epoch 5
+Starting epoch 5
+Starting epoch 5
+Starting epoch 5
+Starting epoch 5
+Starting epoch 5
+Starting epoch 5
+Epoch 5: Training mean absolute age difference: 45.582 in 360.20859384536743 seconds
+Epoch 5: Training mean absolute age difference: 40.689 in 360.20959210395813 seconds
+Epoch 5: Training mean absolute age difference: 44.738 in 360.2099463939667 seconds
+Epoch 5: Training mean absolute age difference: 43.807 in 360.2095317840576 seconds
+Epoch 5: Training mean absolute age difference: 41.555 in 360.20244789123535 seconds
+Epoch 5: Training mean absolute age difference: 43.504 in 360.209755897522 seconds
+Epoch 5: Training mean absolute age difference: 41.524 in 360.21094036102295 seconds
+Epoch 5: Training mean absolute age difference: 39.320 in 360.2097976207733 seconds
+Epoch 5: Validation mean absolute age difference: 41.891 in 322.09250807762146 seconds
+Epoch 5: Validation mean absolute age difference: 43.339 in 323.6651928424835 seconds
+Epoch 5: Validation mean absolute age difference: 47.369 in 324.1513252258301 seconds
+Epoch 5: Validation mean absolute age difference: 45.006 in 327.13860630989075 seconds
+Epoch 5: Validation mean absolute age difference: 40.390 in 335.7431411743164 seconds
+Epoch 5: Validation mean absolute age difference: 42.529 in 346.43874979019165 seconds
+Epoch 5: Validation mean absolute age difference: 43.910 in 349.1159234046936 seconds
+Epoch 5: Validation mean absolute age difference: 40.528 in 355.43069648742676 seconds
+Starting epoch 6
+Starting epoch 6
+Starting epoch 6
+Starting epoch 6
+Starting epoch 6
+Starting epoch 6
+Starting epoch 6
+Starting epoch 6
+Epoch 6: Training mean absolute age difference: 41.357 in 354.76240611076355 seconds
+Epoch 6: Training mean absolute age difference: 38.974 in 354.7650611400604 seconds
+Epoch 6: Training mean absolute age difference: 38.817 in 354.76169061660767 seconds
+Epoch 6: Training mean absolute age difference: 44.532 in 354.7605769634247 seconds
+Epoch 6: Training mean absolute age difference: 42.567 in 354.7614572048187 seconds
+Epoch 6: Training mean absolute age difference: 43.301 in 354.754754781723 seconds
+Epoch 6: Training mean absolute age difference: 40.145 in 354.7615067958832 seconds
+Epoch 6: Training mean absolute age difference: 43.550 in 354.76562237739563 seconds
+Epoch 6: Validation mean absolute age difference: 40.702 in 316.4543046951294 seconds
+Epoch 6: Validation mean absolute age difference: 41.824 in 316.93428111076355 seconds
+Epoch 6: Validation mean absolute age difference: 46.103 in 317.7456452846527 seconds
+Epoch 6: Validation mean absolute age difference: 43.924 in 323.276869058609 seconds
+Epoch 6: Validation mean absolute age difference: 38.562 in 330.3397500514984 seconds
+Epoch 6: Validation mean absolute age difference: 42.527 in 338.35425209999084 seconds
+Epoch 6: Validation mean absolute age difference: 40.770 in 343.65929412841797 seconds
+Epoch 6: Validation mean absolute age difference: 39.776 in 353.196182012558 seconds
+Starting epoch 7
+Starting epoch 7
+Starting epoch 7
+Starting epoch 7
+Starting epoch 7
+Starting epoch 7
+Starting epoch 7
+Starting epoch 7
+Epoch 7: Training mean absolute age difference: 42.254 in 355.8868091106415 seconds
+Epoch 7: Training mean absolute age difference: 38.696 in 355.88782501220703 seconds
+Epoch 7: Training mean absolute age difference: 36.872 in 355.8876762390137 seconds
+Epoch 7: Training mean absolute age difference: 42.242 in 355.8876054286957 seconds
+Epoch 7: Training mean absolute age difference: 39.152 in 355.8872790336609 seconds
+Epoch 7: Training mean absolute age difference: 41.903 in 355.88728189468384 seconds
+Epoch 7: Training mean absolute age difference: 44.276 in 355.88720440864563 seconds
+Epoch 7: Training mean absolute age difference: 39.105 in 355.8803641796112 seconds
+Epoch 7: Validation mean absolute age difference: 41.545 in 312.0443320274353 seconds
+Epoch 7: Validation mean absolute age difference: 39.594 in 318.51841497421265 seconds
+Epoch 7: Validation mean absolute age difference: 44.779 in 319.18368101119995 seconds
+Epoch 7: Validation mean absolute age difference: 42.401 in 327.18334317207336 seconds
+Epoch 7: Validation mean absolute age difference: 38.240 in 335.86068844795227 seconds
+Epoch 7: Validation mean absolute age difference: 41.815 in 343.23062324523926 seconds
+Epoch 7: Validation mean absolute age difference: 40.226 in 344.74919533729553 seconds
+Epoch 7: Validation mean absolute age difference: 40.003 in 357.8442449569702 seconds
+Starting epoch 8
+Starting epoch 8
+Starting epoch 8
+Starting epoch 8
+Starting epoch 8
+Starting epoch 8
+Starting epoch 8
+Starting epoch 8
+Epoch 8: Training mean absolute age difference: 39.728 in 355.1022822856903 seconds
+Epoch 8: Training mean absolute age difference: 40.882 in 355.10963010787964 seconds
+Epoch 8: Training mean absolute age difference: 43.276 in 355.10899901390076 seconds
+Epoch 8: Training mean absolute age difference: 41.136 in 355.1096932888031 seconds
+Epoch 8: Training mean absolute age difference: 41.586 in 355.10945200920105 seconds
+Epoch 8: Training mean absolute age difference: 45.051 in 355.1126866340637 seconds
+Epoch 8: Training mean absolute age difference: 39.587 in 355.10900044441223 seconds
+Epoch 8: Training mean absolute age difference: 42.589 in 355.1091260910034 seconds
+Epoch 8: Validation mean absolute age difference: 41.172 in 307.8487002849579 seconds
+Epoch 8: Validation mean absolute age difference: 42.713 in 313.7648437023163 seconds
+Epoch 8: Validation mean absolute age difference: 46.512 in 318.72316551208496 seconds
+Epoch 8: Validation mean absolute age difference: 44.657 in 328.7765083312988 seconds
+Epoch 8: Validation mean absolute age difference: 39.282 in 333.4497694969177 seconds
+Epoch 8: Validation mean absolute age difference: 42.156 in 345.46009945869446 seconds
+Epoch 8: Validation mean absolute age difference: 42.678 in 346.96167278289795 seconds
+Epoch 8: Validation mean absolute age difference: 40.163 in 358.4079020023346 seconds
+Starting epoch 9
+Starting epoch 9
+Starting epoch 9
+Starting epoch 9
+Starting epoch 9
+Starting epoch 9
+Starting epoch 9
+Starting epoch 9
+Epoch 9: Training mean absolute age difference: 41.425 in 355.42778420448303 seconds
+Epoch 9: Training mean absolute age difference: 44.012 in 355.4204924106598 seconds
+Epoch 9: Training mean absolute age difference: 42.107 in 355.42756390571594 seconds
+Epoch 9: Training mean absolute age difference: 40.429 in 355.4219274520874 seconds
+Epoch 9: Training mean absolute age difference: 41.832 in 355.4280455112457 seconds
+Epoch 9: Training mean absolute age difference: 40.613 in 355.42776703834534 seconds
+Epoch 9: Training mean absolute age difference: 45.253 in 355.4266254901886 seconds
+Epoch 9: Training mean absolute age difference: 40.798 in 355.4269828796387 seconds
+Epoch 9: Validation mean absolute age difference: 43.069 in 313.9214618206024 seconds
+Epoch 9: Validation mean absolute age difference: 46.801 in 319.3236474990845 seconds
+Epoch 9: Validation mean absolute age difference: 41.695 in 320.31698393821716 seconds
+Epoch 9: Validation mean absolute age difference: 44.663 in 327.7174651622772 seconds
+Epoch 9: Validation mean absolute age difference: 39.331 in 336.0728437900543 seconds
+Epoch 9: Validation mean absolute age difference: 43.175 in 340.19975543022156 seconds
+Epoch 9: Validation mean absolute age difference: 42.209 in 343.7697513103485 seconds
+Epoch 9: Validation mean absolute age difference: 40.657 in 357.75945019721985 seconds
+Starting epoch 10
+Starting epoch 10
+Starting epoch 10
+Starting epoch 10
+Starting epoch 10
+Starting epoch 10
+Starting epoch 10
+Starting epoch 10
+Epoch 10: Training mean absolute age difference: 39.523 in 353.5754544734955 seconds
+Epoch 10: Training mean absolute age difference: 42.210 in 353.5663936138153 seconds
+Epoch 10: Training mean absolute age difference: 41.180 in 353.5743374824524 seconds
+Epoch 10: Training mean absolute age difference: 43.934 in 353.58132314682007 seconds
+Epoch 10: Training mean absolute age difference: 47.212 in 353.5753812789917 seconds
+Epoch 10: Training mean absolute age difference: 42.925 in 353.57447814941406 seconds
+Epoch 10: Training mean absolute age difference: 41.083 in 353.5738081932068 seconds
+Epoch 10: Training mean absolute age difference: 41.465 in 353.5744411945343 seconds
+Epoch 10: Validation mean absolute age difference: 37.891 in 311.6491787433624 seconds
+Epoch 10: Validation mean absolute age difference: 40.816 in 312.5515134334564 seconds
+Epoch 10: Validation mean absolute age difference: 44.020 in 315.52558302879333 seconds
+Epoch 10: Validation mean absolute age difference: 42.540 in 324.4278702735901 seconds
+Epoch 10: Validation mean absolute age difference: 37.963 in 333.8351607322693 seconds
+Epoch 10: Validation mean absolute age difference: 40.654 in 334.5834810733795 seconds
+Epoch 10: Validation mean absolute age difference: 38.848 in 338.47463035583496 seconds
+Epoch 10: Validation mean absolute age difference: 37.217 in 353.5756371021271 seconds
+Starting epoch 11
+Starting epoch 11
+Starting epoch 11
+Starting epoch 11
+Starting epoch 11
+Starting epoch 11
+Starting epoch 11
+Starting epoch 11
+Epoch 11: Training mean absolute age difference: 39.410 in 351.5409517288208 seconds
+Epoch 11: Training mean absolute age difference: 43.169 in 351.5411581993103 seconds
+Epoch 11: Training mean absolute age difference: 40.203 in 351.54138016700745 seconds
+Epoch 11: Training mean absolute age difference: 41.090 in 351.54111766815186 seconds
+Epoch 11: Training mean absolute age difference: 43.756 in 351.5409598350525 seconds
+Epoch 11: Training mean absolute age difference: 41.005 in 351.53469800949097 seconds
+Epoch 11: Training mean absolute age difference: 40.759 in 351.541876077652 seconds
+Epoch 11: Training mean absolute age difference: 45.157 in 351.5405378341675 seconds
+Epoch 11: Validation mean absolute age difference: 41.697 in 310.63673305511475 seconds
+Epoch 11: Validation mean absolute age difference: 39.217 in 311.9958064556122 seconds
+Epoch 11: Validation mean absolute age difference: 44.872 in 313.65839886665344 seconds
+Epoch 11: Validation mean absolute age difference: 43.232 in 319.4678406715393 seconds
+Epoch 11: Validation mean absolute age difference: 38.582 in 325.1526484489441 seconds
+Epoch 11: Validation mean absolute age difference: 40.625 in 337.61457896232605 seconds
+Epoch 11: Validation mean absolute age difference: 41.395 in 340.9434485435486 seconds
+Epoch 11: Validation mean absolute age difference: 38.197 in 348.99394631385803 seconds
+Starting epoch 12
+Starting epoch 12
+Starting epoch 12
+Starting epoch 12
+Starting epoch 12
+Starting epoch 12
+Starting epoch 12
+Starting epoch 12
+Epoch 12: Training mean absolute age difference: 42.697 in 348.98195338249207 seconds
+Epoch 12: Training mean absolute age difference: 41.798 in 348.97543144226074 seconds
+Epoch 12: Training mean absolute age difference: 39.223 in 348.98122215270996 seconds
+Epoch 12: Training mean absolute age difference: 42.988 in 348.9820718765259 seconds
+Epoch 12: Training mean absolute age difference: 42.819 in 348.9813802242279 seconds
+Epoch 12: Training mean absolute age difference: 37.239 in 348.9815912246704 seconds
+Epoch 12: Training mean absolute age difference: 39.143 in 348.98228216171265 seconds
+Epoch 12: Training mean absolute age difference: 39.013 in 348.9827210903168 seconds
+Epoch 12: Validation mean absolute age difference: 45.658 in 315.83304953575134 seconds
+Epoch 12: Validation mean absolute age difference: 40.934 in 321.56260561943054 seconds
+Epoch 12: Validation mean absolute age difference: 42.781 in 321.8280494213104 seconds
+Epoch 12: Validation mean absolute age difference: 43.742 in 326.71689558029175 seconds
+Epoch 12: Validation mean absolute age difference: 39.094 in 336.334308385849 seconds
+Epoch 12: Validation mean absolute age difference: 42.408 in 342.2480819225311 seconds
+Epoch 12: Validation mean absolute age difference: 41.637 in 344.96159172058105 seconds
+Epoch 12: Validation mean absolute age difference: 40.282 in 356.81374049186707 seconds
+Starting epoch 13
+Starting epoch 13
+Starting epoch 13
+Starting epoch 13
+Starting epoch 13
+Starting epoch 13
+Starting epoch 13
+Starting epoch 13
+Epoch 13: Training mean absolute age difference: 45.101 in 349.6185739040375 seconds
+Epoch 13: Training mean absolute age difference: 41.359 in 349.61257457733154 seconds
+Epoch 13: Training mean absolute age difference: 41.706 in 349.6197142601013 seconds
+Epoch 13: Training mean absolute age difference: 44.190 in 349.61959767341614 seconds
+Epoch 13: Training mean absolute age difference: 41.121 in 349.61946153640747 seconds
+Epoch 13: Training mean absolute age difference: 40.228 in 349.61962509155273 seconds
+Epoch 13: Training mean absolute age difference: 39.156 in 349.6198134422302 seconds
+Epoch 13: Training mean absolute age difference: 39.838 in 349.6200740337372 seconds
+Epoch 13: Validation mean absolute age difference: 42.734 in 311.76418566703796 seconds
+Epoch 13: Validation mean absolute age difference: 46.614 in 313.0694363117218 seconds
+Epoch 13: Validation mean absolute age difference: 41.119 in 316.7826814651489 seconds
+Epoch 13: Validation mean absolute age difference: 44.888 in 326.6857120990753 seconds
+Epoch 13: Validation mean absolute age difference: 40.871 in 333.9724054336548 seconds
+Epoch 13: Validation mean absolute age difference: 43.427 in 340.2184512615204 seconds
+Epoch 13: Validation mean absolute age difference: 42.149 in 340.8239004611969 seconds
+Epoch 13: Validation mean absolute age difference: 39.847 in 353.81801104545593 seconds
+Starting epoch 14
+Starting epoch 14
+Starting epoch 14
+Starting epoch 14
+Starting epoch 14
+Starting epoch 14
+Starting epoch 14
+Starting epoch 14
+Epoch 14: Training mean absolute age difference: 38.656 in 352.56036615371704 seconds
+Epoch 14: Training mean absolute age difference: 40.381 in 352.5596499443054 seconds
+Epoch 14: Training mean absolute age difference: 42.981 in 352.55937671661377 seconds
+Epoch 14: Training mean absolute age difference: 38.350 in 352.559720993042 seconds
+Epoch 14: Training mean absolute age difference: 42.681 in 352.5590524673462 seconds
+Epoch 14: Training mean absolute age difference: 41.015 in 352.559898853302 seconds
+Epoch 14: Training mean absolute age difference: 43.700 in 352.56007170677185 seconds
+Epoch 14: Training mean absolute age difference: 39.429 in 352.5518615245819 seconds
+Epoch 14: Validation mean absolute age difference: 40.876 in 312.646635055542 seconds
+Epoch 14: Validation mean absolute age difference: 39.196 in 314.0962116718292 seconds
+Epoch 14: Validation mean absolute age difference: 43.841 in 319.0045516490936 seconds
+Epoch 14: Validation mean absolute age difference: 42.310 in 328.2602467536926 seconds
+Epoch 14: Validation mean absolute age difference: 37.630 in 334.07644629478455 seconds
+Epoch 14: Validation mean absolute age difference: 40.186 in 340.86545038223267 seconds
+Epoch 14: Validation mean absolute age difference: 38.667 in 342.5152266025543 seconds
+Epoch 14: Validation mean absolute age difference: 37.335 in 346.8374516963959 seconds
+Starting epoch 15
+Starting epoch 15
+Starting epoch 15
+Starting epoch 15
+Starting epoch 15
+Starting epoch 15
+Starting epoch 15
+Starting epoch 15
+Epoch 15: Training mean absolute age difference: 39.854 in 355.7137825489044 seconds
+Epoch 15: Training mean absolute age difference: 39.117 in 355.72092723846436 seconds
+Epoch 15: Training mean absolute age difference: 41.926 in 355.7211332321167 seconds
+Epoch 15: Training mean absolute age difference: 43.042 in 355.7206971645355 seconds
+Epoch 15: Training mean absolute age difference: 38.853 in 355.7213304042816 seconds
+Epoch 15: Training mean absolute age difference: 41.648 in 355.7215578556061 seconds
+Epoch 15: Training mean absolute age difference: 44.312 in 355.7201864719391 seconds
+Epoch 15: Training mean absolute age difference: 42.686 in 355.72046732902527 seconds
+Epoch 15: Validation mean absolute age difference: 40.822 in 314.98439288139343 seconds
+Epoch 15: Validation mean absolute age difference: 39.052 in 316.2851331233978 seconds
+Epoch 15: Validation mean absolute age difference: 44.488 in 321.2682077884674 seconds
+Epoch 15: Validation mean absolute age difference: 42.620 in 332.4212567806244 seconds
+Epoch 15: Validation mean absolute age difference: 37.683 in 337.63927030563354 seconds
+Epoch 15: Validation mean absolute age difference: 40.510 in 340.3165354728699 seconds
+Epoch 15: Validation mean absolute age difference: 39.919 in 343.6402819156647 seconds
+Epoch 15: Validation mean absolute age difference: 37.086 in 357.52971601486206 seconds
+Starting epoch 16
+Starting epoch 16
+Starting epoch 16
+Starting epoch 16
+Starting epoch 16
+Starting epoch 16
+Starting epoch 16
+Starting epoch 16
+Epoch 16: Training mean absolute age difference: 36.929 in 359.4049665927887 seconds
+Epoch 16: Training mean absolute age difference: 40.371 in 359.39628314971924 seconds
+Epoch 16: Training mean absolute age difference: 34.629 in 359.40370750427246 seconds
+Epoch 16: Training mean absolute age difference: 42.690 in 359.40351390838623 seconds
+Epoch 16: Training mean absolute age difference: 44.893 in 359.4034740924835 seconds
+Epoch 16: Training mean absolute age difference: 39.687 in 359.40484619140625 seconds
+Epoch 16: Training mean absolute age difference: 41.117 in 359.40306973457336 seconds
+Epoch 16: Training mean absolute age difference: 43.280 in 359.4035613536835 seconds
+Epoch 16: Validation mean absolute age difference: 41.091 in 314.0477240085602 seconds
+Epoch 16: Validation mean absolute age difference: 42.841 in 314.38171577453613 seconds
+Epoch 16: Validation mean absolute age difference: 46.267 in 316.5034329891205 seconds
+Epoch 16: Validation mean absolute age difference: 43.788 in 326.04905223846436 seconds
+Epoch 16: Validation mean absolute age difference: 39.274 in 332.5332546234131 seconds
+Epoch 16: Validation mean absolute age difference: 43.111 in 337.1456859111786 seconds
+Epoch 16: Validation mean absolute age difference: 41.879 in 341.0948634147644 seconds
+Epoch 16: Validation mean absolute age difference: 39.549 in 352.58510541915894 seconds
+Starting epoch 17
+Starting epoch 17
+Starting epoch 17
+Starting epoch 17
+Starting epoch 17
+Starting epoch 17
+Starting epoch 17
+Starting epoch 17
+Epoch 17: Training mean absolute age difference: 39.074 in 354.08913826942444 seconds
+Epoch 17: Training mean absolute age difference: 42.550 in 354.0901880264282 seconds
+Epoch 17: Training mean absolute age difference: 38.420 in 354.08923530578613 seconds
+Epoch 17: Training mean absolute age difference: 38.598 in 354.08941888809204 seconds
+Epoch 17: Training mean absolute age difference: 38.964 in 354.08950757980347 seconds
+Epoch 17: Training mean absolute age difference: 41.566 in 354.08270168304443 seconds
+Epoch 17: Training mean absolute age difference: 42.702 in 354.08958101272583 seconds
+Epoch 17: Training mean absolute age difference: 40.530 in 354.09005212783813 seconds
+Epoch 17: Validation mean absolute age difference: 45.857 in 319.2473566532135 seconds
+Epoch 17: Validation mean absolute age difference: 42.497 in 319.2472598552704 seconds
+Epoch 17: Validation mean absolute age difference: 40.904 in 319.38498282432556 seconds
+Epoch 17: Validation mean absolute age difference: 43.453 in 325.6564145088196 seconds
+Epoch 17: Validation mean absolute age difference: 39.197 in 334.73055124282837 seconds
+Epoch 17: Validation mean absolute age difference: 42.294 in 339.3396282196045 seconds
+Epoch 17: Validation mean absolute age difference: 40.991 in 342.8221297264099 seconds
+Epoch 17: Validation mean absolute age difference: 38.765 in 354.1579897403717 seconds
+Starting epoch 18
+Starting epoch 18
+Starting epoch 18
+Starting epoch 18
+Starting epoch 18
+Starting epoch 18
+Starting epoch 18
+Starting epoch 18
+Epoch 18: Training mean absolute age difference: 40.317 in 356.57600808143616 seconds
+Epoch 18: Training mean absolute age difference: 39.346 in 356.5689146518707 seconds
+Epoch 18: Training mean absolute age difference: 36.477 in 356.57552123069763 seconds
+Epoch 18: Training mean absolute age difference: 42.457 in 356.57601022720337 seconds
+Epoch 18: Training mean absolute age difference: 41.700 in 356.57552003860474 seconds
+Epoch 18: Training mean absolute age difference: 36.792 in 356.57562375068665 seconds
+Epoch 18: Training mean absolute age difference: 40.256 in 356.57587909698486 seconds
+Epoch 18: Training mean absolute age difference: 37.289 in 356.57562351226807 seconds
+Epoch 18: Validation mean absolute age difference: 38.788 in 315.51957297325134 seconds
+Epoch 18: Validation mean absolute age difference: 44.038 in 317.0087127685547 seconds
+Epoch 18: Validation mean absolute age difference: 40.460 in 319.42198276519775 seconds
+Epoch 18: Validation mean absolute age difference: 41.826 in 327.5836138725281 seconds
+Epoch 18: Validation mean absolute age difference: 37.981 in 335.7295379638672 seconds
+Epoch 18: Validation mean absolute age difference: 40.646 in 345.0107159614563 seconds
+Epoch 18: Validation mean absolute age difference: 39.028 in 345.2732882499695 seconds
+Epoch 18: Validation mean absolute age difference: 37.624 in 346.7035496234894 seconds
+Starting epoch 19
+Starting epoch 19
+Starting epoch 19
+Starting epoch 19
+Starting epoch 19
+Starting epoch 19
+Starting epoch 19
+Starting epoch 19
+Epoch 19: Training mean absolute age difference: 47.221 in 356.8352437019348 seconds
+Epoch 19: Training mean absolute age difference: 41.257 in 356.8345642089844 seconds
+Epoch 19: Training mean absolute age difference: 38.239 in 356.83442425727844 seconds
+Epoch 19: Training mean absolute age difference: 39.232 in 356.83471488952637 seconds
+Epoch 19: Training mean absolute age difference: 37.937 in 356.83407855033875 seconds
+Epoch 19: Training mean absolute age difference: 40.603 in 356.8343505859375 seconds
+Epoch 19: Training mean absolute age difference: 38.799 in 356.8355927467346 seconds
+Epoch 19: Training mean absolute age difference: 38.633 in 356.82736444473267 seconds
+Epoch 19: Validation mean absolute age difference: 41.663 in 315.1081440448761 seconds
+Epoch 19: Validation mean absolute age difference: 45.575 in 319.3936023712158 seconds
+Epoch 19: Validation mean absolute age difference: 39.142 in 319.7750494480133 seconds
+Epoch 19: Validation mean absolute age difference: 42.850 in 329.19510197639465 seconds
+Epoch 19: Validation mean absolute age difference: 38.890 in 337.6837577819824 seconds
+Epoch 19: Validation mean absolute age difference: 41.733 in 340.8975875377655 seconds
+Epoch 19: Validation mean absolute age difference: 40.636 in 346.79051756858826 seconds
+Epoch 19: Validation mean absolute age difference: 39.443 in 358.6783881187439 seconds
+Starting epoch 20
+Starting epoch 20
+Starting epoch 20
+Starting epoch 20
+Starting epoch 20
+Starting epoch 20
+Starting epoch 20
+Starting epoch 20
+Epoch 20: Training mean absolute age difference: 38.838 in 358.48992896080017 seconds
+Epoch 20: Training mean absolute age difference: 44.171 in 358.49015164375305 seconds
+Epoch 20: Training mean absolute age difference: 41.138 in 358.4899652004242 seconds
+Epoch 20: Training mean absolute age difference: 38.985 in 358.49057936668396 seconds
+Epoch 20: Training mean absolute age difference: 38.316 in 358.4904956817627 seconds
+Epoch 20: Training mean absolute age difference: 38.288 in 358.48292231559753 seconds
+Epoch 20: Training mean absolute age difference: 40.378 in 358.4901294708252 seconds
+Epoch 20: Training mean absolute age difference: 37.427 in 358.48982405662537 seconds
+Epoch 20: Validation mean absolute age difference: 41.384 in 314.8433222770691 seconds
+Epoch 20: Validation mean absolute age difference: 40.401 in 315.82705211639404 seconds
+Epoch 20: Validation mean absolute age difference: 46.062 in 322.4251379966736 seconds
+Epoch 20: Validation mean absolute age difference: 43.285 in 331.33646845817566 seconds
+Epoch 20: Validation mean absolute age difference: 39.444 in 337.0819013118744 seconds
+Epoch 20: Validation mean absolute age difference: 42.168 in 342.4321105480194 seconds
+Epoch 20: Validation mean absolute age difference: 40.675 in 345.5850119590759 seconds
+Epoch 20: Validation mean absolute age difference: 38.337 in 359.3891251087189 seconds
+Starting epoch 21
+Starting epoch 21
+Starting epoch 21
+Starting epoch 21
+Starting epoch 21
+Starting epoch 21
+Starting epoch 21
+Starting epoch 21
+Epoch 21: Training mean absolute age difference: 41.391 in 358.6694803237915 seconds
+Epoch 21: Training mean absolute age difference: 39.615 in 358.6755018234253 seconds
+Epoch 21: Training mean absolute age difference: 38.066 in 358.67772936820984 seconds
+Epoch 21: Training mean absolute age difference: 41.352 in 358.6812074184418 seconds
+Epoch 21: Training mean absolute age difference: 39.782 in 358.677197933197 seconds
+Epoch 21: Training mean absolute age difference: 41.058 in 358.676132440567 seconds
+Epoch 21: Training mean absolute age difference: 42.480 in 358.6758282184601 seconds
+Epoch 21: Training mean absolute age difference: 39.665 in 358.67591524124146 seconds
+Epoch 21: Validation mean absolute age difference: 41.339 in 317.9563648700714 seconds
+Epoch 21: Validation mean absolute age difference: 39.554 in 318.6659631729126 seconds
+Epoch 21: Validation mean absolute age difference: 45.507 in 319.02726793289185 seconds
+Epoch 21: Validation mean absolute age difference: 43.248 in 331.5125072002411 seconds
+Epoch 21: Validation mean absolute age difference: 37.897 in 337.6891348361969 seconds
+Epoch 21: Validation mean absolute age difference: 42.637 in 342.25936126708984 seconds
+Epoch 21: Validation mean absolute age difference: 41.197 in 345.822096824646 seconds
+Epoch 21: Validation mean absolute age difference: 39.074 in 357.82968378067017 seconds
+Starting epoch 22
+Starting epoch 22
+Starting epoch 22
+Starting epoch 22
+Starting epoch 22
+Starting epoch 22
+Starting epoch 22
+Starting epoch 22
+Epoch 22: Training mean absolute age difference: 41.003 in 358.03432846069336 seconds
+Epoch 22: Training mean absolute age difference: 36.046 in 358.04205870628357 seconds
+Epoch 22: Training mean absolute age difference: 42.946 in 358.04092955589294 seconds
+Epoch 22: Training mean absolute age difference: 40.708 in 358.0412230491638 seconds
+Epoch 22: Training mean absolute age difference: 41.163 in 358.0413749217987 seconds
+Epoch 22: Training mean absolute age difference: 38.026 in 358.04083609580994 seconds
+Epoch 22: Training mean absolute age difference: 38.899 in 358.0408864021301 seconds
+Epoch 22: Training mean absolute age difference: 39.515 in 358.0411982536316 seconds
+Epoch 22: Validation mean absolute age difference: 39.527 in 320.78281140327454 seconds
+Epoch 22: Validation mean absolute age difference: 43.780 in 320.91923093795776 seconds
+Epoch 22: Validation mean absolute age difference: 38.466 in 321.51320338249207 seconds
+Epoch 22: Validation mean absolute age difference: 42.154 in 329.81381821632385 seconds
+Epoch 22: Validation mean absolute age difference: 37.477 in 336.5967230796814 seconds
+Epoch 22: Validation mean absolute age difference: 39.846 in 342.8286123275757 seconds
+Epoch 22: Validation mean absolute age difference: 39.254 in 345.08542680740356 seconds
+Epoch 22: Validation mean absolute age difference: 38.491 in 357.74218583106995 seconds
+Starting epoch 23
+Starting epoch 23
+Starting epoch 23
+Starting epoch 23
+Starting epoch 23
+Starting epoch 23
+Starting epoch 23
+Starting epoch 23
+Epoch 23: Training mean absolute age difference: 45.462 in 358.98446106910706 seconds
+Epoch 23: Training mean absolute age difference: 37.816 in 358.97770977020264 seconds
+Epoch 23: Training mean absolute age difference: 38.822 in 358.9844913482666 seconds
+Epoch 23: Training mean absolute age difference: 35.992 in 358.98415994644165 seconds
+Epoch 23: Training mean absolute age difference: 42.941 in 358.9845223426819 seconds
+Epoch 23: Training mean absolute age difference: 41.536 in 358.98464488983154 seconds
+Epoch 23: Training mean absolute age difference: 37.037 in 358.98418283462524 seconds
+Epoch 23: Training mean absolute age difference: 38.842 in 358.9846365451813 seconds
+Epoch 23: Validation mean absolute age difference: 42.431 in 316.03172492980957 seconds
+Epoch 23: Validation mean absolute age difference: 45.403 in 320.9718747138977 seconds
+Epoch 23: Validation mean absolute age difference: 40.733 in 321.4904453754425 seconds
+Epoch 23: Validation mean absolute age difference: 43.043 in 328.86280393600464 seconds
+Epoch 23: Validation mean absolute age difference: 39.864 in 335.5888030529022 seconds
+Epoch 23: Validation mean absolute age difference: 42.492 in 343.2791495323181 seconds
+Epoch 23: Validation mean absolute age difference: 40.998 in 345.92309761047363 seconds
+Epoch 23: Validation mean absolute age difference: 39.738 in 358.4640498161316 seconds
+Starting epoch 24
+Starting epoch 24
+Starting epoch 24
+Starting epoch 24
+Starting epoch 24
+Starting epoch 24
+Starting epoch 24
+Starting epoch 24
+Epoch 24: Training mean absolute age difference: 37.552 in 358.63510489463806 seconds
+Epoch 24: Training mean absolute age difference: 39.559 in 358.6369037628174 seconds
+Epoch 24: Training mean absolute age difference: 37.908 in 358.63638830184937 seconds
+Epoch 24: Training mean absolute age difference: 37.310 in 358.635867357254 seconds
+Epoch 24: Training mean absolute age difference: 41.008 in 358.635534286499 seconds
+Epoch 24: Training mean absolute age difference: 42.812 in 358.6359362602234 seconds
+Epoch 24: Training mean absolute age difference: 38.793 in 358.6294734477997 seconds
+Epoch 24: Training mean absolute age difference: 42.624 in 358.6400349140167 seconds
+Epoch 24: Validation mean absolute age difference: 38.501 in 320.77166962623596 seconds
+Epoch 24: Validation mean absolute age difference: 40.342 in 320.7718114852905 seconds
+Epoch 24: Validation mean absolute age difference: 44.552 in 321.8492422103882 seconds
+Epoch 24: Validation mean absolute age difference: 41.997 in 328.3319025039673 seconds
+Epoch 24: Validation mean absolute age difference: 37.060 in 335.97439312934875 seconds
+Epoch 24: Validation mean absolute age difference: 40.883 in 343.5478835105896 seconds
+Epoch 24: Validation mean absolute age difference: 39.580 in 349.994393825531 seconds
+Epoch 24: Validation mean absolute age difference: 38.231 in 352.70313143730164 seconds
+Starting epoch 25
+Starting epoch 25
+Starting epoch 25
+Starting epoch 25
+Starting epoch 25
+Starting epoch 25
+Starting epoch 25
+Starting epoch 25
+Epoch 25: Training mean absolute age difference: 35.557 in 361.1087896823883 seconds
+Epoch 25: Training mean absolute age difference: 35.327 in 361.1097950935364 seconds
+Epoch 25: Training mean absolute age difference: 38.453 in 361.109335899353 seconds
+Epoch 25: Training mean absolute age difference: 37.205 in 361.1025664806366 seconds
+Epoch 25: Training mean absolute age difference: 38.534 in 361.10875701904297 seconds
+Epoch 25: Training mean absolute age difference: 41.366 in 361.10948967933655 seconds
+Epoch 25: Training mean absolute age difference: 36.411 in 361.1089606285095 seconds
+Epoch 25: Training mean absolute age difference: 39.001 in 361.1101231575012 seconds
+Epoch 25: Validation mean absolute age difference: 40.151 in 315.44157552719116 seconds
+Epoch 25: Validation mean absolute age difference: 42.654 in 320.37729024887085 seconds
+Epoch 25: Validation mean absolute age difference: 35.902 in 320.64764499664307 seconds
+Epoch 25: Validation mean absolute age difference: 40.166 in 329.93008756637573 seconds
+Epoch 25: Validation mean absolute age difference: 35.966 in 340.47148990631104 seconds
+Epoch 25: Validation mean absolute age difference: 38.580 in 342.11431074142456 seconds
+Epoch 25: Validation mean absolute age difference: 36.490 in 345.7102122306824 seconds
+Epoch 25: Validation mean absolute age difference: 36.132 in 355.2974638938904 seconds
+Starting epoch 26
+Starting epoch 26
+Starting epoch 26
+Starting epoch 26
+Starting epoch 26
+Starting epoch 26
+Starting epoch 26
+Starting epoch 26
+Epoch 26: Training mean absolute age difference: 35.173 in 355.5200905799866 seconds
+Epoch 26: Training mean absolute age difference: 37.030 in 355.51962399482727 seconds
+Epoch 26: Training mean absolute age difference: 40.615 in 355.5202684402466 seconds
+Epoch 26: Training mean absolute age difference: 39.615 in 355.5113716125488 seconds
+Epoch 26: Training mean absolute age difference: 39.580 in 355.51997685432434 seconds
+Epoch 26: Training mean absolute age difference: 42.613 in 355.52010440826416 seconds
+Epoch 26: Training mean absolute age difference: 40.034 in 355.5204277038574 seconds
+Epoch 26: Training mean absolute age difference: 35.861 in 355.5208652019501 seconds
+Epoch 26: Validation mean absolute age difference: 38.674 in 317.0413920879364 seconds
+Epoch 26: Validation mean absolute age difference: 43.556 in 318.8366656303406 seconds
+Epoch 26: Validation mean absolute age difference: 41.149 in 320.01810693740845 seconds
+Epoch 26: Validation mean absolute age difference: 42.685 in 320.538147687912 seconds
+Epoch 26: Validation mean absolute age difference: 38.591 in 332.88448452949524 seconds
+Epoch 26: Validation mean absolute age difference: 40.637 in 342.2314579486847 seconds
+Epoch 26: Validation mean absolute age difference: 39.990 in 345.19593620300293 seconds
+Epoch 26: Validation mean absolute age difference: 39.166 in 357.2342646121979 seconds
+Starting epoch 27
+Starting epoch 27
+Starting epoch 27
+Starting epoch 27
+Starting epoch 27
+Starting epoch 27
+Starting epoch 27
+Starting epoch 27
+Epoch 27: Training mean absolute age difference: 42.067 in 357.4488756656647 seconds
+Epoch 27: Training mean absolute age difference: 38.346 in 357.44126296043396 seconds
+Epoch 27: Training mean absolute age difference: 38.323 in 357.4480345249176 seconds
+Epoch 27: Training mean absolute age difference: 42.331 in 357.4482424259186 seconds
+Epoch 27: Training mean absolute age difference: 41.124 in 357.4471116065979 seconds
+Epoch 27: Training mean absolute age difference: 41.220 in 357.44768500328064 seconds
+Epoch 27: Training mean absolute age difference: 41.085 in 357.44765186309814 seconds
+Epoch 27: Training mean absolute age difference: 38.633 in 357.44888639450073 seconds
+Epoch 27: Validation mean absolute age difference: 37.499 in 320.66134810447693 seconds
+Epoch 27: Validation mean absolute age difference: 39.105 in 321.40408086776733 seconds
+Epoch 27: Validation mean absolute age difference: 41.887 in 321.8035807609558 seconds
+Epoch 27: Validation mean absolute age difference: 40.195 in 330.4023861885071 seconds
+Epoch 27: Validation mean absolute age difference: 37.531 in 337.9710867404938 seconds
+Epoch 27: Validation mean absolute age difference: 39.081 in 345.962055683136 seconds
+Epoch 27: Validation mean absolute age difference: 36.528 in 347.0591814517975 seconds
+Epoch 27: Validation mean absolute age difference: 37.522 in 361.5211114883423 seconds
+Starting epoch 28
+Starting epoch 28
+Starting epoch 28
+Starting epoch 28
+Starting epoch 28
+Starting epoch 28
+Starting epoch 28
+Starting epoch 28
+Epoch 28: Training mean absolute age difference: 40.561 in 358.1808617115021 seconds
+Epoch 28: Training mean absolute age difference: 43.009 in 358.182555437088 seconds
+Epoch 28: Training mean absolute age difference: 37.065 in 358.18256163597107 seconds
+Epoch 28: Training mean absolute age difference: 43.835 in 358.1813540458679 seconds
+Epoch 28: Training mean absolute age difference: 38.894 in 358.1740527153015 seconds
+Epoch 28: Training mean absolute age difference: 39.074 in 358.1813933849335 seconds
+Epoch 28: Training mean absolute age difference: 40.274 in 358.1812598705292 seconds
+Epoch 28: Training mean absolute age difference: 36.799 in 358.1810200214386 seconds
+Epoch 28: Validation mean absolute age difference: 39.615 in 317.22072291374207 seconds
+Epoch 28: Validation mean absolute age difference: 38.093 in 318.99727964401245 seconds
+Epoch 28: Validation mean absolute age difference: 44.594 in 320.88274455070496 seconds
+Epoch 28: Validation mean absolute age difference: 41.808 in 332.2780330181122 seconds
+Epoch 28: Validation mean absolute age difference: 37.235 in 337.59010076522827 seconds
+Epoch 28: Validation mean absolute age difference: 40.277 in 345.4104449748993 seconds
+Epoch 28: Validation mean absolute age difference: 37.942 in 346.0427758693695 seconds
+Epoch 28: Validation mean absolute age difference: 38.199 in 362.21221375465393 seconds
+Starting epoch 29
+Starting epoch 29
+Starting epoch 29
+Starting epoch 29
+Starting epoch 29
+Starting epoch 29
+Starting epoch 29
+Starting epoch 29
+Epoch 29: Training mean absolute age difference: 41.783 in 360.8585982322693 seconds
+Epoch 29: Training mean absolute age difference: 37.865 in 360.85930466651917 seconds
+Epoch 29: Training mean absolute age difference: 41.040 in 360.8583436012268 seconds
+Epoch 29: Training mean absolute age difference: 35.721 in 360.8586094379425 seconds
+Epoch 29: Training mean absolute age difference: 37.866 in 360.8585662841797 seconds
+Epoch 29: Training mean absolute age difference: 40.302 in 360.8524580001831 seconds
+Epoch 29: Training mean absolute age difference: 39.661 in 360.8590798377991 seconds
+Epoch 29: Training mean absolute age difference: 40.118 in 360.8591856956482 seconds
+Epoch 29: Validation mean absolute age difference: 36.919 in 318.91955280303955 seconds
+Epoch 29: Validation mean absolute age difference: 39.130 in 320.2810368537903 seconds
+Epoch 29: Validation mean absolute age difference: 43.299 in 321.4344108104706 seconds
+Epoch 29: Validation mean absolute age difference: 42.146 in 323.2811315059662 seconds
+Epoch 29: Validation mean absolute age difference: 37.381 in 337.3897740840912 seconds
+Epoch 29: Validation mean absolute age difference: 39.834 in 344.51483392715454 seconds
+Epoch 29: Validation mean absolute age difference: 38.083 in 347.9817774295807 seconds
+Epoch 29: Validation mean absolute age difference: 35.966 in 361.61935019493103 seconds
+Starting epoch 30
+Starting epoch 30
+Starting epoch 30
+Starting epoch 30
+Starting epoch 30
+Starting epoch 30
+Starting epoch 30
+Starting epoch 30
+Epoch 30: Training mean absolute age difference: 38.665 in 357.82066202163696 seconds
+Epoch 30: Training mean absolute age difference: 38.232 in 357.8137695789337 seconds
+Epoch 30: Training mean absolute age difference: 40.649 in 357.82032322883606 seconds
+Epoch 30: Training mean absolute age difference: 40.234 in 357.81992077827454 seconds
+Epoch 30: Training mean absolute age difference: 40.905 in 357.82072377204895 seconds
+Epoch 30: Training mean absolute age difference: 40.544 in 357.8209493160248 seconds
+Epoch 30: Training mean absolute age difference: 34.549 in 357.8207767009735 seconds
+Epoch 30: Training mean absolute age difference: 38.645 in 357.8206970691681 seconds
+Epoch 30: Validation mean absolute age difference: 36.491 in 313.2731206417084 seconds
+Epoch 30: Validation mean absolute age difference: 40.771 in 314.42653608322144 seconds
+Epoch 30: Validation mean absolute age difference: 35.521 in 317.8874788284302 seconds
+Epoch 30: Validation mean absolute age difference: 39.618 in 327.63911533355713 seconds
+Epoch 30: Validation mean absolute age difference: 34.494 in 336.2981433868408 seconds
+Epoch 30: Validation mean absolute age difference: 35.561 in 342.9701476097107 seconds
+Epoch 30: Validation mean absolute age difference: 38.188 in 344.60957169532776 seconds
+Epoch 30: Validation mean absolute age difference: 34.530 in 357.93102979660034 seconds
+Starting epoch 31
+Starting epoch 31
+Starting epoch 31
+Starting epoch 31
+Starting epoch 31
+Starting epoch 31
+Starting epoch 31
+Starting epoch 31
+Epoch 31: Training mean absolute age difference: 40.773 in 357.4530522823334 seconds
+Epoch 31: Training mean absolute age difference: 36.787 in 357.4477562904358 seconds
+Epoch 31: Training mean absolute age difference: 40.624 in 357.4531362056732 seconds
+Epoch 31: Training mean absolute age difference: 37.856 in 357.45322346687317 seconds
+Epoch 31: Training mean absolute age difference: 34.270 in 357.4525816440582 seconds
+Epoch 31: Training mean absolute age difference: 44.974 in 357.4532446861267 seconds
+Epoch 31: Training mean absolute age difference: 38.003 in 357.45301842689514 seconds
+Epoch 31: Training mean absolute age difference: 42.119 in 357.45364689826965 seconds
+Epoch 31: Validation mean absolute age difference: 39.504 in 317.15010356903076 seconds
+Epoch 31: Validation mean absolute age difference: 37.952 in 317.7781493663788 seconds
+Epoch 31: Validation mean absolute age difference: 44.196 in 318.9299976825714 seconds
+Epoch 31: Validation mean absolute age difference: 41.173 in 327.172251701355 seconds
+Epoch 31: Validation mean absolute age difference: 37.037 in 338.24044156074524 seconds
+Epoch 31: Validation mean absolute age difference: 41.017 in 341.90014481544495 seconds
+Epoch 31: Validation mean absolute age difference: 38.215 in 347.16118478775024 seconds
+Epoch 31: Validation mean absolute age difference: 37.561 in 357.8616373538971 seconds
+Starting epoch 32
+Starting epoch 32
+Starting epoch 32
+Starting epoch 32
+Starting epoch 32
+Starting epoch 32
+Starting epoch 32
+Starting epoch 32
+Epoch 32: Training mean absolute age difference: 40.786 in 357.62603664398193 seconds
+Epoch 32: Training mean absolute age difference: 39.876 in 357.6316282749176 seconds
+Epoch 32: Training mean absolute age difference: 38.007 in 357.63246488571167 seconds
+Epoch 32: Training mean absolute age difference: 41.512 in 357.63264560699463 seconds
+Epoch 32: Training mean absolute age difference: 42.650 in 357.6328854560852 seconds
+Epoch 32: Training mean absolute age difference: 38.996 in 357.6325891017914 seconds
+Epoch 32: Training mean absolute age difference: 40.696 in 357.6325259208679 seconds
+Epoch 32: Training mean absolute age difference: 38.460 in 357.6325237751007 seconds
+Epoch 32: Validation mean absolute age difference: 38.730 in 314.9349946975708 seconds
+Epoch 32: Validation mean absolute age difference: 39.230 in 319.3669753074646 seconds
+Epoch 32: Validation mean absolute age difference: 43.817 in 323.81239342689514 seconds
+Epoch 32: Validation mean absolute age difference: 41.193 in 328.9232177734375 seconds
+Epoch 32: Validation mean absolute age difference: 37.506 in 338.721399307251 seconds
+Epoch 32: Validation mean absolute age difference: 39.931 in 343.8824942111969 seconds
+Epoch 32: Validation mean absolute age difference: 37.526 in 347.34181571006775 seconds
+Epoch 32: Validation mean absolute age difference: 36.114 in 358.79975056648254 seconds
+Starting epoch 33
+Starting epoch 33
+Starting epoch 33
+Starting epoch 33
+Starting epoch 33
+Starting epoch 33
+Starting epoch 33
+Starting epoch 33
+Epoch 33: Training mean absolute age difference: 35.184 in 361.24748849868774 seconds
+Epoch 33: Training mean absolute age difference: 36.136 in 361.2467529773712 seconds
+Epoch 33: Training mean absolute age difference: 38.969 in 361.24715399742126 seconds
+Epoch 33: Training mean absolute age difference: 39.374 in 361.2397038936615 seconds
+Epoch 33: Training mean absolute age difference: 40.933 in 361.2475016117096 seconds
+Epoch 33: Training mean absolute age difference: 35.721 in 361.24672865867615 seconds
+Epoch 33: Training mean absolute age difference: 43.120 in 361.24629187583923 seconds
+Epoch 33: Training mean absolute age difference: 39.864 in 361.2463915348053 seconds
+Epoch 33: Validation mean absolute age difference: 39.319 in 318.21887612342834 seconds
+Epoch 33: Validation mean absolute age difference: 37.685 in 320.3295187950134 seconds
+Epoch 33: Validation mean absolute age difference: 43.429 in 320.66885638237 seconds
+Epoch 33: Validation mean absolute age difference: 40.583 in 332.2224078178406 seconds
+Epoch 33: Validation mean absolute age difference: 36.915 in 335.9620816707611 seconds
+Epoch 33: Validation mean absolute age difference: 39.946 in 345.62180399894714 seconds
+Epoch 33: Validation mean absolute age difference: 37.720 in 346.344158411026 seconds
+Epoch 33: Validation mean absolute age difference: 37.250 in 362.37486600875854 seconds
+Starting epoch 34
+Starting epoch 34
+Starting epoch 34
+Starting epoch 34
+Starting epoch 34
+Starting epoch 34
+Starting epoch 34
+Starting epoch 34
+Epoch 34: Training mean absolute age difference: 37.732 in 358.72747325897217 seconds
+Epoch 34: Training mean absolute age difference: 42.659 in 358.72654151916504 seconds
+Epoch 34: Training mean absolute age difference: 41.201 in 358.7267611026764 seconds
+Epoch 34: Training mean absolute age difference: 38.321 in 358.7264287471771 seconds
+Epoch 34: Training mean absolute age difference: 40.306 in 358.72649359703064 seconds
+Epoch 34: Training mean absolute age difference: 38.025 in 358.7215087413788 seconds
+Epoch 34: Training mean absolute age difference: 37.640 in 358.7268500328064 seconds
+Epoch 34: Training mean absolute age difference: 36.631 in 358.7274990081787 seconds
+Epoch 34: Validation mean absolute age difference: 38.633 in 318.90480160713196 seconds
+Epoch 34: Validation mean absolute age difference: 39.277 in 318.904736995697 seconds
+Epoch 34: Validation mean absolute age difference: 43.517 in 325.4946758747101 seconds
+Epoch 34: Validation mean absolute age difference: 41.296 in 329.0954864025116 seconds
+Epoch 34: Validation mean absolute age difference: 37.031 in 338.59757947921753 seconds
+Epoch 34: Validation mean absolute age difference: 39.422 in 345.1848096847534 seconds
+Epoch 34: Validation mean absolute age difference: 37.970 in 345.8205168247223 seconds
+Epoch 34: Validation mean absolute age difference: 38.033 in 357.18684935569763 seconds
+Starting epoch 35
+Starting epoch 35
+Starting epoch 35
+Starting epoch 35
+Starting epoch 35
+Starting epoch 35
+Starting epoch 35
+Starting epoch 35
+Epoch 35: Training mean absolute age difference: 38.033 in 360.7854480743408 seconds
+Epoch 35: Training mean absolute age difference: 36.555 in 360.7923061847687 seconds
+Epoch 35: Training mean absolute age difference: 36.036 in 360.79140853881836 seconds
+Epoch 35: Training mean absolute age difference: 37.928 in 360.7912051677704 seconds
+Epoch 35: Training mean absolute age difference: 36.259 in 360.7921369075775 seconds
+Epoch 35: Training mean absolute age difference: 37.981 in 360.79236364364624 seconds
+Epoch 35: Training mean absolute age difference: 34.027 in 360.792635679245 seconds
+Epoch 35: Training mean absolute age difference: 41.930 in 360.7921578884125 seconds
+Epoch 35: Validation mean absolute age difference: 36.514 in 316.2553653717041 seconds
+Epoch 35: Validation mean absolute age difference: 40.972 in 319.07548427581787 seconds
+Epoch 35: Validation mean absolute age difference: 35.939 in 319.80568408966064 seconds
+Epoch 35: Validation mean absolute age difference: 39.368 in 332.29185819625854 seconds
+Epoch 35: Validation mean absolute age difference: 35.866 in 342.6572117805481 seconds
+Epoch 35: Validation mean absolute age difference: 38.038 in 347.49489665031433 seconds
+Epoch 35: Validation mean absolute age difference: 36.047 in 347.8806896209717 seconds
+Epoch 35: Validation mean absolute age difference: 35.873 in 362.0511770248413 seconds
+Starting epoch 36
+Starting epoch 36
+Starting epoch 36
+Starting epoch 36
+Starting epoch 36
+Starting epoch 36
+Starting epoch 36
+Starting epoch 36
+Epoch 36: Training mean absolute age difference: 37.494 in 358.73641991615295 seconds
+Epoch 36: Training mean absolute age difference: 34.545 in 358.736132144928 seconds
+Epoch 36: Training mean absolute age difference: 42.532 in 358.7356827259064 seconds
+Epoch 36: Training mean absolute age difference: 39.034 in 358.735999584198 seconds
+Epoch 36: Training mean absolute age difference: 35.992 in 358.7289469242096 seconds
+Epoch 36: Training mean absolute age difference: 35.690 in 358.73562955856323 seconds
+Epoch 36: Training mean absolute age difference: 31.919 in 358.73541951179504 seconds
+Epoch 36: Training mean absolute age difference: 32.970 in 358.73601150512695 seconds
+Epoch 36: Validation mean absolute age difference: 39.705 in 316.0315856933594 seconds
+Epoch 36: Validation mean absolute age difference: 43.476 in 317.3124907016754 seconds
+Epoch 36: Validation mean absolute age difference: 38.102 in 320.61965680122375 seconds
+Epoch 36: Validation mean absolute age difference: 41.041 in 329.42111706733704 seconds
+Epoch 36: Validation mean absolute age difference: 36.580 in 335.74504041671753 seconds
+Epoch 36: Validation mean absolute age difference: 40.095 in 340.8961548805237 seconds
+Epoch 36: Validation mean absolute age difference: 37.764 in 343.6095311641693 seconds
+Epoch 36: Validation mean absolute age difference: 37.357 in 358.9508230686188 seconds
+Starting epoch 37
+Starting epoch 37
+Starting epoch 37
+Starting epoch 37
+Starting epoch 37
+Starting epoch 37
+Starting epoch 37
+Starting epoch 37
+Epoch 37: Training mean absolute age difference: 36.540 in 360.1656084060669 seconds
+Epoch 37: Training mean absolute age difference: 39.243 in 360.1651420593262 seconds
+Epoch 37: Training mean absolute age difference: 35.191 in 360.16553258895874 seconds
+Epoch 37: Training mean absolute age difference: 41.292 in 360.1651816368103 seconds
+Epoch 37: Training mean absolute age difference: 39.094 in 360.16485714912415 seconds
+Epoch 37: Training mean absolute age difference: 41.563 in 360.1650609970093 seconds
+Epoch 37: Training mean absolute age difference: 36.637 in 360.1649067401886 seconds
+Epoch 37: Training mean absolute age difference: 37.287 in 360.15910243988037 seconds
+Epoch 37: Validation mean absolute age difference: 39.331 in 318.70579266548157 seconds
+Epoch 37: Validation mean absolute age difference: 40.204 in 320.7478680610657 seconds
+Epoch 37: Validation mean absolute age difference: 43.140 in 322.9484405517578 seconds
+Epoch 37: Validation mean absolute age difference: 42.348 in 323.4220929145813 seconds
+Epoch 37: Validation mean absolute age difference: 37.488 in 340.3404197692871 seconds
+Epoch 37: Validation mean absolute age difference: 40.749 in 343.0187520980835 seconds
+Epoch 37: Validation mean absolute age difference: 38.259 in 348.6151297092438 seconds
+Epoch 37: Validation mean absolute age difference: 37.823 in 357.87631487846375 seconds
+Starting epoch 38
+Starting epoch 38
+Starting epoch 38
+Starting epoch 38
+Starting epoch 38
+Starting epoch 38
+Starting epoch 38
+Starting epoch 38
+Epoch 38: Training mean absolute age difference: 36.913 in 357.97517108917236 seconds
+Epoch 38: Training mean absolute age difference: 35.299 in 357.9748418331146 seconds
+Epoch 38: Training mean absolute age difference: 39.364 in 357.97492480278015 seconds
+Epoch 38: Training mean absolute age difference: 35.988 in 357.97604632377625 seconds
+Epoch 38: Training mean absolute age difference: 34.853 in 357.96802163124084 seconds
+Epoch 38: Training mean absolute age difference: 36.252 in 357.9760513305664 seconds
+Epoch 38: Training mean absolute age difference: 35.374 in 357.97493171691895 seconds
+Epoch 38: Training mean absolute age difference: 35.641 in 357.9753019809723 seconds
+Epoch 38: Validation mean absolute age difference: 34.667 in 317.80452251434326 seconds
+Epoch 38: Validation mean absolute age difference: 36.740 in 318.88919734954834 seconds
+Epoch 38: Validation mean absolute age difference: 40.126 in 320.77760553359985 seconds
+Epoch 38: Validation mean absolute age difference: 39.606 in 325.3330078125 seconds
+Epoch 38: Validation mean absolute age difference: 34.924 in 335.39354634284973 seconds
+Epoch 38: Validation mean absolute age difference: 36.957 in 341.03349447250366 seconds
+Epoch 38: Validation mean absolute age difference: 35.066 in 346.1270728111267 seconds
+Epoch 38: Validation mean absolute age difference: 37.352 in 355.9854211807251 seconds
+Starting epoch 39
+Starting epoch 39
+Starting epoch 39
+Starting epoch 39
+Starting epoch 39
+Starting epoch 39
+Starting epoch 39
+Starting epoch 39
+Epoch 39: Training mean absolute age difference: 41.901 in 357.6071207523346 seconds
+Epoch 39: Training mean absolute age difference: 35.701 in 357.60706210136414 seconds
+Epoch 39: Training mean absolute age difference: 38.515 in 357.6069121360779 seconds
+Epoch 39: Training mean absolute age difference: 39.417 in 357.60074853897095 seconds
+Epoch 39: Training mean absolute age difference: 39.721 in 357.6063768863678 seconds
+Epoch 39: Training mean absolute age difference: 41.442 in 357.6069324016571 seconds
+Epoch 39: Training mean absolute age difference: 40.825 in 357.6066288948059 seconds
+Epoch 39: Training mean absolute age difference: 41.932 in 357.6008975505829 seconds
+Epoch 39: Validation mean absolute age difference: 36.532 in 311.1909725666046 seconds
+Epoch 39: Validation mean absolute age difference: 37.569 in 314.3757085800171 seconds
+Epoch 39: Validation mean absolute age difference: 42.191 in 324.75886058807373 seconds
+Epoch 39: Validation mean absolute age difference: 39.750 in 327.76446628570557 seconds
+Epoch 39: Validation mean absolute age difference: 35.306 in 337.32149600982666 seconds
+Epoch 39: Validation mean absolute age difference: 39.008 in 343.2878773212433 seconds
+Epoch 39: Validation mean absolute age difference: 37.039 in 346.9922616481781 seconds
+Epoch 39: Validation mean absolute age difference: 36.653 in 356.490079164505 seconds
+Starting epoch 40
+Starting epoch 40
+Starting epoch 40
+Starting epoch 40
+Starting epoch 40
+Starting epoch 40
+Starting epoch 40
+Starting epoch 40
+Epoch 40: Training mean absolute age difference: 38.725 in 361.68027448654175 seconds
+Epoch 40: Training mean absolute age difference: 40.888 in 361.68023586273193 seconds
+Epoch 40: Training mean absolute age difference: 41.744 in 361.6804277896881 seconds
+Epoch 40: Training mean absolute age difference: 35.629 in 361.6729393005371 seconds
+Epoch 40: Training mean absolute age difference: 34.165 in 361.68087911605835 seconds
+Epoch 40: Training mean absolute age difference: 40.216 in 361.6841688156128 seconds
+Epoch 40: Training mean absolute age difference: 35.704 in 361.68037962913513 seconds
+Epoch 40: Training mean absolute age difference: 35.319 in 361.68011379241943 seconds
+Epoch 40: Validation mean absolute age difference: 39.676 in 313.6735713481903 seconds
+Epoch 40: Validation mean absolute age difference: 43.154 in 316.7099258899689 seconds
+Epoch 40: Validation mean absolute age difference: 38.376 in 318.1632959842682 seconds
+Epoch 40: Validation mean absolute age difference: 40.999 in 327.5019588470459 seconds
+Epoch 40: Validation mean absolute age difference: 36.925 in 336.1572570800781 seconds
+Epoch 40: Validation mean absolute age difference: 40.664 in 343.6323654651642 seconds
+Epoch 40: Validation mean absolute age difference: 38.060 in 344.8133897781372 seconds
+Epoch 40: Validation mean absolute age difference: 38.015 in 355.3626358509064 seconds
+Starting epoch 41
+Starting epoch 41
+Starting epoch 41
+Starting epoch 41
+Starting epoch 41
+Starting epoch 41
+Starting epoch 41
+Starting epoch 41
+Epoch 41: Training mean absolute age difference: 35.310 in 362.19945669174194 seconds
+Epoch 41: Training mean absolute age difference: 39.306 in 362.1986801624298 seconds
+Epoch 41: Training mean absolute age difference: 39.440 in 362.1995327472687 seconds
+Epoch 41: Training mean absolute age difference: 37.516 in 362.19883394241333 seconds
+Epoch 41: Training mean absolute age difference: 35.945 in 362.1910774707794 seconds
+Epoch 41: Training mean absolute age difference: 36.991 in 362.19900035858154 seconds
+Epoch 41: Training mean absolute age difference: 34.870 in 362.1990797519684 seconds
+Epoch 41: Training mean absolute age difference: 37.887 in 362.19915652275085 seconds
+Epoch 41: Validation mean absolute age difference: 36.893 in 315.16616010665894 seconds
+Epoch 41: Validation mean absolute age difference: 41.078 in 317.0747261047363 seconds
+Epoch 41: Validation mean absolute age difference: 38.254 in 317.9910807609558 seconds
+Epoch 41: Validation mean absolute age difference: 40.404 in 331.50032663345337 seconds
+Epoch 41: Validation mean absolute age difference: 36.200 in 336.1129500865936 seconds
+Epoch 41: Validation mean absolute age difference: 39.130 in 340.04515981674194 seconds
+Epoch 41: Validation mean absolute age difference: 36.063 in 344.21145701408386 seconds
+Epoch 41: Validation mean absolute age difference: 36.071 in 358.85687494277954 seconds
+Starting epoch 42
+Starting epoch 42
+Starting epoch 42
+Starting epoch 42
+Starting epoch 42
+Starting epoch 42
+Starting epoch 42
+Starting epoch 42
+Epoch 42: Training mean absolute age difference: 38.160 in 356.709171295166 seconds
+Epoch 42: Training mean absolute age difference: 41.350 in 356.716744184494 seconds
+Epoch 42: Training mean absolute age difference: 38.908 in 356.71662735939026 seconds
+Epoch 42: Training mean absolute age difference: 37.357 in 356.71652150154114 seconds
+Epoch 42: Training mean absolute age difference: 38.690 in 356.71669244766235 seconds
+Epoch 42: Training mean absolute age difference: 33.501 in 356.71683049201965 seconds
+Epoch 42: Training mean absolute age difference: 38.092 in 356.71694803237915 seconds
+Epoch 42: Training mean absolute age difference: 35.219 in 356.71633100509644 seconds
+Epoch 42: Validation mean absolute age difference: 39.573 in 314.8042404651642 seconds
+Epoch 42: Validation mean absolute age difference: 38.361 in 318.58606028556824 seconds
+Epoch 42: Validation mean absolute age difference: 43.157 in 319.8595621585846 seconds
+Epoch 42: Validation mean absolute age difference: 41.803 in 330.6633269786835 seconds
+Epoch 42: Validation mean absolute age difference: 37.465 in 341.98184609413147 seconds
+Epoch 42: Validation mean absolute age difference: 41.296 in 342.7792646884918 seconds
+Epoch 42: Validation mean absolute age difference: 37.633 in 346.96571946144104 seconds
+Epoch 42: Validation mean absolute age difference: 38.030 in 360.2123465538025 seconds
+Starting epoch 43
+Starting epoch 43
+Starting epoch 43
+Starting epoch 43
+Starting epoch 43
+Starting epoch 43
+Starting epoch 43
+Starting epoch 43
+Epoch 43: Training mean absolute age difference: 40.158 in 357.0507357120514 seconds
+Epoch 43: Training mean absolute age difference: 37.164 in 357.04463481903076 seconds
+Epoch 43: Training mean absolute age difference: 40.775 in 357.0513117313385 seconds
+Epoch 43: Training mean absolute age difference: 39.067 in 357.0521113872528 seconds
+Epoch 43: Training mean absolute age difference: 36.650 in 357.05072927474976 seconds
+Epoch 43: Training mean absolute age difference: 42.726 in 357.051052570343 seconds
+Epoch 43: Training mean absolute age difference: 39.313 in 357.0512342453003 seconds
+Epoch 43: Training mean absolute age difference: 36.356 in 357.05092883110046 seconds
+Epoch 43: Validation mean absolute age difference: 37.773 in 315.7158796787262 seconds
+Epoch 43: Validation mean absolute age difference: 35.850 in 318.64452290534973 seconds
+Epoch 43: Validation mean absolute age difference: 40.521 in 320.92920994758606 seconds
+Epoch 43: Validation mean absolute age difference: 40.628 in 331.64735746383667 seconds
+Epoch 43: Validation mean absolute age difference: 34.514 in 340.8206477165222 seconds
+Epoch 43: Validation mean absolute age difference: 35.729 in 344.86952924728394 seconds
+Epoch 43: Validation mean absolute age difference: 38.627 in 346.33885192871094 seconds
+Epoch 43: Validation mean absolute age difference: 36.691 in 354.6328375339508 seconds
+Starting epoch 44
+Starting epoch 44
+Starting epoch 44
+Starting epoch 44
+Starting epoch 44
+Starting epoch 44
+Starting epoch 44
+Starting epoch 44
+Epoch 44: Training mean absolute age difference: 41.109 in 358.08690190315247 seconds
+Epoch 44: Training mean absolute age difference: 36.353 in 358.079772233963 seconds
+Epoch 44: Training mean absolute age difference: 41.264 in 358.09132742881775 seconds
+Epoch 44: Training mean absolute age difference: 41.312 in 358.08481073379517 seconds
+Epoch 44: Training mean absolute age difference: 38.907 in 358.08469247817993 seconds
+Epoch 44: Training mean absolute age difference: 39.040 in 358.0854458808899 seconds
+Epoch 44: Training mean absolute age difference: 37.354 in 358.0853765010834 seconds
+Epoch 44: Training mean absolute age difference: 39.342 in 358.08550691604614 seconds
+Epoch 44: Validation mean absolute age difference: 39.725 in 314.68231320381165 seconds
+Epoch 44: Validation mean absolute age difference: 38.052 in 320.18474411964417 seconds
+Epoch 44: Validation mean absolute age difference: 42.222 in 321.25105810165405 seconds
+Epoch 44: Validation mean absolute age difference: 41.452 in 327.75360894203186 seconds
+Epoch 44: Validation mean absolute age difference: 37.092 in 336.1236605644226 seconds
+Epoch 44: Validation mean absolute age difference: 40.561 in 340.51411271095276 seconds
+Epoch 44: Validation mean absolute age difference: 38.274 in 344.7044050693512 seconds
+Epoch 44: Validation mean absolute age difference: 38.117 in 359.39272475242615 seconds
+Starting epoch 45
+Starting epoch 45
+Starting epoch 45
+Starting epoch 45
+Starting epoch 45
+Starting epoch 45
+Starting epoch 45
+Starting epoch 45
+Epoch 45: Training mean absolute age difference: 38.668 in 359.2582416534424 seconds
+Epoch 45: Training mean absolute age difference: 39.263 in 359.2662727832794 seconds
+Epoch 45: Training mean absolute age difference: 36.909 in 359.26706552505493 seconds
+Epoch 45: Training mean absolute age difference: 42.547 in 359.26637029647827 seconds
+Epoch 45: Training mean absolute age difference: 38.262 in 359.26625394821167 seconds
+Epoch 45: Training mean absolute age difference: 40.169 in 359.2667374610901 seconds
+Epoch 45: Training mean absolute age difference: 36.398 in 359.26683235168457 seconds
+Epoch 45: Training mean absolute age difference: 41.858 in 359.2661085128784 seconds
+Epoch 45: Validation mean absolute age difference: 37.950 in 316.20534229278564 seconds
+Epoch 45: Validation mean absolute age difference: 41.004 in 319.690908908844 seconds
+Epoch 45: Validation mean absolute age difference: 36.650 in 321.18128514289856 seconds
+Epoch 45: Validation mean absolute age difference: 40.519 in 330.15249276161194 seconds
+Epoch 45: Validation mean absolute age difference: 35.939 in 338.1771471500397 seconds
+Epoch 45: Validation mean absolute age difference: 39.359 in 344.07438588142395 seconds
+Epoch 45: Validation mean absolute age difference: 37.168 in 345.55438923835754 seconds
+Epoch 45: Validation mean absolute age difference: 36.087 in 359.49446082115173 seconds
+Starting epoch 46
+Starting epoch 46
+Starting epoch 46
+Starting epoch 46
+Starting epoch 46
+Starting epoch 46
+Starting epoch 46
+Starting epoch 46
+Epoch 46: Training mean absolute age difference: 35.542 in 357.0796003341675 seconds
+Epoch 46: Training mean absolute age difference: 40.417 in 357.0807077884674 seconds
+Epoch 46: Training mean absolute age difference: 39.018 in 357.0735855102539 seconds
+Epoch 46: Training mean absolute age difference: 39.393 in 357.07939863204956 seconds
+Epoch 46: Training mean absolute age difference: 33.916 in 357.0799458026886 seconds
+Epoch 46: Training mean absolute age difference: 37.505 in 357.0799174308777 seconds
+Epoch 46: Training mean absolute age difference: 36.011 in 357.0799996852875 seconds
+Epoch 46: Training mean absolute age difference: 38.943 in 357.0840091705322 seconds
+Epoch 46: Validation mean absolute age difference: 37.180 in 314.102196931839 seconds
+Epoch 46: Validation mean absolute age difference: 35.479 in 318.44143438339233 seconds
+Epoch 46: Validation mean absolute age difference: 39.920 in 319.10157203674316 seconds
+Epoch 46: Validation mean absolute age difference: 39.921 in 327.0527024269104 seconds
+Epoch 46: Validation mean absolute age difference: 34.662 in 330.75109601020813 seconds
+Epoch 46: Validation mean absolute age difference: 37.594 in 343.40273356437683 seconds
+Epoch 46: Validation mean absolute age difference: 37.107 in 344.19491052627563 seconds
+Epoch 46: Validation mean absolute age difference: 36.794 in 355.7919547557831 seconds
+Starting epoch 47
+Starting epoch 47
+Starting epoch 47
+Starting epoch 47
+Starting epoch 47
+Starting epoch 47
+Starting epoch 47
+Starting epoch 47
+Epoch 47: Training mean absolute age difference: 38.122 in 363.69711780548096 seconds
+Epoch 47: Training mean absolute age difference: 36.445 in 363.70456314086914 seconds
+Epoch 47: Training mean absolute age difference: 41.097 in 363.7054045200348 seconds
+Epoch 47: Training mean absolute age difference: 34.742 in 363.7047758102417 seconds
+Epoch 47: Training mean absolute age difference: 41.262 in 363.7042078971863 seconds
+Epoch 47: Training mean absolute age difference: 38.428 in 363.7041530609131 seconds
+Epoch 47: Training mean absolute age difference: 36.233 in 363.7050087451935 seconds
+Epoch 47: Training mean absolute age difference: 35.418 in 363.70475912094116 seconds
+Epoch 47: Validation mean absolute age difference: 37.563 in 314.1324939727783 seconds
+Epoch 47: Validation mean absolute age difference: 41.387 in 316.7998511791229 seconds
+Epoch 47: Validation mean absolute age difference: 35.652 in 318.12731862068176 seconds
+Epoch 47: Validation mean absolute age difference: 40.161 in 330.74806809425354 seconds
+Epoch 47: Validation mean absolute age difference: 35.215 in 337.3864734172821 seconds
+Epoch 47: Validation mean absolute age difference: 38.320 in 343.5924425125122 seconds
+Epoch 47: Validation mean absolute age difference: 37.941 in 344.918897151947 seconds
+Epoch 47: Validation mean absolute age difference: 38.513 in 360.70846700668335 seconds
+Starting epoch 48
+Starting epoch 48
+Starting epoch 48
+Starting epoch 48
+Starting epoch 48
+Starting epoch 48
+Starting epoch 48
+Starting epoch 48
+Epoch 48: Training mean absolute age difference: 37.875 in 357.5857503414154 seconds
+Epoch 48: Training mean absolute age difference: 36.942 in 357.5860285758972 seconds
+Epoch 48: Training mean absolute age difference: 39.801 in 357.58548402786255 seconds
+Epoch 48: Training mean absolute age difference: 39.997 in 357.58483505249023 seconds
+Epoch 48: Training mean absolute age difference: 45.078 in 357.58516478538513 seconds
+Epoch 48: Training mean absolute age difference: 38.404 in 357.58503103256226 seconds
+Epoch 48: Training mean absolute age difference: 40.097 in 357.5849711894989 seconds
+Epoch 48: Training mean absolute age difference: 37.971 in 357.57814145088196 seconds
+Epoch 48: Validation mean absolute age difference: 38.044 in 314.84141540527344 seconds
+Epoch 48: Validation mean absolute age difference: 35.902 in 316.72014260292053 seconds
+Epoch 48: Validation mean absolute age difference: 40.217 in 321.0137004852295 seconds
+Epoch 48: Validation mean absolute age difference: 38.726 in 330.7923755645752 seconds
+Epoch 48: Validation mean absolute age difference: 35.086 in 335.9029393196106 seconds
+Epoch 48: Validation mean absolute age difference: 37.621 in 340.06287360191345 seconds
+Epoch 48: Validation mean absolute age difference: 35.826 in 345.7930419445038 seconds
+Epoch 48: Validation mean absolute age difference: 36.460 in 358.69379806518555 seconds
+Starting epoch 49
+Starting epoch 49
+Starting epoch 49
+Starting epoch 49
+Starting epoch 49
+Starting epoch 49
+Starting epoch 49
+Starting epoch 49
+Epoch 49: Training mean absolute age difference: 39.018 in 357.5535488128662 seconds
+Epoch 49: Training mean absolute age difference: 40.960 in 357.5536434650421 seconds
+Epoch 49: Training mean absolute age difference: 35.084 in 357.5545334815979 seconds
+Epoch 49: Training mean absolute age difference: 31.783 in 357.5548748970032 seconds
+Epoch 49: Training mean absolute age difference: 38.387 in 357.5552463531494 seconds
+Epoch 49: Training mean absolute age difference: 35.206 in 357.55360555648804 seconds
+Epoch 49: Training mean absolute age difference: 41.265 in 357.55505657196045 seconds
+Epoch 49: Training mean absolute age difference: 32.835 in 357.5477273464203 seconds
+Epoch 49: Validation mean absolute age difference: 38.066 in 314.92655324935913 seconds
+Epoch 49: Validation mean absolute age difference: 35.693 in 316.1753306388855 seconds
+Epoch 49: Validation mean absolute age difference: 40.876 in 320.0643937587738 seconds
+Epoch 49: Validation mean absolute age difference: 40.577 in 330.4970896244049 seconds
+Epoch 49: Validation mean absolute age difference: 35.620 in 339.00303959846497 seconds
+Epoch 49: Validation mean absolute age difference: 38.852 in 342.0526030063629 seconds
+Epoch 49: Validation mean absolute age difference: 37.052 in 348.0523805618286 seconds
+Epoch 49: Validation mean absolute age difference: 36.156 in 360.60271859169006 seconds
+Starting epoch 50
+Starting epoch 50
+Starting epoch 50
+Starting epoch 50
+Starting epoch 50
+Starting epoch 50
+Starting epoch 50
+Starting epoch 50
+Epoch 50: Training mean absolute age difference: 35.418 in 359.3321897983551 seconds
+Epoch 50: Training mean absolute age difference: 36.309 in 359.33256363868713 seconds
+Epoch 50: Training mean absolute age difference: 37.377 in 359.331974029541 seconds
+Epoch 50: Training mean absolute age difference: 37.779 in 359.33249974250793 seconds
+Epoch 50: Training mean absolute age difference: 41.563 in 359.3325266838074 seconds
+Epoch 50: Training mean absolute age difference: 38.983 in 359.32593417167664 seconds
+Epoch 50: Training mean absolute age difference: 34.229 in 359.33285903930664 seconds
+Epoch 50: Training mean absolute age difference: 38.217 in 359.332017660141 seconds
+Epoch 50: Validation mean absolute age difference: 37.460 in 317.214316368103 seconds
+Epoch 50: Validation mean absolute age difference: 41.382 in 317.386931180954 seconds
+Epoch 50: Validation mean absolute age difference: 35.921 in 321.0455274581909 seconds
+Epoch 50: Validation mean absolute age difference: 39.389 in 330.5102415084839 seconds
+Epoch 50: Validation mean absolute age difference: 35.652 in 336.8101875782013 seconds
+Epoch 50: Validation mean absolute age difference: 38.171 in 342.4274170398712 seconds
+Epoch 50: Validation mean absolute age difference: 36.900 in 345.399254322052 seconds
+Epoch 50: Validation mean absolute age difference: 35.653 in 360.4494013786316 seconds
+Starting epoch 51
+Starting epoch 51
+Starting epoch 51
+Starting epoch 51
+Starting epoch 51
+Starting epoch 51
+Starting epoch 51
+Starting epoch 51
+Epoch 51: Training mean absolute age difference: 35.227 in 355.35619020462036 seconds
+Epoch 51: Training mean absolute age difference: 35.342 in 355.35538125038147 seconds
+Epoch 51: Training mean absolute age difference: 39.860 in 355.35538125038147 seconds
+Epoch 51: Training mean absolute age difference: 38.774 in 355.3478343486786 seconds
+Epoch 51: Training mean absolute age difference: 37.682 in 355.35550594329834 seconds
+Epoch 51: Training mean absolute age difference: 35.915 in 355.3554255962372 seconds
+Epoch 51: Training mean absolute age difference: 38.276 in 355.3546452522278 seconds
+Epoch 51: Training mean absolute age difference: 36.423 in 355.3562185764313 seconds
+Epoch 51: Validation mean absolute age difference: 36.447 in 313.3685564994812 seconds
+Epoch 51: Validation mean absolute age difference: 40.123 in 321.35942125320435 seconds
+Epoch 51: Validation mean absolute age difference: 35.580 in 321.6097753047943 seconds
+Epoch 51: Validation mean absolute age difference: 37.360 in 331.5928359031677 seconds
+Epoch 51: Validation mean absolute age difference: 33.678 in 341.199490070343 seconds
+Epoch 51: Validation mean absolute age difference: 36.742 in 343.80586981773376 seconds
+Epoch 51: Validation mean absolute age difference: 35.055 in 346.53595995903015 seconds
+Epoch 51: Validation mean absolute age difference: 34.644 in 362.1923670768738 seconds
+Starting epoch 52
+Starting epoch 52
+Starting epoch 52
+Starting epoch 52
+Starting epoch 52
+Starting epoch 52
+Starting epoch 52
+Starting epoch 52
+Epoch 52: Training mean absolute age difference: 37.320 in 355.22663617134094 seconds
+Epoch 52: Training mean absolute age difference: 36.697 in 355.23421907424927 seconds
+Epoch 52: Training mean absolute age difference: 33.730 in 355.2337944507599 seconds
+Epoch 52: Training mean absolute age difference: 33.331 in 355.2339098453522 seconds
+Epoch 52: Training mean absolute age difference: 37.549 in 355.234126329422 seconds
+Epoch 52: Training mean absolute age difference: 32.483 in 355.2332429885864 seconds
+Epoch 52: Training mean absolute age difference: 37.771 in 355.23441791534424 seconds
+Epoch 52: Training mean absolute age difference: 38.697 in 355.23355197906494 seconds
+Epoch 52: Validation mean absolute age difference: 37.582 in 320.87483310699463 seconds
+Epoch 52: Validation mean absolute age difference: 37.933 in 321.9061806201935 seconds
+Epoch 52: Validation mean absolute age difference: 42.466 in 322.73982524871826 seconds
+Epoch 52: Validation mean absolute age difference: 39.795 in 327.5775740146637 seconds
+Epoch 52: Validation mean absolute age difference: 36.738 in 335.4460434913635 seconds
+Epoch 52: Validation mean absolute age difference: 39.109 in 342.41986322402954 seconds
+Epoch 52: Validation mean absolute age difference: 36.148 in 347.7184028625488 seconds
+Epoch 52: Validation mean absolute age difference: 36.772 in 357.58365774154663 seconds
+Starting epoch 53
+Starting epoch 53
+Starting epoch 53
+Starting epoch 53
+Starting epoch 53
+Starting epoch 53
+Starting epoch 53
+Starting epoch 53
+Epoch 53: Training mean absolute age difference: 33.283 in 360.0608923435211 seconds
+Epoch 53: Training mean absolute age difference: 36.433 in 360.06034326553345 seconds
+Epoch 53: Training mean absolute age difference: 38.026 in 360.06083941459656 seconds
+Epoch 53: Training mean absolute age difference: 34.464 in 360.06110978126526 seconds
+Epoch 53: Training mean absolute age difference: 40.684 in 360.06063747406006 seconds
+Epoch 53: Training mean absolute age difference: 39.675 in 360.0603539943695 seconds
+Epoch 53: Training mean absolute age difference: 38.176 in 360.0541305541992 seconds
+Epoch 53: Training mean absolute age difference: 36.955 in 360.0603287220001 seconds
+Epoch 53: Validation mean absolute age difference: 39.635 in 315.11299228668213 seconds
+Epoch 53: Validation mean absolute age difference: 40.072 in 318.84057784080505 seconds
+Epoch 53: Validation mean absolute age difference: 43.394 in 322.5932774543762 seconds
+Epoch 53: Validation mean absolute age difference: 41.901 in 332.83826637268066 seconds
+Epoch 53: Validation mean absolute age difference: 38.333 in 338.38728976249695 seconds
+Epoch 53: Validation mean absolute age difference: 41.281 in 346.62626671791077 seconds
+Epoch 53: Validation mean absolute age difference: 38.373 in 347.1495668888092 seconds
+Epoch 53: Validation mean absolute age difference: 38.021 in 359.05866503715515 seconds
+Starting epoch 54
+Starting epoch 54
+Starting epoch 54
+Starting epoch 54
+Starting epoch 54
+Starting epoch 54
+Starting epoch 54
+Starting epoch 54
+Epoch 54: Training mean absolute age difference: 37.657 in 358.90806794166565 seconds
+Epoch 54: Training mean absolute age difference: 34.722 in 358.90878534317017 seconds
+Epoch 54: Training mean absolute age difference: 37.108 in 358.9088349342346 seconds
+Epoch 54: Training mean absolute age difference: 37.832 in 358.90126061439514 seconds
+Epoch 54: Training mean absolute age difference: 38.992 in 358.9090197086334 seconds
+Epoch 54: Training mean absolute age difference: 37.363 in 358.90843319892883 seconds
+Epoch 54: Training mean absolute age difference: 39.248 in 358.9116213321686 seconds
+Epoch 54: Training mean absolute age difference: 36.379 in 358.9079782962799 seconds
+Epoch 54: Validation mean absolute age difference: 35.810 in 316.44486570358276 seconds
+Epoch 54: Validation mean absolute age difference: 39.034 in 318.7975924015045 seconds
+Epoch 54: Validation mean absolute age difference: 33.902 in 319.0178635120392 seconds
+Epoch 54: Validation mean absolute age difference: 37.859 in 330.1786320209503 seconds
+Epoch 54: Validation mean absolute age difference: 33.847 in 338.14927649497986 seconds
+Epoch 54: Validation mean absolute age difference: 36.450 in 341.64007902145386 seconds
+Epoch 54: Validation mean absolute age difference: 33.373 in 344.7212800979614 seconds
+Epoch 54: Validation mean absolute age difference: 33.546 in 357.8921523094177 seconds
+Starting epoch 55
+Starting epoch 55
+Starting epoch 55
+Starting epoch 55
+Starting epoch 55
+Starting epoch 55
+Starting epoch 55
+Starting epoch 55
+Epoch 55: Training mean absolute age difference: 41.898 in 356.84274554252625 seconds
+Epoch 55: Training mean absolute age difference: 35.523 in 356.8414218425751 seconds
+Epoch 55: Training mean absolute age difference: 32.834 in 356.8416397571564 seconds
+Epoch 55: Training mean absolute age difference: 39.560 in 356.8421685695648 seconds
+Epoch 55: Training mean absolute age difference: 38.805 in 356.84215450286865 seconds
+Epoch 55: Training mean absolute age difference: 36.397 in 356.8426218032837 seconds
+Epoch 55: Training mean absolute age difference: 39.817 in 356.84224104881287 seconds
+Epoch 55: Training mean absolute age difference: 34.068 in 356.83511185646057 seconds
+Epoch 55: Validation mean absolute age difference: 37.837 in 318.7451171875 seconds
+Epoch 55: Validation mean absolute age difference: 40.266 in 321.0770797729492 seconds
+Epoch 55: Validation mean absolute age difference: 35.292 in 321.6636309623718 seconds
+Epoch 55: Validation mean absolute age difference: 39.432 in 330.4346947669983 seconds
+Epoch 55: Validation mean absolute age difference: 34.886 in 339.7046549320221 seconds
+Epoch 55: Validation mean absolute age difference: 37.874 in 343.399201631546 seconds
+Epoch 55: Validation mean absolute age difference: 36.852 in 346.4463014602661 seconds
+Epoch 55: Validation mean absolute age difference: 36.515 in 361.21722078323364 seconds
+Starting epoch 56
+Starting epoch 56
+Starting epoch 56
+Starting epoch 56
+Starting epoch 56
+Starting epoch 56
+Starting epoch 56
+Starting epoch 56
+Epoch 56: Training mean absolute age difference: 37.020 in 358.7253749370575 seconds
+Epoch 56: Training mean absolute age difference: 35.868 in 358.73262882232666 seconds
+Epoch 56: Training mean absolute age difference: 37.541 in 358.73260402679443 seconds
+Epoch 56: Training mean absolute age difference: 38.731 in 358.73255801200867 seconds
+Epoch 56: Training mean absolute age difference: 40.116 in 358.73280811309814 seconds
+Epoch 56: Training mean absolute age difference: 35.234 in 358.73306941986084 seconds
+Epoch 56: Training mean absolute age difference: 37.197 in 358.7326498031616 seconds
+Epoch 56: Training mean absolute age difference: 37.262 in 358.73226976394653 seconds
+Epoch 56: Validation mean absolute age difference: 38.145 in 316.2703785896301 seconds
+Epoch 56: Validation mean absolute age difference: 41.344 in 317.21224188804626 seconds
+Epoch 56: Validation mean absolute age difference: 37.257 in 321.64235067367554 seconds
+Epoch 56: Validation mean absolute age difference: 39.774 in 325.2454671859741 seconds
+Epoch 56: Validation mean absolute age difference: 36.413 in 338.0497589111328 seconds
+Epoch 56: Validation mean absolute age difference: 39.352 in 340.76292610168457 seconds
+Epoch 56: Validation mean absolute age difference: 37.720 in 345.70420360565186 seconds
+Epoch 56: Validation mean absolute age difference: 35.800 in 359.21621203422546 seconds
+Starting epoch 57
+Starting epoch 57
+Starting epoch 57
+Starting epoch 57
+Starting epoch 57
+Starting epoch 57
+Starting epoch 57
+Starting epoch 57
+Epoch 57: Training mean absolute age difference: 41.490 in 361.14555382728577 seconds
+Epoch 57: Training mean absolute age difference: 38.430 in 361.145525932312 seconds
+Epoch 57: Training mean absolute age difference: 36.933 in 361.1457841396332 seconds
+Epoch 57: Training mean absolute age difference: 34.281 in 361.13823652267456 seconds
+Epoch 57: Training mean absolute age difference: 31.510 in 361.14598202705383 seconds
+Epoch 57: Training mean absolute age difference: 31.930 in 361.14526748657227 seconds
+Epoch 57: Training mean absolute age difference: 32.245 in 361.1455514431 seconds
+Epoch 57: Training mean absolute age difference: 34.227 in 361.14558696746826 seconds
+Epoch 57: Validation mean absolute age difference: 37.214 in 321.19418025016785 seconds
+Epoch 57: Validation mean absolute age difference: 33.021 in 321.5456373691559 seconds
+Epoch 57: Validation mean absolute age difference: 34.212 in 321.917307138443 seconds
+Epoch 57: Validation mean absolute age difference: 38.134 in 330.06407380104065 seconds
+Epoch 57: Validation mean absolute age difference: 33.351 in 336.92342805862427 seconds
+Epoch 57: Validation mean absolute age difference: 34.870 in 345.44011878967285 seconds
+Epoch 57: Validation mean absolute age difference: 32.540 in 346.40046763420105 seconds
+Epoch 57: Validation mean absolute age difference: 32.496 in 359.9974753856659 seconds
+Starting epoch 58
+Starting epoch 58
+Starting epoch 58
+Starting epoch 58
+Starting epoch 58
+Starting epoch 58
+Starting epoch 58
+Starting epoch 58
+Epoch 58: Training mean absolute age difference: 36.567 in 357.2048056125641 seconds
+Epoch 58: Training mean absolute age difference: 33.268 in 357.2039530277252 seconds
+Epoch 58: Training mean absolute age difference: 39.914 in 357.20459151268005 seconds
+Epoch 58: Training mean absolute age difference: 37.656 in 357.20490193367004 seconds
+Epoch 58: Training mean absolute age difference: 34.351 in 357.20523405075073 seconds
+Epoch 58: Training mean absolute age difference: 36.445 in 357.2040309906006 seconds
+Epoch 58: Training mean absolute age difference: 36.026 in 357.19886088371277 seconds
+Epoch 58: Training mean absolute age difference: 39.112 in 357.2045328617096 seconds
+Epoch 58: Validation mean absolute age difference: 40.886 in 318.97560453414917 seconds
+Epoch 58: Validation mean absolute age difference: 39.632 in 320.6835427284241 seconds
+Epoch 58: Validation mean absolute age difference: 43.971 in 321.20393204689026 seconds
+Epoch 58: Validation mean absolute age difference: 42.113 in 326.9542257785797 seconds
+Epoch 58: Validation mean absolute age difference: 39.144 in 340.7994329929352 seconds
+Epoch 58: Validation mean absolute age difference: 42.056 in 344.24820613861084 seconds
+Epoch 58: Validation mean absolute age difference: 39.313 in 346.9562373161316 seconds
+Epoch 58: Validation mean absolute age difference: 39.152 in 362.7295570373535 seconds
+Starting epoch 59
+Starting epoch 59
+Starting epoch 59
+Starting epoch 59
+Starting epoch 59
+Starting epoch 59
+Starting epoch 59
+Starting epoch 59
+Epoch 59: Training mean absolute age difference: 37.889 in 357.0645580291748 seconds
+Epoch 59: Training mean absolute age difference: 37.748 in 357.0649890899658 seconds
+Epoch 59: Training mean absolute age difference: 35.522 in 357.0649347305298 seconds
+Epoch 59: Training mean absolute age difference: 33.270 in 357.0646095275879 seconds
+Epoch 59: Training mean absolute age difference: 39.910 in 357.06590127944946 seconds
+Epoch 59: Training mean absolute age difference: 34.517 in 357.0661633014679 seconds
+Epoch 59: Training mean absolute age difference: 37.483 in 357.06506156921387 seconds
+Epoch 59: Training mean absolute age difference: 34.787 in 357.05759716033936 seconds
+Epoch 59: Validation mean absolute age difference: 35.970 in 316.33395743370056 seconds
+Epoch 59: Validation mean absolute age difference: 38.823 in 318.4347240924835 seconds
+Epoch 59: Validation mean absolute age difference: 33.735 in 322.53529715538025 seconds
+Epoch 59: Validation mean absolute age difference: 38.062 in 332.5218005180359 seconds
+Epoch 59: Validation mean absolute age difference: 34.574 in 338.838659286499 seconds
+Epoch 59: Validation mean absolute age difference: 36.483 in 345.00273609161377 seconds
+Epoch 59: Validation mean absolute age difference: 33.578 in 346.50858998298645 seconds
+Epoch 59: Validation mean absolute age difference: 33.080 in 361.56352972984314 seconds
+Starting epoch 60
+Starting epoch 60
+Starting epoch 60
+Starting epoch 60
+Starting epoch 60
+Starting epoch 60
+Starting epoch 60
+Starting epoch 60
+Epoch 60: Training mean absolute age difference: 35.942 in 354.3464288711548 seconds
+Epoch 60: Training mean absolute age difference: 37.745 in 354.3468267917633 seconds
+Epoch 60: Training mean absolute age difference: 36.795 in 354.3397762775421 seconds
+Epoch 60: Training mean absolute age difference: 28.852 in 354.3468368053436 seconds
+Epoch 60: Training mean absolute age difference: 30.981 in 354.3466966152191 seconds
+Epoch 60: Training mean absolute age difference: 35.774 in 354.3470275402069 seconds
+Epoch 60: Training mean absolute age difference: 37.421 in 354.34653663635254 seconds
+Epoch 60: Training mean absolute age difference: 33.740 in 354.34705424308777 seconds
+Epoch 60: Validation mean absolute age difference: 35.812 in 310.4745171070099 seconds
+Epoch 60: Validation mean absolute age difference: 36.889 in 315.47640919685364 seconds
+Epoch 60: Validation mean absolute age difference: 40.345 in 319.1018295288086 seconds
+Epoch 60: Validation mean absolute age difference: 38.943 in 327.8689663410187 seconds
+Epoch 60: Validation mean absolute age difference: 34.893 in 341.65099906921387 seconds
+Epoch 60: Validation mean absolute age difference: 38.460 in 343.67686223983765 seconds
+Epoch 60: Validation mean absolute age difference: 35.986 in 346.9066948890686 seconds
+Epoch 60: Validation mean absolute age difference: 34.648 in 357.47903966903687 seconds
+Starting epoch 61
+Starting epoch 61
+Starting epoch 61
+Starting epoch 61
+Starting epoch 61
+Starting epoch 61
+Starting epoch 61
+Starting epoch 61
