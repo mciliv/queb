@@ -10,7 +10,7 @@ GEM
     nio4r (2.7.5)
     puma (6.6.1)
       nio4r (~> 2.0)
-    rack (3.2.4)
+    rack (3.2.5)
     rack-protection (4.2.1)
       base64 (>= 0.1.0)
       logger (>= 1.6.0)
@@ -38,6 +38,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-25
+  x86_64-linux
 
 DEPENDENCIES
   json (~> 2.7)
