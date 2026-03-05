@@ -5,6 +5,7 @@ import { APP_CONFIG } from '../utils/config-loader.js';
 import logger from '../logger.js';
 import { createKeyboardHandler } from '../keyboard-shortcuts.js';
 import ErrorBanner from './ErrorBanner';
+import TerminalSection from './TerminalSection';
 import TextInput from './TextInput';
 import CameraSection from './CameraSection';
 import PhotoSection from './PhotoSection';
@@ -12,17 +13,27 @@ import LinkSection from './LinkSection';
 import MoleculeViewer from './MoleculeViewer';
 import MolecularColumn from './MolecularColumn';
 import '../assets/style.css';
+import { isMobileDevice } from '../utils/device.js';
 
-const isMobileDevice = () => window.matchMedia('(pointer: coarse) and (hover: none)').matches;
 const isMac = /mac/i.test(navigator.userAgent);
 
 const ModeSelector = ({ cameraMode, setCameraMode, photoMode, setPhotoMode, linkMode, setLinkMode }) => {
   const isMobile = isMobileDevice();
 
   const handleModeSelect = (mode) => {
-    setCameraMode(mode === 'camera');
-    setPhotoMode(mode === 'photo');
-    if (setLinkMode) setLinkMode(mode === 'link');
+    if (mode === 'camera') {
+      setCameraMode(!cameraMode);
+      setPhotoMode(false);
+      if (setLinkMode) setLinkMode(false);
+    } else if (mode === 'photo') {
+      setPhotoMode(!photoMode);
+      setCameraMode(false);
+      if (setLinkMode) setLinkMode(false);
+    } else if (mode === 'link') {
+      if (setLinkMode) setLinkMode(!linkMode);
+      setCameraMode(false);
+      setPhotoMode(false);
+    }
   };
 
   return (
@@ -91,6 +102,7 @@ function App() {
   const [columnMode, setColumnMode] = useState('accumulate'); // 'replace' or 'accumulate'
   const [lookupMode, setLookupMode] = useState('GPT-5');
   const [showLeftSidebar, setShowLeftSidebar] = useState(true); // New state for sidebar visibility
+  const [showTerminal, setShowTerminal] = useState(true); // Toggle terminal mode
 
   const { structuresFromText: analyzeText, generateSDFs } = useApi();
 
@@ -103,11 +115,6 @@ function App() {
     script.src = 'https://3Dmol.org/build/3Dmol-min.js';
     script.async = true;
     document.head.appendChild(script);
-  }, []);
-
-  // Auto-enable dev mode
-  useEffect(() => {
-    // Dev-mode setup only
   }, []);
 
   // Ensure accumulate mode during visual tests
@@ -430,28 +437,46 @@ function App() {
 
           {/* Left sidebar with input modes */}
           <div className={`left-sidebar ${showLeftSidebar ? 'visible' : 'hidden'}`}>
+            <div className="sidebar-header" style={{ padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="app-title-small">1 CLI</span>
+              <button 
+                onClick={() => setShowTerminal(!showTerminal)}
+                style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '12px' }}
+              >
+                {showTerminal ? 'Switch to GUI' : 'Switch to Terminal'}
+              </button>
+            </div>
 
             <div className="input-section">
-                <TextInput
-                  value={objectInput}
-                  onChange={setObjectInput}
-                  onSubmit={handleTextPrediction}
-                  isProcessing={isProcessing}
-                  error={error}
-                />
+                {showTerminal ? (
+                  <TerminalSection 
+                    onCommand={handleTextPrediction}
+                    isProcessing={isProcessing}
+                  />
+                ) : (
+                  <>
+                    <TextInput
+                      value={objectInput}
+                      onChange={setObjectInput}
+                      onSubmit={handleTextPrediction}
+                      isProcessing={isProcessing}
+                      error={error}
+                    />
 
-                <ModeSelector
-                  cameraMode={cameraMode}
-                  setCameraMode={setCameraMode}
-                  photoMode={photoMode}
-                  setPhotoMode={setPhotoMode}
-                  linkMode={linkMode}
-                  setLinkMode={setLinkMode}
-                  lookupMode={lookupMode}
-                  setLookupMode={setLookupMode}
-                />
+                    <ModeSelector
+                      cameraMode={cameraMode}
+                      setCameraMode={setCameraMode}
+                      photoMode={photoMode}
+                      setPhotoMode={setPhotoMode}
+                      linkMode={linkMode}
+                      setLinkMode={setLinkMode}
+                      lookupMode={lookupMode}
+                      setLookupMode={setLookupMode}
+                    />
+                  </>
+                )}
 
-                {cameraMode && (
+                {!showTerminal && cameraMode && (
                   <CameraSection
                     isProcessing={isProcessing}
                     setIsProcessing={setIsProcessing}
@@ -460,7 +485,7 @@ function App() {
                   />
                 )}
 
-                {photoMode && (
+                {!showTerminal && photoMode && (
                   <PhotoSection
                     isProcessing={isProcessing}
                     setIsProcessing={setIsProcessing}
@@ -469,7 +494,7 @@ function App() {
                   />
                 )}
 
-                {linkMode && (
+                {!showTerminal && linkMode && (
                   <LinkSection
                     isProcessing={isProcessing}
                     setIsProcessing={setIsProcessing}

@@ -1,4 +1,3 @@
-
 // Forward browser console logs (with stack/location) to backend in dev
 if (process.env.NODE_ENV !== 'production') {
   const parseStackTop = (stack) => {

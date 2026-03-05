@@ -1,5 +1,5 @@
 
-export const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-         (window.innerWidth <= 768 && 'ontouchstart' in window);
-};
+export const isMobileDevice = () =>
+  typeof window.matchMedia === 'function'
+    ? window.matchMedia('(pointer: coarse) and (hover: none)').matches
+    : false;
