@@ -1,4 +1,4 @@
-# 1's goal is to be the most functional & multifunctional
+# 1's goal is to be the most functional & multifunctional system
 
 # Chemical Structure Analyzer
 
