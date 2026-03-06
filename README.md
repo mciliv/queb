@@ -1,4 +1,6 @@
-# Queb — Chemical Structure Analyzer
+# 1's goal is to be the most functional & multifunctional
+
+# Chemical Structure Analyzer
 
 Point a camera at something, upload a photo, paste a link, or type a name → AI identifies the object and its chemical compounds → Interactive 3D molecular structures appear.
 
