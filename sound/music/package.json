@@ -1,0 +1,14 @@
+{
+  "name": "music-playground",
+  "version": "0.1.0",
+  "description": "Standalone repo to play generated music from the Google AI Music CLI",
+  "main": "play.js",
+  "scripts": {
+    "play": "node play.js",
+    "generate": "node generate.js",
+    "gen:play": "node generate.js && node play.js output.mid"
+  },
+  "dependencies": {
+    "@magenta/music": "^1.23.1"
+  }
+}

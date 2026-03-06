@@ -35,3 +35,7 @@ The project uses a custom dependency injection container in src/core/services.js
 2.  Strategy: Formulate a plan before execution.
 3.  Execute: Apply surgical, targeted changes.
 4.  Validate: Run tests and build the application (npm run build).
+
+## 6. Ubuntu VM
+
+Source: `vm.swift`. Run `./ubuntu-vm -h` for full usage, build instructions, and configuration details.
