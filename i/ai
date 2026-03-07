@@ -1,0 +1,184 @@
+#!/bin/zsh
+
+# Configuration
+CURSOR_AGENT_PATH="$HOME/.local/share/cursor-agent/versions/2025.10.02-bd871ac/cursor-agent"
+AI_AGENT="${AI_AGENT:-$CURSOR_AGENT_PATH}"
+SCRIPT_VERSION="1.0.0"
+LAST_CHECKED="2025-10-07"
+
+ai_wrapper() {
+    set -e
+    
+    # Show version info if requested
+    if [[ "$1" == "--version" || "$1" == "-v" ]]; then
+        check_latest_models
+        exit 0
+    fi
+    
+    # If no arguments are provided, or if the first argument does not start with a dash,
+    # run the default command (cursor-agent) with all arguments.
+    if [ -z "$1" ]; then
+        $AI_AGENT "$@"
+        exit 0
+    fi
+    
+    case "$1" in
+        -*)
+            # It's an option, so we'll process it below.
+            ;;
+        *)
+            # It's not an option, treat it as an argument for the default command.
+            $AI_AGENT "$@"
+            exit 0
+            ;;
+    esac
+    
+    # This part is reached only if the first argument starts with a dash.
+    case "$1" in
+        -r)
+            shift
+            $AI_AGENT "$@"
+            ;;
+        -c)
+            shift
+            claude --add-dir ~/app --permission-mode "acceptEdits" "$@"
+            ;;
+        -x)
+            shift
+            codex --full-auto --search "$@"
+            ;;
+        -s|--signals)
+            # Initialize terminal signals
+            ai_signals_init
+            ;;
+        --check-models)
+            check_latest_models
+            ;;
+        *)
+            echo "Invalid option: $1" >&2
+            echo "Usage: $0 [-r|-c|-x|-s|--check-models|--version] [arguments...]" >&2
+            echo "  -r            Run with cursor-agent"
+            echo "  -c            Run with claude"
+            echo "  -x            Run with codex"
+            echo "  -s            Initialize terminal signals"
+            echo "  --check-models Check latest AI models"
+            echo "  --version     Show version info"
+            exit 1
+            ;;
+    esac
+}
+
+# Terminal Signals Functions
+ai_signals_init() {
+    echo "=== AI AGENT TERMINAL SIGNALS ==="
+    
+    # Check if AI agent is available
+    if ! command -v ${AI_AGENT%% *} >/dev/null 2>&1; then
+        echo "⚠️  Warning: AI agent '${AI_AGENT%% *}' not found in PATH"
+        echo "   Set AI_AGENT environment variable to your preferred agent"
+        echo ""
+    fi
+    
+    # Universal AI agent function
+    ai_analyze() {
+        local prompt="$1"
+        local input="$2"
+        
+        case "${AI_AGENT%% *}" in
+            "cursor-agent")
+                echo "$input" | $AI_AGENT -p "$prompt"
+                ;;
+            "claude")
+                echo "$input" | $AI_AGENT "$prompt"
+                ;;
+            "chatgpt")
+                echo "$input" | $AI_AGENT "$prompt"
+                ;;
+            "ollama")
+                echo "$input" | $AI_AGENT "$prompt"
+                ;;
+            "openai")
+                echo "$input" | $AI_AGENT "$prompt"
+                ;;
+            *)
+                echo "$input" | $AI_AGENT "$prompt"
+                ;;
+        esac
+    }
+    
+    # Analysis functions
+    ai_last() {
+        local cmd=$(fc -ln -1 | sed 's/^[[:space:]]*//')
+        local output=$(eval "$cmd" 2>&1)
+        local code=$?
+        if [[ $code -eq 0 ]]; then
+            ai_analyze "analyze: $cmd" "$output"
+        else
+            ai_analyze "error: $cmd (code: $code)" "$output"
+        fi
+    }
+    
+    ai_ls() { ai_analyze "analyze directory" "$(ls -la)"; }
+    ai_git() { ai_analyze "analyze git status" "$(git status)"; }
+    ai_sys() { ai_analyze "analyze system" "$(uname -a; df -h; ps aux | head -10)"; }
+    ai_net() { ai_analyze "analyze network" "$(ifconfig | grep -A 1 "inet "; netstat -an | head -10)"; }
+    
+    # Safe keybindings - only use keys that don't have existing functionality
+    echo "Setting up safe keybindings..."
+    
+    # Detect shell and apply keybindings
+    if command -v bindkey >/dev/null 2>&1; then
+        # Zsh shell
+        echo "Detected zsh shell"
+        bindkey -s '^[^A' 'ai_last\n'    # Alt+Ctrl+A
+        bindkey -s '^[^B' 'ai_ls\n'      # Alt+Ctrl+B
+        bindkey -s '^[^C' 'ai_git\n'     # Alt+Ctrl+C
+        bindkey -s '^[^D' 'ai_sys\n'     # Alt+Ctrl+D
+        bindkey -s '^[^E' 'ai_net\n'     # Alt+Ctrl+E
+    elif command -v bind >/dev/null 2>&1; then
+        # Bash shell
+        echo "Detected bash shell"
+        bind '"\e\C-a": "ai_last\n"'     # Alt+Ctrl+A
+        bind '"\e\C-b": "ai_ls\n"'       # Alt+Ctrl+B
+        bind '"\e\C-c": "ai_git\n"'      # Alt+Ctrl+C
+        bind '"\e\C-d": "ai_sys\n"'      # Alt+Ctrl+D
+        bind '"\e\C-e": "ai_net\n"'      # Alt+Ctrl+E
+    else
+        echo "⚠️  Warning: Could not detect shell for keybindings"
+    fi
+    
+    # Show usage
+    echo ""
+    echo "AI AGENT SIGNALS READY!"
+    echo "Using agent: $AI_AGENT"
+    echo "Safe keybindings (no conflicts):"
+    echo "  Alt+Ctrl+A - Analyze last command"
+    echo "  Alt+Ctrl+B - Analyze directory"
+    echo "  Alt+Ctrl+C - Analyze git status"
+    echo "  Alt+Ctrl+D - Analyze system"
+    echo "  Alt+Ctrl+E - Analyze network"
+    echo ""
+    echo "Or call directly: ai_last, ai_ls, ai_git, ai_sys, ai_net"
+    echo ""
+    echo "To change AI agent:"
+    echo "  export AI_AGENT='claude'"
+    echo "  export AI_AGENT='ollama run llama2'"
+    echo ""
+    echo "To check latest models: ai --check-models"
+    echo ""
+    echo "✅ All functionality restored:"
+    echo "   - AI Agent Wrapper (ai -r, ai -c, ai -x)"
+    echo "   - Terminal Signals (ai -s)"
+    echo "   - Analysis Functions (ai_last, ai_ls, ai_git, ai_sys, ai_net)"
+    echo "   - Safe Keybindings (Alt+Ctrl+A through Alt+Ctrl+E)"
+    echo "   - Version Check (ai --version, ai --check-models)"
+}
+
+# Main execution
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Script is being executed directly
+    ai_wrapper "$@"
+else
+    # Script is being sourced
+    echo "AI Agent functions loaded. Use 'ai -s' to initialize terminal signals."
+fi

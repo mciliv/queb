@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+# Defaults
+MODEL="grok-4"
+SYSTEM=""
+USER=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -s|--system)
+      SYSTEM="$2"
+      shift 2
+      ;;
+    -m|--model)
+      MODEL="$2"
+      shift 2
+      ;;
+    *)
+      USER="$1"
+      shift
+      ;;
+  esac
+done
+
+# Require user input
+if [[ -z "$USER" ]]; then
+  echo 'Usage: x "message" [-s "system"] [-m model]'
+  exit 1
+fi
+
+# Build request JSON
+JSON=$(cat <<EOF
+{
+  "model": "$MODEL",
+  "input": [
+    {
+      "role": "system",
+      "content": "$SYSTEM"
+    },
+    {
+      "role": "user",
+      "content": "$USER"
+    }
+  ],
+  "tools": [
+    {
+	"type": "web_search"
+    }
+  ]
+}
+EOF
+)
+
+# Send request
+curl https://api.x.ai/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -m 3600 \
+  -d "$JSON"

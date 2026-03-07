@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UML Project Viewer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>UML Project Viewer</h1>
+            <div class="controls">
+                <input type="text" id="directory-input" placeholder="Enter directory path (e.g., ~/queb)" value="~/queb">
+                <button id="refresh-btn">Load</button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="diagram-panel">
+                <h2>Project Structure <span class="hint">← Click any class/function to view code</span></h2>
+                <div id="diagram-container"></div>
+            </div>
+            
+            <div class="code-panel">
+                <div class="code-header">
+                    <h2>Code Viewer</h2>
+                    <span id="file-name"></span>
+                </div>
+                <pre id="code-content">👈 Click on any class or function box to view its source code here</pre>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

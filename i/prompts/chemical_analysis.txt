@@ -1,0 +1,24 @@
+Identify the main chemical compounds found in the given object.
+
+Return ONLY valid JSON in this exact format:
+{
+  "object": "<name of the object>",
+  "chemicals": [
+    {"name": "<chemical name>", "smiles": "<SMILES notation>"},
+    ...
+  ],
+  "reason": "<brief explanation>"
+}
+
+Guidelines:
+- Include all individual chemical components, in order of abundance
+- Use standard chemical names
+- Provide SMILES notation PubChem IsomericSMILES when available
+- Be specific about chemical compounds, not just general categories
+- If unsure about SMILES, omit the field but keep the name
+- Output JSON only, no markdown or commentary
+
+Examples for specific molecules themselves:
+- "water" → {"name": "water", "smiles": "O"}
+- "salt" → {"name": "sodium chloride", "smiles": "[Na+].[Cl-]"}
+- "sugar" → {"name": "sucrose", "smiles": "C([C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O)O)O)O)O[C@@H]2[C@H]([C@@H]([C@H]([C@H]([C@H](O2)O)O)O)O)O"}

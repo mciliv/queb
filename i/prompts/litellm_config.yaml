@@ -1,0 +1,154 @@
+model_list:
+  # OpenAI - Latest Models (Jan 2026)
+  - model_name: gpt-4o
+    litellm_params:
+      model: gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+  
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+  
+  - model_name: o1
+    litellm_params:
+      model: o1
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: o1-mini
+    litellm_params:
+      model: o1-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  # Anthropic - Latest Claude Models
+  - model_name: claude-3-7-sonnet
+    litellm_params:
+      model: anthropic/claude-3-7-sonnet-20250219
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-3-5-sonnet
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-3-5-haiku
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-3-opus
+    litellm_params:
+      model: anthropic/claude-3-opus-20240229
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # Google Gemini - Latest Models
+  - model_name: gemini-2-0-flash
+    litellm_params:
+      model: gemini/gemini-2.0-flash-exp
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: gemini-1-5-pro
+    litellm_params:
+      model: gemini/gemini-1.5-pro-latest
+      api_key: os.environ/GEMINI_API_KEY
+
+  - model_name: gemini-1-5-flash
+    litellm_params:
+      model: gemini/gemini-1.5-flash-latest
+      api_key: os.environ/GEMINI_API_KEY
+
+  # xAI Grok
+  - model_name: grok-2
+    litellm_params:
+      model: xai/grok-2-latest
+      api_key: os.environ/XAI_API_KEY
+
+  - model_name: grok-2-vision
+    litellm_params:
+      model: xai/grok-2-vision-1212
+      api_key: os.environ/XAI_API_KEY
+
+  # DeepSeek
+  - model_name: deepseek-chat
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  - model_name: deepseek-reasoner
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # OpenRouter (access to many models)
+  - model_name: openrouter-auto
+    litellm_params:
+      model: openrouter/auto
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  # AWS Bedrock - Claude on AWS
+  - model_name: bedrock-claude-3-5-sonnet
+    litellm_params:
+      model: bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0
+      aws_region_name: us-east-1
+
+  - model_name: bedrock-claude-3-7-sonnet
+    litellm_params:
+      model: bedrock/us.anthropic.claude-3-7-sonnet-20250219-v1:0
+      aws_region_name: us-east-1
+
+  # Local/Self-hosted - Ollama
+  - model_name: llama-3-3
+    litellm_params:
+      model: ollama/llama3.3
+      api_base: http://localhost:11434
+
+  - model_name: qwen-2-5
+    litellm_params:
+      model: ollama/qwen2.5
+      api_base: http://localhost:11434
+
+# Router settings for load balancing
+router_settings:
+  routing_strategy: simple-shuffle  # Distribute requests evenly
+  allowed_fails: 3  # Retry up to 3 times
+  cooldown_time: 30  # 30 seconds before retrying failed deployment
+  num_retries: 3
+
+# LiteLLM module settings
+litellm_settings:
+  drop_params: true  # Drop unsupported params instead of erroring
+  set_verbose: false  # Set to true for debugging
+  json_logs: true
+  success_callback: ["prometheus"]  # Enable Prometheus metrics
+  failure_callback: ["prometheus"]
+
+# General proxy settings
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY  # Required for auth
+  database_url: os.environ/DATABASE_URL  # PostgreSQL for persistence
+  
+  # Default model aliases
+  default_models:
+    chat: gpt-4o  # Default for chat completions
+    reasoning: o1  # Default for reasoning tasks
+    vision: grok-2-vision  # Default for vision tasks
+    fast: gpt-4o-mini  # Default for fast responses
+    
+  # Cost tracking
+  max_budget: 100  # $100 default budget
+  budget_duration: 30d  # Reset monthly
+  
+  # Rate limiting (requests per minute)
+  rpm_limit: 1000
+  tpm_limit: 200000  # Tokens per minute
+  
+  # Timeouts
+  request_timeout: 600  # 10 minutes for long requests
+  
+  # Alerts
+  alerting: ["slack"]
+  alerting_threshold: 300  # Alert when more than 300 errors
+
+# Environment variables for alerts (optional)
+environment_variables:
+  SLACK_WEBHOOK_URL: os.environ/SLACK_WEBHOOK_URL

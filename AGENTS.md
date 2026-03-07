@@ -38,4 +38,4 @@ The project uses a custom dependency injection container in src/core/services.js
 
 ## 6. Ubuntu VM
 
-Source: `vm.swift`. Run `./ubuntu-vm -h` for full usage, build instructions, and configuration details.
+Source: `vm/vm.swift`. Run `./ubuntu-vm -h` for full usage, build instructions, and configuration details.

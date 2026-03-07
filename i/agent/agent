@@ -1,0 +1,177 @@
+#!/bin/bash
+# Run any command and automatically pass output to AI for analysis
+# Usage: ./scripts/run-with-ai "command to run"
+
+set -e
+
+# Configuration
+AI_COMMAND="${AI_COMMAND:-~/Code/ai}"
+AUTO_TRIGGER="${AUTO_TRIGGER:-true}"
+FORCE_AI="${FORCE_AI:-false}"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to check if output contains error patterns
+should_trigger_ai() {
+    local output="$1"
+    local error_patterns=(
+        "error" "failed" "exception" "timeout" "crash"
+        "EADDRINUSE" "ENOTFOUND" "ECONNREFUSED" "EACCES"
+        "TypeError" "ReferenceError" "SyntaxError"
+        "Cannot read property" "undefined is not a function"
+    )
+    
+    for pattern in "${error_patterns[@]}"; do
+        if echo "$output" | grep -qi "$pattern"; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Function to format output for AI
+format_for_ai() {
+    local command="$1"
+    local exit_code="$2"
+    local stdout="$3"
+    local stderr="$4"
+    local duration="$5"
+    
+    cat << EOF
+# Terminal Output Analysis
+
+**Command:** $command
+**Exit Code:** $exit_code
+**Duration:** ${duration}ms
+**Success:** $([ $exit_code -eq 0 ] && echo "Yes" || echo "No")
+**Timestamp:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+## Standard Output
+\`\`\`
+$stdout
+\`\`\`
+
+## Error Output
+\`\`\`
+$stderr
+\`\`\`
+
+## Analysis Request
+
+Please analyze this terminal output and provide:
+1. What went wrong (if anything)
+2. Root cause analysis
+3. Specific fix recommendations
+4. Commands to run to fix the issue
+5. Prevention strategies
+
+Focus on actionable solutions that can be implemented immediately.
+EOF
+}
+
+# Main execution
+main() {
+    if [ $# -eq 0 ]; then
+        print_error "No command provided"
+        echo "Usage: $0 \"command to run\""
+        echo "Example: $0 \"npm start\""
+        echo "Example: $0 \"node index.js\""
+        exit 1
+    fi
+    
+    local command="$1"
+    local start_time=$(date +%s%3N)
+    
+    print_status "Running command: $command"
+    
+    # Create temporary files for output capture
+    local stdout_file=$(mktemp)
+    local stderr_file=$(mktemp)
+    
+    # Execute the command and capture output
+    set +e
+    eval "$command" > "$stdout_file" 2> "$stderr_file"
+    local exit_code=$?
+    set -e
+    
+    local end_time=$(date +%s%3N)
+    local duration=$((end_time - start_time))
+    
+    # Read captured output
+    local stdout=$(cat "$stdout_file")
+    local stderr=$(cat "$stderr_file")
+    
+    # Clean up temp files
+    rm -f "$stdout_file" "$stderr_file"
+    
+    # Print the original output
+    if [ -n "$stdout" ]; then
+        echo "$stdout"
+    fi
+    if [ -n "$stderr" ]; then
+        echo "$stderr" >&2
+    fi
+    
+    # Check if we should trigger AI analysis
+    local all_output="$stdout$stderr"
+    local should_analyze=false
+    
+    if [ "$FORCE_AI" = "true" ]; then
+        should_analyze=true
+        print_status "Force AI analysis enabled"
+    elif [ "$AUTO_TRIGGER" = "true" ] && should_trigger_ai "$all_output"; then
+        should_analyze=true
+        print_status "Error patterns detected, triggering AI analysis"
+    elif [ $exit_code -ne 0 ]; then
+        should_analyze=true
+        print_status "Command failed (exit code $exit_code), triggering AI analysis"
+    fi
+    
+    if [ "$should_analyze" = "true" ]; then
+        print_status "🤖 Passing output to AI for analysis..."
+        
+        # Format output for AI
+        local formatted_output=$(format_for_ai "$command" "$exit_code" "$stdout" "$stderr" "$duration")
+        
+        # Pass to AI command
+        if command -v "$AI_COMMAND" >/dev/null 2>&1; then
+            echo "$formatted_output" | "$AI_COMMAND"
+            print_success "AI analysis completed"
+        else
+            print_warning "AI command not found: $AI_COMMAND"
+            print_warning "Set AI_COMMAND environment variable to specify AI command path"
+            print_warning "Formatted output saved to: /tmp/output-$(date +%s).md"
+            echo "$formatted_output" > "/tmp/output-$(date +%s).md"
+        fi
+    else
+        print_success "Command completed successfully"
+    fi
+    
+    # Exit with the same code as the original command
+    exit $exit_code
+}
+
+# Run main function with all arguments
+main "$@"

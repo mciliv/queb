@@ -1,0 +1,39 @@
+{
+  "name": "chat",
+  "version": "0.1.0",
+  "description": "Node.js AI service utilities with provider abstraction.",
+  "main": "index.js",
+  "type": "commonjs",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "AIService.js",
+    "CursorAgentIntegration.js",
+    "structuralize-api-contract.js",
+    "openai_respone.json",
+    "prompts",
+    "ai",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "latest",
+    "@ai-sdk/openai": "latest",
+    "@ai-sdk/xai": "latest",
+    "ai": "latest",
+    "dotenv": "^17.2.3",
+    "node-fetch": "^2.7.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "jest": "latest"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
